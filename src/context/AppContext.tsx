@@ -284,22 +284,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // Default followed rooms/hosts so "ملكي" displays followed rooms right away
     return new Set<string>();
   });
-  const [transactions, setTransactions] = useState<Transaction[]>(() => {
-    safeStorage.removeItem('toti_transactions');
-    const saved = safeStorage.getItem('toti_transactions_v2');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return [];
-      }
-    }
-    return [];
-  });
-
+  // Financial history must originate from the server ledger, not localStorage.
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   useEffect(() => {
-    safeStorage.setItem('toti_transactions_v2', JSON.stringify(transactions));
-  }, [transactions]);
+    safeStorage.removeItem('toti_transactions');
+    safeStorage.removeItem('toti_transactions_v2');
+    if (!isLoggedIn) setTransactions([]);
+  }, [isLoggedIn]);
+
   const [activeGiftAnimation, setActiveGiftAnimation] = useState<GiftAnimationPayload | null>(null);
 
   // Modals
