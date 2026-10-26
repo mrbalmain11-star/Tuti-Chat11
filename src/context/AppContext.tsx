@@ -175,22 +175,32 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // UI placeholder only until the verified user's profile/wallet is loaded.
   // Never hydrate privileged balances or identity from localStorage.
-  const [currentUser, setCurrentUser] = useState<UserProfile>(() => ({
+  const makeEmptyUser = (): UserProfile => ({
     ...initialCurrentUser,
     id: '',
     name: '',
     nickname: '',
+    avatar: '',
+    bio: '',
     coins: 0,
     diamonds: 0,
     vipLevel: 0,
+    vipExpiry: '',
     wealthLevel: 0,
     wealthExp: 0,
     charmLevel: 0,
     charmExp: 0,
+    hearts: 0,
+    friendsCount: 0,
+    followersCount: 0,
+    fansCount: 0,
+    visitorsCount: 0,
+    album: [],
     isSuperAdmin: false,
     isRechargeAgent: false,
     permissions: [],
-  }));
+  });
+  const [currentUser, setCurrentUser] = useState<UserProfile>(makeEmptyUser);
 
   // Only a verified Supabase auth session may unlock the app.
   const [isLoggedIn, setIsLoggedInState] = useState(false);
@@ -238,7 +248,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     if (!isLoggedIn) {
-      setCurrentUser(prev => ({ ...prev, id: '', coins: 0, diamonds: 0 }));
+      setCurrentUser(makeEmptyUser());
       return;
     }
     let active = true;
