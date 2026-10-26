@@ -610,9 +610,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const sendRoomMessage = (roomId: string, text: string) => {
+  const sendRoomMessage = (_roomId: string, text: string): void => {
     if (!text.trim()) return;
-    const newMsg: ChatMessage = {
+    alert('إرسال رسائل الغرفة غير متاح حتى ربط الدردشة الحقيقية بالخادم.');
+  };
+
+  const newMsg: ChatMessage = {
       id: 'msg-' + Date.now(),
       senderId: currentUser.id,
       senderName: currentUser.nickname || currentUser.name,
