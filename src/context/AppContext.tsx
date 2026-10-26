@@ -620,61 +620,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     alert('الرسائل الخاصة غير متاحة حتى اكتمال الربط الحقيقي بالخادم.');
   };
 
-  const newMsg = {
-      id: 'm-' + Date.now(),
-      text,
-      sender: 'me' as const,
-      timestamp: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
-    };
-
-    setConversations((prev) =>
-      prev.map((c) => {
-        if (c.id === convId) {
-          const updated = {
-            ...c,
-            lastMessage: text,
-            lastTime: 'الآن',
-            messages: [...c.messages, newMsg],
-          };
-          if (openChatThread?.id === convId) {
-            setOpenChatThread(updated);
-          }
-          return updated;
-        }
-        return c;
-      })
-    );
-
-    // Auto-reply simulation for demo realism
-    if (convId !== 'sys-msg' && convId !== 'official-msg') {
-      setTimeout(() => {
-        const replyMsg = {
-          id: 'm-reply-' + Date.now(),
-          text: 'أهلاً بك يا غالي! تسلم ويسعد قلبك دائماً 🌸',
-          sender: 'them' as const,
-          timestamp: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
-        };
-        setConversations((prev) =>
-          prev.map((c) => {
-            if (c.id === convId) {
-              const updated = {
-                ...c,
-                lastMessage: replyMsg.text,
-                lastTime: 'الآن',
-                messages: [...c.messages, replyMsg],
-              };
-              if (openChatThread?.id === convId) {
-                setOpenChatThread(updated);
-              }
-              return updated;
-            }
-            return c;
-          })
-        );
-      }, 1500);
-    }
-  };
-
   // Until the server-side atomic gift RPC is wired, never debit balances locally.
   const sendGift = (
     _gift: GiftItem,
