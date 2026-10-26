@@ -18,7 +18,7 @@ import {
   initialTransactions,
 } from '../mockData';
 import { sounds } from '../utils/audio';
-import { stagingBackend, fetchRealRooms, fetchMyProfile } from '../services/stagingBackend';
+import { stagingBackend, fetchRealRooms, fetchMyProfile, fetchMyWallet } from '../services/stagingBackend';
 import { mapRoomToUi } from '../services/mapRoomToUi';
 import { Language, Translations, translations } from '../i18n/translations';
 import { StorageItem, BagItem, initialBagItems } from '../data/storageItems';
@@ -231,6 +231,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         avatar: profile.avatar_url ?? '',
       }));
     }).catch(error => console.error('Failed to load staging profile:', error));
+    return () => { active = false; };
+  }, [isLoggedIn]);
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setCurrentUser(prev => ({ ...prev, id: '', coins: 0, diamonds: 0 }));
+      return;
+    }
+    let active = true;
+    fetchMyWallet().then(wallet => {
+      if (active) setCurrentUser(prev => ({
+        ...prev, coins: wallet.coins, diamonds: wallet.diamonds,
+      }));
+    }).catch(error => {
+      console.error('Failed to load authenticated staging wallet:', error);
+      if (active) setCurrentUser(prev => ({ ...prev, coins: 0, diamonds: 0 }));
+    });
     return () => { active = false; };
   }, [isLoggedIn]);
 
