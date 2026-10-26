@@ -766,15 +766,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
-  const joinAgency = (agencyId: string) => {
-    const ag = agencies.find((a) => a.id === agencyId);
-    if (!ag) return;
-    sounds.playClick();
-    setCurrentUser((prev) => ({
-      ...prev,
-      agencyName: ag.name,
-      agencyRole: 'عضو مميز',
-    }));
+  const joinAgency = (_agencyId: string): void => {
+    alert('الانضمام للوكالات غير متاح حتى التحقق من العضوية في الخادم.');
   };
 
   const createAgency = (_name: string, _description: string): void => {
