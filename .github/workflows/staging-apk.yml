@@ -40,14 +40,12 @@ jobs:
         env:
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.STAGING_SUPABASE_PUBLISHABLE_KEY }}
         run: npm run build
-      - name: Prepare Android project if missing
+      - name: Generate complete Android project in CI
         run: |
-          if [ -f android/app/build.gradle ] || [ -f android/app/build.gradle.kts ]; then
-            echo "Using existing Android project"
-          else
-            echo "Generating Android project"
-            npx cap add android
-          fi
+          # Existing checked-in Android folder is incomplete (Gradle wrapper missing).
+          # Regenerate it only inside the disposable CI runner; repository stays unchanged.
+          rm -rf android
+          npx cap add android
       - name: Sync Capacitor assets
         run: npx cap sync android
       - name: Register Google OAuth callback
@@ -55,12 +53,10 @@ jobs:
       - name: Build Android debug APK
         working-directory: android
         run: |
-          if [ -f gradle/wrapper/gradle-wrapper.jar ] && [ -f gradle/wrapper/gradle-wrapper.properties ]; then
-            bash gradlew assembleDebug
-          else
-            echo "::error::Gradle wrapper files are missing from the Android project"
-            exit 1
-          fi
+          test -f gradle/wrapper/gradle-wrapper.jar
+          test -f gradle/wrapper/gradle-wrapper.properties
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDebug
       - uses: actions/upload-artifact@v4
         with:
           name: TotiChat-Staging-Debug-APK
