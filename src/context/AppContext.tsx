@@ -18,7 +18,7 @@ import {
   initialTransactions,
 } from '../mockData';
 import { sounds } from '../utils/audio';
-import { stagingBackend, fetchRealRooms } from '../services/stagingBackend';
+import { stagingBackend, fetchRealRooms, fetchMyProfile } from '../services/stagingBackend';
 import { mapRoomToUi } from '../services/mapRoomToUi';
 import { Language, Translations, translations } from '../i18n/translations';
 import { StorageItem, BagItem, initialBagItems } from '../data/storageItems';
@@ -215,6 +215,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
     return () => { active = false; subscription.unsubscribe(); };
   }, []);
+
+  // Load only authenticated profile fields from the staging backend.
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    let active = true;
+    fetchMyProfile().then(profile => {
+      if (!active || !profile) return;
+      setCurrentUser(prev => ({
+        ...prev,
+        id: profile.id,
+        name: profile.display_name,
+        nickname: profile.display_name,
+        bio: profile.bio ?? '',
+        avatar: profile.avatar_url ?? '',
+      }));
+    }).catch(error => console.error('Failed to load staging profile:', error));
+    return () => { active = false; };
+  }, [isLoggedIn]);
 
   const [activeTab, setActiveTab] = useState<'home' | 'messages' | 'profile'>('home');
   const [homeSubTab, setHomeSubTab] = useState<'party' | 'royal' | 'discover'>('party');
