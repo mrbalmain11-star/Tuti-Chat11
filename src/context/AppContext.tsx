@@ -171,32 +171,24 @@ const safeStorage = {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<UserProfile>(() => {
-    // Clear legacy cache keys
-    safeStorage.removeItem('toti_user_v5_clean');
-    safeStorage.removeItem('toti_user_v4');
-    safeStorage.removeItem('toti_user_v3');
-    safeStorage.removeItem('toti_user_v2');
-    safeStorage.removeItem('toti_user');
-
-    const saved = safeStorage.getItem('toti_user_v6_313');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        return {
-          ...initialCurrentUser,
-          ...parsed,
-          id: '313',
-          coins: typeof parsed.coins === 'number' ? Math.max(parsed.coins, 900000000000) : 900000000000,
-          charmLevel: typeof parsed.charmLevel === 'number' && parsed.charmLevel >= 210 ? parsed.charmLevel : 210,
-          charmExp: typeof parsed.charmExp === 'number' && parsed.charmExp >= 409653731 ? parsed.charmExp : 409653731,
-        };
-      } catch (e) {
-        return initialCurrentUser;
-      }
-    }
-    return initialCurrentUser;
-  });
+  // UI placeholder only until the verified user's profile/wallet is loaded.
+  // Never hydrate privileged balances or identity from localStorage.
+  const [currentUser, setCurrentUser] = useState<UserProfile>(() => ({
+    ...initialCurrentUser,
+    id: '',
+    name: '',
+    nickname: '',
+    coins: 0,
+    diamonds: 0,
+    vipLevel: 0,
+    wealthLevel: 0,
+    wealthExp: 0,
+    charmLevel: 0,
+    charmExp: 0,
+    isSuperAdmin: false,
+    isRechargeAgent: false,
+    permissions: [],
+  }));
 
   // Only a verified Supabase auth session may unlock the app.
   const [isLoggedIn, setIsLoggedInState] = useState(false);
