@@ -615,22 +615,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     alert('إرسال رسائل الغرفة غير متاح حتى ربط الدردشة الحقيقية بالخادم.');
   };
 
-  const newMsg: ChatMessage = {
-      id: 'msg-' + Date.now(),
-      senderId: currentUser.id,
-      senderName: currentUser.nickname || currentUser.name,
-      senderAvatar: currentUser.avatar,
-      text,
-      timestamp: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
-      vipLevel: currentUser.vipLevel,
-    };
-
-    setRoomMessages((prev) => ({
-      ...prev,
-      [roomId]: [...(prev[roomId] || []), newMsg],
-    }));
-  };
-
   const sendDirectMessage = (convId: string, text: string) => {
     if (!text.trim()) return;
     sounds.playClick();
