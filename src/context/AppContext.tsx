@@ -18,7 +18,7 @@ import {
   initialTransactions,
 } from '../mockData';
 import { sounds } from '../utils/audio';
-import { stagingBackend, fetchRealRooms, fetchMyProfile, fetchMyWallet, fetchRoomMembers } from '../services/stagingBackend';
+import { stagingBackend, fetchRealRooms, fetchMyProfile, fetchMyWallet, fetchRoomMembers, initializeNativeAuthLinks } from '../services/stagingBackend';
 import { mapRoomToUi } from '../services/mapRoomToUi';
 import { saveProfileChanges } from '../services/profileWrites';
 import { fetchMyLedger } from '../services/ledgerReads';
@@ -240,6 +240,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (active) setIsLoggedInState(false);
     });
     return () => { active = false; subscription.unsubscribe(); };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    let dispose: (() => void) | undefined;
+    void initializeNativeAuthLinks().then(cleanup => {
+      if (cancelled) cleanup();
+      else dispose = cleanup;
+    }).catch(error => console.error('Native auth callback listener failed:', error));
+    return () => { cancelled = true; dispose?.(); };
   }, []);
 
   // Load only authenticated profile fields from the staging backend.
