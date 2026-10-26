@@ -22,6 +22,7 @@ import { stagingBackend, fetchRealRooms, fetchMyProfile, fetchMyWallet, fetchRoo
 import { mapRoomToUi } from '../services/mapRoomToUi';
 import { saveProfileChanges } from '../services/profileWrites';
 import { fetchMyLedger } from '../services/ledgerReads';
+import { reserveSeat } from '../services/roomMembershipRpc';
 import { Language, Translations, translations } from '../i18n/translations';
 import { StorageItem, BagItem, initialBagItems } from '../data/storageItems';
 import { getLevelFromExp, calculateCumulativeExpForLevel } from '../utils/levelUtils';
@@ -615,8 +616,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Seat reservations and moderation require authenticated server operations.
-  const takeSeat = (_seatNumber: number): void => {
-    alert('حجز المقعد غير متاح حتى اكتمال الربط الآمن بالخادم.');
+  const takeSeat = (seatNumber: number): void => {
+    if (!activeRoom) return;
+    const roomId = activeRoom.id;
+    void reserveSeat(roomId, seatNumber).then(() => {
+      setActiveRoom(prev => {
+        if (prev?.id !== roomId) return prev;
+        return {
+          ...prev,
+          seats: prev.seats.map(seat => ({
+            ...seat,
+            user: seat.seatNumber === seatNumber ? currentUser :
+              seat.user?.id === currentUser.id ? null : seat.user,
+            isSpeaking: false,
+          })),
+        };
+      });
+    }).catch(error => {
+      console.error('Seat reservation failed:', error);
+      alert('تعذر حجز المقعد من الخادم.');
+    });
   };
 
   const leaveSeat = (_seatNumber: number): void => {
