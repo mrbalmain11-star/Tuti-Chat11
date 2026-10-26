@@ -19,6 +19,10 @@ jobs:
           distribution: temurin
           java-version: '21'
       - uses: android-actions/setup-android@v3
+      - name: Install web and Capacitor dependencies
+        run: npm install --no-audit --no-fund
+      - name: Validate TypeScript
+        run: npm run lint
       - name: Require staging publishable key
         env:
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.STAGING_SUPABASE_PUBLISHABLE_KEY }}
@@ -27,15 +31,16 @@ jobs:
             echo "::error::Configure STAGING_SUPABASE_PUBLISHABLE_KEY before building a functional APK"
             exit 1
           fi
-      - run: npm install --no-audit --no-fund
-      - run: npm run lint
       - name: Build staging web bundle
         env:
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.STAGING_SUPABASE_PUBLISHABLE_KEY }}
         run: npm run build
-      - run: npx cap add android
-      - run: npx cap sync android
-      - run: node scripts/configure-android-oauth.mjs
+      - name: Generate Android project
+        run: npx cap add android
+      - name: Sync Capacitor assets
+        run: npx cap sync android
+      - name: Register Google OAuth callback
+        run: node scripts/configure-android-oauth.mjs
       - name: Build Android debug APK
         working-directory: android
         run: bash gradlew assembleDebug
