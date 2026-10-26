@@ -615,10 +615,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     alert('إرسال رسائل الغرفة غير متاح حتى ربط الدردشة الحقيقية بالخادم.');
   };
 
-  const sendDirectMessage = (convId: string, text: string) => {
+  const sendDirectMessage = (_convId: string, text: string): void => {
     if (!text.trim()) return;
-    sounds.playClick();
-    const newMsg = {
+    alert('الرسائل الخاصة غير متاحة حتى اكتمال الربط الحقيقي بالخادم.');
+  };
+
+  const newMsg = {
       id: 'm-' + Date.now(),
       text,
       sender: 'me' as const,
