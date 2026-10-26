@@ -22,6 +22,7 @@ import { stagingBackend, fetchRealRooms, fetchMyProfile, fetchMyWallet, fetchRoo
 import { mapRoomToUi } from '../services/mapRoomToUi';
 import { saveProfileChanges } from '../services/profileWrites';
 import { fetchMyLedger } from '../services/ledgerReads';
+import { fetchRealRoomMessages } from '../services/roomMessageReads';
 import { reserveSeat, joinRoomMembership, leaveRoomMembership, sendRealRoomMessage } from '../services/roomMembershipRpc';
 import { Language, Translations, translations } from '../i18n/translations';
 import { StorageItem, BagItem, initialBagItems } from '../data/storageItems';
@@ -539,6 +540,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Live room messages stream
   const [roomMessages, setRoomMessages] = useState<Record<string, ChatMessage[]>>({});
+  useEffect(() => {
+    if (!isLoggedIn || !activeRoom) {
+      setRoomMessages({});
+      return;
+    }
+    const roomId = activeRoom.id;
+    let active = true;
+    void fetchRealRoomMessages(roomId).then(messages => {
+      if (active) setRoomMessages({ [roomId]: messages });
+    }).catch(error => {
+      console.error('Failed to read room messages:', error);
+      if (active) setRoomMessages({});
+    });
+    return () => { active = false; };
+  }, [isLoggedIn, activeRoom?.id]);
 
   // Never persist a mutable copy of balances, roles or identity in localStorage.
   useEffect(() => {
