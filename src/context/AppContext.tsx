@@ -504,37 +504,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Live room messages stream
-  const [roomMessages, setRoomMessages] = useState<Record<string, ChatMessage[]>>({
-    'room-1': [
-      {
-        id: 'msg-1',
-        senderId: 'sys',
-        senderName: 'النظام',
-        senderAvatar: '',
-        text: 'مرحباً بكم في الحفلة! يمنع أي نشاط أو تواصل عنيف أو إباحي أو استغلالي أو مرتبط بالقمار أو غير قانوني.',
-        timestamp: '18:10',
-        isSystem: true,
-      },
-      {
-        id: 'msg-2',
-        senderId: 'user-ali',
-        senderName: 'محمد علي',
-        senderAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
-        text: 'حياكم الله اهلا وسهلا بالجميع 🌹',
-        timestamp: '18:12',
-        vipLevel: 2,
-      },
-      {
-        id: 'msg-3',
-        senderId: 'sys-join',
-        senderName: 'النظام',
-        senderAvatar: '',
-        text: 'محمد علي انضم، أهلاً وسهلاً',
-        timestamp: '18:13',
-        isSystem: true,
-      },
-    ],
-  });
+  const [roomMessages, setRoomMessages] = useState<Record<string, ChatMessage[]>>({});
 
   // Never persist a mutable copy of balances, roles or identity in localStorage.
   useEffect(() => {
@@ -807,38 +777,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
   };
 
-  const createAgency = (name: string, description: string) => {
-    sounds.playGiftFanfare();
-    const newAg: Agency = {
-      id: 'ag-' + Date.now(),
-      name,
-      logo: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&auto=format&fit=crop&q=80',
-      rank: agencies.length + 1,
-      leaderName: currentUser.name,
-      leaderAvatar: currentUser.avatar,
-      country: currentUser.country,
-      countryFlag: currentUser.countryFlag,
-      memberCount: 1,
-      totalIncome: '0 🪙',
-      monthlyScore: '1,000',
-      description,
-      members: [
-        {
-          id: currentUser.id,
-          name: currentUser.name,
-          avatar: currentUser.avatar,
-          role: 'مدير الوكالة',
-          score: '1,000',
-          vipLevel: currentUser.vipLevel,
-        },
-      ],
-    };
-    setAgencies((prev) => [newAg, ...prev]);
-    setCurrentUser((prev) => ({
-      ...prev,
-      agencyName: name,
-      agencyRole: 'مدير الوكالة',
-    }));
+  const createAgency = (_name: string, _description: string): void => {
+    alert('إنشاء الوكالات غير متاح حتى ربطه بصلاحيات الخادم.');
   };
 
   const createVoiceRoom = (title: string, tag: string) => {
