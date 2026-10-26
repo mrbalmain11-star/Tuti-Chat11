@@ -556,6 +556,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return () => { active = false; };
   }, [isLoggedIn, activeRoom?.id]);
 
+  useEffect(() => {
+    if (!isLoggedIn || !activeRoom || !stagingBackend) return;
+    const roomId = activeRoom.id;
+    let active = true;
+    const channel = stagingBackend.channel('room-messages-' + roomId)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'room_messages',
+        filter: 'room_id=eq.' + roomId,
+      }, () => {
+        void fetchRealRoomMessages(roomId).then(messages => {
+          if (active) setRoomMessages(prev => ({ ...prev, [roomId]: messages }));
+        }).catch(error => console.error('Room message realtime refresh failed:', error));
+      })
+      .subscribe();
+    return () => {
+      active = false;
+      void stagingBackend.removeChannel(channel);
+    };
+  }, [isLoggedIn, activeRoom?.id]);
+
   // Never persist a mutable copy of balances, roles or identity in localStorage.
   useEffect(() => {
     safeStorage.removeItem('toti_user_v6_313');
