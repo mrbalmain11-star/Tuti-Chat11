@@ -811,7 +811,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     void sendRealRoomMessage(roomId, text).then(async () => {
       try {
         const messages = await fetchRealRoomMessages(roomId);
-        setRoomMessages(prev => ({ ...prev, [roomId]: messages }));
+        setRoomMessages(prev => prev[roomId] === undefined ? prev : ({ ...prev, [roomId]: messages }));
       } catch (error) {
         console.error('Message sent but refresh failed:', error);
         alert('تم قبول الرسالة من الخادم لكن تعذر تحديث عرض المحادثة.');
