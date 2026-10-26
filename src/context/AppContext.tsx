@@ -644,7 +644,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setIsRoomMinimized(false);
       const members = await fetchRoomMembers(roomId);
       const mine = members.find(m => m.user_id === currentUser.id);
-      if (!mine?.seat_no) return;
+      if (!mine) return;
+      setMyMicMuted(mine.is_muted || mine.moderation_muted);
+      if (!mine.seat_no) return;
       setActiveRoom(prev => {
         if (prev?.id !== roomId) return prev;
         return {
