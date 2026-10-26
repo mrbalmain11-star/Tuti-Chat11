@@ -5,6 +5,8 @@
  */
 import { createClient } from '@supabase/supabase-js';
 import { Capacitor } from '@capacitor/core';
+import { App } from '@capacitor/app';
+import { Browser } from '@capacitor/browser';
 
 const STAGING_URL = 'https://rziaedugbdwefbefcxjt.supabase.co';
 const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
@@ -15,7 +17,7 @@ if (!publishableKey) {
 
 export const stagingBackend = publishableKey
   ? createClient(STAGING_URL, publishableKey, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: !Capacitor.isNativePlatform() },
     })
   : null;
 
@@ -62,12 +64,52 @@ export async function fetchMyProfile(): Promise<BackendProfile | null> {
   return data as BackendProfile | null;
 }
 
+const NATIVE_OAUTH_CALLBACK = 'com.numyar.totichat.staging://auth/callback';
+
+export async function initializeNativeAuthLinks(): Promise<() => void> {
+  if (!Capacitor.isNativePlatform()) return () => {};
+  const listener = await App.addListener('appUrlOpen', async ({ url }) => {
+    if (!url.startsWith(NATIVE_OAUTH_CALLBACK)) return;
+    try {
+      const client = requireBackend();
+      const callback = new URL(url);
+      const params = new URLSearchParams(callback.search);
+      const hash = new URLSearchParams(callback.hash.replace(/^#/, ''));
+      const error = params.get('error_description') ?? hash.get('error_description');
+      if (error) throw new Error(error);
+      const code = params.get('code');
+      if (code) {
+        const { error: exchangeError } = await client.auth.exchangeCodeForSession(code);
+        if (exchangeError) throw exchangeError;
+      } else {
+        const access_token = hash.get('access_token');
+        const refresh_token = hash.get('refresh_token');
+        if (!access_token || !refresh_token) throw new Error('Missing OAuth session tokens');
+        const { error: sessionError } = await client.auth.setSession({ access_token, refresh_token });
+        if (sessionError) throw sessionError;
+      }
+      await Browser.close();
+    } catch (error) {
+      console.error('Native OAuth callback failed:', error);
+    }
+  });
+  return () => { void listener.remove(); };
+}
+
 export async function signInWithRealGoogle(): Promise<void> {
   const client = requireBackend();
-  // Android WebView origins cannot receive browser OAuth callbacks reliably.
-  // Do not launch a browser login that strands users outside the app.
   if (Capacitor.isNativePlatform()) {
-    throw new Error('Native Google sign-in requires a configured Android deep-link callback');
+    const { data, error } = await client.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: NATIVE_OAUTH_CALLBACK,
+        skipBrowserRedirect: true,
+      },
+    });
+    if (error) throw error;
+    if (!data.url) throw new Error('Google authorization URL unavailable');
+    await Browser.open({ url: data.url });
+    return;
   }
   const redirectTo = new URL('/auth/callback', window.location.origin).toString();
   const { error } = await client.auth.signInWithOAuth({
