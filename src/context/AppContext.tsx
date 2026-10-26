@@ -20,6 +20,7 @@ import {
 import { sounds } from '../utils/audio';
 import { stagingBackend, fetchRealRooms, fetchMyProfile, fetchMyWallet, fetchRoomMembers } from '../services/stagingBackend';
 import { mapRoomToUi } from '../services/mapRoomToUi';
+import { saveProfileChanges } from '../services/profileWrites';
 import { Language, Translations, translations } from '../i18n/translations';
 import { StorageItem, BagItem, initialBagItems } from '../data/storageItems';
 import { getLevelFromExp, calculateCumulativeExpForLevel } from '../utils/levelUtils';
@@ -512,11 +513,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   const updateUserProfile = (updates: Partial<UserProfile>): void => {
-    // Never accept client-only updates to identity, balances, roles, or progression.
-    // Profile editing will be enabled only after an authenticated server write succeeds.
-    if (Object.keys(updates).length > 0) {
-      alert('تعديل الملف الشخصي غير متاح حتى ربط الحفظ الحقيقي بالخادم.');
+    const allowed = new Set(['name', 'nickname', 'bio', 'avatar']);
+    if (Object.keys(updates).some(key => !allowed.has(key))) {
+      alert('هذه البيانات لا يمكن تعديلها من التطبيق.');
+      return;
     }
+    const fields: { display_name?: string; bio?: string; avatar_url?: string | null } = {};
+    if (updates.name !== undefined || updates.nickname !== undefined) {
+      fields.display_name = updates.name ?? updates.nickname;
+    }
+    if (updates.bio !== undefined) fields.bio = updates.bio;
+    if (updates.avatar !== undefined) fields.avatar_url = updates.avatar || null;
+    void saveProfileChanges(fields).then(profile => {
+      setCurrentUser(prev => ({
+        ...prev,
+        name: profile.display_name,
+        nickname: profile.display_name,
+        bio: profile.bio,
+        avatar: profile.avatar_url ?? '',
+      }));
+    }).catch(error => {
+      console.error('Profile update rejected:', error);
+      alert('تعذر حفظ الملف الشخصي. تحقق من البيانات والاتصال.');
+    });
   };
 
   const enterRoom = (roomId: string): void => {
