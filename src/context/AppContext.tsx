@@ -18,7 +18,8 @@ import {
   initialTransactions,
 } from '../mockData';
 import { sounds } from '../utils/audio';
-import { stagingBackend } from '../services/stagingBackend';
+import { stagingBackend, fetchRealRooms } from '../services/stagingBackend';
+import { mapRoomToUi } from '../services/mapRoomToUi';
 import { Language, Translations, translations } from '../i18n/translations';
 import { StorageItem, BagItem, initialBagItems } from '../data/storageItems';
 import { getLevelFromExp, calculateCumulativeExpForLevel } from '../utils/levelUtils';
@@ -225,37 +226,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [activeTab, setActiveTab] = useState<'home' | 'messages' | 'profile'>('home');
   const [homeSubTab, setHomeSubTab] = useState<'party' | 'royal' | 'discover'>('party');
-  const [rooms, setRooms] = useState<VoiceRoom[]>(() => {
-    const saved = safeStorage.getItem('toti_rooms');
-    if (saved) {
-      try {
-        const parsed: VoiceRoom[] = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          // Strict Constraint: Ensure strictly 1 personal room per user
-          const myRooms = parsed.filter((r) => r.hostId === initialCurrentUser.id);
-          if (myRooms.length > 1) {
-            const first = myRooms[0];
-            return [first, ...parsed.filter((r) => r.hostId !== initialCurrentUser.id)];
-          }
-          return parsed;
-        }
-      } catch (_) {}
-    }
-    return mockRooms;
-  });
-
+  const [rooms, setRooms] = useState<VoiceRoom[]>([]);
   useEffect(() => {
-    try {
-      safeStorage.setItem('toti_rooms', JSON.stringify(rooms));
-    } catch (_) {}
-  }, [rooms]);
+    if (!isLoggedIn) { setRooms([]); return; }
+    let active = true;
+    fetchRealRooms().then(rows => {
+      if (active) setRooms(rows.map(mapRoomToUi));
+    }).catch(error => {
+      console.error('Failed to load real staging rooms:', error);
+      if (active) setRooms([]);
+    });
+    return () => { active = false; };
+  }, [isLoggedIn]);
   const [activeRoom, setActiveRoom] = useState<VoiceRoom | null>(null);
   const [isRoomMinimized, setIsRoomMinimized] = useState(false);
   const [myMicMuted, setMyMicMuted] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<string>('شائع 🔥');
-  const [conversations, setConversations] = useState<DirectConversation[]>(mockConversations);
+  const [conversations, setConversations] = useState<DirectConversation[]>([]);
   const [openChatThread, setOpenChatThread] = useState<DirectConversation | null>(null);
-  const [agencies, setAgencies] = useState<Agency[]>(mockAgencies);
+  const [agencies, setAgencies] = useState<Agency[]>([]);
   const [followedRoomHosts, setFollowedRoomHosts] = useState<Set<string>>(() => {
     const saved = safeStorage.getItem('toti_followed_room_hosts_v2');
     if (saved) {
@@ -265,7 +254,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       } catch (_) {}
     }
     // Default followed rooms/hosts so "ملكي" displays followed rooms right away
-    return new Set(['20201', '20204', '20202']);
+    return new Set<string>();
   });
   const [transactions, setTransactions] = useState<Transaction[]>(() => {
     safeStorage.removeItem('toti_transactions');
