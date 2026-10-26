@@ -591,7 +591,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         refreshing = false;
       }
     };
-    const channel = stagingBackend.channel('room-messages-' + roomId)
+    const client = stagingBackend;
+    const channel = client.channel('room-messages-' + roomId)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
@@ -606,7 +607,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
     return () => {
       active = false;
-      void stagingBackend.removeChannel(channel);
+      void client.removeChannel(channel);
     };
   }, [isLoggedIn, activeRoom?.id]);
 
@@ -654,7 +655,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         console.error('Room roster realtime refresh failed:', error);
       } finally { loading = false; }
     };
-    const channel = stagingBackend.channel('room-roster-' + roomId)
+    const client = stagingBackend;
+    const channel = client.channel('room-roster-' + roomId)
       .on('postgres_changes', {
         event: '*', schema: 'public', table: 'room_members',
         filter: 'room_id=eq.' + roomId,
@@ -666,7 +668,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
     return () => {
       alive = false;
-      void stagingBackend.removeChannel(channel);
+      void client.removeChannel(channel);
     };
   }, [isLoggedIn, activeRoom?.id, currentUser.id]);
 
@@ -888,6 +890,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const createVoiceRoom = (_title: string, _tag: string): void => {
     alert('إنشاء الغرف غير متاح حتى اكتمال الربط بقاعدة البيانات.');
+  };
+
+  const updateRoom = (_roomId: string, _updates: Partial<VoiceRoom>): void => {
+    alert('تعديل الغرفة غير متاح حتى ربطه بصلاحيات الخادم.');
+  };
+
+  const changeRoomBackground = (_roomId: string, _backgroundUrl: string): boolean => {
+    alert('تغيير خلفية الغرفة غير متاح حتى ربطه بصلاحيات الخادم.');
+    return false;
   };
 
   const deleteRoom = (_roomId: string): void => {
