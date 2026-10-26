@@ -40,3 +40,19 @@ export async function leaveRoomMembership(roomId: string): Promise<void> {
   if (error) throw error;
   if (data !== true) throw new Error('Room leave not confirmed');
 }
+
+export async function sendRealRoomMessage(roomId: string, body: string): Promise<number> {
+  if (!stagingBackend) throw new Error('Staging not configured');
+  const text = body.trim();
+  if (!text || text.length > 1000) throw new Error('Invalid message length');
+  const { data: auth, error: authError } = await stagingBackend.auth.getUser();
+  if (authError) throw authError;
+  if (!auth.user) throw new Error('Not authenticated');
+  const { data, error } = await stagingBackend.rpc('phase2_room_send_message', {
+    p_room_id: roomId,
+    p_body: text,
+  });
+  if (error) throw error;
+  if (!Number.isSafeInteger(data) || data <= 0) throw new Error('Message not confirmed');
+  return data;
+}
