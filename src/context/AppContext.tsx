@@ -511,29 +511,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     safeStorage.removeItem('toti_user_v6_313');
   }, []);
 
-  const updateUserProfile = (updates: Partial<UserProfile>) => {
-    setCurrentUser((prev) => {
-      const updated = { ...prev, ...updates };
-
-      // Also update currentUser in activeRoom seats
-      if (activeRoom) {
-        setActiveRoom((prevRoom) => {
-          if (!prevRoom) return prevRoom;
-          return {
-            ...prevRoom,
-            seats: prevRoom.seats.map((seat) => {
-              if (seat.user?.id === updated.id) {
-                return { ...seat, user: { ...seat.user, ...updates } };
-              }
-              return seat;
-            }),
-          };
-        });
-      }
-
-      return updated;
-    });
-    sounds.playClick();
+  const updateUserProfile = (updates: Partial<UserProfile>): void => {
+    // Never accept client-only updates to identity, balances, roles, or progression.
+    // Profile editing will be enabled only after an authenticated server write succeeds.
+    if (Object.keys(updates).length > 0) {
+      alert('تعديل الملف الشخصي غير متاح حتى ربط الحفظ الحقيقي بالخادم.');
+    }
   };
 
   const enterRoom = (roomId: string): void => {
