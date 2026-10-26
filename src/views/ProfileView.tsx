@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Copy,
   Check,
@@ -21,7 +21,7 @@ import { processImageFile } from '../utils/imageUpload';
 import { CharmBadge, WealthBadge, GameBadge } from '../components/LevelBadgeIcons';
 import { VipName } from '../components/VipName';
 import { VipBadge } from '../components/VipBadge';
-import { AgencyProfileCard } from '../components/AgencyProfileCard';
+import { fetchMyProfile } from '../services/stagingBackend';
 
 export const ProfileView: React.FC = () => {
   const {
@@ -48,6 +48,14 @@ export const ProfileView: React.FC = () => {
   } = useApp();
 
   const [copied, setCopied] = useState(false);
+  const [publicId, setPublicId] = useState<number | null>(null);
+  useEffect(() => {
+    let active = true;
+    void fetchMyProfile().then(profile => {
+      if (active) setPublicId(profile?.public_id ?? null);
+    }).catch(error => console.error('Unable to load public profile ID:', error));
+    return () => { active = false; };
+  }, [currentUser.id]);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -120,7 +128,8 @@ export const ProfileView: React.FC = () => {
   };
 
   const handleCopyId = () => {
-    const idToCopy = currentUser.id || '313';
+    const idToCopy = publicId?.toString();
+    if (!idToCopy) return;
     navigator.clipboard?.writeText(idToCopy);
     setCopied(true);
     sounds.playCoin();
@@ -181,7 +190,7 @@ export const ProfileView: React.FC = () => {
         <img
           src={
             currentUser.cover ||
-            'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?w=800&auto=format&fit=crop&q=80'
+            '/placeholder-cover.svg'
           }
           alt="غلاف الملف الشخصي"
           className="w-full h-full object-cover"
@@ -229,7 +238,7 @@ export const ProfileView: React.FC = () => {
                 <img
                   src={
                     currentUser.avatar ||
-                    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&fit=crop&q=80'
+                    '/placeholder-avatar.svg'
                   }
                   alt={currentUser.name}
                   className="w-full h-full object-cover"
@@ -257,7 +266,7 @@ export const ProfileView: React.FC = () => {
                   title="انقر لتعديل الاسم"
                 >
                   <VipName
-                    name={currentUser.name || 'دولة العراق'}
+                    name={currentUser.name || 'مستخدم جديد'}
                     vipLevel={currentUser.vipLevel}
                     fallbackColor="text-slate-900"
                     className="text-xl font-black drop-shadow-xs"
@@ -289,31 +298,19 @@ export const ProfileView: React.FC = () => {
                   <Copy className="w-3.5 h-3.5 text-amber-600" />
                 )}
                 <span className="font-semibold tracking-wider">
-                  ID: {currentUser.id || '313'}
+                  ID: {publicId ?? '—'}
                 </span>
               </button>
 
               {/* Badges Row: Flag + Gender/Age + Charm Level + Wealth Level */}
               <div className="flex items-center gap-1.5 mt-2">
                 {/* Flag */}
-                <span className="text-base leading-none">🇮🇶</span>
+                {currentUser.countryFlag && <span className="text-base leading-none">{currentUser.countryFlag}</span>}
 
-                {/* Gender & Age Pill */}
-                <div
-                  onClick={() => {
-                    sounds.playClick();
-                    setOpenEditProfileModal(true);
-                  }}
-                  className="bg-amber-100 text-amber-900 border border-amber-300 text-[11px] font-black px-2 py-0.5 rounded-full flex items-center gap-0.5 cursor-pointer shadow-xs active:scale-95 transition"
-                  title="تعديل العمر والجنس"
-                >
-                  <span>27</span>
-                  <span className="text-xs">♂</span>
-                </div>
-
-                {/* Charm / Experience Level Badge */}
+                {/* Only verified profile values are displayed. */}
+                {/* Charm / Experience Level Badge */}}
                 <CharmBadge
-                  level={currentUser.charmLevel || 1}
+                  level={currentUser.charmLevel}
                   size="compact"
                   onClick={() => {
                     sounds.playClick();
@@ -325,7 +322,7 @@ export const ProfileView: React.FC = () => {
 
                 {/* Wealth Level Badge */}
                 <WealthBadge
-                  level={currentUser.wealthLevel || 1}
+                  level={currentUser.wealthLevel}
                   size="compact"
                   onClick={() => {
                     sounds.playClick();
@@ -337,7 +334,7 @@ export const ProfileView: React.FC = () => {
 
                 {/* Games Level Badge (مستوى الألعاب) */}
                 <GameBadge
-                  level={currentUser.gameLevel || 1}
+                  level={currentUser.gameLevel || 0}
                   size="compact"
                   onClick={() => {
                     sounds.playClick();
@@ -412,7 +409,7 @@ export const ProfileView: React.FC = () => {
             Realistic Dynamic Agency Rectangle (مستطيل الوكالة الفعلي بالمعلومات الحقيقية)
             يعرض صورة الوكيل الحقيقية، ومعرف الوكيل (ID)، وعدد المضيفين المتغير تلقائياً
             ========================================================================= */}
-        <AgencyProfileCard className="mt-3.5" />
+        {/* Agency card hidden until a real membership is loaded from the backend. */}
 
         {/* =========================================================================
             Stats Row: (الزوار | المعجبون | متابعة | الأصدقاء)
