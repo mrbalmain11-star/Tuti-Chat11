@@ -23,7 +23,7 @@ import { mapRoomToUi } from '../services/mapRoomToUi';
 import { saveProfileChanges } from '../services/profileWrites';
 import { fetchMyLedger } from '../services/ledgerReads';
 import { fetchRealRoomMessages } from '../services/roomMessageReads';
-import { reserveSeat, joinRoomMembership, leaveRoomMembership, sendRealRoomMessage } from '../services/roomMembershipRpc';
+import { reserveSeat, joinRoomMembership, leaveRoomMembership, sendRealRoomMessage, setMyRoomMute } from '../services/roomMembershipRpc';
 import { Language, Translations, translations } from '../i18n/translations';
 import { StorageItem, BagItem, initialBagItems } from '../data/storageItems';
 import { getLevelFromExp, calculateCumulativeExpForLevel } from '../utils/levelUtils';
@@ -712,10 +712,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const toggleMyMic = (): void => {
-    // Local microphone preference only. This is not a server seat mute
-    // or proof that audio transport is connected.
-    setMyMicMuted(prev => !prev);
-    sounds.playClick();
+    if (!activeRoom) return;
+    const roomId = activeRoom.id;
+    const nextMuted = !myMicMuted;
+    void setMyRoomMute(roomId, nextMuted).then(confirmed => {
+      setMyMicMuted(confirmed);
+      setActiveRoom(prev => prev?.id !== roomId ? prev : ({
+        ...prev,
+        seats: prev.seats.map(seat => seat.user?.id === currentUser.id
+          ? { ...seat, isMuted: confirmed, isSpeaking: false } : seat),
+      }));
+    }).catch(error => {
+      console.error('Server mic mute update failed:', error);
+      alert('تعذر تغيير حالة المايك من الخادم.');
+    });
   };
 
   const sendRoomMessage = (roomId: string, text: string): void => {
