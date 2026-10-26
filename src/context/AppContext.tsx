@@ -658,7 +658,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             return {
               ...seat,
               user: member ? {
-                ...currentUser,
+                ...(member.user_id === currentUser.id ? currentUser : makeEmptyUser()),
                 id: member.user_id,
                 name: member.display_name,
                 nickname: member.display_name,
