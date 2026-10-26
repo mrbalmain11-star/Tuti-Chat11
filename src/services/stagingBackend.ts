@@ -76,3 +76,24 @@ export async function signOutRealUser(): Promise<void> {
   const { error } = await client.auth.signOut();
   if (error) throw error;
 }
+
+export type BackendWallet = { coins: number; diamonds: number };
+
+export async function fetchMyWallet(): Promise<BackendWallet> {
+  const client = requireBackend();
+  const { data: auth, error: authError } = await client.auth.getUser();
+  if (authError) throw authError;
+  if (!auth.user) throw new Error('Not authenticated');
+  const { data, error } = await client.from('wallets')
+    .select('coins,diamonds')
+    .eq('user_id', auth.user.id)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return { coins: 0, diamonds: 0 };
+  const coins = Number(data.coins);
+  const diamonds = Number(data.diamonds);
+  if (!Number.isSafeInteger(coins) || !Number.isSafeInteger(diamonds)) {
+    throw new Error('Wallet value exceeds safe integer precision');
+  }
+  return { coins, diamonds };
+}
