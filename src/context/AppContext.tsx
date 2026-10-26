@@ -782,21 +782,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     alert('حذف الغرف غير متاح حتى اكتمال التحقق من صلاحيات المالك بالخادم.');
   };
 
-  const addGameExp = (amount: number) => {
-    if (amount <= 0) return;
-    setCurrentUser((prev) => {
-      const currentGameExp = prev.gameExp ?? calculateCumulativeExpForLevel(prev.gameLevel || 1);
-      const nextGameExp = currentGameExp + amount;
-      const nextGameLevel = getLevelFromExp(nextGameExp);
-      if (nextGameLevel > (prev.gameLevel || 1)) {
-        sounds.playLevelUp();
-      }
-      return {
-        ...prev,
-        gameExp: nextGameExp,
-        gameLevel: nextGameLevel,
-      };
-    });
+  const addGameExp = (_amount: number): void => {
+    // Experience must be awarded and verified by the backend.
+    console.warn('Local game experience mutation is disabled.');
   };
 
   const unreadCount = conversations.reduce((acc, c) => acc + (c.unreadCount || 0), 0);
