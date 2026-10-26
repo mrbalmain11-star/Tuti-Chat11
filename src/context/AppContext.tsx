@@ -23,6 +23,7 @@ import { mapRoomToUi } from '../services/mapRoomToUi';
 import { saveProfileChanges } from '../services/profileWrites';
 import { fetchMyLedger } from '../services/ledgerReads';
 import { fetchRealRoomMessages } from '../services/roomMessageReads';
+import { fetchRoomVisualMembers } from '../services/roomVisualMembers';
 import { reserveSeat, joinRoomMembership, leaveRoomMembership, sendRealRoomMessage, setMyRoomMute } from '../services/roomMembershipRpc';
 import { Language, Translations, translations } from '../i18n/translations';
 import { StorageItem, BagItem, initialBagItems } from '../data/storageItems';
@@ -643,22 +644,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setActiveRoom(room);
       setIsRoomMinimized(false);
       setMyMicMuted(true);
-      const members = await fetchRoomMembers(roomId);
+      const members = await fetchRoomVisualMembers(roomId);
       const mine = members.find(m => m.user_id === currentUser.id);
-      if (!mine) return;
-      setMyMicMuted(mine.is_muted || mine.moderation_muted);
-      if (!mine.seat_no) return;
+      if (mine) setMyMicMuted(mine.is_muted);
       setActiveRoom(prev => {
         if (prev?.id !== roomId) return prev;
         return {
           ...prev,
-          seats: prev.seats.map(seat => ({
-            ...seat,
-            user: seat.seatNumber === mine.seat_no ? currentUser : seat.user,
-            isMuted: seat.seatNumber === mine.seat_no
-              ? (mine.is_muted || mine.moderation_muted) : seat.isMuted,
-            isSpeaking: false,
-          })),
+          listenersCount: members.length,
+          activeMicCount: members.filter(m => m.seat_no !== null).length,
+          seats: prev.seats.map(seat => {
+            const member = members.find(m => m.seat_no === seat.seatNumber);
+            return {
+              ...seat,
+              user: member ? {
+                ...currentUser,
+                id: member.user_id,
+                name: member.display_name,
+                nickname: member.display_name,
+                avatar: member.avatar_url ?? '',
+                coins: 0,
+                diamonds: 0,
+                isSuperAdmin: false,
+                isRechargeAgent: false,
+                permissions: [],
+              } : null,
+              isMuted: member?.is_muted ?? true,
+              isSpeaking: false,
+            };
+          }),
         };
       });
     }).catch(error => {
