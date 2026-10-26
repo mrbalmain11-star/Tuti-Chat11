@@ -10,7 +10,7 @@ const filter = `        <intent-filter>
                   android:host="auth" android:path="/callback" />
         </intent-filter>`;
 if (!xml.includes('com.numyar.totichat.staging')) {
-  const activity = /(<activity\b[^>]*android:name="\.MainActivity"[^>]*>)/;
+  const activity = /(<activity\b(?=[^>]*android:name="\.MainActivity")[^>]*>)/;
   if (!activity.test(xml)) throw new Error('Capacitor MainActivity not found in manifest');
   writeFileSync(file, xml.replace(activity, '$1\n' + filter));
 }
