@@ -541,29 +541,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const enterRoom = (roomId: string): void => {
     const room = rooms.find(r => r.id === roomId);
     if (!room) return;
-    // A local navigation event is not proof of server membership.
     setActiveRoom(room);
     setIsRoomMinimized(false);
+    // RLS currently exposes only the signed-in member's own reservation.
+    // Never interpret that subset as a complete room audience or seat map.
     void fetchRoomMembers(roomId).then(members => {
-      const occupied = new Map(
-        members.filter(m => m.seat_no !== null).map(m => [m.seat_no, m]),
-      );
-      const updatedRoom: VoiceRoom = {
-        ...room,
-        listenersCount: members.length,
-        activeMicCount: occupied.size,
-        seats: room.seats.map(seat => {
-          const member = occupied.get(seat.seatNumber);
-          return {
+      const mine = members.find(m => m.user_id === currentUser.id);
+      if (!mine?.seat_no) return;
+      setActiveRoom(prev => {
+        if (prev?.id !== roomId) return prev;
+        return {
+          ...prev,
+          seats: prev.seats.map(seat => ({
             ...seat,
-            user: member?.user_id === currentUser.id ? currentUser : null,
-            isMuted: member ? (member.is_muted || member.moderation_muted) : true,
+            user: seat.seatNumber === mine.seat_no ? currentUser : seat.user,
+            isMuted: seat.seatNumber === mine.seat_no
+              ? (mine.is_muted || mine.moderation_muted) : seat.isMuted,
             isSpeaking: false,
-          };
-        }),
-      };
-      setActiveRoom(prev => prev?.id === roomId ? updatedRoom : prev);
-    }).catch(error => console.error('Failed to load server room membership:', error));
+          })),
+        };
+      });
+    }).catch(error => console.error('Failed to load own room membership:', error));
   };
 
   const leaveRoom = () => {
