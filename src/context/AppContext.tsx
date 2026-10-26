@@ -576,21 +576,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     alert('كتم أعضاء الغرفة يتطلب صلاحيات المشرف والتحقق من الخادم.');
   };
 
-  const toggleMyMic = () => {
-    const nextState = !myMicMuted;
-    setMyMicMuted(nextState);
+  const toggleMyMic = (): void => {
+    // Local microphone preference only. This is not a server seat mute
+    // or proof that audio transport is connected.
+    setMyMicMuted(prev => !prev);
     sounds.playClick();
-    if (activeRoom) {
-      const updatedSeats = activeRoom.seats.map((s) => {
-        if (s.user?.id === currentUser.id) {
-          return { ...s, isMuted: nextState, isSpeaking: !nextState };
-        }
-        return s;
-      });
-      const updatedRoom = { ...activeRoom, seats: updatedSeats };
-      setActiveRoom(updatedRoom);
-      setRooms((prev) => prev.map((r) => (r.id === activeRoom.id ? updatedRoom : r)));
-    }
   };
 
   const sendRoomMessage = (_roomId: string, text: string): void => {
