@@ -501,10 +501,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     ],
   });
 
-  // Save user changes
+  // Never persist a mutable copy of balances, roles or identity in localStorage.
   useEffect(() => {
-    safeStorage.setItem('toti_user_v6_313', JSON.stringify(currentUser));
-  }, [currentUser]);
+    safeStorage.removeItem('toti_user_v6_313');
+  }, []);
 
   const updateUserProfile = (updates: Partial<UserProfile>) => {
     setCurrentUser((prev) => {
@@ -720,236 +720,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  // Until the server-side atomic gift RPC is wired, never debit balances locally.
   const sendGift = (
-    gift: GiftItem,
-    receiver: { id: string; name: string; avatar?: string },
-    count: number = 1
+    _gift: GiftItem,
+    _receiver: { id: string; name: string; avatar?: string },
+    _count: number = 1
   ): boolean => {
-    const totalCost = gift.price * count;
-    if (currentUser.coins < totalCost) {
-      setOpenRechargeModal(true);
-      return false;
-    }
-
-    const isSendingToSelf = receiver.id === currentUser.id;
-
-    // Self-support is permitted ONLY inside active voice rooms
-    if (isSendingToSelf && !activeRoom) {
-      alert('خاصية دعم الحساب متاحة فقط من داخل الروم الصوتي! 🎙️');
-      return false;
-    }
-
-    // 1 Coin = 1 EXP rule (1 كوينز دعم = 1 خبرة ثروة للداعم)
-    const updatedCoins = currentUser.coins - totalCost;
-    const currentWealthExp = (currentUser.wealthExp ?? calculateCumulativeExpForLevel(currentUser.wealthLevel || 1));
-    const newWealthExp = currentWealthExp + totalCost;
-    const newWealthLevel = getLevelFromExp(newWealthExp);
-
-    // If sender leveled up, play level up sound
-    if (newWealthLevel > (currentUser.wealthLevel || 1)) {
-      sounds.playLevelUp();
-    }
-
-    // Update Current User (Sender) with new Coins and Wealth EXP/Level
-    // If the sender also gifted themselves or tests gifts, their charm and diamonds also receive support
-    const diamondsEarned = Math.floor(totalCost * 0.7); // 70% of gift value converted to diamonds for receiver
-
-    setCurrentUser((prev) => {
-      const updatedWealthExp = (prev.wealthExp ?? calculateCumulativeExpForLevel(prev.wealthLevel || 1)) + totalCost;
-      const updatedWealthLevel = getLevelFromExp(updatedWealthExp);
-
-      if (isSendingToSelf) {
-        const myCharmExp = (prev.charmExp ?? calculateCumulativeExpForLevel(prev.charmLevel || 1)) + totalCost;
-        const myCharmLevel = getLevelFromExp(myCharmExp);
-        return {
-          ...prev,
-          coins: updatedCoins,
-          wealthExp: updatedWealthExp,
-          wealthLevel: updatedWealthLevel,
-          diamonds: (prev.diamonds || 0) + diamondsEarned,
-          charmExp: myCharmExp,
-          charmLevel: myCharmLevel,
-        };
-      }
-
-      return {
-        ...prev,
-        coins: updatedCoins,
-        wealthExp: updatedWealthExp,
-        wealthLevel: updatedWealthLevel,
-      };
-    });
-
-    // Update receiver diamonds and charm level in active room seats / host
-    if (activeRoom) {
-      setRooms((prevRooms) =>
-        prevRooms.map((room) => {
-          if (room.id !== activeRoom.id) return room;
-          return {
-            ...room,
-            seats: room.seats.map((seat) => {
-              if (seat.user && seat.user.id === receiver.id) {
-                const prevCharmExp = seat.user.charmExp ?? calculateCumulativeExpForLevel(seat.user.charmLevel || 1);
-                const nextCharmExp = prevCharmExp + totalCost;
-                const nextCharmLevel = getLevelFromExp(nextCharmExp);
-                return {
-                  ...seat,
-                  user: {
-                    ...seat.user,
-                    charmExp: nextCharmExp,
-                    charmLevel: nextCharmLevel,
-                    diamonds: (seat.user.diamonds || 0) + diamondsEarned,
-                  },
-                };
-              }
-              return seat;
-            }),
-          };
-        })
-      );
-
-      // Also update activeRoom instance in state
-      setActiveRoom((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          seats: prev.seats.map((seat) => {
-            if (seat.user && seat.user.id === receiver.id) {
-              const prevCharmExp = seat.user.charmExp ?? calculateCumulativeExpForLevel(seat.user.charmLevel || 1);
-              const nextCharmExp = prevCharmExp + totalCost;
-              const nextCharmLevel = getLevelFromExp(nextCharmExp);
-              return {
-                ...seat,
-                user: {
-                  ...seat.user,
-                  charmExp: nextCharmExp,
-                  charmLevel: nextCharmLevel,
-                  diamonds: (seat.user.diamonds || 0) + diamondsEarned,
-                },
-              };
-            }
-            return seat;
-          }),
-        };
-      });
-    }
-
-    // Also update internalProfileUser if currently inspected
-    if (internalProfileUser && internalProfileUser.id === receiver.id) {
-      const prevCharmExp = internalProfileUser.charmExp ?? calculateCumulativeExpForLevel(internalProfileUser.charmLevel || 1);
-      const nextCharmExp = prevCharmExp + totalCost;
-      const nextCharmLevel = getLevelFromExp(nextCharmExp);
-      setInternalProfileUser({
-        ...internalProfileUser,
-        charmExp: nextCharmExp,
-        charmLevel: nextCharmLevel,
-        diamonds: (internalProfileUser.diamonds || 0) + diamondsEarned,
-      });
-    }
-
-    // Record transaction
-    const newTx: Transaction = {
-      id: 'tx-' + Date.now(),
-      type: 'gift_send',
-      title: isSendingToSelf
-        ? `دعم حسابي الشخصي [${gift.name}] (x${count})`
-        : `إرسال هدية [${gift.name}] (x${count}) إلى ${receiver.name}`,
-      amount: -totalCost,
-      timestamp: new Date().toLocaleDateString('ar-EG') + ' ' + new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
-      status: 'نجاح',
-    };
-    setTransactions((prev) => [newTx, ...prev]);
-
-    // Audio & Full Screen Animation
-    sounds.playGiftFanfare();
-    setActiveGiftAnimation({
-      gift,
-      sender: currentUser.nickname || currentUser.name,
-      receiver: isSendingToSelf ? 'نفسه (دعم ذاتي 🌟)' : receiver.name,
-      count,
-    });
-
-    // If inside a room, broadcast to room chat
-    if (activeRoom) {
-      const giftNoticeMsg: ChatMessage = {
-        id: 'gift-msg-' + Date.now(),
-        senderId: currentUser.id,
-        senderName: currentUser.nickname || currentUser.name,
-        senderAvatar: currentUser.avatar,
-        text: isSendingToSelf
-          ? `قام بدعم حسابه بـ ${gift.name} ${gift.icon} x${count} 🌟 (+${totalCost} خبرة و +${diamondsEarned} ألماسة)`
-          : `أرسل ${gift.name} ${gift.icon} x${count} إلى ${receiver.name} ✨`,
-        timestamp: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
-        isGiftNotice: true,
-        vipLevel: currentUser.vipLevel,
-        giftInfo: {
-          giftName: gift.name,
-          giftIcon: gift.icon,
-          count,
-          receiverName: isSendingToSelf ? 'نفسه (دعم ذاتي)' : receiver.name,
-        },
-      };
-      setRoomMessages((prev) => ({
-        ...prev,
-        [activeRoom.id]: [...(prev[activeRoom.id] || []), giftNoticeMsg],
-      }));
-    }
-
-    return true;
+    alert('إرسال الهدايا غير متاح حتى اكتمال الربط الآمن بالخادم.');
+    return false;
   };
 
   const clearGiftAnimation = () => {
     setActiveGiftAnimation(null);
   };
 
-  const rechargeCoins = (amount: number) => {
-    sounds.playCoinChime();
-    setCurrentUser((prev) => ({
-      ...prev,
-      coins: prev.coins + amount,
-    }));
-
-    const newTx: Transaction = {
-      id: 'tx-' + Date.now(),
-      type: 'charge',
-      title: `شحن رصيد كوينز (${amount.toLocaleString()} كوينز)`,
-      amount: amount,
-      timestamp: new Date().toLocaleDateString('ar-EG') + ' ' + new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
-      status: 'نجاح',
-    };
-    setTransactions((prev) => [newTx, ...prev]);
+  // Charging is performed by authorized agents through audited server operations only.
+  const rechargeCoins = (_amount: number): void => {
+    alert('الشحن المباشر من التطبيق غير متاح. يرجى التواصل مع وكيل شحن معتمد.');
   };
 
-  // 30% Conversion Rate: Every 100,000 Diamonds = 30,000 Coins
-  const convertDiamondsToCoins = (diamondsAmount: number): boolean => {
-    const diamonds = Math.max(0, Math.floor(diamondsAmount));
-    if (diamonds <= 0 || (currentUser.diamonds || 0) < diamonds) {
-      return false;
-    }
-
-    const coinsReceived = Math.floor(diamonds * 0.3); // 30% conversion rate
-    sounds.playCoinChime();
-
-    setCurrentUser((prev) => ({
-      ...prev,
-      diamonds: (prev.diamonds || 0) - diamonds,
-      coins: prev.coins + coinsReceived,
-    }));
-
-    const newTx: Transaction = {
-      id: 'tx-' + Date.now(),
-      type: 'charge',
-      title: `فك ألماس (${diamonds.toLocaleString('ar-EG')} 💎 ➜ ${coinsReceived.toLocaleString('ar-EG')} 🪙 بنسبة 30%)`,
-      amount: coinsReceived,
-      timestamp:
-        new Date().toLocaleDateString('ar-EG') +
-        ' ' +
-        new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
-      status: 'نجاح',
-    };
-    setTransactions((prev) => [newTx, ...prev]);
-
-    return true;
+  // Conversion requires an atomic server transaction, not local wallet mutation.
+  const convertDiamondsToCoins = (_diamondsAmount: number): boolean => {
+    alert('تحويل الألماس غير متاح حتى اكتمال الربط الآمن بالخادم.');
+    return false;
   };
 
   const toggleFollowHost = (hostId: string) => {
