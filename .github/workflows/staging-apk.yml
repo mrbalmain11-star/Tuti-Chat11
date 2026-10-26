@@ -40,8 +40,14 @@ jobs:
         env:
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.STAGING_SUPABASE_PUBLISHABLE_KEY }}
         run: npm run build
-      - name: Generate Android project
-        run: npx cap add android
+      - name: Prepare Android project if missing
+        run: |
+          if [ -f android/app/build.gradle ] || [ -f android/app/build.gradle.kts ]; then
+            echo "Using existing Android project"
+          else
+            echo "Generating Android project"
+            npx cap add android
+          fi
       - name: Sync Capacitor assets
         run: npx cap sync android
       - name: Register Google OAuth callback
