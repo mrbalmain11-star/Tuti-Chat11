@@ -291,6 +291,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [activeRoom, setActiveRoom] = useState<VoiceRoom | null>(null);
   const [isRoomMinimized, setIsRoomMinimized] = useState(false);
   const [myMicMuted, setMyMicMuted] = useState(false);
+  useEffect(() => {
+    if (isLoggedIn) return;
+    setActiveRoom(null);
+    setIsRoomMinimized(false);
+    setMyMicMuted(false);
+  }, [isLoggedIn]);
   const [selectedCountry, setSelectedCountry] = useState<string>('شائع 🔥');
   const [conversations, setConversations] = useState<DirectConversation[]>([]);
   const [openChatThread, setOpenChatThread] = useState<DirectConversation | null>(null);
