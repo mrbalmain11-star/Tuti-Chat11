@@ -54,7 +54,13 @@ jobs:
         run: node scripts/configure-android-oauth.mjs
       - name: Build Android debug APK
         working-directory: android
-        run: bash gradlew assembleDebug
+        run: |
+          if [ -f gradle/wrapper/gradle-wrapper.jar ] && [ -f gradle/wrapper/gradle-wrapper.properties ]; then
+            bash gradlew assembleDebug
+          else
+            echo "::error::Gradle wrapper files are missing from the Android project"
+            exit 1
+          fi
       - uses: actions/upload-artifact@v4
         with:
           name: TotiChat-Staging-Debug-APK
