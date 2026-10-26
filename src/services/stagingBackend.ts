@@ -63,6 +63,12 @@ export async function fetchMyProfile(): Promise<BackendProfile | null> {
 
 export async function signInWithRealGoogle(): Promise<void> {
   const client = requireBackend();
+  // Android WebView origins cannot receive browser OAuth callbacks reliably.
+  // Do not launch a browser login that strands users outside the app.
+  if (window.location.protocol === 'capacitor:' ||
+      window.location.hostname === 'localhost' && window.location.port === '') {
+    throw new Error('Native Google sign-in requires a configured Android deep-link callback');
+  }
   const redirectTo = new URL('/auth/callback', window.location.origin).toString();
   const { error } = await client.auth.signInWithOAuth({
     provider: 'google',
