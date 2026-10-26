@@ -50,17 +50,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
 
   const handleSendOtp = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phoneNumber.trim()) {
-      showToast('يرجى إدخال رقم الهاتف أولاً');
-      return;
-    }
-    sounds.playCoin();
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      setStep('otp');
-      showToast(`تم إرسال رمز التحقق إلى ${countryCode}${phoneNumber}`);
-    }, 700);
+    showToast('تسجيل الهاتف غير متاح حتى يتم تفعيل خدمة OTP الحقيقية.');
   };
 
   const handleVerifyOtp = (e: React.FormEvent) => {
