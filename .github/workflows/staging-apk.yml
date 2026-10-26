@@ -35,6 +35,7 @@ jobs:
         run: npm run build
       - run: npx cap add android
       - run: npx cap sync android
+      - run: node scripts/configure-android-oauth.mjs
       - name: Build Android debug APK
         working-directory: android
         run: bash gradlew assembleDebug
