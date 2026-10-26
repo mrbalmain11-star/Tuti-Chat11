@@ -21,6 +21,7 @@ import { sounds } from '../utils/audio';
 import { stagingBackend, fetchRealRooms, fetchMyProfile, fetchMyWallet, fetchRoomMembers } from '../services/stagingBackend';
 import { mapRoomToUi } from '../services/mapRoomToUi';
 import { saveProfileChanges } from '../services/profileWrites';
+import { fetchMyLedger } from '../services/ledgerReads';
 import { Language, Translations, translations } from '../i18n/translations';
 import { StorageItem, BagItem, initialBagItems } from '../data/storageItems';
 import { getLevelFromExp, calculateCumulativeExpForLevel } from '../utils/levelUtils';
@@ -290,6 +291,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     safeStorage.removeItem('toti_transactions');
     safeStorage.removeItem('toti_transactions_v2');
     if (!isLoggedIn) setTransactions([]);
+  }, [isLoggedIn]);
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    let active = true;
+    void fetchMyLedger().then(entries => {
+      if (active) setTransactions(entries);
+    }).catch(error => {
+      console.error('Failed to fetch real wallet ledger:', error);
+      if (active) setTransactions([]);
+    });
+    return () => { active = false; };
   }, [isLoggedIn]);
 
   const [activeGiftAnimation, setActiveGiftAnimation] = useState<GiftAnimationPayload | null>(null);
