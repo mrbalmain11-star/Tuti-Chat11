@@ -4,6 +4,7 @@
  * Configure VITE_SUPABASE_PUBLISHABLE_KEY using the Staging publishable key.
  */
 import { createClient } from '@supabase/supabase-js';
+import { Capacitor } from '@capacitor/core';
 
 const STAGING_URL = 'https://rziaedugbdwefbefcxjt.supabase.co';
 const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
@@ -65,8 +66,7 @@ export async function signInWithRealGoogle(): Promise<void> {
   const client = requireBackend();
   // Android WebView origins cannot receive browser OAuth callbacks reliably.
   // Do not launch a browser login that strands users outside the app.
-  if (window.location.protocol === 'capacitor:' ||
-      window.location.hostname === 'localhost' && window.location.port === '') {
+  if (Capacitor.isNativePlatform()) {
     throw new Error('Native Google sign-in requires a configured Android deep-link callback');
   }
   const redirectTo = new URL('/auth/callback', window.location.origin).toString();
