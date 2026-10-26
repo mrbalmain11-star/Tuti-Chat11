@@ -18,7 +18,12 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - uses: android-actions/setup-android@v3
+      - name: Verify preinstalled Android SDK
+        run: |
+          echo "ANDROID_HOME=${ANDROID_HOME}"
+          test -d "${ANDROID_HOME}/platform-tools"
+          test -d "${ANDROID_HOME}/cmdline-tools"
+          java -version
       - name: Install web and Capacitor dependencies
         run: npm install --no-audit --no-fund
       - name: Validate TypeScript
