@@ -677,11 +677,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const sendRoomMessage = (roomId: string, text: string): void => {
     if (!text.trim() || !activeRoom || activeRoom.id !== roomId) return;
-    void sendRealRoomMessage(roomId, text).catch(error => {
-      console.error('Room message rejected by server:', error);
-      alert('تعذر إرسال الرسالة من الخادم.');
+    void sendRealRoomMessage(roomId, text).then(async () => {
+      const messages = await fetchRealRoomMessages(roomId);
+      setRoomMessages(prev => ({ ...prev, [roomId]: messages }));
+    }).catch(error => {
+      console.error('Room message send or refresh failed:', error);
+      alert('تعذر تأكيد إرسال الرسالة أو تحديث سجلها.');
     });
-    // Do not fabricate a delivered message; server-backed reads are still pending.
   };
 
   const sendDirectMessage = (_convId: string, text: string): void => {
