@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Headphones, Smartphone, ChevronLeft, ShieldCheck, X, FileText, Check, Loader2, ArrowRight } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
-import { signInWithRealGoogle } from '../services/stagingBackend';
+import { signInWithRealGoogle, NATIVE_AUTH_ERROR_EVENT } from '../services/stagingBackend';
 
 interface AuthScreenProps {
   onLoginSuccess?: () => void;
@@ -32,6 +32,16 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
+
+  useEffect(() => {
+    const onNativeError = (event: Event) => {
+      const detail = (event as CustomEvent<string>).detail;
+      console.error('Google sign-in callback:', detail);
+      showToast('فشل إكمال تسجيل Google: ' + (detail || 'تحقق من رابط الرجوع في Supabase Staging'));
+    };
+    window.addEventListener(NATIVE_AUTH_ERROR_EVENT, onNativeError);
+    return () => window.removeEventListener(NATIVE_AUTH_ERROR_EVENT, onNativeError);
+  }, []);
 
   const handleGoogleLogin = async () => {
     if (isLoading) return;
