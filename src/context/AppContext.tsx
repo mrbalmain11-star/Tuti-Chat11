@@ -22,7 +22,7 @@ import { stagingBackend, fetchRealRooms, fetchMyProfile, fetchMyWallet, fetchRoo
 import { mapRoomToUi } from '../services/mapRoomToUi';
 import { saveProfileChanges } from '../services/profileWrites';
 import { fetchMyLedger } from '../services/ledgerReads';
-import { reserveSeat } from '../services/roomMembershipRpc';
+import { reserveSeat, joinRoomMembership } from '../services/roomMembershipRpc';
 import { Language, Translations, translations } from '../i18n/translations';
 import { StorageItem, BagItem, initialBagItems } from '../data/storageItems';
 import { getLevelFromExp, calculateCumulativeExpForLevel } from '../utils/levelUtils';
@@ -580,11 +580,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const enterRoom = (roomId: string): void => {
     const room = rooms.find(r => r.id === roomId);
     if (!room) return;
-    setActiveRoom(room);
-    setIsRoomMinimized(false);
-    // RLS currently exposes only the signed-in member's own reservation.
-    // Never interpret that subset as a complete room audience or seat map.
-    void fetchRoomMembers(roomId).then(members => {
+    void joinRoomMembership(roomId).then(async () => {
+      setActiveRoom(room);
+      setIsRoomMinimized(false);
+      const members = await fetchRoomMembers(roomId);
       const mine = members.find(m => m.user_id === currentUser.id);
       if (!mine?.seat_no) return;
       setActiveRoom(prev => {
@@ -600,7 +599,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           })),
         };
       });
-    }).catch(error => console.error('Failed to load own room membership:', error));
+    }).catch(error => {
+      console.error('Room join or membership fetch failed:', error);
+      alert('تعذر تأكيد دخول الغرفة من الخادم.');
+    });
   };
 
   const leaveRoom = () => {
