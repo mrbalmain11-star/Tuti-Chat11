@@ -308,7 +308,7 @@ export const ProfileView: React.FC = () => {
                 {currentUser.countryFlag && <span className="text-base leading-none">{currentUser.countryFlag}</span>}
 
                 {/* Only verified profile values are displayed. */}
-                {/* Charm / Experience Level Badge */}}
+                {/* Charm / Experience Level Badge */}
                 <CharmBadge
                   level={currentUser.charmLevel}
                   size="compact"
