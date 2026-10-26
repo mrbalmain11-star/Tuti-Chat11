@@ -66,33 +66,53 @@ export async function fetchMyProfile(): Promise<BackendProfile | null> {
 
 const NATIVE_OAUTH_CALLBACK = 'com.numyar.totichat.staging://auth/callback';
 
+export const NATIVE_AUTH_ERROR_EVENT = 'totichat:native-auth-error';
+
+async function handleNativeOAuthUrl(url: string): Promise<void> {
+  if (!url.startsWith(NATIVE_OAUTH_CALLBACK + '?') &&
+      !url.startsWith(NATIVE_OAUTH_CALLBACK + '#') &&
+      url !== NATIVE_OAUTH_CALLBACK) return;
+  try {
+    const client = requireBackend();
+    const callback = new URL(url);
+    const params = new URLSearchParams(callback.search);
+    const hash = new URLSearchParams(callback.hash.replace(/^#/, ''));
+    const error = params.get('error_description') ?? hash.get('error_description')
+      ?? params.get('error') ?? hash.get('error');
+    if (error) throw new Error(error);
+    const code = params.get('code');
+    if (code) {
+      const { error: exchangeError } = await client.auth.exchangeCodeForSession(code);
+      if (exchangeError) throw exchangeError;
+    } else {
+      const access_token = hash.get('access_token');
+      const refresh_token = hash.get('refresh_token');
+      if (!access_token || !refresh_token) {
+        throw new Error('OAuth redirect returned without a session. Check Supabase redirect URL allowlist.');
+      }
+      const { error: sessionError } = await client.auth.setSession({ access_token, refresh_token });
+      if (sessionError) throw sessionError;
+    }
+    const { data: { session }, error: verifyError } = await client.auth.getSession();
+    if (verifyError || !session?.user) throw verifyError ?? new Error('OAuth session not established');
+  } catch (error) {
+    console.error('Native OAuth callback failed:', error);
+    window.dispatchEvent(new CustomEvent(NATIVE_AUTH_ERROR_EVENT, {
+      detail: error instanceof Error ? error.message : String(error),
+    }));
+  } finally {
+    try { await Browser.close(); } catch { /* Browser may already be closed */ }
+  }
+}
+
 export async function initializeNativeAuthLinks(): Promise<() => void> {
   if (!Capacitor.isNativePlatform()) return () => {};
-  const listener = await App.addListener('appUrlOpen', async ({ url }) => {
-    if (!url.startsWith(NATIVE_OAUTH_CALLBACK)) return;
-    try {
-      const client = requireBackend();
-      const callback = new URL(url);
-      const params = new URLSearchParams(callback.search);
-      const hash = new URLSearchParams(callback.hash.replace(/^#/, ''));
-      const error = params.get('error_description') ?? hash.get('error_description');
-      if (error) throw new Error(error);
-      const code = params.get('code');
-      if (code) {
-        const { error: exchangeError } = await client.auth.exchangeCodeForSession(code);
-        if (exchangeError) throw exchangeError;
-      } else {
-        const access_token = hash.get('access_token');
-        const refresh_token = hash.get('refresh_token');
-        if (!access_token || !refresh_token) throw new Error('Missing OAuth session tokens');
-        const { error: sessionError } = await client.auth.setSession({ access_token, refresh_token });
-        if (sessionError) throw sessionError;
-      }
-      await Browser.close();
-    } catch (error) {
-      console.error('Native OAuth callback failed:', error);
-    }
+  const listener = await App.addListener('appUrlOpen', ({ url }) => {
+    void handleNativeOAuthUrl(url);
   });
+  // Android can cold-start the app for an OAuth deep link before the listener exists.
+  const launch = await App.getLaunchUrl();
+  if (launch?.url) void handleNativeOAuthUrl(launch.url);
   return () => { void listener.remove(); };
 }
 
