@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Headphones, Smartphone, ChevronLeft, ShieldCheck, X, FileText, Check, Loader2, ArrowRight } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
+import { signInWithRealGoogle } from '../services/stagingBackend';
 
 interface AuthScreenProps {
   onLoginSuccess?: () => void;
@@ -32,15 +33,19 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const handleGoogleLogin = () => {
+  const handleGoogleLogin = async () => {
+    if (isLoading) return;
     sounds.playCoin();
     setIsLoading(true);
-    showToast('جاري تسجيل الدخول عبر Google...');
-    setTimeout(() => {
+    try {
+      await signInWithRealGoogle();
+      // A verified auth-state listener, not this click, must mark the user signed in.
+    } catch (error) {
+      console.error('Google OAuth failed:', error);
+      showToast('تعذر تسجيل الدخول الحقيقي. حاول مجدداً.');
+    } finally {
       setIsLoading(false);
-      setIsLoggedIn(true);
-      onLoginSuccess?.();
-    }, 600);
+    }
   };
 
   const handleSendOtp = (e: React.FormEvent) => {
@@ -60,14 +65,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
 
   const handleVerifyOtp = (e: React.FormEvent) => {
     e.preventDefault();
-    sounds.playCoin();
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      setShowPhoneModal(false);
-      setIsLoggedIn(true);
-      onLoginSuccess?.();
-    }, 600);
+    showToast('تسجيل الهاتف غير متاح حتى يتم تفعيل التحقق الحقيقي.');
   };
 
   return (
