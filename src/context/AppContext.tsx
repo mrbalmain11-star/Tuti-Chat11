@@ -781,67 +781,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     alert('إنشاء الوكالات غير متاح حتى ربطه بصلاحيات الخادم.');
   };
 
-  const createVoiceRoom = (title: string, tag: string) => {
-    // Strict Constraint: 1 personal room per user
-    const existingPersonalRoom = rooms.find((r) => r.hostId === currentUser.id);
-    if (existingPersonalRoom) {
-      sounds.playClick();
-      enterRoom(existingPersonalRoom.id);
-      return;
-    }
-
-    sounds.playGiftFanfare();
-    const newRoom: VoiceRoom = {
-      id: 'room-' + currentUser.id,
-      title: title || `غرفة ${currentUser.name} 👑`,
-      hostName: currentUser.name,
-      hostAvatar: currentUser.avatar,
-      hostId: currentUser.id,
-      coverImage: currentUser.avatar,
-      rank: rooms.length + 1,
-      country: currentUser.country,
-      countryFlag: currentUser.countryFlag,
-      listenersCount: 1,
-      activeMicCount: 1,
-      tag: tag || 'حفلة جديدة 🔥',
-      agencyName: currentUser.agencyName || 'بدون وكالة',
-      frameType: 'gold',
-      announcement: 'أهلاً وسهلاً بالجميع في غرفتي الشخصية على توتي شات!',
-      backgroundUrl: '/galaxy-room-bg.jpg',
-      memberAvatars: [currentUser.avatar],
-      seats: Array.from({ length: 15 }, (_, i) => ({
-        seatNumber: i + 1,
-        user: i === 0 ? { ...currentUser, isHost: true } : null,
-        isLocked: false,
-        isMuted: false,
-        isSpeaking: i === 0,
-      })),
-      createdAt: new Date().toISOString(),
-    };
-    setRooms((prev) => [newRoom, ...prev]);
-    enterRoom(newRoom.id);
+  const createVoiceRoom = (_title: string, _tag: string): void => {
+    alert('إنشاء الغرف غير متاح حتى اكتمال الربط بقاعدة البيانات.');
   };
 
-  const updateRoom = (roomId: string, updates: Partial<VoiceRoom>) => {
-    setRooms((prev) =>
-      prev.map((r) => (r.id === roomId ? { ...r, ...updates, updatedAt: new Date().toISOString() } : r))
-    );
-    if (activeRoom?.id === roomId) {
-      setActiveRoom((prev) => (prev ? { ...prev, ...updates, updatedAt: new Date().toISOString() } : null));
-    }
-  };
-
-  const changeRoomBackground = (roomId: string, backgroundUrl: string): boolean => {
-    updateRoom(roomId, { backgroundUrl });
-    return true;
-  };
-
-  const deleteRoom = (roomId: string) => {
-    sounds.playClick();
-    if (activeRoom?.id === roomId) {
-      leaveRoom();
-    }
-    setRooms((prev) => prev.filter((r) => r.id !== roomId));
+  const deleteRoom = (_roomId: string): void => {
+    alert('حذف الغرف غير متاح حتى اكتمال التحقق من صلاحيات المالك بالخادم.');
   };
 
   const addGameExp = (amount: number) => {
