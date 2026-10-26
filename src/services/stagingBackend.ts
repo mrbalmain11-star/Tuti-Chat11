@@ -33,6 +33,7 @@ export type BackendRoom = {
 
 export type BackendProfile = {
   id: string;
+  public_id: number;
   display_name: string;
   bio: string;
   avatar_url: string | null;
@@ -59,7 +60,7 @@ export async function fetchMyProfile(): Promise<BackendProfile | null> {
   if (authError) throw authError;
   if (!auth.user) return null;
   const { data, error } = await client.from('profiles')
-    .select('id,display_name,bio,avatar_url').eq('id', auth.user.id).maybeSingle();
+    .select('id,public_id,display_name,bio,avatar_url').eq('id', auth.user.id).maybeSingle();
   if (error) throw error;
   return data as BackendProfile | null;
 }
