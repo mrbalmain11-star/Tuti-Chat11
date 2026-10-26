@@ -56,3 +56,17 @@ export async function sendRealRoomMessage(roomId: string, body: string): Promise
   if (!Number.isSafeInteger(data) || data <= 0) throw new Error('Message not confirmed');
   return data;
 }
+
+export async function setMyRoomMute(roomId: string, muted: boolean): Promise<boolean> {
+  if (!stagingBackend) throw new Error('Staging not configured');
+  const { data: auth, error: authError } = await stagingBackend.auth.getUser();
+  if (authError) throw authError;
+  if (!auth.user) throw new Error('Not authenticated');
+  const { data, error } = await stagingBackend.rpc('phase2_room_set_muted', {
+    p_room_id: roomId,
+    p_muted: muted,
+  });
+  if (error) throw error;
+  if (data !== muted) throw new Error('Mute update not confirmed');
+  return data;
+}
