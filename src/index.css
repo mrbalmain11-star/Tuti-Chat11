@@ -1,0 +1,309 @@
+@import "tailwindcss";
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .gold-gradient {
+    background: linear-gradient(135deg, #fce881 0%, #d4af37 50%, #aa7c11 100%);
+  }
+
+  .gold-border {
+    border-image: linear-gradient(135deg, #fce881, #d4af37, #996515) 1;
+  }
+
+  .royal-glass {
+    background: rgba(18, 24, 38, 0.75);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  .gold-text {
+    background: linear-gradient(135deg, #ffe082 0%, #ffd54f 50%, #ffb300 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* VIP 1: أحمر وأسود يلمع (Red & Black Shimmering) */
+  .vip-shine-1 {
+    background: linear-gradient(
+      115deg,
+      #dc2626 0%,
+      #09090b 20%,
+      #ef4444 38%,
+      #fca5a5 48%,
+      #ef4444 58%,
+      #09090b 78%,
+      #b91c1c 100%
+    );
+    background-size: 260% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: vip-shimmer-smooth 6.5s ease-in-out infinite;
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 3px rgba(239, 68, 68, 0.45));
+    font-weight: 900;
+  }
+
+  /* VIP 2: أصفر وأسود لامع (Yellow & Black Shining) */
+  .vip-shine-2 {
+    background: linear-gradient(
+      115deg,
+      #ca8a04 0%,
+      #0a0a0c 20%,
+      #eab308 38%,
+      #fef08a 48%,
+      #facc15 58%,
+      #0a0a0c 78%,
+      #ca8a04 100%
+    );
+    background-size: 260% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: vip-shimmer-smooth 6.5s ease-in-out infinite;
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 3px rgba(234, 179, 8, 0.45));
+    font-weight: 900;
+  }
+
+  /* VIP 3: أخضر وفضي يلمع (Green & Silver Shimmering) */
+  .vip-shine-3 {
+    background: linear-gradient(
+      115deg,
+      #047857 0%,
+      #94a3b8 20%,
+      #10b981 38%,
+      #ffffff 48%,
+      #34d399 58%,
+      #cbd5e1 78%,
+      #047857 100%
+    );
+    background-size: 260% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: vip-shimmer-smooth 6.5s ease-in-out infinite;
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 3px rgba(16, 185, 129, 0.45));
+    font-weight: 900;
+  }
+
+  /* VIP 4: أسود وأبيض ذهبي وأحمر يلمع (Black, White, Gold, & Red Shining) */
+  .vip-shine-4 {
+    background: linear-gradient(
+      115deg,
+      #09090b 0%,
+      #f59e0b 20%,
+      #ef4444 38%,
+      #ffffff 48%,
+      #f59e0b 58%,
+      #b91c1c 78%,
+      #09090b 100%
+    );
+    background-size: 280% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: vip-shimmer-smooth 6.5s ease-in-out infinite;
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 3px rgba(245, 158, 11, 0.4));
+    font-weight: 900;
+  }
+
+  /* VIP 5: أحمر وأسود وذهبي وفضي يلمع رائع (Red, Black, Gold, & Silver Wonderful Shining) */
+  .vip-shine-5 {
+    background: linear-gradient(
+      115deg,
+      #dc2626 0%,
+      #09090b 16%,
+      #fbbf24 32%,
+      #ffffff 48%,
+      #e11d48 62%,
+      #cbd5e1 78%,
+      #09090b 100%
+    );
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: vip-shimmer-smooth 6.5s ease-in-out infinite;
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 4px rgba(251, 191, 36, 0.45));
+    font-weight: 900;
+  }
+
+  /* VIP 6: التنين البنفسجي الماسي */
+  .vip-shine-6 {
+    background: linear-gradient(
+      115deg,
+      #4f46e5 0%,
+      #ec4899 25%,
+      #ffffff 50%,
+      #a855f7 75%,
+      #4f46e5 100%
+    );
+    background-size: 280% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: vip-shimmer-smooth 6s ease-in-out infinite;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.9)) drop-shadow(0 0 6px rgba(168, 85, 247, 0.6));
+    font-weight: 900;
+  }
+
+  /* VIP 7: العنقاء السماوية الخالدة */
+  .vip-shine-7 {
+    background: linear-gradient(
+      115deg,
+      #f59e0b 0%,
+      #ef4444 20%,
+      #ffffff 45%,
+      #ec4899 65%,
+      #8b5cf6 85%,
+      #f59e0b 100%
+    );
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: vip-shimmer-smooth 5.5s ease-in-out infinite;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.9)) drop-shadow(0 0 8px rgba(236, 72, 153, 0.65));
+    font-weight: 900;
+  }
+
+  /* VIP 8: العرش الإمبراطوري الأعظم */
+  .vip-shine-8 {
+    background: linear-gradient(
+      115deg,
+      #ffd700 0%,
+      #b45309 15%,
+      #fef08a 35%,
+      #ffffff 50%,
+      #f59e0b 70%,
+      #78350f 85%,
+      #ffd700 100%
+    );
+    background-size: 320% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: vip-shimmer-smooth 5s ease-in-out infinite;
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 10px rgba(255, 215, 0, 0.8));
+    font-weight: 900;
+  }
+
+  /* VIP 9: سيد الكون والخلود المطلق */
+  .vip-shine-9 {
+    background: linear-gradient(
+      115deg,
+      #ffffff 0%,
+      #38bdf8 15%,
+      #a855f7 35%,
+      #ffffff 50%,
+      #fbbf24 65%,
+      #ec4899 80%,
+      #ffffff 100%
+    );
+    background-size: 350% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: vip-shimmer-smooth 4.5s ease-in-out infinite;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 12px rgba(251, 191, 36, 0.9));
+    font-weight: 900;
+  }
+
+  /* VIP 10: الأسد الإمبراطوري المتوج */
+  .vip-shine-10 {
+    background: linear-gradient(
+      115deg,
+      #ef4444 0%,
+      #f59e0b 25%,
+      #ffffff 50%,
+      #dc2626 75%,
+      #f59e0b 100%
+    );
+    background-size: 320% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: vip-shimmer-smooth 4.5s ease-in-out infinite;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 12px rgba(239, 68, 68, 0.85));
+    font-weight: 900;
+  }
+
+  /* SVIP 11: العنقاء الإمبراطورية المجنحة */
+  .vip-shine-11 {
+    background: linear-gradient(
+      115deg,
+      #a855f7 0%,
+      #38bdf8 25%,
+      #ffffff 50%,
+      #ec4899 75%,
+      #f59e0b 100%
+    );
+    background-size: 350% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: vip-shimmer-smooth 4s ease-in-out infinite;
+    filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 14px rgba(168, 85, 247, 0.95));
+    font-weight: 900;
+  }
+
+  /* SVIP 12: عرش السيادة والخلود الأعظم - ذهب 24K وياقوت أزرق ماسي */
+  .vip-shine-12 {
+    background: linear-gradient(
+      115deg,
+      #fde047 0%,
+      #38bdf8 20%,
+      #ffffff 40%,
+      #f59e0b 60%,
+      #60a5fa 80%,
+      #fbbf24 100%
+    );
+    background-size: 380% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: vip-shimmer-smooth 3.8s ease-in-out infinite;
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 16px rgba(251, 191, 36, 1));
+    font-weight: 900;
+  }
+}
+
+@keyframes vip-shimmer-smooth {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.animate-mic-active {
+  animation: pulse-ring 1.8s infinite cubic-bezier(0.45, 0, 0.55, 1);
+}
+
+@keyframes falcon-breathing {
+  0%, 100% {
+    filter: drop-shadow(0 2px 10px rgba(245, 158, 11, 0.35));
+    transform: scale(1);
+  }
+  50% {
+    filter: drop-shadow(0 4px 18px rgba(245, 158, 11, 0.7));
+    transform: scale(1.03);
+  }
+}
+
+.animate-falcon-glow {
+  animation: falcon-breathing 4s ease-in-out infinite;
+}

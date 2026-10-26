@@ -1,0 +1,6 @@
+{
+  "name": "توتي شات - Toti Chat",
+  "description": "تطبيق توتي شات للدردشة الصوتية والغرف الاجتماعية والوكالات بنمط عربي ملكي فاخر",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

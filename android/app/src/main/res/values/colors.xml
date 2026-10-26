@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="purple_dark">#070216</color>
+    <color name="purple_surface">#120826</color>
+    <color name="purple_card">#1B0C38</color>
+    <color name="gold_primary">#F5B800</color>
+    <color name="gold_light">#FFE066</color>
+    <color name="emerald_primary">#10B981</color>
+    <color name="emerald_dark">#088358</color>
+    <color name="text_white">#FFFFFF</color>
+    <color name="text_secondary">#94A3B8</color>
+</resources>

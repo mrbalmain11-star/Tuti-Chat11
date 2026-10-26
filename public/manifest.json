@@ -1,0 +1,32 @@
+{
+  "id": "/",
+  "name": "توتي شات - Toti Chat",
+  "short_name": "توتي شات",
+  "description": "تطبيق توتي شات للدردشة الصوتية والغرف الاجتماعية والوكالات بنمط عربي ملكي فاخر",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#070216",
+  "background_color": "#070216",
+  "lang": "ar",
+  "dir": "rtl",
+  "categories": [
+    "social",
+    "entertainment"
+  ],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

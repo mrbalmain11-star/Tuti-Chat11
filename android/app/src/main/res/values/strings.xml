@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">Toti Chat</string>
+    <string name="app_name_ar">توتي شات</string>
+    <string name="tab_home">حفلة</string>
+    <string name="tab_messages">الرسائل</string>
+    <string name="tab_profile">أنا</string>
+    <string name="party">حفلة</string>
+    <string name="followed">تم المتابعة</string>
+    <string name="search_hint">ابحث عن غرف، معرّفات، أصدقاء...</string>
+    <string name="wealth_level">مستوى الثروة</string>
+    <string name="charm_level">مستوى الخبرة / السحر</string>
+    <string name="vip_level">مستوى VIP</string>
+    <string name="coins">العملات</string>
+    <string name="diamonds">الماس</string>
+</resources>

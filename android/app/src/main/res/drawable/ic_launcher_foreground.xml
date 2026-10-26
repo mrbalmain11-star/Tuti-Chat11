@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:scaleX="0.65"
+        android:scaleY="0.65"
+        android:translateX="19"
+        android:translateY="19">
+        <!-- Emerald Chat Bubble -->
+        <path
+            android:fillColor="#10B981"
+            android:pathData="M24,46 C24,32 36,24 54,24 C72,24 84,32 84,46 C84,60 72,68 57,69 L47,79 C45,81 42,80 42,77 L43,69 C32,67 24,59 24,46 Z" />
+
+        <!-- Golden Royal Crown -->
+        <path
+            android:fillColor="#F5B800"
+            android:pathData="M40,32 L44,20 L54,26 L64,20 L68,32 Z" />
+        <path
+            android:fillColor="#FFE066"
+            android:pathData="M39,32 L69,32 L69,35 L39,35 Z" />
+
+        <!-- Crown Jewels -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M44,19m-2,0a2,2 0,1 1,4 0a2,2 0,1 1,-4 0" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M54,25m-2,0a2,2 0,1 1,4 0a2,2 0,1 1,-4 0" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M64,19m-2,0a2,2 0,1 1,4 0a2,2 0,1 1,-4 0" />
+
+        <!-- Audio Waves / Mic Inside -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M51,43 L57,43 A3,3 0 0,1 60,46 L60,51 A3,3 0 0,1 57,54 L51,54 A3,3 0 0,1 48,51 L48,46 A3,3 0 0,1 51,43 Z" />
+        <path
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="2"
+            android:strokeLineCap="round"
+            android:pathData="M45,49 C45,55 63,55 63,49" />
+        <path
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="2"
+            android:strokeLineCap="round"
+            android:pathData="M54,55 L54,61" />
+    </group>
+</vector>
