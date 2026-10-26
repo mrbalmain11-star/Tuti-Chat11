@@ -642,6 +642,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     void joinRoomMembership(roomId).then(async () => {
       setActiveRoom(room);
       setIsRoomMinimized(false);
+      setMyMicMuted(true);
       const members = await fetchRoomMembers(roomId);
       const mine = members.find(m => m.user_id === currentUser.id);
       if (!mine) return;
