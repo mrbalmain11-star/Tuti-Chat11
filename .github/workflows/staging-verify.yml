@@ -9,11 +9,29 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout integration branch
+        uses: actions/checkout@v4
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: npm install --no-audit --no-fund
-      - run: npm run lint
-      - run: npm run build
+      - name: Show toolchain and project configuration
+        run: |
+          node --version
+          npm --version
+          test -f package.json
+          npm pkg get scripts dependencies.@capacitor/core dependencies.@capacitor/android devDependencies.typescript
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: TypeScript validation
+        run: npm run lint
+      - name: Production bundle validation
+        run: npm run build
+      - name: Summarize verification
+        if: always()
+        run: |
+          echo "## Staging integration checks" >> "$GITHUB_STEP_SUMMARY"
+          echo "Commit: $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+          echo "Inspect the first failed named step above; no deployment or production changes are performed." >> "$GITHUB_STEP_SUMMARY"
