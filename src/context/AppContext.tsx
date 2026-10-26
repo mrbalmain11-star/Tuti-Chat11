@@ -576,62 +576,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     sounds.playClick();
   };
 
-  const takeSeat = (seatNumber: number) => {
-    if (!activeRoom) return;
-    const seat = activeRoom.seats?.find((s) => s.seatNumber === seatNumber);
-    if (seat && seat.user && seat.user.id !== currentUser.id) return;
-
-    sounds.playMicConnect();
-    let seatExisted = false;
-    const currentSeats = activeRoom.seats || [];
-    const updatedSeats = currentSeats.map((s) => {
-      if (s.seatNumber === seatNumber) {
-        seatExisted = true;
-        return { ...s, user: currentUser, isMuted: myMicMuted, isSpeaking: !myMicMuted, isLocked: false };
-      }
-      if (s.user?.id === currentUser.id) {
-        return { ...s, user: null, isSpeaking: false };
-      }
-      return s;
-    });
-
-    const finalSeats = seatExisted
-      ? updatedSeats
-      : [...updatedSeats, { seatNumber, user: currentUser, isMuted: myMicMuted, isSpeaking: !myMicMuted, isLocked: false }];
-
-    const updatedRoom = { ...activeRoom, seats: finalSeats };
-    setActiveRoom(updatedRoom);
-    setRooms((prev) => prev.map((r) => (r.id === activeRoom.id ? updatedRoom : r)));
-
-    // Send chat announcement
-    sendRoomMessage(activeRoom.id, `صعد ${currentUser.nickname || currentUser.name} إلى المايك رقم ${seatNumber} 🎙️`);
+  // Seat reservations and moderation require authenticated server operations.
+  const takeSeat = (_seatNumber: number): void => {
+    alert('حجز المقعد غير متاح حتى اكتمال الربط الآمن بالخادم.');
   };
 
-  const leaveSeat = (seatNumber: number) => {
-    if (!activeRoom) return;
-    const updatedSeats = activeRoom.seats.map((s) => (s.seatNumber === seatNumber ? { ...s, user: null, isSpeaking: false } : s));
-    const updatedRoom = { ...activeRoom, seats: updatedSeats };
-    setActiveRoom(updatedRoom);
-    setRooms((prev) => prev.map((r) => (r.id === activeRoom.id ? updatedRoom : r)));
-    sounds.playClick();
+  const leaveSeat = (_seatNumber: number): void => {
+    alert('ترك المقعد غير متاح حتى اكتمال الربط الآمن بالخادم.');
   };
 
-  const toggleLockSeat = (seatNumber: number) => {
-    if (!activeRoom) return;
-    const updatedSeats = activeRoom.seats.map((s) => (s.seatNumber === seatNumber ? { ...s, isLocked: !s.isLocked } : s));
-    const updatedRoom = { ...activeRoom, seats: updatedSeats };
-    setActiveRoom(updatedRoom);
-    setRooms((prev) => prev.map((r) => (r.id === activeRoom.id ? updatedRoom : r)));
-    sounds.playClick();
+  const toggleLockSeat = (_seatNumber: number): void => {
+    alert('قفل المقاعد يتطلب صلاحيات المشرف والتحقق من الخادم.');
   };
 
-  const toggleMuteSeat = (seatNumber: number) => {
-    if (!activeRoom) return;
-    const updatedSeats = activeRoom.seats.map((s) => (s.seatNumber === seatNumber ? { ...s, isMuted: !s.isMuted } : s));
-    const updatedRoom = { ...activeRoom, seats: updatedSeats };
-    setActiveRoom(updatedRoom);
-    setRooms((prev) => prev.map((r) => (r.id === activeRoom.id ? updatedRoom : r)));
-    sounds.playClick();
+  const toggleMuteSeat = (_seatNumber: number): void => {
+    alert('كتم أعضاء الغرفة يتطلب صلاحيات المشرف والتحقق من الخادم.');
   };
 
   const toggleMyMic = () => {
