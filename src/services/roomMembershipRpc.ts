@@ -28,3 +28,15 @@ export async function joinRoomMembership(roomId: string): Promise<void> {
   if (error) throw error;
   if (data !== true) throw new Error('Room join not confirmed');
 }
+
+export async function leaveRoomMembership(roomId: string): Promise<void> {
+  if (!stagingBackend) throw new Error('Staging not configured');
+  const { data: auth, error: authError } = await stagingBackend.auth.getUser();
+  if (authError) throw authError;
+  if (!auth.user) throw new Error('Not authenticated');
+  const { data, error } = await stagingBackend.rpc('phase2_room_leave', {
+    p_room_id: roomId,
+  });
+  if (error) throw error;
+  if (data !== true) throw new Error('Room leave not confirmed');
+}
