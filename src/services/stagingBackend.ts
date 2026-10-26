@@ -97,3 +97,20 @@ export async function fetchMyWallet(): Promise<BackendWallet> {
   }
   return { coins, diamonds };
 }
+
+export type BackendRoomMember = {
+  room_id: string;
+  user_id: string;
+  seat_no: number | null;
+  is_muted: boolean;
+  moderation_muted: boolean;
+};
+
+export async function fetchRoomMembers(roomId: string): Promise<BackendRoomMember[]> {
+  const client = requireBackend();
+  const { data, error } = await client.from('room_members')
+    .select('room_id,user_id,seat_no,is_muted,moderation_muted')
+    .eq('room_id', roomId);
+  if (error) throw error;
+  return (data ?? []) as BackendRoomMember[];
+}
