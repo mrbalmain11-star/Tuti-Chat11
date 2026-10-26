@@ -22,7 +22,7 @@ import { stagingBackend, fetchRealRooms, fetchMyProfile, fetchMyWallet, fetchRoo
 import { mapRoomToUi } from '../services/mapRoomToUi';
 import { saveProfileChanges } from '../services/profileWrites';
 import { fetchMyLedger } from '../services/ledgerReads';
-import { reserveSeat, joinRoomMembership, leaveRoomMembership } from '../services/roomMembershipRpc';
+import { reserveSeat, joinRoomMembership, leaveRoomMembership, sendRealRoomMessage } from '../services/roomMembershipRpc';
 import { Language, Translations, translations } from '../i18n/translations';
 import { StorageItem, BagItem, initialBagItems } from '../data/storageItems';
 import { getLevelFromExp, calculateCumulativeExpForLevel } from '../utils/levelUtils';
@@ -659,9 +659,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     sounds.playClick();
   };
 
-  const sendRoomMessage = (_roomId: string, text: string): void => {
-    if (!text.trim()) return;
-    alert('إرسال رسائل الغرفة غير متاح حتى ربط الدردشة الحقيقية بالخادم.');
+  const sendRoomMessage = (roomId: string, text: string): void => {
+    if (!text.trim() || !activeRoom || activeRoom.id !== roomId) return;
+    void sendRealRoomMessage(roomId, text).catch(error => {
+      console.error('Room message rejected by server:', error);
+      alert('تعذر إرسال الرسالة من الخادم.');
+    });
+    // Do not fabricate a delivered message; server-backed reads are still pending.
   };
 
   const sendDirectMessage = (_convId: string, text: string): void => {
