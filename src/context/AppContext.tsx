@@ -18,6 +18,7 @@ import {
   initialTransactions,
 } from '../mockData';
 import { sounds } from '../utils/audio';
+import { stagingBackend } from '../services/stagingBackend';
 import { Language, Translations, translations } from '../i18n/translations';
 import { StorageItem, BagItem, initialBagItems } from '../data/storageItems';
 import { getLevelFromExp, calculateCumulativeExpForLevel } from '../utils/levelUtils';
@@ -196,19 +197,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return initialCurrentUser;
   });
 
-  const [isLoggedIn, setIsLoggedInState] = useState<boolean>(() => {
-    const saved = safeStorage.getItem('toti_auth_logged_in');
-    if (saved !== null) {
-      return saved === 'true';
-    }
-    const hasExistingSession = safeStorage.getItem('toti_user_v6_313');
-    return !!hasExistingSession;
-  });
-
+  // Only a verified Supabase auth session may unlock the app.
+  const [isLoggedIn, setIsLoggedInState] = useState(false);
   const setIsLoggedIn = (logged: boolean) => {
-    setIsLoggedInState(logged);
-    safeStorage.setItem('toti_auth_logged_in', String(logged));
+    if (!logged) {
+      setIsLoggedInState(false);
+      void stagingBackend?.auth.signOut();
+    }
+    // Ignore client-side attempts to mark a user authenticated.
   };
+
+  useEffect(() => {
+    if (!stagingBackend) return;
+    let active = true;
+    const { data: { subscription } } = stagingBackend.auth.onAuthStateChange(
+      (_event, session) => {
+        if (active) setIsLoggedInState(Boolean(session?.user));
+      },
+    );
+    void stagingBackend.auth.getSession().then(({ data, error }) => {
+      if (active) setIsLoggedInState(!error && Boolean(data.session?.user));
+    }).catch(() => {
+      if (active) setIsLoggedInState(false);
+    });
+    return () => { active = false; subscription.unsubscribe(); };
+  }, []);
 
   const [activeTab, setActiveTab] = useState<'home' | 'messages' | 'profile'>('home');
   const [homeSubTab, setHomeSubTab] = useState<'party' | 'royal' | 'discover'>('party');
