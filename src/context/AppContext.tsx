@@ -560,18 +560,39 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!isLoggedIn || !activeRoom || !stagingBackend) return;
     const roomId = activeRoom.id;
     let active = true;
+    let refreshing = false;
+    let refreshAgain = false;
+    const refresh = async () => {
+      if (refreshing) {
+        refreshAgain = true;
+        return;
+      }
+      refreshing = true;
+      try {
+        do {
+          refreshAgain = false;
+          const messages = await fetchRealRoomMessages(roomId);
+          if (active) setRoomMessages(prev => ({ ...prev, [roomId]: messages }));
+        } while (active && refreshAgain);
+      } catch (error) {
+        console.error('Room message refresh failed:', error);
+      } finally {
+        refreshing = false;
+      }
+    };
     const channel = stagingBackend.channel('room-messages-' + roomId)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
         table: 'room_messages',
         filter: 'room_id=eq.' + roomId,
-      }, () => {
-        void fetchRealRoomMessages(roomId).then(messages => {
-          if (active) setRoomMessages(prev => ({ ...prev, [roomId]: messages }));
-        }).catch(error => console.error('Room message realtime refresh failed:', error));
-      })
-      .subscribe();
+      }, () => { void refresh(); })
+      .subscribe(status => {
+        if (status === 'SUBSCRIBED') void refresh();
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.error('Room message realtime subscription:', status);
+        }
+      });
     return () => {
       active = false;
       void stagingBackend.removeChannel(channel);
