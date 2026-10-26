@@ -22,7 +22,7 @@ import { stagingBackend, fetchRealRooms, fetchMyProfile, fetchMyWallet, fetchRoo
 import { mapRoomToUi } from '../services/mapRoomToUi';
 import { saveProfileChanges } from '../services/profileWrites';
 import { fetchMyLedger } from '../services/ledgerReads';
-import { reserveSeat, joinRoomMembership } from '../services/roomMembershipRpc';
+import { reserveSeat, joinRoomMembership, leaveRoomMembership } from '../services/roomMembershipRpc';
 import { Language, Translations, translations } from '../i18n/translations';
 import { StorageItem, BagItem, initialBagItems } from '../data/storageItems';
 import { getLevelFromExp, calculateCumulativeExpForLevel } from '../utils/levelUtils';
@@ -605,16 +605,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
-  const leaveRoom = () => {
-    if (activeRoom) {
-      // remove current user from seats if sitting
-      const updatedSeats = activeRoom.seats.map((s) => (s.user?.id === currentUser.id ? { ...s, user: null, isSpeaking: false } : s));
-      const updatedRoom = { ...activeRoom, seats: updatedSeats };
-      setRooms((prev) => prev.map((r) => (r.id === activeRoom.id ? updatedRoom : r)));
-    }
-    setActiveRoom(null);
-    setIsRoomMinimized(false);
-    sounds.playClick();
+  const leaveRoom = (): void => {
+    if (!activeRoom) return;
+    const roomId = activeRoom.id;
+    void leaveRoomMembership(roomId).then(() => {
+      setActiveRoom(prev => prev?.id === roomId ? null : prev);
+      setIsRoomMinimized(false);
+    }).catch(error => {
+      console.error('Room leave failed:', error);
+      alert('تعذر تأكيد مغادرة الغرفة.');
+    });
   };
 
   // Seat reservations and moderation require authenticated server operations.
