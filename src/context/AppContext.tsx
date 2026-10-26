@@ -18,7 +18,7 @@ import {
   initialTransactions,
 } from '../mockData';
 import { sounds } from '../utils/audio';
-import { stagingBackend, fetchRealRooms, fetchMyProfile, fetchMyWallet } from '../services/stagingBackend';
+import { stagingBackend, fetchRealRooms, fetchMyProfile, fetchMyWallet, fetchRoomMembers } from '../services/stagingBackend';
 import { mapRoomToUi } from '../services/mapRoomToUi';
 import { Language, Translations, translations } from '../i18n/translations';
 import { StorageItem, BagItem, initialBagItems } from '../data/storageItems';
@@ -536,30 +536,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     sounds.playClick();
   };
 
-  const enterRoom = (roomId: string) => {
-    const room = rooms.find((r) => r.id === roomId);
-    if (room) {
-      setActiveRoom(room);
-      setIsRoomMinimized(false);
-      sounds.playMicConnect();
-
-      // add entrance notification
-      setRoomMessages((prev) => ({
-        ...prev,
-        [roomId]: [
-          ...(prev[roomId] || []),
-          {
-            id: 'join-' + Date.now(),
-            senderId: 'sys',
-            senderName: 'النظام',
-            senderAvatar: '',
-            text: `${currentUser.nickname || currentUser.name} انضم إلى الغرفة، مرحباً بك! ✨`,
-            timestamp: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
-            isSystem: true,
-          },
-        ],
-      }));
-    }
+  const enterRoom = (roomId: string): void => {
+    const room = rooms.find(r => r.id === roomId);
+    if (!room) return;
+    // A local navigation event is not proof of server membership.
+    setActiveRoom(room);
+    setIsRoomMinimized(false);
+    void fetchRoomMembers(roomId).then(members => {
+      const occupied = new Map(
+        members.filter(m => m.seat_no !== null).map(m => [m.seat_no, m]),
+      );
+      const updatedRoom: VoiceRoom = {
+        ...room,
+        listenersCount: members.length,
+        activeMicCount: occupied.size,
+        seats: room.seats.map(seat => {
+          const member = occupied.get(seat.seatNumber);
+          return {
+            ...seat,
+            user: member?.user_id === currentUser.id ? currentUser : null,
+            isMuted: member ? (member.is_muted || member.moderation_muted) : true,
+            isSpeaking: false,
+          };
+        }),
+      };
+      setActiveRoom(prev => prev?.id === roomId ? updatedRoom : prev);
+    }).catch(error => console.error('Failed to load server room membership:', error));
   };
 
   const leaveRoom = () => {
