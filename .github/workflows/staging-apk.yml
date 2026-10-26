@@ -36,6 +36,17 @@ jobs:
             echo "::error::Configure STAGING_SUPABASE_PUBLISHABLE_KEY before building a functional APK"
             exit 1
           fi
+      - name: Verify staging API key before packaging
+        env:
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.STAGING_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          set -euo pipefail
+          status=$(curl --silent --show-error --output /tmp/auth-health.json --write-out '%{http_code}' --header "apikey: $VITE_SUPABASE_PUBLISHABLE_KEY" "https://rziaedugbdwefbefcxjt.supabase.co/auth/v1/health")
+          if [ "$status" != "200" ]; then
+            echo "::error::Staging Supabase API key was rejected by Auth (HTTP $status)"
+            exit 1
+          fi
+          echo "Staging Auth API key check passed"
       - name: Build staging web bundle
         env:
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.STAGING_SUPABASE_PUBLISHABLE_KEY }}
