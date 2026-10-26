@@ -731,11 +731,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const sendRoomMessage = (roomId: string, text: string): void => {
     if (!text.trim() || !activeRoom || activeRoom.id !== roomId) return;
     void sendRealRoomMessage(roomId, text).then(async () => {
-      const messages = await fetchRealRoomMessages(roomId);
-      setRoomMessages(prev => ({ ...prev, [roomId]: messages }));
+      try {
+        const messages = await fetchRealRoomMessages(roomId);
+        setRoomMessages(prev => ({ ...prev, [roomId]: messages }));
+      } catch (error) {
+        console.error('Message sent but refresh failed:', error);
+        alert('تم قبول الرسالة من الخادم لكن تعذر تحديث عرض المحادثة.');
+      }
     }).catch(error => {
-      console.error('Room message send or refresh failed:', error);
-      alert('تعذر تأكيد إرسال الرسالة أو تحديث سجلها.');
+      console.error('Room message rejected:', error);
+      alert('تعذر إرسال الرسالة من الخادم.');
     });
   };
 
