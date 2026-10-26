@@ -1,5 +1,8 @@
 name: Build TotiChat Staging APK
 on:
+  push:
+    branches:
+      - integration/legacy-backend-staging
   workflow_dispatch:
 permissions:
   contents: read
