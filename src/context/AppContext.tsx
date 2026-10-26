@@ -600,6 +600,66 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, [isLoggedIn, activeRoom?.id]);
 
+  useEffect(() => {
+    if (!isLoggedIn || !activeRoom || !stagingBackend) return;
+    const roomId = activeRoom.id;
+    let alive = true;
+    let loading = false;
+    let pending = false;
+    const refreshRoster = async () => {
+      if (loading) { pending = true; return; }
+      loading = true;
+      try {
+        do {
+          pending = false;
+          const members = await fetchRoomVisualMembers(roomId);
+          if (!alive) return;
+          const mine = members.find(m => m.user_id === currentUser.id);
+          if (mine) setMyMicMuted(mine.is_muted);
+          setActiveRoom(prev => {
+            if (!prev || prev.id !== roomId) return prev;
+            return {
+              ...prev,
+              listenersCount: members.length,
+              activeMicCount: members.filter(m => m.seat_no != null).length,
+              seats: prev.seats.map(seat => {
+                const member = members.find(m => m.seat_no === seat.seatNumber);
+                return {
+                  ...seat,
+                  user: member ? {
+                    ...(member.user_id === currentUser.id ? currentUser : makeEmptyUser()),
+                    id: member.user_id,
+                    name: member.display_name,
+                    nickname: member.display_name,
+                    avatar: member.avatar_url ?? '',
+                  } : null,
+                  isMuted: member?.is_muted ?? true,
+                  isSpeaking: false,
+                };
+              }),
+            };
+          });
+        } while (alive && pending);
+      } catch (error) {
+        console.error('Room roster realtime refresh failed:', error);
+      } finally { loading = false; }
+    };
+    const channel = stagingBackend.channel('room-roster-' + roomId)
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'room_members',
+        filter: 'room_id=eq.' + roomId,
+      }, () => { void refreshRoster(); })
+      .subscribe(status => {
+        if (status === 'SUBSCRIBED') void refreshRoster();
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT')
+          console.error('Room roster realtime subscription:', status);
+      });
+    return () => {
+      alive = false;
+      void stagingBackend.removeChannel(channel);
+    };
+  }, [isLoggedIn, activeRoom?.id, currentUser.id]);
+
   // Never persist a mutable copy of balances, roles or identity in localStorage.
   useEffect(() => {
     safeStorage.removeItem('toti_user_v6_313');
