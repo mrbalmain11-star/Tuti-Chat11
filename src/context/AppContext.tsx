@@ -672,6 +672,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     void leaveRoomMembership(roomId).then(() => {
       setActiveRoom(prev => prev?.id === roomId ? null : prev);
       setIsRoomMinimized(false);
+      setMyMicMuted(false);
     }).catch(error => {
       console.error('Room leave failed:', error);
       alert('تعذر تأكيد مغادرة الغرفة.');
