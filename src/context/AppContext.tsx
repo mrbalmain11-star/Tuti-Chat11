@@ -721,6 +721,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     void saveProfileChanges(fields).then(async profile => {
       const { data, error } = await stagingBackend!.auth.getUser();
       if (error || data.user?.id !== profile.id) return;
+      const avatar = profile.avatar_url ? await getMyAvatarUrl(profile.avatar_url) : '';
       setCurrentUser(prev => {
         if (prev.id && prev.id !== profile.id) return prev;
         return {
@@ -729,7 +730,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           name: profile.display_name,
           nickname: profile.display_name,
           bio: profile.bio,
-          avatar: profile.avatar_url ?? '',
+          avatar,
         };
       });
     }).catch(error => {
