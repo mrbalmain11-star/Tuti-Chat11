@@ -61,17 +61,33 @@ export const ProfileView: React.FC = () => {
     return () => { active = false; };
   }, [currentUser.id]);
   const [publicId, setPublicId] = useState<number | null>(null);
-  useEffect(() => {
-    let active = true;
-    void fetchMyProfile().then(profile => {
-      if (active) setPublicId(profile?.public_id ?? null);
-    }).catch(error => console.error('Unable to load public profile ID:', error));
-    return () => { active = false; };
-  }, [currentUser.id]);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [, setSavingProfile] = useState(false);
-  useEffect(() => { let active = true; void fetchMyProfile().then(async p => { if (!p || !active) return; const avatar = p.avatar_url ? await getMyAvatarUrl(p.avatar_url) : null; if (active) updateUserProfile({ name: p.display_name, nickname: p.display_name, bio: p.bio, ...(avatar ? { avatar } : {}) }); }).catch(console.error); return () => { active = false; }; }, [currentUser.id]);
+  // Read identity, display name and avatar from one authenticated profile snapshot.
+  // Do not allow a late response to overwrite a freshly uploaded avatar.
+  const profileRevision = useRef(0);
+  useEffect(() => {
+    let active = true;
+    const revision = ++profileRevision.current;
+    setPublicId(null);
+    void (async () => {
+      const profile = await fetchMyProfile();
+      if (!active || revision !== profileRevision.current || !profile) return;
+      setPublicId(profile.public_id);
+      const avatar = profile.avatar_url ? await getMyAvatarUrl(profile.avatar_url) : '';
+      if (!active || revision !== profileRevision.current) return;
+      updateUserProfile({
+        name: profile.display_name,
+        nickname: profile.display_name,
+        bio: profile.bio,
+        avatar,
+      });
+    })().catch(error => {
+      if (active) console.error('Unable to synchronize staging profile:', error);
+    });
+    return () => { active = false; };
+  }, [currentUser.id]);
   const [uploadingCover, setUploadingCover] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -104,6 +120,8 @@ export const ProfileView: React.FC = () => {
       const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob(b => b ? resolve(b) : reject(new Error('تعذر تحويل الصورة')), 'image/webp', 0.82));
       setProfileError(null);
       const path = await uploadMyAvatar(blob);
+      // Invalidate in-flight profile reads before applying the saved image.
+      ++profileRevision.current;
       const signed = await getMyAvatarUrl(path);
       updateUserProfile({ avatar: signed });
       setToastMessage('تم حفظ الصورة في حسابك بنجاح');
