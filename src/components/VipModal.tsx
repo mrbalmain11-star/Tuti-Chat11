@@ -565,12 +565,11 @@ export const VipModal: React.FC = () => {
               <div
                 className="absolute z-20 pointer-events-none"
                 style={{
-                  top: '21.5%',
-                  left: '79%',
+                  top: '20.5%',
+                  left: '84%',
                   transform: 'translate(-50%, -50%)',
-                  width: '13.5%',
+                  width: '12%',
                   aspectRatio: '1 / 1',
-                  maxWidth: '13.5%',
                 }}
               >
                 <div className="w-full h-full rounded-full overflow-hidden border border-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.7)] bg-slate-900 relative">
@@ -590,10 +589,10 @@ export const VipModal: React.FC = () => {
               <div
                 className="absolute z-20 pointer-events-none flex items-center justify-center"
                 style={{
-                  top: '30.5%',
-                  left: '79%',
+                  top: '29.5%',
+                  left: '84%',
                   transform: 'translate(-50%, -50%)',
-                  width: '25%',
+                  width: '24%',
                   height: '3.5%',
                   overflow: 'hidden',
                 }}
@@ -611,13 +610,13 @@ export const VipModal: React.FC = () => {
                 className="absolute z-20 pointer-events-none flex items-center justify-center gap-0.5 flex-nowrap min-w-0 overflow-hidden"
                 style={{
                   top: '35%',
-                  left: '79%',
+                  left: '84%',
                   transform: 'translate(-50%, -50%)',
                   width: '28%',
                   maxHeight: '3.5%',
                 }}
               >
-                <VipBadge vipLevel={activeTier.level} size="xs" className="min-w-0 max-w-[58%] overflow-hidden" />
+                <span className="shrink-0 rounded-full border border-amber-300/80 bg-black/80 px-1 text-[9px] font-black text-amber-200 whitespace-nowrap">{`VIP${activeTier.level}`}</span>
                 <span className="text-[10px] leading-none select-none">{currentUser.countryFlag || '🇮🇶'}</span>
                 <span className="text-[9px] font-bold text-cyan-300">
                   {currentUser.gender === 'أنثى' ? '♀' : '♂'}
