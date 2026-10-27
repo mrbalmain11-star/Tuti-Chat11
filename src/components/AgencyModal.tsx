@@ -73,13 +73,7 @@ export const AgencyModal: React.FC = () => {
     agencyName: string;
     agencyIdNumber: string;
     agentName: string;
-  } | null>({
-    id: 'req-iraq-state',
-    agencyId: 'agency-4',
-    agencyName: 'دولة العراق...',
-    agencyIdNumber: '1133812',
-    agentName: 'دولة العراق',
-  });
+  } | null>(null);
 
   // Expandable host rows in Agent Data Center
   const [expandedHostIndex, setExpandedHostIndex] = useState<number | null>(0);
@@ -89,36 +83,7 @@ export const AgencyModal: React.FC = () => {
   const [showDateDropdown, setShowDateDropdown] = useState(false);
 
   // Agency Members List for Agent
-  const [membersList, setMembersList] = useState([
-    {
-      id: '1331',
-      name: 'دولة العراق',
-      role: 'مدير الوكالة 👑',
-      score: '0 🪙',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
-    },
-    {
-      id: '2044',
-      name: 'قيصر بغداد',
-      role: 'مشرف رسمي 🛡️',
-      score: '0 🪙',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
-    },
-    {
-      id: '3088',
-      name: 'نور الرافدين',
-      role: 'مضيف مميز ⭐',
-      score: '0 🪙',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
-    },
-    {
-      id: '4112',
-      name: 'صقر بابل',
-      role: 'مضيف صوتي 🎙️',
-      score: '0 🪙',
-      avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&auto=format&fit=crop&q=80',
-    },
-  ]);
+  const [membersList, setMembersList] = useState<Array<{ id: string; name: string; role: string; score: string; avatar: string }>>([]);
 
   // New member ID input in Agent Members
   const [newMemberId, setNewMemberId] = useState('');
@@ -191,15 +156,7 @@ export const AgencyModal: React.FC = () => {
 
   // Simulate new incoming invite for testing
   const handleSimulateNewInvite = () => {
-    sounds.playClick();
-    setPendingAgencyInvite({
-      id: `req-${Date.now()}`,
-      agencyId: 'agency-4',
-      agencyName: 'دولة العراق...',
-      agencyIdNumber: '1133812',
-      agentName: 'دولة العراق',
-    });
-    showToast('وصلك طلب انضمام جديد من وكيل! 📩');
+    showToast('لا توجد دعوات حقيقية حالياً');
   };
 
   return (
