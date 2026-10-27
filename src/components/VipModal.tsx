@@ -566,9 +566,9 @@ export const VipModal: React.FC = () => {
                 className="absolute z-20 pointer-events-none"
                 style={{
                   top: '20.5%',
-                  left: '84%',
+                  left: '79%',
                   transform: 'translate(-50%, -50%)',
-                  width: '12%',
+                  width: '17%',
                   aspectRatio: '1 / 1',
                 }}
               >
@@ -589,18 +589,18 @@ export const VipModal: React.FC = () => {
               <div
                 className="absolute z-20 pointer-events-none flex items-center justify-center"
                 style={{
-                  top: '29.5%',
-                  left: '84%',
+                  top: '30%',
+                  left: '79%',
                   transform: 'translate(-50%, -50%)',
-                  width: '24%',
-                  height: '3.5%',
+                  width: '21%',
+                  height: '2.7%',
                   overflow: 'hidden',
                 }}
               >
                 <VipName
                   name={currentUser.nickname || currentUser.name || 'دولة العراق'}
                   vipLevel={activeTier.level}
-                  className="text-[10px] sm:text-[11px] font-black truncate text-center block drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] max-w-full min-w-0 px-1"
+                  className="text-[8px] sm:text-[9px] leading-none font-black truncate whitespace-nowrap text-center block drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] max-w-full min-w-0 px-0.5"
                   fallbackColor="text-amber-100"
                 />
               </div>
@@ -610,7 +610,7 @@ export const VipModal: React.FC = () => {
                 className="absolute z-20 pointer-events-none flex items-center justify-center gap-0.5 flex-nowrap min-w-0 overflow-hidden"
                 style={{
                   top: '35%',
-                  left: '84%',
+                  left: '79%',
                   transform: 'translate(-50%, -50%)',
                   width: '28%',
                   maxHeight: '3.5%',
