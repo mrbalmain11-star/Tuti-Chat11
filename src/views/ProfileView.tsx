@@ -290,6 +290,20 @@ export const ProfileView: React.FC = () => {
                 />
               </div>
 
+              <button
+                type="button"
+                aria-label="تغيير الصورة الشخصية"
+                title="تغيير الصورة الشخصية"
+                disabled={uploadingAvatar}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setProfileError(null);
+                  fileInputRef.current?.click();
+                }}
+                className="absolute -bottom-1 -left-1 z-30 w-9 h-9 rounded-full bg-amber-500 text-white border-2 border-white shadow-lg flex items-center justify-center disabled:opacity-50"
+              >
+                <Camera className="w-4 h-4" />
+              </button>
               {uploadingAvatar && (
                 <div className="absolute inset-0 rounded-full bg-black/60 flex items-center justify-center text-white z-20">
                   <Loader2 className="w-5 h-5 animate-spin" />
