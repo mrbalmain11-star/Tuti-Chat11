@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { AdminBannersPanel } from './AdminBannersPanel';
 import { AdminOperationsPanel } from './AdminOperationsPanel';
 import { AdminSpecialIdPanel } from './AdminSpecialIdPanel';
+import { AdminRoomModerationPanel } from './AdminRoomModerationPanel';
 import { ArrowRight, RefreshCw, ShieldCheck, Users, Building2, Radio } from 'lucide-react';
 import { fetchMyAdminAccess, fetchOwnerDashboardCounts, fetchOwnerDashboardRecent, type OwnerDashboardRecent, type AdminAccess, type OwnerDashboardCounts } from '../services/stagingBackend';
 
@@ -60,6 +61,7 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
           </section>}
           {access.role === 'owner' && <AdminOperationsPanel />}
           {access.role === 'owner' && <AdminSpecialIdPanel />}
+          {access.role === 'owner' && <AdminRoomModerationPanel />}
           {access.role === 'owner' && <AdminBannersPanel />}
           <section className="rounded-2xl border border-amber-200 bg-white p-5">
             <h2 className="font-black mb-3">أقسام الإدارة</h2>
