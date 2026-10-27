@@ -197,7 +197,7 @@ export const VipBadge: React.FC<VipBadgeProps> = ({
           src={meta.badgeImg}
           alt={meta.name}
           onError={() => setImgError(true)}
-          className="h-full w-auto max-w-none object-contain drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)] pointer-events-none"
+          className="block h-full w-auto max-w-full min-w-0 object-contain drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)] pointer-events-none"
           loading="eager"
         />
       </div>
