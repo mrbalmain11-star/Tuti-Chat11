@@ -918,8 +918,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     alert('إنشاء الوكالات غير متاح حتى ربطه بصلاحيات الخادم.');
   };
 
-  const createVoiceRoom = (_title: string, _tag: string): void => {
-    alert('إنشاء الغرف غير متاح حتى اكتمال الربط بقاعدة البيانات.');
+  const createVoiceRoom = (title: string, _tag: string): void => {
+    const trimmed = title.trim();
+    if (trimmed.length < 2 || trimmed.length > 60) {
+      alert('اسم الغرفة يجب أن يكون بين حرفين و60 حرفاً.');
+      return;
+    }
+    if (!stagingBackend) {
+      alert('الاتصال بالخادم غير مهيأ.');
+      return;
+    }
+    void stagingBackend.rpc('staging_create_my_room', { p_title: trimmed }).then(async ({ data, error }) => {
+      if (error || typeof data !== 'string') throw error ?? new Error('Room creation not confirmed');
+      const rows = await fetchRealRooms();
+      setRooms(rows.map(mapRoomToUi));
+    }).catch(error => {
+      console.error('Failed to create staging room:', error);
+      alert('تعذر إنشاء الغرفة أو تحميلها من الخادم.');
+    });
   };
 
   const updateRoom = (_roomId: string, _updates: Partial<VoiceRoom>): void => {
