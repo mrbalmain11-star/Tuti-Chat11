@@ -1085,52 +1085,6 @@ export const AgencyModal: React.FC = () => {
                   </button>
                 </div>
 
-                {/* Quick Add / Remove Test Buttons */}
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      sounds.playLevelUp();
-                      const randomId = Math.floor(1000 + Math.random() * 9000).toString();
-                      setMembersList((prev) => {
-                        const next = [
-                          ...prev,
-                          {
-                            id: randomId,
-                            name: `مضيف #${randomId}`,
-                            role: 'مضيف معتمد 🎙️',
-                            score: '0 🪙',
-                            avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
-                          },
-                        ];
-                        setAgencyMemberCount(next.length);
-                        return next;
-                      });
-                      showToast('تمت إضافة عضو جديد للوكالة وارتفع عدد الأعضاء! 📈');
-                    }}
-                    className="flex-1 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-300 text-[11px] font-black transition active:scale-95 cursor-pointer flex items-center justify-center gap-1"
-                  >
-                    <span>+ إضافة عضو تجريبي (يرتفع)</span>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      if (membersList.length <= 1) {
-                        showToast('لا يمكن حذف مدير الوكالة!');
-                        return;
-                      }
-                      sounds.playClick();
-                      setMembersList((prev) => {
-                        const next = prev.slice(0, prev.length - 1);
-                        setAgencyMemberCount(next.length);
-                        return next;
-                      });
-                      showToast('تمت إزالة عضو وقل عدد الأعضاء! 📉');
-                    }}
-                    className="flex-1 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-400/40 text-rose-300 text-[11px] font-black transition active:scale-95 cursor-pointer flex items-center justify-center gap-1"
-                  >
-                    <span>- إزالة عضو (يقل)</span>
-                  </button>
-                </div>
 
                 {/* Counts */}
                 <div className="grid grid-cols-2 gap-2 text-center text-xs">
