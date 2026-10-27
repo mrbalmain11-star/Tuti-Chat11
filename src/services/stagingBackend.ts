@@ -205,7 +205,7 @@ export async function fetchMyAdminAccess(): Promise<AdminAccess | null> {
   const { data: { user }, error: authError } = await client.auth.getUser();
   if (authError) throw authError;
   if (!user) return null;
-  const { data, error } = await client.schema('phase3').rpc('my_admin_access');
+  const { data, error } = await client.rpc('my_admin_access');
   if (error) throw error;
   const access = Array.isArray(data) ? data[0] : null;
   if (!access || typeof access.role !== 'string' || !Array.isArray(access.permissions)) return null;
