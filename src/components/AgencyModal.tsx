@@ -102,33 +102,9 @@ export const AgencyModal: React.FC = () => {
   };
 
   // Switch role and apply it directly to currentUser profile in AppContext
-  const handleSwitchAndApplyRole = (newRole: 'user' | 'host' | 'agent') => {
+  const handleSwitchAndApplyRole = (_newRole: 'user' | 'host' | 'agent') => {
     sounds.playClick();
-    setRole(newRole);
-    setActiveSubView(null);
-
-    if (newRole === 'user') {
-      updateUserProfile({
-        agencyRole: 'مستخدم',
-        isHost: false,
-        agencyName: '',
-      });
-      showToast('تم تطبيق دور: مستخدم عادي (تظهر شاشة لا توجد بيانات فقط) 👤');
-    } else if (newRole === 'host') {
-      updateUserProfile({
-        agencyRole: 'مضيف',
-        isHost: true,
-        agencyName: currentUser.agencyName || 'دولة العراق...',
-      });
-      showToast('تم تطبيق دور: مضيف معتمد (تظهر شاشة مركز البيانات وبيانات المضيف فقط) 🎙️');
-    } else if (newRole === 'agent') {
-      updateUserProfile({
-        agencyRole: 'وكيل',
-        isHost: false,
-        agencyName: currentUser.agencyName || 'وكالة كينج الملكية',
-      });
-      showToast('تم تطبيق دور: وكيل مفعّل (تظهر بطاقات أعضاء الوكالة، البيانات، المكافأة) 👑');
-    }
+    showToast('تغيير صفة الوكالة يتطلب موافقة الإدارة والتحقق من الخادم');
   };
 
   // User accepts agency invite -> Becomes Host and applies changes immediately!
