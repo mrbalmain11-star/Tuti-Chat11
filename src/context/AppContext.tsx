@@ -374,7 +374,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         });
         if (m.recipient_id === auth.user.id && !m.read_at) thread.unreadCount++;
       }
-      if (active) setConversations([...threads.values()]);
+      if (active) {
+        const refreshed = [...threads.values()];
+        setConversations(refreshed);
+        setOpenChatThread(previous => {
+          if (!previous) return null;
+          return refreshed.find(thread => thread.userId === previous.userId) ?? previous;
+        });
+      }
     };
     void loadDirectMessages().catch(error => console.error('DM history load failed:', error));
     const channel = client.channel('staging-my-direct-messages')
