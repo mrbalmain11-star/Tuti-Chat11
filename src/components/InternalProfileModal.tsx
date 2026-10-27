@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   ChevronRight,
   Copy,
@@ -31,6 +31,7 @@ import { UserProfile } from '../types';
 import { mockAgencies } from '../mockData';
 import { CharmBadge, WealthBadge, GameBadge } from './LevelBadgeIcons';
 import { processImageFile } from '../utils/imageUpload';
+import { fetchMyProfile, saveMyProfile, uploadMyAvatar, getMyAvatarUrl } from '../services/stagingBackend';
 import { VipName } from './VipName';
 import { VipBadge, VIP_BEAST_METADATA } from './VipBadge';
 import { AgencyProfileCard } from './AgencyProfileCard';
@@ -62,8 +63,17 @@ export const InternalProfileModal: React.FC = () => {
   } = useApp();
 
   // The user being displayed: either targeted user or current user
-  const user: UserProfile = internalProfileUser || currentUser;
+  const user: UserProfile = internalProfileUser?.id === currentUser.id ? currentUser : (internalProfileUser || currentUser);
   const isSelf = user.id === currentUser.id;
+  const [myPublicId, setMyPublicId] = useState<number | null>(null);
+  useEffect(() => {
+    if (!openInternalProfileModal || !isSelf) { setMyPublicId(null); return; }
+    let active = true;
+    void fetchMyProfile().then(profile => {
+      if (active) setMyPublicId(profile?.public_id ?? null);
+    }).catch(error => console.error('Unable to load public ID:', error));
+    return () => { active = false; };
+  }, [openInternalProfileModal, isSelf, currentUser.id]);
 
   // Active inventory tab: 'frame' (الإطار) | 'vehicle' (المركبة) | 'gifts' (لوحة الهدايا) | 'honor' (لوحة الشرف)
   const [activeTab, setActiveTab] = useState<'frame' | 'vehicle' | 'gifts' | 'honor'>('frame');
@@ -99,12 +109,28 @@ export const InternalProfileModal: React.FC = () => {
 
     try {
       setUploadingAvatar(true);
+      if (!isSelf) throw new Error('لا يمكن تعديل صورة حساب آخر');
       const dataUrl = await processImageFile(file);
-      updateUserProfile({ avatar: dataUrl });
+      const image = new Image();
+      image.src = dataUrl;
+      await image.decode();
+      const canvas = document.createElement('canvas');
+      const ratio = Math.min(1, 512 / Math.max(image.width, image.height));
+      canvas.width = Math.max(1, Math.round(image.width * ratio));
+      canvas.height = Math.max(1, Math.round(image.height * ratio));
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('تعذر تجهيز الصورة');
+      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+      const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob(
+        b => b ? resolve(b) : reject(new Error('تعذر تحويل الصورة')), 'image/webp', 0.82,
+      ));
+      const path = await uploadMyAvatar(blob);
+      const signedUrl = await getMyAvatarUrl(path);
+      updateUserProfile({ avatar: signedUrl });
       sounds.playCoin();
-      showToast('تم تغيير الصورة الشخصية بنجاح! 📸');
-    } catch {
-      showToast('تعذر رفع الصورة، يرجى المحاولة مرة أخرى');
+      showToast('تم حفظ الصورة الشخصية في حسابك 📸');
+    } catch (error) {
+      showToast('تعذر حفظ الصورة: ' + (error instanceof Error ? error.message : String(error)));
     } finally {
       setUploadingAvatar(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -129,25 +155,36 @@ export const InternalProfileModal: React.FC = () => {
     }
   };
 
-  const handleSaveName = (e: React.FormEvent) => {
+  const handleSaveName = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editNameInput.trim()) return;
-    sounds.playCoin();
-    updateUserProfile({ name: editNameInput.trim(), nickname: editNameInput.trim() });
-    setShowEditNameModal(false);
-    showToast('تم تغيير الاسم بنجاح! ✏️');
+    const name = editNameInput.trim();
+    if (!isSelf || name.length < 2 || name.length > 40) return;
+    try {
+      const saved = await saveMyProfile({ display_name: name });
+      updateUserProfile({ name: saved.display_name, nickname: saved.display_name });
+      setShowEditNameModal(false);
+      showToast('تم حفظ الاسم في حسابك ✏️');
+    } catch (error) {
+      showToast('تعذر حفظ الاسم: ' + (error instanceof Error ? error.message : String(error)));
+    }
   };
 
-  const handleSaveBio = (e: React.FormEvent) => {
+  const handleSaveBio = async (e: React.FormEvent) => {
     e.preventDefault();
-    sounds.playCoin();
-    updateUserProfile({ bio: editBioInput.trim() });
-    setShowEditBioModal(false);
-    showToast('تم حفظ السيرة الذاتية بنجاح! 📝');
+    if (!isSelf) return;
+    try {
+      const saved = await saveMyProfile({ bio: editBioInput.trim().slice(0, 150) });
+      updateUserProfile({ bio: saved.bio });
+      setShowEditBioModal(false);
+      showToast('تم حفظ السيرة الذاتية في حسابك 📝');
+    } catch (error) {
+      showToast('تعذر حفظ السيرة: ' + (error instanceof Error ? error.message : String(error)));
+    }
   };
 
   const handleCopyId = () => {
-    const idToCopy = user.id || '313';
+    const idToCopy = isSelf ? myPublicId?.toString() : user.id;
+    if (!idToCopy) return;
     navigator.clipboard.writeText(idToCopy);
     setCopiedId(true);
     sounds.playCoin();
@@ -442,7 +479,7 @@ export const InternalProfileModal: React.FC = () => {
               <Copy className="w-3.5 h-3.5 text-slate-500" />
             )}
             <span className="font-semibold tracking-wider">
-              ID: {user.id || '313'}
+              ID: {isSelf ? (myPublicId ?? '—') : (user.id || '—')}
             </span>
           </button>
 
