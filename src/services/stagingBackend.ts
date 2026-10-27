@@ -227,3 +227,16 @@ export async function fetchOwnerDashboardCounts(): Promise<OwnerDashboardCounts 
   if (!values.every(n => Number.isSafeInteger(n) && n >= 0)) throw new Error('Invalid dashboard counts');
   return { users_count: values[0], agencies_count: values[1], rooms_count: values[2] };
 }
+
+export type AdminRecentItem = { public_id?: number; id?: string; display_name?: string; name?: string; title?: string; created_at: string };
+export type OwnerDashboardRecent = { users: AdminRecentItem[]; agencies: AdminRecentItem[]; rooms: AdminRecentItem[] };
+/** Owner-only, read-only latest records. Authorization enforced by the SQL function. */
+export async function fetchOwnerDashboardRecent(): Promise<OwnerDashboardRecent> {
+  const client = requireBackend();
+  const { data, error } = await client.rpc('owner_dashboard_recent');
+  if (error) throw error;
+  if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('Owner dashboard access denied');
+  const recent = data as Record<string, unknown>;
+  if (!Array.isArray(recent.users) || !Array.isArray(recent.agencies) || !Array.isArray(recent.rooms)) throw new Error('Invalid owner dashboard response');
+  return { users: recent.users as AdminRecentItem[], agencies: recent.agencies as AdminRecentItem[], rooms: recent.rooms as AdminRecentItem[] };
+}
