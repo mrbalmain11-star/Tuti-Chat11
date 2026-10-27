@@ -11,7 +11,7 @@ import {
 } from '../types';
 import { mockGifts } from '../mockData';
 import { sounds } from '../utils/audio';
-import { stagingBackend, fetchRealRooms, fetchMyProfile, fetchMyWallet, fetchRoomMembers, initializeNativeAuthLinks } from '../services/stagingBackend';
+import { stagingBackend, fetchRealRooms, fetchMyProfile, fetchMyWallet, fetchRoomMembers, initializeNativeAuthLinks, getMyAvatarUrl } from '../services/stagingBackend';
 import { mapRoomToUi } from '../services/mapRoomToUi';
 import { saveProfileChanges } from '../services/profileWrites';
 import { fetchMyLedger } from '../services/ledgerReads';
@@ -249,17 +249,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     if (!isLoggedIn) return;
     let active = true;
-    fetchMyProfile().then(profile => {
+    void (async () => {
+      const profile = await fetchMyProfile();
       if (!active || !profile) return;
+      const avatar = profile.avatar_url ? await getMyAvatarUrl(profile.avatar_url) : '';
+      if (!active) return;
       setCurrentUser(prev => ({
         ...prev,
         id: profile.id,
         name: profile.display_name,
         nickname: profile.display_name,
         bio: profile.bio ?? '',
-        avatar: profile.avatar_url ?? '',
+        avatar,
       }));
-    }).catch(error => console.error('Failed to load staging profile:', error));
+    })().catch(error => console.error('Failed to load staging profile:', error));
     return () => { active = false; };
   }, [isLoggedIn]);
 
@@ -674,6 +677,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const allowed = new Set(['name', 'nickname', 'bio', 'avatar']);
     if (Object.keys(updates).some(key => !allowed.has(key))) {
       alert('هذه البيانات لا يمكن تعديلها من التطبيق.');
+      return;
+    }
+    // Avatar URLs are temporary signed display URLs, never persistent storage paths.
+    // Upload handlers already saved the canonical path via uploadMyAvatar().
+    // Applying a signed URL to the profile row breaks the image on reload.
+    if (updates.avatar !== undefined) {
+      setCurrentUser(prev => ({ ...prev, ...updates }));
       return;
     }
     const fields: { display_name?: string; bio?: string; avatar_url?: string | null } = {};
