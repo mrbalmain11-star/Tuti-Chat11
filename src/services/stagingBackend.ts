@@ -250,7 +250,13 @@ export async function saveMyProfile(changes: { display_name?: string; bio?: stri
   const { data, error } = await client.from('profiles')
     .update(changes).eq('id', user.id)
     .select('id,public_id,display_name,bio,avatar_url').single();
-  if (error) throw error;
+  if (error) {
+    console.error('Profile save failed', { code: error.code, message: error.message, details: error.details });
+    if (error.code === 'PGRST116') throw new Error('تعذر العثور على ملف حسابك أو لا توجد صلاحية لتعديله. سجّل الدخول مجدداً ثم حاول.');
+    if (error.code === '42501') throw new Error('الخادم رفض تعديل الملف الشخصي بسبب الصلاحيات.');
+    throw error;
+  }
+  if (!data) throw new Error('لم يؤكد الخادم حفظ الملف الشخصي');
   return data as BackendProfile;
 }
 
