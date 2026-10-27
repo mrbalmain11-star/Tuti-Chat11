@@ -918,9 +918,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
-  const sendDirectMessage = (_convId: string, text: string): void => {
-    if (!text.trim()) return;
-    alert('الرسائل الخاصة غير متاحة حتى اكتمال الربط الحقيقي بالخادم.');
+  const sendDirectMessage = (convId: string, text: string): void => {
+    const body = text.trim();
+    if (!body || body.length > 2000 || !stagingBackend) {
+      alert('تعذر إرسال الرسالة: تحقق من النص والاتصال.');
+      return;
+    }
+    const peer = conversations.find(c => c.id === convId || c.userId === convId);
+    const recipientId = peer?.userId ?? (openChatThread?.id === convId ? openChatThread.userId : null);
+    if (!recipientId || recipientId === currentUser.id) {
+      alert('المستلم غير صالح.');
+      return;
+    }
+    const requestId = crypto.randomUUID();
+    void stagingBackend.rpc('staging_send_dm', {
+      p_to: recipientId, p_text: body, p_nonce: requestId,
+    }).then(async ({ data, error }) => {
+      if (error || !data) throw error ?? new Error('Message not confirmed');
+      setConversations(prev => prev.map(c => c.userId === recipientId ? {
+        ...c,
+        lastMessage: body,
+        lastTime: new Date().toISOString(),
+        messages: [...c.messages, {
+          id: String(data), text: body, sender: 'me' as const,
+          timestamp: new Date().toISOString(),
+        }],
+      } : c));
+    }).catch(error => {
+      console.error('Direct message send failed:', error);
+      alert('تعذر إرسال الرسالة من الخادم.');
+    });
   };
 
   // Until the server-side atomic gift RPC is wired, never debit balances locally.
