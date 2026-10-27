@@ -211,3 +211,19 @@ export async function fetchMyAdminAccess(): Promise<AdminAccess | null> {
   if (!access || typeof access.role !== 'string' || !Array.isArray(access.permissions)) return null;
   return { role: access.role, permissions: access.permissions };
 }
+
+export type OwnerDashboardCounts = { users_count: number; agencies_count: number; rooms_count: number };
+/** Read-only real staging totals. SQL RPC checks owner on the server. */
+export async function fetchOwnerDashboardCounts(): Promise<OwnerDashboardCounts | null> {
+  const client = requireBackend();
+  const { data: { user }, error: authError } = await client.auth.getUser();
+  if (authError) throw authError;
+  if (!user) return null;
+  const { data, error } = await client.rpc('owner_dashboard_counts');
+  if (error) throw error;
+  const row = Array.isArray(data) ? data[0] : null;
+  if (!row) return null;
+  const values = [row.users_count, row.agencies_count, row.rooms_count].map(Number);
+  if (!values.every(n => Number.isSafeInteger(n) && n >= 0)) throw new Error('Invalid dashboard counts');
+  return { users_count: values[0], agencies_count: values[1], rooms_count: values[2] };
+}
