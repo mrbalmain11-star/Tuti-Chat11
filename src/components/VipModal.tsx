@@ -42,7 +42,7 @@ export const VIP_TIERS: VipTierData[] = [
     beastName: 'غزال الريم الأخضر الأسطوري',
     price: 20000,
     durationDays: 30,
-    cardImage: '/public/assets/aistudio/IMG-20261026-WA0038_55a88cbb.jpg',
+    cardImage: '/assets/aistudio/IMG-20261026-WA0038_55a88cbb.jpg',
     themeColor: '#22c55e',
     glowColor: 'rgba(34, 197, 94, 0.5)',
     badgeGradient: 'from-emerald-700 via-green-500 to-emerald-800',
@@ -62,7 +62,7 @@ export const VIP_TIERS: VipTierData[] = [
     beastName: 'الفرس السماوي الأزرق المجنح',
     price: 60000,
     durationDays: 30,
-    cardImage: '/public/assets/aistudio/IMG-20261026-WA0037_14e3217b.jpg',
+    cardImage: '/assets/aistudio/IMG-20261026-WA0037_14e3217b.jpg',
     themeColor: '#06b6d4',
     glowColor: 'rgba(6, 182, 212, 0.55)',
     badgeGradient: 'from-cyan-600 via-sky-400 to-blue-700',
@@ -83,7 +83,7 @@ export const VIP_TIERS: VipTierData[] = [
     beastName: 'الذئب القمري الكوبالت البنفسجي',
     price: 200000,
     durationDays: 30,
-    cardImage: '/public/assets/aistudio/IMG-20261026-WA0036_39fcf42e.jpg',
+    cardImage: '/assets/aistudio/IMG-20261026-WA0036_39fcf42e.jpg',
     themeColor: '#a855f7',
     glowColor: 'rgba(168, 85, 247, 0.6)',
     badgeGradient: 'from-purple-700 via-fuchsia-500 to-indigo-900',
@@ -104,7 +104,7 @@ export const VIP_TIERS: VipTierData[] = [
     beastName: 'الصقر الأرجواني والتاج الملكي',
     price: 600000,
     durationDays: 30,
-    cardImage: '/public/assets/aistudio/IMG-20261026-WA0039_a41ca8b9.jpg',
+    cardImage: '/assets/aistudio/IMG-20261026-WA0039_a41ca8b9.jpg',
     themeColor: '#9333ea',
     glowColor: 'rgba(147, 51, 234, 0.65)',
     badgeGradient: 'from-purple-800 via-violet-600 to-indigo-950',
@@ -125,7 +125,7 @@ export const VIP_TIERS: VipTierData[] = [
     beastName: 'الفهد الذهبي الناري',
     price: 1500000,
     durationDays: 30,
-    cardImage: '/public/assets/aistudio/IMG-20261026-WA0040_d3aa3c77.jpg',
+    cardImage: '/assets/aistudio/IMG-20261026-WA0040_d3aa3c77.jpg',
     themeColor: '#e11d48',
     glowColor: 'rgba(225, 29, 72, 0.7)',
     badgeGradient: 'from-rose-600 via-amber-500 to-red-800',
@@ -146,7 +146,7 @@ export const VIP_TIERS: VipTierData[] = [
     beastName: 'الأسد البرونزي الزمردي الملكي',
     price: 3500000,
     durationDays: 30,
-    cardImage: '/public/assets/aistudio/IMG-20261026-WA0048_ecccc119.jpg',
+    cardImage: '/assets/aistudio/IMG-20261026-WA0048_ecccc119.jpg',
     themeColor: '#059669',
     glowColor: 'rgba(5, 150, 105, 0.75)',
     badgeGradient: 'from-emerald-600 via-teal-400 to-green-900',
@@ -167,7 +167,7 @@ export const VIP_TIERS: VipTierData[] = [
     beastName: 'النمر اللهبي الأزرق الفاخر',
     price: 8000000,
     durationDays: 30,
-    cardImage: '/public/assets/aistudio/IMG-20261026-WA0047_a9a12b99.jpg',
+    cardImage: '/assets/aistudio/IMG-20261026-WA0047_a9a12b99.jpg',
     themeColor: '#2563eb',
     glowColor: 'rgba(37, 99, 235, 0.8)',
     badgeGradient: 'from-blue-600 via-sky-400 to-indigo-900',
@@ -188,7 +188,7 @@ export const VIP_TIERS: VipTierData[] = [
     beastName: 'الفيل الملكي الوردي الأسطوري',
     price: 18000000,
     durationDays: 30,
-    cardImage: '/public/assets/aistudio/IMG-20261026-WA0046_be379335.jpg',
+    cardImage: '/assets/aistudio/IMG-20261026-WA0046_be379335.jpg',
     themeColor: '#ca8a04',
     glowColor: 'rgba(202, 138, 4, 0.85)',
     badgeGradient: 'from-amber-500 via-yellow-300 to-stone-900',
@@ -209,7 +209,7 @@ export const VIP_TIERS: VipTierData[] = [
     beastName: 'التنين القرمزي الكوني الناري',
     price: 35000000,
     durationDays: 30,
-    cardImage: '/public/assets/aistudio/IMG-20261026-WA0043_a4d1533d.jpg',
+    cardImage: '/assets/aistudio/IMG-20261026-WA0043_a4d1533d.jpg',
     themeColor: '#7c3aed',
     glowColor: 'rgba(124, 58, 237, 0.9)',
     badgeGradient: 'from-purple-900 via-fuchsia-600 to-amber-500',
@@ -230,7 +230,7 @@ export const VIP_TIERS: VipTierData[] = [
     beastName: 'الأسد الإمبراطوري المتوج بالياقوت',
     price: 70000000,
     durationDays: 30,
-    cardImage: '/public/assets/aistudio/IMG-20261026-WA0045_5e019064.jpg',
+    cardImage: '/assets/aistudio/IMG-20261026-WA0045_5e019064.jpg',
     themeColor: '#be123c',
     glowColor: 'rgba(190, 18, 60, 0.95)',
     badgeGradient: 'from-red-600 via-rose-500 to-amber-500',
@@ -251,7 +251,7 @@ export const VIP_TIERS: VipTierData[] = [
     beastName: 'العنقاء الإمبراطورية وأجنحة النور',
     price: 120000000,
     durationDays: 30,
-    cardImage: '/public/assets/aistudio/IMG-20261026-WA0041_e4885212.jpg',
+    cardImage: '/assets/aistudio/IMG-20261026-WA0041_e4885212.jpg',
     themeColor: '#0d9488',
     glowColor: 'rgba(13, 148, 136, 0.95)',
     badgeGradient: 'from-purple-900 via-fuchsia-600 to-amber-400',
@@ -272,7 +272,7 @@ export const VIP_TIERS: VipTierData[] = [
     beastName: 'عرش السيادة والخلود الأعظم عيار 24',
     price: 200000000,
     durationDays: 30,
-    cardImage: '/public/assets/aistudio/IMG-20261026-WA0042_9d9a2962.jpg',
+    cardImage: '/assets/aistudio/IMG-20261026-WA0042_9d9a2962.jpg',
     themeColor: '#1e3a8a',
     glowColor: 'rgba(245, 158, 11, 1)',
     badgeGradient: 'from-amber-600 via-yellow-400 to-amber-700',
@@ -1050,7 +1050,7 @@ export const VipModal: React.FC = () => {
                   {/* Screenshot Artwork */}
                   <div className="w-full rounded-2xl overflow-hidden border border-amber-500/30 shadow-lg">
                     <img
-                      src="/public/assets/aistudio/Screenshot_____-__-__-__-__-__-____com.tuliling.laika_350fdf65.jpg"
+                      src="/assets/aistudio/Screenshot_____-__-__-__-__-__-____com.tuliling.laika_350fdf65.jpg"
                       alt="أغطية رأس VIP 1-12"
                       className="w-full h-auto object-contain max-h-[42vh]"
                     />
@@ -1093,7 +1093,7 @@ export const VipModal: React.FC = () => {
                 <div className="w-full flex flex-col items-center space-y-3 pt-1">
                   <div className="w-full rounded-2xl overflow-hidden border border-amber-500/30 shadow-lg">
                     <img
-                      src="/public/assets/aistudio/Screenshot_____-__-__-__-__-__-____com.tuliling.laika_d9e8e6c2.jpg"
+                      src="/assets/aistudio/Screenshot_____-__-__-__-__-__-____com.tuliling.laika_d9e8e6c2.jpg"
                       alt="موجات مايك VIP 1-12"
                       className="w-full h-auto object-contain max-h-[42vh]"
                     />
@@ -1135,7 +1135,7 @@ export const VipModal: React.FC = () => {
                 <div className="w-full flex flex-col items-center space-y-3 pt-1">
                   <div className="w-full rounded-2xl overflow-hidden border border-amber-500/30 shadow-lg">
                     <img
-                      src="/public/assets/aistudio/Screenshot_____-__-__-__-__-__-____com.tuliling.laika_ca43fbe5.jpg"
+                      src="/assets/aistudio/Screenshot_____-__-__-__-__-__-____com.tuliling.laika_ca43fbe5.jpg"
                       alt="ألوان الأسماء المميزة VIP"
                       className="w-full h-auto object-contain max-h-[42vh]"
                     />

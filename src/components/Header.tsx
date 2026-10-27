@@ -113,7 +113,7 @@ export const Header: React.FC = () => {
             title="إنشاء غرفة"
           >
             <img
-              src="/src/assets/images/nav_home_mosque_1790179628609.jpg"
+              src={new URL("../assets/images/nav_home_mosque_1790179628609.jpg", import.meta.url).href}
               alt="إنشاء غرفة"
               className="w-8 h-8 object-cover rounded-lg drop-shadow-[0_2px_5px_rgba(0,0,0,0.35)] group-hover:scale-105 transition"
             />

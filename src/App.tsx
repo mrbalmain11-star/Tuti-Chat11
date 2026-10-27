@@ -98,9 +98,9 @@ const AppContent: React.FC = () => {
 
         {/* Dynamic Main View */}
         <main className="flex-1">
-          {activeTab === 'home' && <HomeView />}
-          {activeTab === 'messages' && <MessagesView />}
-          {activeTab === 'profile' && <ProfileView />}
+          <div style={{ display: activeTab === 'home' ? 'block' : 'none' }}><HomeView /></div>
+          <div style={{ display: activeTab === 'messages' ? 'block' : 'none' }}><MessagesView /></div>
+          <div style={{ display: activeTab === 'profile' ? 'block' : 'none' }}><ProfileView /></div>
         </main>
 
         {/* Bottom Navigation */}

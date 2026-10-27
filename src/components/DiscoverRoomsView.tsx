@@ -29,7 +29,7 @@ const ACTIVITY_BANNERS: ActivityBanner[] = [
     tag: 'فعالية ملكية',
     tagColor: 'from-purple-600 to-amber-500',
     subtitle: 'صمم وأرسل هداياك المخصصة بأسمائك ورسوماتك الخاصة داخل الرومات',
-    image: '/src/assets/images/custom_gift_banner_1791896374504.jpg',
+    image: new URL('../assets/images/custom_gift_banner_1791896374504.jpg', import.meta.url).href,
     badge: '🎁 هدايا حصرية',
   },
   {
@@ -38,7 +38,7 @@ const ACTIVITY_BANNERS: ActivityBanner[] = [
     tag: 'سباق النجوم',
     tagColor: 'from-amber-600 to-red-600',
     subtitle: 'منافسة أساطير البث والدعم في الشرق الأوسط والعالم لنيل تاج النجم',
-    image: '/src/assets/images/global_star_banner_1791896393643.jpg',
+    image: new URL('../assets/images/global_star_banner_1791896393643.jpg', import.meta.url).href,
     badge: '⭐ توب 1 عالمي',
   },
   {
@@ -47,7 +47,7 @@ const ACTIVITY_BANNERS: ActivityBanner[] = [
     tag: 'مكافآت الذهب',
     tagColor: 'from-yellow-500 to-amber-700',
     subtitle: 'بونص ذهب إضافي +30% وجوائز وصناديق كبرى عند كل عملية شحن',
-    image: '/src/assets/images/recharge_event_banner_1791896416151.jpg',
+    image: new URL('../assets/images/recharge_event_banner_1791896416151.jpg', import.meta.url).href,
     badge: '🪙 بونص مضاعف',
   },
   {
@@ -56,7 +56,7 @@ const ACTIVITY_BANNERS: ActivityBanner[] = [
     tag: 'كبلز وCP',
     tagColor: 'from-pink-600 to-rose-500',
     subtitle: 'تحدي رفقاء الروح وكبلز الرومات للفوز بخاتم العرش الماسي الوردي',
-    image: '/src/assets/images/weekly_soulmates_banner_1791896450326.jpg',
+    image: new URL('../assets/images/weekly_soulmates_banner_1791896450326.jpg', import.meta.url).href,
     badge: '💖 خاتم العرش',
   },
   {
@@ -65,7 +65,7 @@ const ACTIVITY_BANNERS: ActivityBanner[] = [
     tag: 'وكالات رسمية',
     tagColor: 'from-blue-600 to-cyan-500',
     subtitle: 'فرصة تأسيس واعتماد وكالتك في توتي شات مع أعلى نسبة أرباح ودعم رسمي',
-    image: '/src/assets/images/toty_agency_banner_1791896475828.jpg',
+    image: new URL('../assets/images/toty_agency_banner_1791896475828.jpg', import.meta.url).href,
     badge: '🏢 نسبة 85%',
   },
 ];
