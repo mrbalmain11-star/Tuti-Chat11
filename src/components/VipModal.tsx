@@ -529,7 +529,7 @@ export const VipModal: React.FC = () => {
               <img
                 src={activeTier.cardImage}
                 alt={activeTier.name}
-                className="w-full h-auto object-cover max-h-[58vh] select-none"
+                className="block w-full h-auto object-contain select-none"
               />
 
               {/* Status Badge overlay in top left of image */}
@@ -554,9 +554,9 @@ export const VipModal: React.FC = () => {
                 className="absolute z-20 pointer-events-none"
                 style={{
                   top: '21.5%',
-                  left: '82.5%',
+                  left: '79%',
                   transform: 'translate(-50%, -50%)',
-                  width: '18.5%',
+                  width: '16%',
                   aspectRatio: '1 / 1',
                 }}
               >
@@ -578,16 +578,17 @@ export const VipModal: React.FC = () => {
                 className="absolute z-20 pointer-events-none flex items-center justify-center"
                 style={{
                   top: '31.2%',
-                  left: '82.5%',
+                  left: '79%',
                   transform: 'translate(-50%, -50%)',
-                  width: '27%',
+                  width: '24%',
                   height: '4.8%',
+                  overflow: 'hidden',
                 }}
               >
                 <VipName
                   name={currentUser.nickname || currentUser.name || 'دولة العراق'}
                   vipLevel={activeTier.level}
-                  className="text-[10px] sm:text-[11px] font-black truncate text-center block drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] max-w-full px-1"
+                  className="text-[10px] sm:text-[11px] font-black truncate text-center block drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] max-w-full min-w-0 px-1"
                   fallbackColor="text-amber-100"
                 />
               </div>
@@ -597,9 +598,9 @@ export const VipModal: React.FC = () => {
                 className="absolute z-20 pointer-events-none flex items-center justify-center gap-1 flex-wrap"
                 style={{
                   top: '36.5%',
-                  left: '82.5%',
+                  left: '79%',
                   transform: 'translate(-50%, -50%)',
-                  width: '32%',
+                  width: '28%',
                 }}
               >
                 <VipBadge vipLevel={activeTier.level} size="xs" />
