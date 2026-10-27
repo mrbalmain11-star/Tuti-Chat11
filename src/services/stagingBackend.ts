@@ -183,3 +183,16 @@ export async function fetchRoomMembers(roomId: string): Promise<BackendRoomMembe
   if (error) throw error;
   return (data ?? []) as BackendRoomMember[];
 }
+
+/** Verify the active Supabase identity against its own persisted profile. Does not confer admin rights. */
+export async function verifySignedInProfile(): Promise<{ userId: string; publicId: number } | null> {
+  const client = requireBackend();
+  const { data: { user }, error: authError } = await client.auth.getUser();
+  if (authError) throw authError;
+  if (!user || !user.email_confirmed_at) return null;
+  const { data: profile, error: profileError } = await client.from('profiles')
+    .select('id,public_id').eq('id', user.id).maybeSingle();
+  if (profileError) throw profileError;
+  if (!profile || profile.id !== user.id || !Number.isInteger(profile.public_id)) return null;
+  return { userId: user.id, publicId: profile.public_id };
+}
