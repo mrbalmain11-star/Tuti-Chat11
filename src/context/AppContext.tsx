@@ -899,20 +899,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return false;
   };
 
-  const toggleFollowHost = (hostId: string) => {
-    sounds.playClick();
-    setFollowedRoomHosts((prev) => {
-      const next = new Set(prev);
-      if (next.has(hostId)) {
-        next.delete(hostId);
-      } else {
-        next.add(hostId);
-      }
-      try {
-        safeStorage.setItem('toti_followed_room_hosts_v2', JSON.stringify(Array.from(next)));
-      } catch (_) {}
-      return next;
-    });
+  const toggleFollowHost = (hostId: string): void => {
+    if (!stagingBackend || !hostId || hostId === currentUser.id) return;
+    void stagingBackend.rpc('staging_toggle_follow', { p_followed_id: hostId })
+      .then(({ data, error }) => {
+        if (error || typeof data !== 'boolean') throw error ?? new Error('Follow not confirmed');
+        setFollowedRoomHosts(prev => {
+          const next = new Set(prev);
+          if (data) next.add(hostId);
+          else next.delete(hostId);
+          return next;
+        });
+        sounds.playClick();
+      }).catch(error => {
+        console.error('Follow update rejected:', error);
+        alert('تعذر تحديث المتابعة من الخادم.');
+      });
   };
 
   const joinAgency = (_agencyId: string): void => {
