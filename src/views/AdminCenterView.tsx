@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { AdminBannersPanel } from './AdminBannersPanel';
 import { AdminOperationsPanel } from './AdminOperationsPanel';
 import { AdminSpecialIdPanel } from './AdminSpecialIdPanel';
-import { ArrowRight, RefreshCw, ShieldCheck, Users, Building2, Radio, LockKeyhole } from 'lucide-react';
+import { ArrowRight, RefreshCw, ShieldCheck, Users, Building2, Radio } from 'lucide-react';
 import { fetchMyAdminAccess, fetchOwnerDashboardCounts, fetchOwnerDashboardRecent, type OwnerDashboardRecent, type AdminAccess, type OwnerDashboardCounts } from '../services/stagingBackend';
 
 type Props = { onClose: () => void };
@@ -62,8 +62,19 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
           {access.role === 'owner' && <AdminSpecialIdPanel />}
           {access.role === 'owner' && <AdminBannersPanel />}
           <section className="rounded-2xl border border-amber-200 bg-white p-5">
-            <h2 className="font-black mb-2">مركز العمليات</h2>
-            <p className="text-sm text-slate-600">استخدم تبويبات إدارة التطبيق أعلاه لاستعراض المستخدمين والغرف والوكالات والصلاحيات وسجل التدقيق. عمليات الحظر والشحن وتعديل الصلاحيات لن تُفعّل إلا بعد ربطها بإجراءات خادم آمنة.</p>
+            <h2 className="font-black mb-3">أقسام الإدارة</h2>
+            <p className="text-sm text-slate-500 mb-4">تفاصيل الأقسام والوظائف المتوفرة حالياً. سجلات المستخدمين والغرف والوكالات موجودة في التبويبات أعلاه.</p>
+            {[
+              { title: 'إدارة المستخدمين', detail: 'عرض الحسابات والبحث عنها، ومنح آيدي مميز للمالك' },
+              { title: 'إدارة الوكالات', detail: 'عرض وكالات المضيفين والشحن والطلبات والانضمامات' },
+              { title: 'إدارة الغرف', detail: 'عرض الغرف والبحث عنها؛ إجراءات الإشراف قيد الربط' },
+              { title: 'الشحن والمحفظة', detail: 'عرض وكالات الشحن؛ تغيير الأرصدة غير مفعّل' },
+              { title: 'الصلاحيات', detail: 'عرض سجلات الصلاحيات؛ تعديل الأدوار غير مفعّل' },
+              { title: 'التقارير', detail: 'سجل التدقيق متاح؛ التقارير المالية التفصيلية قيد الربط' },
+            ].map(item => <div key={item.title} className="border-t border-amber-100 py-3">
+              <p className="font-semibold text-sm">{item.title}</p>
+              <p className="text-slate-500 text-xs mt-1">{item.detail}</p>
+            </div>)}
           </section>
         </>}
       </main>
