@@ -29,8 +29,6 @@ export const AgencyModal: React.FC = () => {
     openAgencyModal,
     setOpenAgencyModal,
     currentUser,
-    joinAgency,
-    updateUserProfile,
     agencyMemberCount,
     setAgencyMemberCount,
   } = useApp();
@@ -107,20 +105,25 @@ export const AgencyModal: React.FC = () => {
     showToast('تغيير صفة الوكالة يتطلب موافقة الإدارة والتحقق من الخادم');
   };
 
-  // User accepts agency invite -> Becomes Host and applies changes immediately!
-  const handleUserAcceptInvite = () => {
+  // The server must approve membership; never grant host status locally.
+  const handleUserAcceptInvite = async () => {
     if (!pendingAgencyInvite) return;
-    sounds.playLevelUp();
-    joinAgency(pendingAgencyInvite.agencyId);
-    updateUserProfile({
-      agencyRole: 'مضيف',
-      isHost: true,
-      agencyName: pendingAgencyInvite.agencyName,
-    });
-    setPendingAgencyInvite(null);
-    setRole('host');
-    setActiveSubView(null);
-    showToast(`🎉 مبارك! تم قبول الانضمام إلى ${pendingAgencyInvite.agencyName} وتم تطبيق دور مضيف معتمد! 🎙️`);
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(pendingAgencyInvite.agencyId)) {
+      showToast('معرّف الوكالة غير صالح؛ لا يمكن اعتماد بيانات تجريبية');
+      return;
+    }
+    try {
+      const { stagingBackend } = await import('../services/stagingBackend');
+      if (!stagingBackend) throw new Error('خادم الوكالات غير متصل');
+      const { error } = await stagingBackend.rpc('phase4_agency_action', {
+        p_action: 'join',
+        p_data: { agency_id: pendingAgencyInvite.agencyId, reason: 'طلب انضمام مقدم من التطبيق' },
+        p_request_id: crypto.randomUUID(),
+      });
+      if (error) throw error;
+      setPendingAgencyInvite(null);
+      showToast('تم إرسال طلب الانضمام للمراجعة. لا تُمنح صفة مضيف قبل موافقة الوكالة.');
+    } catch (error) { showToast(error instanceof Error ? error.message : 'فشل إرسال الطلب'); }
   };
 
   // User rejects agency invite -> Stays as pure No Data

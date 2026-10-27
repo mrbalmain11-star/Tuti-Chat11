@@ -69,7 +69,7 @@ export const ProfileView: React.FC = () => {
     return () => { active = false; };
   }, [currentUser.id]);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
-  const [savingProfile, setSavingProfile] = useState(false);
+  const [, setSavingProfile] = useState(false);
   useEffect(() => { let active = true; void fetchMyProfile().then(async p => { if (!p || !active) return; const avatar = p.avatar_url ? await getMyAvatarUrl(p.avatar_url) : null; if (active) updateUserProfile({ name: p.display_name, nickname: p.display_name, bio: p.bio, ...(avatar ? { avatar } : {}) }); }).catch(console.error); return () => { active = false; }; }, [currentUser.id]);
   const [uploadingCover, setUploadingCover] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
