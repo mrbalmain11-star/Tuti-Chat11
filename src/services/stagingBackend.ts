@@ -46,12 +46,21 @@ function requireBackend() {
 
 export async function fetchRealRooms(): Promise<BackendRoom[]> {
   const client = requireBackend();
-  const { data, error } = await client.from('rooms')
-    .select('id,owner_id,title,is_private,welcome_message,cover_path,background_path')
-    .eq('is_private', false)
-    .order('created_at', { ascending: false });
-  if (error) throw error;
-  return (data ?? []) as BackendRoom[];
+  const { data: auth, error: authError } = await client.auth.getUser();
+  if (authError) throw authError;
+  if (!auth.user) return [];
+  const fields = 'id,owner_id,title,is_private,welcome_message,cover_path,background_path';
+  const [publicRooms, ownedRooms] = await Promise.all([
+    client.from('rooms').select(fields).eq('is_private', false).order('created_at', { ascending: false }),
+    client.from('rooms').select(fields).eq('owner_id', auth.user.id).order('created_at', { ascending: false }),
+  ]);
+  if (publicRooms.error) throw publicRooms.error;
+  if (ownedRooms.error) throw ownedRooms.error;
+  const unique = new Map<string, BackendRoom>();
+  for (const room of [...(ownedRooms.data ?? []), ...(publicRooms.data ?? [])] as BackendRoom[]) {
+    unique.set(room.id, room);
+  }
+  return [...unique.values()];
 }
 
 export async function fetchMyProfile(): Promise<BackendProfile | null> {
