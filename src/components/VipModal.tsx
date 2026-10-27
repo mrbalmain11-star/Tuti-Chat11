@@ -556,11 +556,11 @@ export const VipModal: React.FC = () => {
                   top: '21.5%',
                   left: '79%',
                   transform: 'translate(-50%, -50%)',
-                  width: '16%',
+                  width: '13.5%',
                   aspectRatio: '1 / 1',
                 }}
               >
-                <div className="w-full h-full rounded-full overflow-hidden border-2 border-amber-300 shadow-[0_0_16px_rgba(245,158,11,0.9)] bg-slate-900 relative">
+                <div className="w-full h-full rounded-full overflow-hidden border border-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.7)] bg-slate-900 relative">
                   <img
                     src={
                       currentUser.avatar ||
@@ -577,11 +577,11 @@ export const VipModal: React.FC = () => {
               <div
                 className="absolute z-20 pointer-events-none flex items-center justify-center"
                 style={{
-                  top: '31.2%',
+                  top: '30.5%',
                   left: '79%',
                   transform: 'translate(-50%, -50%)',
-                  width: '24%',
-                  height: '4.8%',
+                  width: '25%',
+                  height: '3.5%',
                   overflow: 'hidden',
                 }}
               >
@@ -595,15 +595,16 @@ export const VipModal: React.FC = () => {
 
               {/* 3. Account signals / Badges arranged below name banner (مثل ما هيه بالحساب) */}
               <div
-                className="absolute z-20 pointer-events-none flex items-center justify-center gap-1 flex-wrap"
+                className="absolute z-20 pointer-events-none flex items-center justify-center gap-0.5 flex-nowrap min-w-0"
                 style={{
-                  top: '36.5%',
+                  top: '35%',
                   left: '79%',
                   transform: 'translate(-50%, -50%)',
                   width: '28%',
+                  maxHeight: '3.5%',
                 }}
               >
-                <VipBadge vipLevel={activeTier.level} size="xs" />
+                <VipBadge vipLevel={activeTier.level} size="xs" className="min-w-0 max-w-[58%]" />
                 <span className="text-[10px] leading-none select-none">{currentUser.countryFlag || '🇮🇶'}</span>
                 <span className="text-[9px] font-bold text-cyan-300">
                   {currentUser.gender === 'أنثى' ? '♀' : '♂'}
