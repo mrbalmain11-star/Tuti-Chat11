@@ -107,7 +107,7 @@ export const SettingsModal: React.FC = () => {
   const [simpleMode, setSimpleMode] = useState(false);
 
   // Cache size: starts at 23.53M matching screenshot
-  const [cacheSize, setCacheSize] = useState('23.53M');
+  const [cacheSize, setCacheSize] = useState('—');
 
   // Broadcast notification text
   const [broadcastNotification, setBroadcastNotification] = useState('إيقاف الإشعارات');
@@ -342,7 +342,7 @@ export const SettingsModal: React.FC = () => {
                 showToast(isRtl ? 'ذاكرة التخزين المؤقت ممسوحة بالفعل' : 'Cache is already clean');
               } else {
                 setCacheSize('0.00M');
-                showToast(isRtl ? 'تم مسح ذاكرة التخزين المؤقت بنجاح (23.53M) ✅' : 'Cache cleared successfully (23.53M) ✅');
+                showToast(isRtl ? 'تمت إعادة ضبط مؤشر التخزين المؤقت؛ لا تتوفر قراءة دقيقة للحجم' : 'Cache indicator reset; exact size is unavailable');
               }
             }}
             className="px-4 py-3.5 flex items-center justify-between hover:bg-slate-50/70 active:bg-slate-100/70 transition cursor-pointer"
@@ -393,7 +393,7 @@ export const SettingsModal: React.FC = () => {
           <div
             onClick={() => {
               sounds.playClick();
-              showToast(isRtl ? 'أنت تستخدم أحدث إصدار متوفر V1.0.66-99 ✨' : 'You are using the latest version V1.0.66-99 ✨');
+              showToast(isRtl ? 'نسخة تجريبية للاختبار' : 'Staging test build');
             }}
             className="px-4 py-3.5 flex items-center justify-between hover:bg-slate-50/70 active:bg-slate-100/70 transition cursor-pointer"
           >
@@ -402,7 +402,7 @@ export const SettingsModal: React.FC = () => {
               <span className="text-[14px] font-bold text-slate-800">{t.appVersion}</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="text-xs text-slate-400 font-sans font-medium">V1.0.66-99</span>
+              <span className="text-xs text-slate-400 font-sans font-medium">Staging Beta</span>
               {isRtl ? <ChevronLeft className="w-4 h-4 text-slate-400 stroke-[2]" /> : <ChevronRight className="w-4 h-4 text-slate-400 stroke-[2]" />}
             </div>
           </div>
