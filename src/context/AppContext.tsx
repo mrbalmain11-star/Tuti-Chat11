@@ -9,7 +9,6 @@ import {
   MicSeat,
   ChatMessage,
 } from '../types';
-import { mockGifts } from '../mockData';
 import { sounds } from '../utils/audio';
 import { stagingBackend, fetchRealRooms, fetchMyProfile, fetchMyWallet, fetchRoomMembers, initializeNativeAuthLinks, getMyAvatarUrl } from '../services/stagingBackend';
 import { mapRoomToUi } from '../services/mapRoomToUi';
@@ -1110,7 +1109,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         openChatThread,
         setOpenChatThread,
         unreadCount,
-        gifts: mockGifts,
+        gifts: [], // Do not display fabricated gift inventory before verified catalog integration.
         sendGift,
         activeGiftAnimation,
         clearGiftAnimation,
