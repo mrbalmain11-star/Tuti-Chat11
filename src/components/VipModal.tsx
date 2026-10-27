@@ -20,6 +20,7 @@ import confetti from 'canvas-confetti';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
 import { VipName } from './VipName';
+import { fetchMyProfile } from '../services/stagingBackend';
 import { VipBadge, VIP_BEAST_METADATA } from './VipBadge';
 
 export interface VipTierData {
@@ -303,6 +304,16 @@ export const VipModal: React.FC = () => {
     setOpenRechargeModal,
     conversations,
   } = useApp();
+
+  const [myPublicId, setMyPublicId] = useState<number | null>(null);
+  useEffect(() => {
+    if (!openVipModal) { setMyPublicId(null); return; }
+    let active = true;
+    void fetchMyProfile().then(profile => {
+      if (active) setMyPublicId(profile?.public_id ?? null);
+    }).catch(error => console.error('Unable to load VIP public ID:', error));
+    return () => { active = false; };
+  }, [openVipModal, currentUser.id]);
 
   // Active VIP tier index (0 to 11 for VIP 1 to SVIP 12)
   const [activeTierIdx, setActiveTierIdx] = useState<number>(() => {
@@ -683,7 +694,8 @@ export const VipModal: React.FC = () => {
                 <button
                   onClick={() => {
                     sounds.playClick();
-                    const copyId = currentUser.id || '313';
+                    const copyId = myPublicId?.toString();
+                    if (!copyId) return;
                     if (navigator.clipboard) {
                       navigator.clipboard.writeText(copyId);
                     }
@@ -694,7 +706,7 @@ export const VipModal: React.FC = () => {
                   title="نسخ المعرف"
                 >
                   <Copy className="w-3 h-3 text-slate-400" />
-                  <span>ID: {currentUser.id || '313'}</span>
+                  <span>ID: {myPublicId ?? '—'}</span>
                 </button>
                 <span className="px-1.5 py-0.2 rounded-full bg-cyan-600/70 text-cyan-200 text-[9px] font-bold">
                   ID
