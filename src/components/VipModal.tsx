@@ -565,10 +565,10 @@ export const VipModal: React.FC = () => {
               <div
                 className="absolute z-20 pointer-events-none"
                 style={{
-                  top: '20.5%',
-                  left: '88%',
+                  top: '22%',
+                  left: '82%',
                   transform: 'translate(-50%, -50%)',
-                  width: '12%',
+                  width: '17.8%',
                   aspectRatio: '1 / 1',
                 }}
               >
@@ -590,17 +590,17 @@ export const VipModal: React.FC = () => {
                 className="absolute z-20 pointer-events-none flex items-center justify-center"
                 style={{
                   top: '30%',
-                  left: '83%',
+                  left: '82%',
                   transform: 'translate(-50%, -50%)',
-                  width: '23%',
-                  height: '3%',
+                  width: '18%',
+                  height: '2.5%',
                   overflow: 'hidden',
                 }}
               >
                 <VipName
                   name={currentUser.nickname || currentUser.name || 'مستخدم'}
                   vipLevel={activeTier.level}
-                  className="text-[8px] sm:text-[9px] leading-none font-black truncate whitespace-nowrap text-center block drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] max-w-full min-w-0 px-0.5"
+                  className="text-[7px] sm:text-[8px] leading-none font-black truncate whitespace-nowrap text-center block drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] max-w-full min-w-0 px-0.5"
                   fallbackColor="text-amber-100"
                 />
               </div>
@@ -610,9 +610,9 @@ export const VipModal: React.FC = () => {
                 className="absolute z-20 pointer-events-none flex items-center justify-center gap-0.5 flex-nowrap min-w-0 overflow-hidden"
                 style={{
                   top: '35%',
-                  left: '83%',
+                  left: '82%',
                   transform: 'translate(-50%, -50%)',
-                  width: '28%',
+                  width: '23%',
                   maxHeight: '3.5%',
                 }}
               >
