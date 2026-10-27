@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { ArrowRight, RefreshCw, ShieldCheck, Users, Building2, Radio, LockKeyhole } from 'lucide-react';
-import { fetchMyAdminAccess, fetchOwnerDashboardCounts, type AdminAccess, type OwnerDashboardCounts } from '../services/stagingBackend';
+import { fetchMyAdminAccess, fetchOwnerDashboardCounts, fetchOwnerDashboardRecent, type OwnerDashboardRecent, type AdminAccess, type OwnerDashboardCounts } from '../services/stagingBackend';
 
 type Props = { onClose: () };
 export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
   const [access, setAccess] = useState<AdminAccess | null>(null);
   const [counts, setCounts] = useState<OwnerDashboardCounts | null>(null);
+  const [recent, setRecent] = useState<OwnerDashboardRecent | null>(null);
+  const [section, setSection] = useState<'users' | 'agencies' | 'rooms'>('users');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const reload = async () => {
-    setLoading(true); setError(null); setAccess(null); setCounts(null);
+    setLoading(true); setError(null); setAccess(null); setCounts(null); setRecent(null);
     try {
       const verified = await fetchMyAdminAccess();
       if (!verified) throw new Error('ليس لديك تصريح لدخول مركز الإدارة');
@@ -37,6 +39,21 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
           </div>
           {access.role === 'owner' && <section className="grid grid-cols-3 gap-3 mb-6">
             {([{label:'المستخدمون',value:counts?.users_count,Icon:Users},{label:'الوكالات',value:counts?.agencies_count,Icon:Building2},{label:'الغرف',value:counts?.rooms_count,Icon:Radio}]).map(({label,value,Icon})=><div key={label} className="rounded-2xl bg-white border border-amber-200 p-3 text-center shadow-sm"><Icon className="mx-auto mb-2 text-amber-700" size={22}/><div className="font-black text-xl">{value ?? '—'}</div><div className="text-xs text-slate-500">{label}</div></div>)}
+          </section>}
+          {access.role === 'owner' && recent && <section className="rounded-2xl border border-amber-200 bg-white p-4 mb-5">
+            <h2 className="font-black mb-3">السجلات الأخيرة</h2>
+            <div className="flex gap-2 mb-4">
+              {([{key:'users',label:'المستخدمون'},{key:'agencies',label:'الوكالات'},{key:'rooms',label:'الغرف'}] as const).map(item =>
+                <button type="button" key={item.key} onClick={() => setSection(item.key)} className={`rounded-xl px-3 py-2 text-sm border ${section === item.key ? 'bg-amber-100 border-amber-400 font-bold' : 'border-slate-200'}`}>{item.label}</button>
+              )}
+            </div>
+            {recent[section].length === 0 ? <p className="text-sm text-slate-500">لا توجد سجلات في هذا القسم.</p> :
+              <div className="divide-y divide-slate-100">{recent[section].map((item,index) =>
+                <div key={item.id ?? String(item.public_id ?? index)} className="py-3 flex justify-between items-center gap-3 text-sm">
+                  <span className="font-semibold break-words">{item.display_name ?? item.name ?? item.title ?? 'بدون اسم'}</span>
+                  <span className="text-slate-500 shrink-0" dir="ltr">{item.public_id ?? item.id?.slice(0,8) ?? '—'}</span>
+                </div>
+              )}</div>}
           </section>}
           <section className="rounded-2xl border border-amber-200 bg-white p-5">
             <h2 className="font-black mb-3">أقسام الإدارة</h2>
