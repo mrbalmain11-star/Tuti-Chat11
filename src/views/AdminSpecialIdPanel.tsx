@@ -3,12 +3,30 @@ import { stagingBackend } from '../services/stagingBackend';
 
 export const AdminSpecialIdPanel: React.FC = () => {
   const [target, setTarget] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [accountLabel, setAccountLabel] = useState('');
   const [specialId, setSpecialId] = useState('');
   const [reason, setReason] = useState('');
   const [confirmation, setConfirmation] = useState(false);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
+  const findAccount = async () => {
+    setError(''); setAccountLabel(''); setTarget(''); setConfirmation(false);
+    if (!stagingBackend) { setError('خادم Staging غير متصل'); return; }
+    const id = Number(accountNumber);
+    if (!Number.isSafeInteger(id) || id < 1) { setError('أدخل رقم الحساب الصحيح'); return; }
+    setBusy(true);
+    try {
+      const { data, error } = await stagingBackend.rpc('owner_find_user_by_public_id', { p_public_id: id });
+      if (error) throw error;
+      const found = Array.isArray(data) ? data[0] : null;
+      if (!found) throw new Error('الحساب غير موجود');
+      setTarget(String(found.user_id));
+      setAccountLabel(String(found.display_name || 'مستخدم') + ' (' + String(found.normal_id) + ')');
+    } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+    finally { setBusy(false); }
+  };
   const grant = async () => {
     setError(''); setNotice('');
     if (!stagingBackend) { setError('خادم Staging غير متصل'); return; }
@@ -30,14 +48,20 @@ export const AdminSpecialIdPanel: React.FC = () => {
   return <section className="rounded-2xl border border-amber-200 bg-white p-4 mb-5">
     <h2 className="font-black text-lg mb-2">منح آيدي مميز</h2>
     <p className="text-sm text-slate-500 mb-4">للمالك فقط. المنح نهائي لحساب موثق ولا يمكن تغيير الآيدي بعد تخصيصه. لا يتم استبدال رقم الحساب الأصلي.</p>
-    <label className="block text-sm mb-1">معرّف المستخدم UUID</label>
-    <input className="w-full border rounded-xl p-3 mb-3" dir="ltr" value={target} onChange={e => setTarget(e.target.value)} placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
+    <label className="block text-sm mb-1">رقم حساب المستخدم الأصلي</label>
+    <div className="flex gap-2 mb-2">
+      <input className="border rounded-xl p-3 flex-1 min-w-0" inputMode="numeric" value={accountNumber} onChange={e => { setAccountNumber(e.target.value); setTarget(''); setAccountLabel(''); setConfirmation(false); }} placeholder="100000" />
+      <button type="button" disabled={busy} onClick={() => void findAccount()} className="border border-amber-500 rounded-xl px-3">تحقق</button>
+    </div>
+    {accountLabel && <p className="text-green-700 text-sm mb-2">الحساب: {accountLabel}</p>}
+    <label className="block text-sm mb-1">معرّف الحساب UUID (تلقائي)</label>
+    <input className="w-full border rounded-xl p-3 mb-3" dir="ltr" value={target} readOnly placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
     <label className="block text-sm mb-1">الآيدي المميز المطلوب</label>
     <input className="w-full border rounded-xl p-3 mb-3" dir="ltr" inputMode="numeric" maxLength={10} value={specialId} onChange={e => setSpecialId(e.target.value)} placeholder="12345" />
     <label className="block text-sm mb-1">سبب المنح (إلزامي للتدقيق)</label>
     <textarea className="w-full border rounded-xl p-3 mb-3" maxLength={300} rows={2} value={reason} onChange={e => setReason(e.target.value)} />
     <label className="flex gap-2 text-sm mb-3"><input type="checkbox" checked={confirmation} onChange={e => setConfirmation(e.target.checked)} /> أؤكد أن هذا الآيدي سيُمنح بشكل نهائي</label>
-    <button type="button" disabled={busy || !confirmation} onClick={() => void grant()} className="rounded-xl bg-amber-700 text-white px-4 py-3 disabled:opacity-40">{busy ? 'جاري التحقق...' : 'منح الآيدي المميز'}</button>
+    <button type="button" disabled={busy || !confirmation || !accountLabel || !target} onClick={() => void grant()} className="rounded-xl bg-amber-700 text-white px-4 py-3 disabled:opacity-40">{busy ? 'جاري التحقق...' : 'منح الآيدي المميز'}</button>
     {error && <p role="alert" className="text-red-700 mt-3">{error}</p>}
     {notice && <p role="status" className="text-green-700 mt-3">{notice}</p>}
   </section>;
