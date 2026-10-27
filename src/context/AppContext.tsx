@@ -289,13 +289,39 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     if (!isLoggedIn) { setRooms([]); return; }
     let active = true;
-    fetchRealRooms().then(rows => {
-      if (active) setRooms(rows.map(mapRoomToUi));
-    }).catch(error => {
-      console.error('Failed to load real staging rooms:', error);
-      if (active) setRooms([]);
-    });
-    return () => { active = false; };
+    let refreshInFlight = false;
+    let refreshPending = false;
+    const refreshRooms = async () => {
+      if (refreshInFlight) { refreshPending = true; return; }
+      refreshInFlight = true;
+      try {
+        do {
+          refreshPending = false;
+          const rows = await fetchRealRooms();
+          if (active) setRooms(rows.map(mapRoomToUi));
+        } while (active && refreshPending);
+      } catch (error) {
+        console.error('Failed to refresh real staging rooms:', error);
+      } finally {
+        refreshInFlight = false;
+      }
+    };
+    void refreshRooms();
+    const client = stagingBackend;
+    const channel = client?.channel('staging-public-rooms')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'rooms' }, () => {
+        void refreshRooms();
+      })
+      .subscribe(status => {
+        if (status === 'SUBSCRIBED') void refreshRooms();
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.error('Rooms realtime subscription:', status);
+        }
+      });
+    return () => {
+      active = false;
+      if (channel && client) void client.removeChannel(channel);
+    };
   }, [isLoggedIn]);
   const [activeRoom, setActiveRoom] = useState<VoiceRoom | null>(null);
   const [isRoomMinimized, setIsRoomMinimized] = useState(false);
