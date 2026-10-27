@@ -59,6 +59,7 @@ import { MicSeat, UserProfile } from '../types';
 import { sounds } from '../utils/audio';
 import { VipName } from './VipName';
 import { VipBadge } from './VipBadge';
+import { fetchMyProfile } from '../services/stagingBackend';
 
 const PRESET_BACKGROUNDS = [
   {
@@ -145,6 +146,15 @@ export const VoiceRoomModal: React.FC = () => {
   const [showDecorationsModal, setShowDecorationsModal] = useState<'mic' | 'frame' | 'title' | null>(null);
 
   // Mic Seat Profile Popup (Image 1 for own account, Image 2 for other users)
+  const [myPublicId, setMyPublicId] = useState<number | null>(null);
+  useEffect(() => {
+    let active = true;
+    void fetchMyProfile().then(profile => {
+      if (active) setMyPublicId(profile?.public_id ?? null);
+    }).catch(error => console.error('Room public ID unavailable:', error));
+    return () => { active = false; };
+  }, [currentUser.id]);
+
   const [selectedMicUser, setSelectedMicUser] = useState<{ seatNumber: number; user: UserProfile } | null>(null);
   const [selectedEmptySeat, setSelectedEmptySeat] = useState<number | null>(null);
   const [followedUsers, setFollowedUsers] = useState<Record<string, boolean>>({});
@@ -485,7 +495,7 @@ export const VoiceRoomModal: React.FC = () => {
     setSelectedEmptySeat(seatNum);
   };
 
-  const hostAccountId = activeRoom.hostId || activeRoom.id || '5716905';
+  const hostAccountId = activeRoom.hostId === currentUser.id ? (myPublicId?.toString() ?? '—') : '—';
 
   return (
     <div
@@ -637,7 +647,7 @@ export const VoiceRoomModal: React.FC = () => {
                   if (isOwner) {
                     setShowRoomInfoModal(true);
                   } else {
-                    handleCopyId(hostAccountId);
+                    if (hostAccountId !== '—') handleCopyId(hostAccountId);
                   }
                 }}
                 className={`flex items-center gap-2 bg-[#211540]/85 backdrop-blur-md border rounded-full py-1 px-3 shadow-lg cursor-pointer transition active:scale-98 ${
@@ -2025,7 +2035,8 @@ export const VoiceRoomModal: React.FC = () => {
               <div
                 onClick={() => {
                   sounds.playClick();
-                  const copyId = selectedMicUser.user.id || '816357955';
+                  const copyId = selectedMicUser.user.id === currentUser.id ? myPublicId?.toString() : undefined;
+                  if (!copyId) return;
                   if (navigator.clipboard) {
                     navigator.clipboard.writeText(copyId);
                   }
@@ -2035,7 +2046,7 @@ export const VoiceRoomModal: React.FC = () => {
                 title="انقر لنسخ المعرف"
               >
                 <Copy className="w-3.5 h-3.5 text-slate-400" />
-                <span className="font-mono font-bold tracking-wider">{selectedMicUser.user.id || '816357955'}</span>
+                <span className="font-mono font-bold tracking-wider">{selectedMicUser.user.id === currentUser.id ? (myPublicId ?? '—') : '—'}</span>
                 <span className="px-1.5 py-0.2 rounded-full bg-cyan-600 text-white font-mono text-[10px] font-bold">
                   ID
                 </span>
