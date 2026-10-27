@@ -18,10 +18,6 @@ import {
   Trash2,
   Mail,
   Globe,
-  FolderCode,
-  FileCode,
-  Download,
-  Copy,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
@@ -118,7 +114,7 @@ export const SettingsModal: React.FC = () => {
 
   // Modal sub-dialogs
   const [activeDialog, setActiveDialog] = useState<
-    'account' | 'permissions' | 'userAgreement' | 'privacy' | 'deleteAccount' | 'logout' | 'network' | 'appFiles' | null
+    'account' | 'permissions' | 'userAgreement' | 'privacy' | 'deleteAccount' | 'logout' | 'network' | null
   >(null);
   const [isFixingNetwork, setIsFixingNetwork] = useState(false);
   const [agreementLang, setAgreementLang] = useState<'both' | 'ar' | 'en'>('ar');
@@ -411,32 +407,7 @@ export const SettingsModal: React.FC = () => {
             </div>
           </div>
 
-          {/* 13. ملفات التطبيق والمشروع */}
-          <div
-            onClick={() => {
-              sounds.playClick();
-              setActiveDialog('appFiles');
-            }}
-            className="px-4 py-3.5 flex items-center justify-between hover:bg-slate-50/70 active:bg-slate-100/70 transition cursor-pointer"
-          >
-            <div className="flex items-center gap-3">
-              <FolderCode className="w-5 h-5 text-amber-600 stroke-[1.8]" />
-              <div className="flex flex-col">
-                <span className="text-[14px] font-bold text-slate-800">
-                  {isRtl ? 'ملفات التطبيق والمشروع' : 'App Source & Files'}
-                </span>
-                <span className="text-[10px] text-slate-400 font-medium">
-                  {isRtl ? 'استعراض هيكل ومسارات كافة ملفات الكود' : 'View project structure & file paths'}
-                </span>
-              </div>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-amber-700 font-mono font-bold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
-                45+ ملف
-              </span>
-              {isRtl ? <ChevronLeft className="w-4 h-4 text-slate-400 stroke-[2]" /> : <ChevronRight className="w-4 h-4 text-slate-400 stroke-[2]" />}
-            </div>
-          </div>
+
         </div>
 
         {/* ========================================================================= */}
@@ -1051,217 +1022,7 @@ export const SettingsModal: React.FC = () => {
       )}
 
       {/* 8. App Files & Source Code Dialog */}
-      {activeDialog === 'appFiles' && (
-        <div className="fixed inset-0 z-60 bg-black/60 backdrop-blur-2xs flex items-center justify-center p-3 sm:p-4">
-          <div className="w-full max-w-lg bg-white rounded-3xl p-5 shadow-2xl flex flex-col max-h-[88vh] animate-in zoom-in-95 duration-200">
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3 shrink-0">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600">
-                  <FolderCode className="w-5 h-5 stroke-[2.2]" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-900 leading-tight">
-                    {isRtl ? 'ملفات وسورس كود التطبيق' : 'App Source Files & Architecture'}
-                  </h3>
-                  <p className="text-[11px] text-slate-500">
-                    {isRtl ? 'مشروع توتي شات المتكامل | React 19 + TypeScript + Vite' : 'Toti Chat Complete Project'}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => {
-                  sounds.playClick();
-                  setActiveDialog(null);
-                }}
-                className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-200 transition cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
 
-            {/* Quick Stats Banner */}
-            <div className="grid grid-cols-3 gap-2 my-3 shrink-0">
-              <div className="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-2.5 text-center">
-                <span className="block text-[10px] text-amber-700 font-bold">{isRtl ? 'إجمالي الأسطر' : 'Total Lines'}</span>
-                <span className="text-sm font-black font-mono text-amber-900">18,900+</span>
-              </div>
-              <div className="bg-emerald-50/80 border border-emerald-200/80 rounded-2xl p-2.5 text-center">
-                <span className="block text-[10px] text-emerald-700 font-bold">{isRtl ? 'ملفات الكود' : 'Code Files'}</span>
-                <span className="text-sm font-black font-mono text-emerald-900">45+ ملف</span>
-              </div>
-              <div className="bg-blue-50/80 border border-blue-200/80 rounded-2xl p-2.5 text-center">
-                <span className="block text-[10px] text-blue-700 font-bold">{isRtl ? 'حالة البناء' : 'Build Status'}</span>
-                <span className="text-xs font-black text-blue-900">ناجح 100% ✅</span>
-              </div>
-            </div>
-
-            {/* Scrollable File List */}
-            <div className="flex-1 overflow-y-auto no-scrollbar space-y-4 pr-1 text-xs">
-              {/* Category 1: الواجهات الرئيسية */}
-              <div>
-                <h4 className="font-bold text-slate-800 text-[13px] mb-2 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                  {isRtl ? 'واجهات التطبيق الأساسية (Views)' : 'Main Views'}
-                </h4>
-                <div className="space-y-1.5">
-                  {[
-                    { path: 'src/views/ProfileView.tsx', desc: 'الملف الشخصي، بطاقة الوكالة الفاخرة، نسخ المعرف، إحصائيات الحساب' },
-                    { path: 'src/views/HomeView.tsx', desc: 'الصفحة الرئيسية واستعراض الغرف الصوتية والفلاتر' },
-                    { path: 'src/views/MessagesView.tsx', desc: 'نظام الرسائل والإشعارات الرسمية والدردشات الخاصة' },
-                  ].map((f) => (
-                    <div
-                      key={f.path}
-                      className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 hover:bg-amber-50/40 transition flex items-center justify-between gap-2"
-                    >
-                      <div className="min-w-0">
-                        <div className="font-mono font-bold text-slate-800 text-[11px] truncate" dir="ltr">{f.path}</div>
-                        <div className="text-[10px] text-slate-500 truncate">{f.desc}</div>
-                      </div>
-                      <button
-                        onClick={() => {
-                          sounds.playClick();
-                          navigator.clipboard.writeText(f.path);
-                          showToast(`تم نسخ المسار: ${f.path}`);
-                        }}
-                        className="shrink-0 p-1.5 rounded-lg bg-white border border-slate-200 hover:border-amber-300 text-slate-600 hover:text-amber-700 transition"
-                        title="نسخ المسار"
-                      >
-                        <Copy className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Category 2: المكونات الملكية والغرف */}
-              <div>
-                <h4 className="font-bold text-slate-800 text-[13px] mb-2 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                  {isRtl ? 'المكونات الملكية والغرف الصوتية' : 'Voice Rooms & Royal Features'}
-                </h4>
-                <div className="space-y-1.5">
-                  {[
-                    { path: 'src/components/VoiceRoomModal.tsx', desc: 'الغرفة الصوتية الملكية، المايكات، المقاعد، الهدايا، البث الصوتي' },
-                    { path: 'src/components/AgencyModal.tsx', desc: 'نظام الوكالة والمضيفين والتحكم في عدد الأعضاء' },
-                    { path: 'src/components/AgencyProfileCard.tsx', desc: 'بطاقة ومستطيل الوكالة التفاعلية داخل الملف الشخصي' },
-                    { path: 'src/components/InternalProfileModal.tsx', desc: 'نافذة البروفايل الداخلية الشاملة بالمعرف وصورة الوكيل' },
-                    { path: 'src/components/SettingsModal.tsx', desc: 'إعدادات الحساب مع ميزة منع الذهاب للغرفة حصرياً لـ VIP 6+' },
-                    { path: 'src/components/VipModal.tsx', desc: 'مركز مستويات VIP والمزايا الملكية المخصصة' },
-                    { path: 'src/components/GiftStoreModal.tsx', desc: 'متجر الهدايا، شحن العملات، وإرسال الهدايا للغرف' },
-                    { path: 'src/components/StorageModal.tsx', desc: 'حقيبة التخزين، إطارات الحسابات، سيارات الدخول' },
-                    { path: 'src/components/WealthLeaderboardModal.tsx', desc: 'لوحة الشرف وتصنيفات الثراء والجاذبية' },
-                  ].map((f) => (
-                    <div
-                      key={f.path}
-                      className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 hover:bg-emerald-50/40 transition flex items-center justify-between gap-2"
-                    >
-                      <div className="min-w-0">
-                        <div className="font-mono font-bold text-slate-800 text-[11px] truncate" dir="ltr">{f.path}</div>
-                        <div className="text-[10px] text-slate-500 truncate">{f.desc}</div>
-                      </div>
-                      <button
-                        onClick={() => {
-                          sounds.playClick();
-                          navigator.clipboard.writeText(f.path);
-                          showToast(`تم نسخ المسار: ${f.path}`);
-                        }}
-                        className="shrink-0 p-1.5 rounded-lg bg-white border border-slate-200 hover:border-emerald-300 text-slate-600 hover:text-emerald-700 transition"
-                        title="نسخ المسار"
-                      >
-                        <Copy className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Category 3: الحالة والترجمة والبيانات */}
-              <div>
-                <h4 className="font-bold text-slate-800 text-[13px] mb-2 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                  {isRtl ? 'إدارة البيانات والحالة العامة' : 'State & Data'}
-                </h4>
-                <div className="space-y-1.5">
-                  {[
-                    { path: 'src/context/AppContext.tsx', desc: 'السياق المركزي للحالة، الحساب الحالي، عدد الأعضاء، المزامنة' },
-                    { path: 'src/i18n/translations.ts', desc: 'نظام اللغات والترجمة الشاملة (العربية والإنجليزية)' },
-                    { path: 'src/mockData.ts', desc: 'البيانات الافتراضية، الغرف، المستخدمين، الوكالات' },
-                    { path: 'src/types.ts', desc: 'تعريفات TypeScript للغرف والمستخدمين والوكالات' },
-                    { path: 'src/utils/audio.ts', desc: 'المؤثرات الصوتية الملكية التفاعلية' },
-                  ].map((f) => (
-                    <div
-                      key={f.path}
-                      className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 hover:bg-blue-50/40 transition flex items-center justify-between gap-2"
-                    >
-                      <div className="min-w-0">
-                        <div className="font-mono font-bold text-slate-800 text-[11px] truncate" dir="ltr">{f.path}</div>
-                        <div className="text-[10px] text-slate-500 truncate">{f.desc}</div>
-                      </div>
-                      <button
-                        onClick={() => {
-                          sounds.playClick();
-                          navigator.clipboard.writeText(f.path);
-                          showToast(`تم نسخ المسار: ${f.path}`);
-                        }}
-                        className="shrink-0 p-1.5 rounded-lg bg-white border border-slate-200 hover:border-blue-300 text-slate-600 hover:text-blue-700 transition"
-                        title="نسخ المسار"
-                      >
-                        <Copy className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Bottom Actions */}
-            <div className="pt-3 border-t border-slate-100 flex items-center gap-2 shrink-0">
-              <button
-                onClick={() => {
-                  sounds.playClick();
-                  const allFilesText = [
-                    '# ملفات تطبيق توتي شات - Toti Chat',
-                    '## الواجهات الرئيسية (Views):',
-                    '- src/views/ProfileView.tsx (الملف الشخصي وبطاقة الوكالة)',
-                    '- src/views/HomeView.tsx (الرئيسية والغرف الصوتية)',
-                    '- src/views/MessagesView.tsx (الرسائل والإشعارات)',
-                    '## المكونات (Components):',
-                    '- src/components/VoiceRoomModal.tsx (الغرفة الصوتية الملكية)',
-                    '- src/components/AgencyModal.tsx (إدارة الوكالة والأعضاء)',
-                    '- src/components/AgencyProfileCard.tsx (مستطيل الوكالة)',
-                    '- src/components/InternalProfileModal.tsx (بروفايل المستخدم)',
-                    '- src/components/SettingsModal.tsx (الإعدادات وقفل VIP 6+)',
-                    '- src/components/VipModal.tsx (مستويات VIP)',
-                    '- src/components/GiftStoreModal.tsx (متجر الهدايا)',
-                    '- src/components/StorageModal.tsx (حقيبة التخزين)',
-                    '## الحالة والبيانات:',
-                    '- src/context/AppContext.tsx (الحالة المركزية)',
-                    '- src/i18n/translations.ts (الترجمات)',
-                    '- src/types.ts (الأنواع)',
-                    '- src/mockData.ts (البيانات)',
-                  ].join('\n');
-                  navigator.clipboard.writeText(allFilesText);
-                  showToast(isRtl ? 'تم نسخ قائمة ملفات المشروع إلى الحافظة 📋' : 'Project files copied to clipboard 📋');
-                }}
-                className="flex-1 py-2.5 rounded-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer shadow-xs active:scale-95"
-              >
-                <Copy className="w-3.5 h-3.5" />
-                <span>{isRtl ? 'نسخ قائمة ملفات التطبيق' : 'Copy Files List'}</span>
-              </button>
-              <button
-                onClick={() => {
-                  sounds.playClick();
-                  setActiveDialog(null);
-                }}
-                className="px-5 py-2.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition cursor-pointer"
-              >
-                {isRtl ? 'إغلاق' : 'Close'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
