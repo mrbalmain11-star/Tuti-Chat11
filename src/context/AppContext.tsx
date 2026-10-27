@@ -332,6 +332,38 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setMyMicMuted(false);
   }, [isLoggedIn]);
   const [selectedCountry, setSelectedCountry] = useState<string>('شائع 🔥');
+  const [realGifts, setRealGifts] = useState<GiftItem[]>([]);
+  useEffect(() => {
+    if (!isLoggedIn || !stagingBackend) {
+      setRealGifts([]);
+      return;
+    }
+    let active = true;
+    void (async () => {
+      const { data, error } = await stagingBackend.from('gift_catalog')
+        .select('id,name,price,icon,category_id,animation_type,rarity')
+        .eq('is_active', true).order('price', { ascending: true });
+      if (error) throw error;
+      const allowedAnimation = new Set<GiftItem['animationType']>([
+        'lion', 'mosque', 'sword', 'samurai', 'crown', 'car', 'diamond', 'rose',
+      ]);
+      const gifts = (data ?? []).map(g => ({
+        id: String(g.id), name: String(g.name), price: Number(g.price),
+        icon: String(g.icon),
+        category: (g.category_id === 'luck' ? 'حظ' : g.category_id === 'cp' ? 'CP' : 'هدية') as GiftItem['category'],
+        animationType: (allowedAnimation.has(g.animation_type as GiftItem['animationType'])
+          ? g.animation_type : 'rose') as GiftItem['animationType'],
+        rarity: (['legendary','epic','rare','common'].includes(g.rarity ?? '')
+          ? g.rarity : 'common') as GiftItem['rarity'],
+      }));
+      if (active) setRealGifts(gifts);
+    })().catch(error => {
+      console.error('Gift catalog load failed:', error);
+      if (active) setRealGifts([]);
+    });
+    return () => { active = false; };
+  }, [isLoggedIn]);
+
   const [conversations, setConversations] = useState<DirectConversation[]>([]);
   const [openChatThread, setOpenChatThread] = useState<DirectConversation | null>(null);
   useEffect(() => {
@@ -1109,7 +1141,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         openChatThread,
         setOpenChatThread,
         unreadCount,
-        gifts: [], // Do not display fabricated gift inventory before verified catalog integration.
+        gifts: realGifts,
         sendGift,
         activeGiftAnimation,
         clearGiftAnimation,
