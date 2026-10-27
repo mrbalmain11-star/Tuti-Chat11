@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ArrowRight, RefreshCw, ShieldCheck, Users, Building2, Radio, LockKeyhole } from 'lucide-react';
 import { fetchMyAdminAccess, fetchOwnerDashboardCounts, fetchOwnerDashboardRecent, type OwnerDashboardRecent, type AdminAccess, type OwnerDashboardCounts } from '../services/stagingBackend';
 
-type Props = { onClose: () };
+type Props = { onClose: () => void };
 export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
   const [access, setAccess] = useState<AdminAccess | null>(null);
   const [counts, setCounts] = useState<OwnerDashboardCounts | null>(null);
