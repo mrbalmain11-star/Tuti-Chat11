@@ -22,15 +22,14 @@ export const AgencyProfileCard: React.FC<AgencyProfileCardProps> = ({
   onClick,
   className = '',
 }) => {
-  const { currentUser, setOpenAgencyModal, agencyMemberCount } = useApp();
+  const { setOpenAgencyModal } = useApp();
 
-  const displayAvatar =
-    avatar ||
-    currentUser.avatar ||
-    'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=500&auto=format&fit=crop&q=80';
-  const displayAgencyName = agencyName || currentUser.agencyName || 'وكالة العراقين';
-  const displayAgencyId = agencyId || currentUser.id || '2365555';
-  const displayMemberCount = memberCount ?? agencyMemberCount ?? 1;
+  // Never substitute a user's UUID or a stock agency for missing backend data.
+  if (!agencyName || !agencyId || !/^\\d{6}$/.test(agencyId)) return null;
+  const displayAvatar = avatar;
+  const displayAgencyName = agencyName;
+  const displayAgencyId = agencyId;
+  const displayMemberCount = memberCount ?? 0;
 
   const handleClick = () => {
     sounds.playClick();
@@ -52,11 +51,7 @@ export const AgencyProfileCard: React.FC<AgencyProfileCardProps> = ({
       <div className="flex items-center gap-3 min-w-0 flex-1">
         {/* Squircle Avatar with rounded corners */}
         <div className="w-[58px] h-[58px] rounded-[18px] overflow-hidden shrink-0 shadow-xs border border-emerald-700/20 bg-slate-900">
-          <img
-            src={displayAvatar}
-            alt={displayAgencyName}
-            className="w-full h-full object-cover"
-          />
+          {displayAvatar ? <img src={displayAvatar} alt={displayAgencyName} className="w-full h-full object-cover" /> : <Users className="w-full h-full p-3 text-emerald-200" />}
         </div>
 
         {/* Agency Information Columns */}
