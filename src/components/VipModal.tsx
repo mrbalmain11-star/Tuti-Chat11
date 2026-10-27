@@ -572,15 +572,27 @@ export const VipModal: React.FC = () => {
                   aspectRatio: '1 / 1',
                 }}
               >
-                <div className="w-full h-full rounded-full overflow-hidden border border-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.7)] bg-slate-900 relative">
-                  <img
-                    src={
-                      currentUser.avatar ||
-                      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&fit=crop&q=80'
-                    }
-                    alt={currentUser.name}
-                    className="w-full h-full object-cover"
-                  />
+                <div className="w-full h-full rounded-full overflow-hidden border border-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.7)] bg-slate-900 relative isolate">
+                  {currentUser.avatar ? (
+                    <img
+                      key={currentUser.avatar}
+                      src={currentUser.avatar}
+                      alt={currentUser.name}
+                      className="w-full h-full object-cover"
+                      onLoad={(event) => {
+                        const image = event.currentTarget;
+                        // A full phone screenshot is not a profile portrait.
+                        // Never display the entire profile screen inside the VIP frame.
+                        if (image.naturalWidth > 0 && image.naturalHeight / image.naturalWidth > 1.45) {
+                          image.style.display = 'none';
+                        }
+                      }}
+                      onError={(event) => { event.currentTarget.style.display = 'none'; }}
+                    />
+                  ) : null}
+                  <span className="absolute inset-0 -z-10 flex items-center justify-center text-amber-100 font-black text-lg bg-gradient-to-br from-amber-900 to-slate-950">
+                    {(currentUser.nickname || currentUser.name || '؟').trim().charAt(0)}
+                  </span>
                   <div className="absolute inset-0 bg-gradient-to-tr from-black/20 via-transparent to-white/20 pointer-events-none" />
                 </div>
               </div>
