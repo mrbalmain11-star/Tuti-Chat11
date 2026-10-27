@@ -23,6 +23,7 @@ import { CharmBadge, WealthBadge, GameBadge } from '../components/LevelBadgeIcon
 import { VipName } from '../components/VipName';
 import { VipBadge } from '../components/VipBadge';
 import { fetchMyProfile, fetchMyAdminAccess, type AdminAccess } from '../services/stagingBackend';
+import { AdminCenterView } from './AdminCenterView';
 
 export const ProfileView: React.FC = () => {
   const {
@@ -170,18 +171,7 @@ export const ProfileView: React.FC = () => {
       className="min-h-screen pb-28 font-['Cairo',sans-serif] bg-gradient-to-b from-[#FDFBF7] via-[#FAF6ED] to-[#F5EFE0] text-slate-800 select-none relative overflow-x-hidden"
       dir={isRtl ? 'rtl' : 'ltr'}
     >
-      {adminPanelOpen && adminAccess && (
-        <div className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-5" role="dialog" aria-modal="true" aria-label="مركز الإدارة">
-          <div className="bg-white rounded-2xl p-5 w-full max-w-md shadow-2xl" dir="rtl">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-slate-900">مركز الإدارة</h2>
-              <button type="button" aria-label="إغلاق" onClick={() => setAdminPanelOpen(false)}><X className="w-5 h-5" /></button>
-            </div>
-            <p className="text-sm text-slate-700">الصلاحية الحالية: {adminAccess.role === 'owner' ? 'المالك' : adminAccess.role}</p>
-            <p className="text-xs text-slate-500 mt-3">العمليات الإدارية قيد الربط والتحقق من الخادم. لا توجد بيانات تجريبية أو إجراءات وهمية هنا.</p>
-          </div>
-        </div>
-      )}
+      {adminPanelOpen && adminAccess && <AdminCenterView onClose={() => setAdminPanelOpen(false)} />}
       {/* Toast Alert */}
       {toastMessage && (
         <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-white/95 border border-amber-400 text-slate-900 text-xs font-bold px-5 py-2.5 rounded-full shadow-xl flex items-center gap-2 backdrop-blur-md animate-in fade-in slide-in-from-top-3">
