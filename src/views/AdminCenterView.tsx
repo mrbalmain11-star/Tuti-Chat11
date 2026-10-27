@@ -62,9 +62,8 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
           {access.role === 'owner' && <AdminSpecialIdPanel />}
           {access.role === 'owner' && <AdminBannersPanel />}
           <section className="rounded-2xl border border-amber-200 bg-white p-5">
-            <h2 className="font-black mb-3">أقسام الإدارة</h2>
-            <p className="text-sm text-slate-500 mb-4">الإحصائيات أعلاه حقيقية. العمليات التي تحتاج موافقات وتدقيقاً لم تُفعّل بعد.</p>
-            {['إدارة المستخدمين','إدارة الوكالات','إدارة الغرف','الشحن والمحفظة','الصلاحيات','التقارير'].map(label=><div key={label} className="border-t border-amber-100 py-3 flex items-center justify-between text-sm"><span>{label}</span><span className="text-slate-400 flex items-center gap-1"><LockKeyhole size={14}/> قيد الربط الآمن</span></div>)}
+            <h2 className="font-black mb-2">مركز العمليات</h2>
+            <p className="text-sm text-slate-600">استخدم تبويبات إدارة التطبيق أعلاه لاستعراض المستخدمين والغرف والوكالات والصلاحيات وسجل التدقيق. عمليات الحظر والشحن وتعديل الصلاحيات لن تُفعّل إلا بعد ربطها بإجراءات خادم آمنة.</p>
           </section>
         </>}
       </main>
