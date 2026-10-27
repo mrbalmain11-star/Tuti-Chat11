@@ -1059,26 +1059,7 @@ export const AgencyModal: React.FC = () => {
                     className="flex-1 bg-transparent text-xs text-white placeholder:text-slate-500 focus:outline-none text-right font-mono"
                   />
                   <button
-                    onClick={() => {
-                      if (!newMemberId.trim()) return;
-                      sounds.playLevelUp();
-                      setMembersList((prev) => {
-                        const next = [
-                          ...prev,
-                          {
-                            id: newMemberId.trim(),
-                            name: `مضيف جديد (#${newMemberId.trim()})`,
-                            role: 'مضيف معتمد 🎙️',
-                            score: '0 🪙',
-                            avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
-                          },
-                        ];
-                        setAgencyMemberCount(next.length);
-                        return next;
-                      });
-                      showToast(`تم إرسال دعوة انضمام وإضافة ID: ${newMemberId} بنجاح! 📨`);
-                      setNewMemberId('');
-                    }}
+                    onClick={() => showToast('إرسال دعوات المضيفين غير متاح حتى ربطه بالخادم والتحقق من صلاحيات الوكالة')}
                     className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 font-black text-xs shadow-xs active:scale-95 transition cursor-pointer"
                   >
                     إرسال دعوة
