@@ -938,8 +938,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
-  const updateRoom = (_roomId: string, _updates: Partial<VoiceRoom>): void => {
-    alert('تعديل الغرفة غير متاح حتى ربطه بصلاحيات الخادم.');
+  const updateRoom = (roomId: string, updates: Partial<VoiceRoom>): void => {
+    if (!stagingBackend) {
+      alert('الاتصال بالخادم غير مهيأ.');
+      return;
+    }
+    const existing = rooms.find(room => room.id === roomId);
+    if (!existing || existing.hostId !== currentUser.id) {
+      alert('لا تملك صلاحية تعديل هذه الغرفة.');
+      return;
+    }
+    const title = updates.title ?? existing.title;
+    const welcome = updates.announcement ?? existing.announcement ?? '';
+    void stagingBackend.rpc('staging_update_my_room', {
+      p_room_id: roomId, p_title: title, p_welcome_message: welcome,
+    }).then(async ({ data, error }) => {
+      if (error || data !== true) throw error ?? new Error('Update not confirmed');
+      const rows = await fetchRealRooms();
+      setRooms(rows.map(mapRoomToUi));
+      setActiveRoom(prev => prev?.id === roomId ? { ...prev, title, announcement: welcome } : prev);
+    }).catch(error => {
+      console.error('Room update failed:', error);
+      alert('تعذر تعديل الغرفة من الخادم.');
+    });
   };
 
   const changeRoomBackground = (_roomId: string, _backgroundUrl: string): boolean => {
