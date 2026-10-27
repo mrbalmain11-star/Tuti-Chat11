@@ -935,15 +935,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       p_to: recipientId, p_text: body, p_nonce: requestId,
     }).then(async ({ data, error }) => {
       if (error || !data) throw error ?? new Error('Message not confirmed');
-      setConversations(prev => prev.map(c => c.userId === recipientId ? {
-        ...c,
-        lastMessage: body,
-        lastTime: new Date().toISOString(),
-        messages: [...c.messages, {
-          id: String(data), text: body, sender: 'me' as const,
-          timestamp: new Date().toISOString(),
-        }],
-      } : c));
+      const sentAt = new Date().toISOString();
+      setConversations(prev => {
+        const existing = prev.find(c => c.userId === recipientId);
+        if (!existing) {
+          const name = openChatThread?.userId === recipientId ? openChatThread.userName : 'مستخدم';
+          return [{
+            id: recipientId, userId: recipientId, userName: name,
+            userAvatar: '', isOnline: false, lastMessage: body,
+            lastTime: sentAt, unreadCount: 0,
+            messages: [{ id: String(data), text: body, sender: 'me' as const, timestamp: sentAt }],
+          }, ...prev];
+        }
+        return prev.map(c => c.userId === recipientId ? {
+          ...c, lastMessage: body, lastTime: sentAt,
+          messages: c.messages.some(m => m.id === String(data))
+            ? c.messages : [...c.messages, {
+              id: String(data), text: body, sender: 'me' as const, timestamp: sentAt,
+            }],
+        } : c);
+      });
     }).catch(error => {
       console.error('Direct message send failed:', error);
       alert('تعذر إرسال الرسالة من الخادم.');
