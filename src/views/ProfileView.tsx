@@ -69,6 +69,7 @@ export const ProfileView: React.FC = () => {
     return () => { active = false; };
   }, [currentUser.id]);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
   const [, setSavingProfile] = useState(false);
   useEffect(() => { let active = true; void fetchMyProfile().then(async p => { if (!p || !active) return; const avatar = p.avatar_url ? await getMyAvatarUrl(p.avatar_url) : null; if (active) updateUserProfile({ name: p.display_name, nickname: p.display_name, bio: p.bio, ...(avatar ? { avatar } : {}) }); }).catch(console.error); return () => { active = false; }; }, [currentUser.id]);
   const [uploadingCover, setUploadingCover] = useState(false);
@@ -101,12 +102,14 @@ export const ProfileView: React.FC = () => {
       if (!ctx) throw new Error('تعذر تجهيز الصورة');
       ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
       const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob(b => b ? resolve(b) : reject(new Error('تعذر تحويل الصورة')), 'image/webp', 0.82));
+      setProfileError(null);
       const path = await uploadMyAvatar(blob);
       const signed = await getMyAvatarUrl(path);
       updateUserProfile({ avatar: signed });
       setToastMessage('تم حفظ الصورة في حسابك بنجاح');
     } catch (error) {
-      setToastMessage(error instanceof Error ? error.message : 'تعذر حفظ الصورة على الخادم');
+      setProfileError('الصورة: ' + (error instanceof Error ? error.message : String(error)));
+      setToastMessage('تعذر حفظ الصورة. راجع تفاصيل الخطأ أدناه.');
     } finally {
       setUploadingAvatar(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -120,8 +123,9 @@ export const ProfileView: React.FC = () => {
     try {
       setUploadingCover(true);
       const dataUrl = await processImageFile(file);
-      updateUserProfile({ cover: dataUrl });
-      setToastMessage('تم تغيير غلاف الملف الشخصي بنجاح! 🖼️');
+      void dataUrl;
+      setProfileError('الغلاف: حفظ صورة الغلاف على الخادم غير متاح في هذه النسخة. لم يتم تغيير الغلاف.');
+      setToastMessage('تعذر حفظ الغلاف على الخادم');
       setTimeout(() => setToastMessage(null), 3000);
     } catch {
       setToastMessage('تعذر رفع صورة الغلاف، يرجى المحاولة مرة أخرى');
@@ -138,11 +142,12 @@ export const ProfileView: React.FC = () => {
     if (name.length < 2 || name.length > 40) { setToastMessage('الاسم يجب أن يكون من 2 إلى 40 حرفاً'); return; }
     setSavingProfile(true);
     try {
+      setProfileError(null);
       const saved = await saveMyProfile({ display_name: name });
       updateUserProfile({ name: saved.display_name, nickname: saved.display_name });
       setShowEditNameModal(false);
       setToastMessage('تم حفظ الاسم على الخادم');
-    } catch (error) { setToastMessage(error instanceof Error ? error.message : 'فشل حفظ الاسم'); }
+    } catch (error) { setProfileError('الاسم: ' + (error instanceof Error ? error.message : String(error))); setToastMessage('تعذر حفظ الاسم. راجع تفاصيل الخطأ أدناه.'); }
     finally { setSavingProfile(false); }
   };
 
@@ -150,11 +155,12 @@ export const ProfileView: React.FC = () => {
     e.preventDefault();
     setSavingProfile(true);
     try {
+      setProfileError(null);
       const saved = await saveMyProfile({ bio: editBioInput.trim().slice(0,150) });
       updateUserProfile({ bio: saved.bio });
       setShowEditBioModal(false);
       setToastMessage('تم حفظ السيرة على الخادم');
-    } catch (error) { setToastMessage(error instanceof Error ? error.message : 'فشل حفظ السيرة'); }
+    } catch (error) { setProfileError('السيرة: ' + (error instanceof Error ? error.message : String(error))); setToastMessage('تعذر حفظ السيرة. راجع تفاصيل الخطأ أدناه.'); }
     finally { setSavingProfile(false); }
   };
 
@@ -199,6 +205,13 @@ export const ProfileView: React.FC = () => {
         </div>
       )}
 
+      {profileError && (
+        <div role="alert" className="mx-4 mt-3 p-3 rounded-xl bg-red-50 border border-red-300 text-red-900 text-sm break-words" dir="rtl">
+          <p className="font-bold">تفاصيل خطأ حفظ الملف الشخصي</p>
+          <p className="mt-1 select-text">{profileError}</p>
+          <button type="button" className="mt-2 underline" onClick={() => setProfileError(null)}>إغلاق</button>
+        </div>
+      )}
       {/* Hidden File Input for Phone Gallery */}
       <input
         ref={fileInputRef}
