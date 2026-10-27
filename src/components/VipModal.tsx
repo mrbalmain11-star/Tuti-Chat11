@@ -523,7 +523,7 @@ export const VipModal: React.FC = () => {
 
             {/* Poster Card Artwork Image from Uploads */}
             <div
-              className="relative w-full max-w-[340px] rounded-3xl overflow-hidden border-2 shadow-[0_0_30px_rgba(0,0,0,0.9)] bg-black"
+              className="relative w-full max-w-[340px] mx-auto rounded-3xl overflow-hidden border-2 shadow-[0_0_30px_rgba(0,0,0,0.9)] bg-black"
               style={{ borderColor: activeTier.themeColor }}
             >
               <img
@@ -558,6 +558,7 @@ export const VipModal: React.FC = () => {
                   transform: 'translate(-50%, -50%)',
                   width: '13.5%',
                   aspectRatio: '1 / 1',
+                  maxWidth: '13.5%',
                 }}
               >
                 <div className="w-full h-full rounded-full overflow-hidden border border-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.7)] bg-slate-900 relative">
@@ -595,7 +596,7 @@ export const VipModal: React.FC = () => {
 
               {/* 3. Account signals / Badges arranged below name banner (مثل ما هيه بالحساب) */}
               <div
-                className="absolute z-20 pointer-events-none flex items-center justify-center gap-0.5 flex-nowrap min-w-0"
+                className="absolute z-20 pointer-events-none flex items-center justify-center gap-0.5 flex-nowrap min-w-0 overflow-hidden"
                 style={{
                   top: '35%',
                   left: '79%',
@@ -604,7 +605,7 @@ export const VipModal: React.FC = () => {
                   maxHeight: '3.5%',
                 }}
               >
-                <VipBadge vipLevel={activeTier.level} size="xs" className="min-w-0 max-w-[58%]" />
+                <VipBadge vipLevel={activeTier.level} size="xs" className="min-w-0 max-w-[58%] overflow-hidden" />
                 <span className="text-[10px] leading-none select-none">{currentUser.countryFlag || '🇮🇶'}</span>
                 <span className="text-[9px] font-bold text-cyan-300">
                   {currentUser.gender === 'أنثى' ? '♀' : '♂'}
