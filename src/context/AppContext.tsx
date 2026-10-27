@@ -9,14 +9,7 @@ import {
   MicSeat,
   ChatMessage,
 } from '../types';
-import {
-  initialCurrentUser,
-  mockRooms,
-  mockGifts,
-  mockConversations,
-  mockAgencies,
-  initialTransactions,
-} from '../mockData';
+import { mockGifts } from '../mockData';
 import { sounds } from '../utils/audio';
 import { stagingBackend, fetchRealRooms, fetchMyProfile, fetchMyWallet, fetchRoomMembers, initializeNativeAuthLinks } from '../services/stagingBackend';
 import { mapRoomToUi } from '../services/mapRoomToUi';
@@ -26,7 +19,7 @@ import { fetchRealRoomMessages } from '../services/roomMessageReads';
 import { fetchRoomVisualMembers } from '../services/roomVisualMembers';
 import { reserveSeat, joinRoomMembership, leaveRoomMembership, sendRealRoomMessage, setMyRoomMute } from '../services/roomMembershipRpc';
 import { Language, Translations, translations } from '../i18n/translations';
-import { StorageItem, BagItem, initialBagItems } from '../data/storageItems';
+import { StorageItem, BagItem } from '../data/storageItems';
 import { getLevelFromExp, calculateCumulativeExpForLevel } from '../utils/levelUtils';
 
 interface GiftAnimationPayload {
@@ -366,13 +359,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const parsed: BagItem[] = JSON.parse(saved);
         return parsed.map((item) => (item.category === 'frames' ? { ...item, isEquipped: false } : item));
       } catch {
-        return initialBagItems.map((item) => (item.category === 'frames' ? { ...item, isEquipped: false } : item));
+        return [];
       }
     }
-    return initialBagItems.map((item) => (item.category === 'frames' ? { ...item, isEquipped: false } : item));
+    return [];
   });
   const [equippedFrame, setEquippedFrame] = useState<string>('');
-  const [equippedBubble, setEquippedBubble] = useState<string>('bubble-royal-gold');
+  const [equippedBubble, setEquippedBubble] = useState<string>('');
   const [equippedEntrance, setEquippedEntrance] = useState<string>('entrance-imperial-caravan');
   const [equippedMount, setEquippedMount] = useState<string>('mount-rolls-royce');
 
