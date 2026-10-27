@@ -1113,15 +1113,7 @@ export const AgencyModal: React.FC = () => {
                         </button>
                         {idx !== 0 && (
                           <button
-                            onClick={() => {
-                              sounds.playClick();
-                              setMembersList((prev) => {
-                                const next = prev.filter((_, i) => i !== idx);
-                                setAgencyMemberCount(next.length);
-                                return next;
-                              });
-                              showToast('إزالة أعضاء الوكالة تتطلب تنفيذ العملية على الخادم أولاً');
-                            }}
+                            onClick={() => showToast('إزالة أعضاء الوكالة غير متاحة حتى ربطها بالخادم')}
                             className="w-7 h-7 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 flex items-center justify-center cursor-pointer transition active:scale-95"
                             title="إزالة العضو"
                           >
