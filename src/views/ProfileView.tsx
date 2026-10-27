@@ -119,6 +119,7 @@ export const ProfileView: React.FC = () => {
       ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
       const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob(b => b ? resolve(b) : reject(new Error('تعذر تحويل الصورة')), 'image/webp', 0.82));
       setProfileError(null);
+      setToastMessage(null);
       const path = await uploadMyAvatar(blob);
       // Invalidate in-flight profile reads before applying the saved image.
       ++profileRevision.current;
@@ -227,7 +228,7 @@ export const ProfileView: React.FC = () => {
         <div role="alert" className="mx-4 mt-3 p-3 rounded-xl bg-red-50 border border-red-300 text-red-900 text-sm break-words" dir="rtl">
           <p className="font-bold">تفاصيل خطأ حفظ الملف الشخصي</p>
           <p className="mt-1 select-text">{profileError}</p>
-          <button type="button" className="mt-2 underline" onClick={() => setProfileError(null)}>إغلاق</button>
+          <button type="button" className="mt-2 underline" onClick={() => { setProfileError(null); setToastMessage(null); }}>إغلاق</button>
         </div>
       )}
       {/* Hidden File Input for Phone Gallery */}
