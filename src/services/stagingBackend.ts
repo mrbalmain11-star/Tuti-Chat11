@@ -196,3 +196,18 @@ export async function verifySignedInProfile(): Promise<{ userId: string; publicI
   if (!profile || profile.id !== user.id || !Number.isInteger(profile.public_id)) return null;
   return { userId: user.id, publicId: profile.public_id };
 }
+
+export type AdminAccess = { role: string; permissions: string[] };
+
+/** Server-authorized access for the signed-in user only. Fail closed on any error. */
+export async function fetchMyAdminAccess(): Promise<AdminAccess | null> {
+  const client = requireBackend();
+  const { data: { user }, error: authError } = await client.auth.getUser();
+  if (authError) throw authError;
+  if (!user) return null;
+  const { data, error } = await client.schema('phase3').rpc('my_admin_access');
+  if (error) throw error;
+  const access = Array.isArray(data) ? data[0] : null;
+  if (!access || typeof access.role !== 'string' || !Array.isArray(access.permissions)) return null;
+  return { role: access.role, permissions: access.permissions };
+}
