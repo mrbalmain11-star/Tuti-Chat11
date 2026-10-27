@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { AdminBannersPanel } from './AdminBannersPanel';
 import { ArrowRight, RefreshCw, ShieldCheck, Users, Building2, Radio, LockKeyhole } from 'lucide-react';
 import { fetchMyAdminAccess, fetchOwnerDashboardCounts, fetchOwnerDashboardRecent, type OwnerDashboardRecent, type AdminAccess, type OwnerDashboardCounts } from '../services/stagingBackend';
 
@@ -16,7 +17,7 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
       const verified = await fetchMyAdminAccess();
       if (!verified) throw new Error('ليس لديك تصريح لدخول مركز الإدارة');
       setAccess(verified);
-      if (verified.role === 'owner') setCounts(await fetchOwnerDashboardCounts());
+      if (verified.role === 'owner') { const [totals, records] = await Promise.all([fetchOwnerDashboardCounts(), fetchOwnerDashboardRecent()]); setCounts(totals); setRecent(records); }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'تعذر الاتصال بالخادم');
     } finally { setLoading(false); }
@@ -55,6 +56,7 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
                 </div>
               )}</div>}
           </section>}
+          {access.role === 'owner' && <AdminBannersPanel />}
           <section className="rounded-2xl border border-amber-200 bg-white p-5">
             <h2 className="font-black mb-3">أقسام الإدارة</h2>
             <p className="text-sm text-slate-500 mb-4">الإحصائيات أعلاه حقيقية. العمليات التي تحتاج موافقات وتدقيقاً لم تُفعّل بعد.</p>
