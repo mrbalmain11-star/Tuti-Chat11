@@ -1104,7 +1104,7 @@ export const AgencyModal: React.FC = () => {
                         <button
                           onClick={() => {
                             sounds.playClick();
-                            showToast(`تم إرسال رسالة تنبيه للمضيف ${m.name}`);
+                            showToast('مراسلة المضيفين غير متاحة حتى ربطها بخدمة الرسائل الحقيقية');
                           }}
                           className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 flex items-center justify-center cursor-pointer transition active:scale-95"
                           title="مراسلة"
@@ -1120,7 +1120,7 @@ export const AgencyModal: React.FC = () => {
                                 setAgencyMemberCount(next.length);
                                 return next;
                               });
-                              showToast(`تم إزالة العضو ${m.name}`);
+                              showToast('إزالة أعضاء الوكالة تتطلب تنفيذ العملية على الخادم أولاً');
                             }}
                             className="w-7 h-7 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 flex items-center justify-center cursor-pointer transition active:scale-95"
                             title="إزالة العضو"
@@ -1174,7 +1174,7 @@ export const AgencyModal: React.FC = () => {
                   <button
                     onClick={() => {
                       sounds.playLevelUp();
-                      showToast('تم تقديم طلب سحب الأرباح إلى المحفظة الإلكترونية بنجاح! 💳');
+                      showToast('سحب الأرباح غير متاح حتى تفعيل الخدمة والتحقق من الرصيد على الخادم');
                     }}
                     className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black text-xs shadow-md active:scale-95 transition mt-2 cursor-pointer"
                   >
