@@ -1,3 +1,4 @@
+/* V002 staging APK build marker: vvv2 — original VIP layout preserved. */
 import React, { useState, useEffect } from 'react';
 import {
   X,
