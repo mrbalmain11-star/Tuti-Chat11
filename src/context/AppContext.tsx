@@ -336,17 +336,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [conversations, setConversations] = useState<DirectConversation[]>([]);
   const [openChatThread, setOpenChatThread] = useState<DirectConversation | null>(null);
   const [agencies, setAgencies] = useState<Agency[]>([]);
-  const [followedRoomHosts, setFollowedRoomHosts] = useState<Set<string>>(() => {
-    const saved = safeStorage.getItem('toti_followed_room_hosts_v2');
-    if (saved) {
-      try {
-        const arr = JSON.parse(saved);
-        if (Array.isArray(arr)) return new Set(arr);
-      } catch (_) {}
+  const [followedRoomHosts, setFollowedRoomHosts] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    safeStorage.removeItem('toti_followed_room_hosts_v2');
+    if (!isLoggedIn || !stagingBackend) {
+      setFollowedRoomHosts(new Set());
+      return;
     }
-    // Default followed rooms/hosts so "ملكي" displays followed rooms right away
-    return new Set<string>();
-  });
+    let active = true;
+    void stagingBackend.rpc('staging_my_followed_ids').then(({ data, error }) => {
+      if (error) throw error;
+      if (active) setFollowedRoomHosts(new Set((data ?? []) as string[]));
+    }).catch(error => {
+      console.error('Failed to load follows:', error);
+    });
+    return () => { active = false; };
+  }, [isLoggedIn]);
   // Financial history must originate from the server ledger, not localStorage.
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   useEffect(() => {
