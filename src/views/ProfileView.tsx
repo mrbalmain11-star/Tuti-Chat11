@@ -22,7 +22,7 @@ import { processImageFile } from '../utils/imageUpload';
 import { CharmBadge, WealthBadge, GameBadge } from '../components/LevelBadgeIcons';
 import { VipName } from '../components/VipName';
 import { VipBadge } from '../components/VipBadge';
-import { fetchMyProfile, fetchMyAdminAccess, type AdminAccess } from '../services/stagingBackend';
+import { fetchMyProfile, fetchMyAdminAccess, saveMyProfile, uploadMyAvatar, getMyAvatarUrl, type AdminAccess } from '../services/stagingBackend';
 import { AdminCenterView } from './AdminCenterView';
 
 export const ProfileView: React.FC = () => {
@@ -69,6 +69,8 @@ export const ProfileView: React.FC = () => {
     return () => { active = false; };
   }, [currentUser.id]);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  useEffect(() => { let active = true; void fetchMyProfile().then(async p => { if (!p || !active) return; const avatar = p.avatar_url ? await getMyAvatarUrl(p.avatar_url) : null; if (active) updateUserProfile({ name: p.display_name, nickname: p.display_name, bio: p.bio, ...(avatar ? { avatar } : {}) }); }).catch(console.error); return () => { active = false; }; }, [currentUser.id]);
   const [uploadingCover, setUploadingCover] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -84,17 +86,27 @@ export const ProfileView: React.FC = () => {
   const handleAvatarFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     try {
       setUploadingAvatar(true);
+      if (!file.type.startsWith('image/')) throw new Error('اختر ملف صورة');
       const dataUrl = await processImageFile(file);
-      updateUserProfile({ avatar: dataUrl });
-      sounds.playCoin();
-      setToastMessage('تم تغيير الصورة الشخصية بنجاح! 📸');
-      setTimeout(() => setToastMessage(null), 3000);
-    } catch {
-      setToastMessage('تعذر رفع الصورة، يرجى المحاولة مرة أخرى');
-      setTimeout(() => setToastMessage(null), 3000);
+      const image = new Image();
+      image.src = dataUrl;
+      await image.decode();
+      const canvas = document.createElement('canvas');
+      const ratio = Math.min(1, 512 / Math.max(image.width, image.height));
+      canvas.width = Math.max(1, Math.round(image.width * ratio));
+      canvas.height = Math.max(1, Math.round(image.height * ratio));
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('تعذر تجهيز الصورة');
+      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+      const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob(b => b ? resolve(b) : reject(new Error('تعذر تحويل الصورة')), 'image/webp', 0.82));
+      const path = await uploadMyAvatar(blob);
+      const signed = await getMyAvatarUrl(path);
+      updateUserProfile({ avatar: signed });
+      setToastMessage('تم حفظ الصورة في حسابك بنجاح');
+    } catch (error) {
+      setToastMessage(error instanceof Error ? error.message : 'تعذر حفظ الصورة على الخادم');
     } finally {
       setUploadingAvatar(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -120,23 +132,30 @@ export const ProfileView: React.FC = () => {
     }
   };
 
-  const handleSaveName = (e: React.FormEvent) => {
+  const handleSaveName = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editNameInput.trim()) return;
-    sounds.playCoin();
-    updateUserProfile({ name: editNameInput.trim(), nickname: editNameInput.trim() });
-    setShowEditNameModal(false);
-    setToastMessage('تم تغيير الاسم بنجاح! ✏️');
-    setTimeout(() => setToastMessage(null), 3000);
+    const name = editNameInput.trim();
+    if (name.length < 2 || name.length > 40) { setToastMessage('الاسم يجب أن يكون من 2 إلى 40 حرفاً'); return; }
+    setSavingProfile(true);
+    try {
+      const saved = await saveMyProfile({ display_name: name });
+      updateUserProfile({ name: saved.display_name, nickname: saved.display_name });
+      setShowEditNameModal(false);
+      setToastMessage('تم حفظ الاسم على الخادم');
+    } catch (error) { setToastMessage(error instanceof Error ? error.message : 'فشل حفظ الاسم'); }
+    finally { setSavingProfile(false); }
   };
 
-  const handleSaveBio = (e: React.FormEvent) => {
+  const handleSaveBio = async (e: React.FormEvent) => {
     e.preventDefault();
-    sounds.playCoin();
-    updateUserProfile({ bio: editBioInput.trim() });
-    setShowEditBioModal(false);
-    setToastMessage('تم حفظ السيرة الذاتية بنجاح! 📝');
-    setTimeout(() => setToastMessage(null), 3000);
+    setSavingProfile(true);
+    try {
+      const saved = await saveMyProfile({ bio: editBioInput.trim().slice(0,150) });
+      updateUserProfile({ bio: saved.bio });
+      setShowEditBioModal(false);
+      setToastMessage('تم حفظ السيرة على الخادم');
+    } catch (error) { setToastMessage(error instanceof Error ? error.message : 'فشل حفظ السيرة'); }
+    finally { setSavingProfile(false); }
   };
 
   const handleCopyId = () => {

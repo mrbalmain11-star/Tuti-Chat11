@@ -240,3 +240,42 @@ export async function fetchOwnerDashboardRecent(): Promise<OwnerDashboardRecent>
   if (!Array.isArray(recent.users) || !Array.isArray(recent.agencies) || !Array.isArray(recent.rooms)) throw new Error('Invalid owner dashboard response');
   return { users: recent.users as AdminRecentItem[], agencies: recent.agencies as AdminRecentItem[], rooms: recent.rooms as AdminRecentItem[] };
 }
+
+/** Persist only editable profile fields for the authenticated account. */
+export async function saveMyProfile(changes: { display_name?: string; bio?: string; avatar_url?: string | null }): Promise<BackendProfile> {
+  const client = requireBackend();
+  const { data: { user }, error: authError } = await client.auth.getUser();
+  if (authError) throw authError;
+  if (!user) throw new Error('يرجى تسجيل الدخول مجدداً');
+  const { data, error } = await client.from('profiles')
+    .update(changes).eq('id', user.id)
+    .select('id,public_id,display_name,bio,avatar_url').single();
+  if (error) throw error;
+  return data as BackendProfile;
+}
+
+/** Storage policy requires UUID/UUID.webp under the authenticated user's folder. */
+export async function uploadMyAvatar(file: Blob): Promise<string> {
+  const client = requireBackend();
+  const { data: { user }, error: authError } = await client.auth.getUser();
+  if (authError) throw authError;
+  if (!user) throw new Error('يرجى تسجيل الدخول مجدداً');
+  if (file.size > 2 * 1024 * 1024 || file.type !== 'image/webp') throw new Error('حجم الصورة أو نوعها غير مدعوم');
+  const path = user.id + '/' + crypto.randomUUID() + '.webp';
+  const { error: uploadError } = await client.storage.from('profile-avatars').upload(path, file, { contentType: 'image/webp', upsert: false });
+  if (uploadError) throw uploadError;
+  try {
+    await saveMyProfile({ avatar_url: path });
+  } catch (error) {
+    await client.storage.from('profile-avatars').remove([path]);
+    throw error;
+  }
+  return path;
+}
+
+export async function getMyAvatarUrl(path: string): Promise<string> {
+  const client = requireBackend();
+  const { data, error } = await client.storage.from('profile-avatars').createSignedUrl(path, 3600);
+  if (error) throw error;
+  return data.signedUrl;
+}
