@@ -335,6 +335,55 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [selectedCountry, setSelectedCountry] = useState<string>('شائع 🔥');
   const [conversations, setConversations] = useState<DirectConversation[]>([]);
   const [openChatThread, setOpenChatThread] = useState<DirectConversation | null>(null);
+  useEffect(() => {
+    if (!isLoggedIn || !stagingBackend || !currentUser.id) {
+      setConversations([]);
+      return;
+    }
+    const client = stagingBackend;
+    let active = true;
+    const loadDirectMessages = async () => {
+      const { data: auth, error: authError } = await client.auth.getUser();
+      if (authError || auth.user?.id !== currentUser.id) return;
+      const { data, error } = await client.from('direct_messages')
+        .select('id,sender_id,recipient_id,body,created_at,read_at')
+        .or(`sender_id.eq.${auth.user.id},recipient_id.eq.${auth.user.id}`)
+        .order('created_at', { ascending: false }).limit(200);
+      if (error) throw error;
+      const messages = data ?? [];
+      const ids = [...new Set(messages.map(m => m.sender_id === auth.user!.id ? m.recipient_id : m.sender_id))];
+      const { data: profiles, error: profilesError } = ids.length
+        ? await client.from('profiles').select('id,display_name,avatar_url').in('id', ids)
+        : { data: [], error: null };
+      if (profilesError) throw profilesError;
+      const names = new Map((profiles ?? []).map(p => [p.id, p]));
+      const threads = new Map<string, DirectConversation>();
+      for (const m of messages) {
+        const peerId = m.sender_id === auth.user.id ? m.recipient_id : m.sender_id;
+        const peer = names.get(peerId);
+        if (!threads.has(peerId)) threads.set(peerId, {
+          id: peerId, userId: peerId, userName: peer?.display_name ?? 'مستخدم',
+          userAvatar: '', isOnline: false, lastMessage: m.body,
+          lastTime: m.created_at, unreadCount: 0, messages: [],
+        });
+        const thread = threads.get(peerId)!;
+        thread.messages.unshift({
+          id: String(m.id), text: m.body,
+          sender: m.sender_id === auth.user.id ? 'me' : 'them',
+          timestamp: m.created_at,
+        });
+        if (m.recipient_id === auth.user.id && !m.read_at) thread.unreadCount++;
+      }
+      if (active) setConversations([...threads.values()]);
+    };
+    void loadDirectMessages().catch(error => console.error('DM history load failed:', error));
+    const channel = client.channel('staging-my-direct-messages')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'direct_messages' }, () => {
+        void loadDirectMessages().catch(error => console.error('DM refresh failed:', error));
+      }).subscribe();
+    return () => { active = false; void client.removeChannel(channel); };
+  }, [isLoggedIn, currentUser.id]);
+
   const [agencies, setAgencies] = useState<Agency[]>([]);
   const [followedRoomHosts, setFollowedRoomHosts] = useState<Set<string>>(new Set());
   useEffect(() => {
