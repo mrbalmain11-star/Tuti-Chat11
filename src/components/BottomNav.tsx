@@ -7,17 +7,17 @@ export const BottomNav: React.FC = () => {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40 max-w-md mx-auto font-['Cairo',sans-serif] bg-white border-t border-slate-200/70 select-none shadow-[0_-2px_10px_rgba(0,0,0,0.03)]"
+      className="fixed bottom-0 left-0 right-0 z-40 w-full max-w-md mx-auto font-['Cairo',sans-serif] bg-white border-t border-slate-200/70 select-none shadow-[0_-2px_10px_rgba(0,0,0,0.03)]"
       dir={isRtl ? 'rtl' : 'ltr'}
     >
-      <div className="pt-2 pb-1 px-8 flex items-center justify-between">
+      <div className="pt-2 pb-1 px-3 sm:px-8 flex items-center justify-between gap-2">
         {/* 1. الصفحة الرئيسية */}
         <button
           onClick={() => {
             sounds.playClick();
             setActiveTab('home');
           }}
-          className="flex flex-col items-center justify-center transition-all active:scale-95 cursor-pointer group w-20"
+          className="flex flex-col items-center justify-center transition-all active:scale-95 cursor-pointer group min-w-0 flex-1"
           title={t.navHome}
         >
           <div className="w-9 h-8 flex items-center justify-center relative">
@@ -53,7 +53,7 @@ export const BottomNav: React.FC = () => {
             sounds.playClick();
             setActiveTab('messages');
           }}
-          className="relative flex flex-col items-center justify-center transition-all active:scale-95 cursor-pointer group w-20"
+          className="relative flex flex-col items-center justify-center transition-all active:scale-95 cursor-pointer group min-w-0 flex-1"
           title={t.navMessages}
         >
           <div className="w-9 h-8 flex items-center justify-center relative">
@@ -103,7 +103,7 @@ export const BottomNav: React.FC = () => {
             sounds.playClick();
             setActiveTab('profile');
           }}
-          className="flex flex-col items-center justify-center transition-all active:scale-95 cursor-pointer group w-20"
+          className="flex flex-col items-center justify-center transition-all active:scale-95 cursor-pointer group min-w-0 flex-1"
           title={t.navProfile}
         >
           <div className="w-9 h-8 flex items-center justify-center relative">

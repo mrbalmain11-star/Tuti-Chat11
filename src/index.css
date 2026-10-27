@@ -307,3 +307,13 @@
 .animate-falcon-glow {
   animation: falcon-breathing 4s ease-in-out infinite;
 }
+
+/* Android viewport and low-power accessibility safeguards */
+html, body, #root { min-width: 0; max-width: 100%; }
+img, svg { max-width: 100%; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
+@media (max-width: 360px) {
+  .font-\\['Cairo'\\,sans-serif\\] { letter-spacing: normal; }
+}

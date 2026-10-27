@@ -423,7 +423,7 @@ export const VipModal: React.FC = () => {
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 select-none overflow-hidden font-['Cairo',sans-serif]"
       dir="rtl"
     >
-      <div className="relative w-full max-w-md h-full flex flex-col justify-between overflow-hidden shadow-2xl bg-[#030107] text-white">
+      <div className="relative w-full max-w-md h-full min-h-0 flex flex-col justify-between overflow-hidden shadow-2xl bg-[#030107] text-white">
         {/* ========================================================================= */}
         {/* CELESTIAL BACKGROUND WITH SPOTLIGHT                                       */}
         {/* ========================================================================= */}
@@ -509,7 +509,7 @@ export const VipModal: React.FC = () => {
         {/* ========================================================================= */}
         {/* SCROLLABLE MAIN CONTENT                                                  */}
         {/* ========================================================================= */}
-        <div className="relative z-10 flex-1 overflow-y-auto no-scrollbar px-4 pb-28 space-y-4 pt-2">
+        <div className="relative z-10 flex-1 min-h-0 overflow-y-auto overscroll-contain no-scrollbar px-3 sm:px-4 pb-28 space-y-4 pt-2">
           {/* VIP POSTER CARD SHOWCASE WITH NAVIGATION ARROWS */}
           <div className="relative flex items-center justify-center">
             {/* Previous Tier Arrow (<) */}
