@@ -269,7 +269,7 @@ export async function uploadMyAvatar(file: Blob): Promise<string> {
   if (file.size > 2 * 1024 * 1024 || file.type !== 'image/webp') throw new Error('حجم الصورة أو نوعها غير مدعوم');
   const path = user.id + '/' + crypto.randomUUID() + '.webp';
   const { error: uploadError } = await client.storage.from('profile-avatars').upload(path, file, { contentType: 'image/webp', upsert: false });
-  if (uploadError) throw uploadError;
+  if (uploadError) throw new Error(`رفع الصورة فشل (${uploadError.statusCode ?? 'unknown'}): ${uploadError.message}`);
   try {
     await saveMyProfile({ avatar_url: path });
   } catch (error) {
@@ -282,6 +282,6 @@ export async function uploadMyAvatar(file: Blob): Promise<string> {
 export async function getMyAvatarUrl(path: string): Promise<string> {
   const client = requireBackend();
   const { data, error } = await client.storage.from('profile-avatars').createSignedUrl(path, 3600);
-  if (error) throw error;
+  if (error) throw new Error(`تعذر قراءة الصورة المحفوظة: ${error.message}`);
   return data.signedUrl;
 }
