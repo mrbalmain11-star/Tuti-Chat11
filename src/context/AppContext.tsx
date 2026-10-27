@@ -400,7 +400,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return;
     }
     let active = true;
-    void stagingBackend.rpc('staging_my_followed_ids').then(({ data, error }) => {
+    void Promise.resolve(stagingBackend.rpc('staging_my_followed_ids')).then(({ data, error }) => {
       if (error) throw error;
       if (active) setFollowedRoomHosts(new Set((data ?? []) as string[]));
     }).catch(error => {
@@ -938,9 +938,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return;
     }
     const requestId = crypto.randomUUID();
-    void stagingBackend.rpc('staging_send_dm', {
+    void Promise.resolve(stagingBackend.rpc('staging_send_dm', {
       p_to: recipientId, p_text: body, p_nonce: requestId,
-    }).then(async ({ data, error }) => {
+    })).then(async ({ data, error }) => {
       if (error || !data) throw error ?? new Error('Message not confirmed');
       const sentAt = new Date().toISOString();
       setConversations(prev => {
@@ -995,7 +995,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const toggleFollowHost = (hostId: string): void => {
     if (!stagingBackend || !hostId || hostId === currentUser.id) return;
-    void stagingBackend.rpc('staging_toggle_follow', { p_followed_id: hostId })
+    void Promise.resolve(stagingBackend.rpc('staging_toggle_follow', { p_followed_id: hostId }))
       .then(({ data, error }) => {
         if (error || typeof data !== 'boolean') throw error ?? new Error('Follow not confirmed');
         setFollowedRoomHosts(prev => {
@@ -1029,7 +1029,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       alert('الاتصال بالخادم غير مهيأ.');
       return;
     }
-    void stagingBackend.rpc('staging_create_my_room', { p_title: trimmed }).then(async ({ data, error }) => {
+    void Promise.resolve(stagingBackend.rpc('staging_create_my_room', { p_title: trimmed })).then(async ({ data, error }) => {
       if (error || typeof data !== 'string') throw error ?? new Error('Room creation not confirmed');
       const rows = await fetchRealRooms();
       setRooms(rows.map(mapRoomToUi));
@@ -1051,9 +1051,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
     const title = updates.title ?? existing.title;
     const welcome = updates.announcement ?? existing.announcement ?? '';
-    void stagingBackend.rpc('staging_update_my_room', {
+    void Promise.resolve(stagingBackend.rpc('staging_update_my_room', {
       p_room_id: roomId, p_title: title, p_welcome_message: welcome,
-    }).then(async ({ data, error }) => {
+    })).then(async ({ data, error }) => {
       if (error || data !== true) throw error ?? new Error('Update not confirmed');
       const rows = await fetchRealRooms();
       setRooms(rows.map(mapRoomToUi));
