@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Crown,
   Heart,
@@ -15,6 +15,7 @@ import {
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
 import { VipName } from './VipName';
+import { fetchMyProfile } from '../services/stagingBackend';
 
 export const RoyalRoomsView: React.FC = () => {
   const {
@@ -27,6 +28,16 @@ export const RoyalRoomsView: React.FC = () => {
     setOpenCreateRoomModal,
     setHomeSubTab,
   } = useApp();
+
+  const [publicId, setPublicId] = useState<number | null>(null);
+  useEffect(() => {
+    let mounted = true;
+    setPublicId(null);
+    void fetchMyProfile().then(profile => {
+      if (mounted) setPublicId(profile?.public_id ?? null);
+    }).catch(error => console.error('Unable to load room owner public ID:', error));
+    return () => { mounted = false; };
+  }, [currentUser.id]);
 
   const [copiedId, setCopiedId] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -51,12 +62,13 @@ export const RoyalRoomsView: React.FC = () => {
   const handleCopyId = (e: React.MouseEvent) => {
     e.stopPropagation();
     sounds.playClick();
-    const idToCopy = myRoom?.hostId || currentUser.id || '313';
+    const idToCopy = publicId?.toString();
+    if (!idToCopy) { showToast('المعرف العام غير متوفر حالياً'); return; }
     if (navigator.clipboard) {
       navigator.clipboard.writeText(idToCopy);
     }
     setCopiedId(true);
-    showToast('تم نسخ معرف الغرفة بنجاح ✓');
+    showToast('تم نسخ المعرف العام للحساب بنجاح ✓');
     setTimeout(() => setCopiedId(false), 2000);
   };
 
@@ -175,7 +187,7 @@ export const RoyalRoomsView: React.FC = () => {
                   className="flex items-center gap-1 text-[10px] text-amber-200/90 hover:text-amber-100 bg-white/10 hover:bg-white/15 px-2 py-0.5 rounded-full font-mono border border-amber-300/20 transition active:scale-95"
                   title="نسخ معرف الغرفة"
                 >
-                  <span>ID: {myRoom?.hostId || currentUser.id || '313'}</span>
+                  <span>ID: {publicId ?? '—'}</span>
                   {copiedId ? (
                     <Check className="w-3 h-3 text-emerald-400" />
                   ) : (
