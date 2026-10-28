@@ -1108,6 +1108,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     })).then(async ({ data, error }) => {
       if (error || !data) throw error ?? new Error('Message not confirmed');
       const sentAt = new Date().toISOString();
+      setOpenChatThread(prev => prev?.userId === recipientId ? {
+        ...prev,
+        lastMessage: body,
+        lastTime: sentAt,
+        messages: prev.messages.some(m => m.id === String(data)) ? prev.messages : [...prev.messages, {
+          id: String(data), text: body, sender: 'me' as const, timestamp: sentAt,
+        }],
+      } : prev);
       setConversations(prev => {
         const existing = prev.find(c => c.userId === recipientId);
         if (!existing) {
