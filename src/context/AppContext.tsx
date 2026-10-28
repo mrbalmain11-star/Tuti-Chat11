@@ -57,7 +57,7 @@ interface AppContextType {
   setOpenChatThread: (conv: DirectConversation | null) => void;
   unreadCount: number;
   gifts: GiftItem[];
-  sendGift: (gift: GiftItem, receiver: { id: string; name: string; avatar?: string }, count?: number) => boolean;
+  sendGift: (gift: GiftItem, receiver: { id: string; name: string; avatar?: string }, count?: number) => Promise<boolean>;
   activeGiftAnimation: GiftAnimationPayload | null;
   clearGiftAnimation: () => void;
   agencies: Agency[];
@@ -1011,14 +1011,37 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
-  // Until the server-side atomic gift RPC is wired, never debit balances locally.
-  const sendGift = (
-    _gift: GiftItem,
-    _receiver: { id: string; name: string; avatar?: string },
-    _count: number = 1
-  ): boolean => {
-    alert('إرسال الهدايا غير متاح حتى اكتمال الربط الآمن بالخادم.');
-    return false;
+  // The server performs atomic balance deduction and idempotent gift delivery.
+  const sendGift = async (
+    gift: GiftItem,
+    receiver: { id: string; name: string; avatar?: string },
+    count: number = 1
+  ): Promise<boolean> => {
+    if (!stagingBackend || !activeRoom || !gift || !receiver?.id ||
+        ![1, 7, 17, 77, 777].includes(count) || !Number.isSafeInteger(gift.price) || gift.price < 0) {
+      alert('الهدية أو المستلم أو الغرفة غير صالح.');
+      return false;
+    }
+    try {
+      const { data, error } = await stagingBackend.rpc('phase3_send_gift', {
+        p_room_id: activeRoom.id,
+        p_recipient_id: receiver.id,
+        p_gift_id: gift.id,
+        p_quantity: count,
+        p_request_id: crypto.randomUUID(),
+        p_expected_price: gift.price,
+      });
+      if (error) throw error;
+      if (!data?.id) throw new Error('Gift event not confirmed');
+      setActiveGiftAnimation({ gift, sender: currentUser.name, receiver: receiver.name, count });
+      const wallet = await fetchMyWallet().catch(() => null);
+      if (wallet) setCurrentUser(prev => ({ ...prev, coins: wallet.coins, diamonds: wallet.diamonds }));
+      return true;
+    } catch (error) {
+      console.error('Gift delivery failed:', error);
+      alert('فشل إرسال الهدية أو رفض الخادم العملية. لم يتم تأكيد الخصم.');
+      return false;
+    }
   };
 
   const clearGiftAnimation = () => {
