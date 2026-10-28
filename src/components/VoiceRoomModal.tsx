@@ -344,17 +344,37 @@ export const VoiceRoomModal: React.FC = () => {
     }
   };
 
-  const handleKickMember = (userId: string, userName: string) => {
-    if (!activeRoom) return;
-    if (!isOwner && !isModerator) {
-      sounds.playError();
-      showToast('🔒 طرد الأعضاء متاح للإدارة والمشرفين فقط');
+  const handleVoiceModeration = async (userId: string, action: 'kick' | 'mute' | 'release_seat') => {
+    if (!activeRoom || !stagingBackend || (!isOwner && !isModerator)) {
+      showToast('هذا الأمر متاح لمالك الغرفة والمشرف فقط.');
       return;
     }
-    // This action requires a voice-relay-backed server operation.
-    // Never remove the caller's seat or claim a kick succeeded.
-    sounds.playError();
-    showToast('طرد الأعضاء غير متاح حتى تفعيل أمر الإدارة الآمن.');
+    if (userId === currentUser.id || userId === activeRoom.hostId) {
+      showToast('لا يمكن تطبيق هذا الأمر على المالك أو نفسك.');
+      return;
+    }
+    const requestId = crypto.randomUUID();
+    try {
+      const { data, error } = await stagingBackend.functions.invoke('phase2-voice-moderate', {
+        body: { roomId: activeRoom.id, targetId: userId, action, requestId },
+      });
+      if (error || data?.success !== true || data?.sfuDisconnected !== true) {
+        console.error('Voice moderation not confirmed:', error, data);
+        showToast(data?.databaseCommitted
+          ? 'تم تحديث الخادم لكن فصل الصوت غير مؤكد. تحقق من حالة العضو.'
+          : 'تعذر تنفيذ الأمر. تحقق من الصلاحيات واتصال الصوت.');
+        return;
+      }
+      showToast(action === 'kick' ? 'تم طرد العضو من الغرفة' : action === 'mute'
+        ? 'تم كتم مايك العضو من الخادم' : 'تم إنزال العضو من المقعد');
+    } catch (error) {
+      console.error('Voice moderation failed:', error);
+      showToast('فشل أمر الإدارة، لم يتم تأكيد النتيجة.');
+    }
+  };
+
+  const handleKickMember = (userId: string, _userName: string) => {
+    void handleVoiceModeration(userId, 'kick');
   };
 
   const handleApplyDecoration = (type: 'mic' | 'frame' | 'title', value: string) => {
@@ -1897,7 +1917,7 @@ export const VoiceRoomModal: React.FC = () => {
                     if (selectedMicUser.user.id === currentUser.id) {
                       leaveSeat(selectedMicUser.seatNumber);
                     } else {
-                      showToast('إنزال عضو آخر يتطلب خدمة إدارة الصوت الآمنة.');
+                      void handleVoiceModeration(selectedMicUser.user.id, 'release_seat');
                     }
                     setSelectedMicUser(null);
                   }}
@@ -1913,7 +1933,7 @@ export const VoiceRoomModal: React.FC = () => {
                 <button
                   onClick={() => {
                     sounds.playClick();
-                    void handleAllowMic(selectedMicUser.user.id);
+                    void handleVoiceModeration(selectedMicUser.user.id, 'mute');
                     setSelectedMicUser(null);
                   }}
                   className="flex flex-col items-center gap-1 text-slate-300 hover:text-white transition active:scale-95 cursor-pointer"
@@ -1921,7 +1941,7 @@ export const VoiceRoomModal: React.FC = () => {
                   <div className="w-10 h-10 rounded-full bg-slate-800/90 flex items-center justify-center border border-slate-700 shadow-sm">
                     <MicOff className="w-5 h-5 text-rose-400" />
                   </div>
-                  <span className="text-xs font-bold">رفع حظر المايك</span>
+                  <span className="text-xs font-bold">حظر مايك</span>
                 </button>
               </div>
             </div>
