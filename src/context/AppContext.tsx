@@ -1233,23 +1233,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       alert('الاتصال بالخادم غير مهيأ.');
       return;
     }
-    const existing = rooms.find(room => room.id === roomId);
+    const existing = rooms.find(room => room.id === roomId) ?? (activeRoom?.id === roomId ? activeRoom : null);
     if (!existing || existing.hostId !== currentUser.id) {
       alert('لا تملك صلاحية تعديل هذه الغرفة.');
       return;
     }
-    const title = updates.title ?? existing.title;
+    const title = (updates.title ?? existing.title).trim();
     const welcome = updates.announcement ?? existing.announcement ?? '';
-    void Promise.resolve(stagingBackend.rpc('staging_update_my_room', {
-      p_room_id: roomId, p_title: title, p_welcome_message: welcome,
-    })).then(async ({ data, error }) => {
-      if (error || data !== true) throw error ?? new Error('Update not confirmed');
+    if (title.length < 2 || title.length > 60 || welcome.length > 500) {
+      alert('اسم الغرفة يجب أن يكون من حرفين إلى 60 حرفاً، والإعلان بحد أقصى 500 حرف.');
+      return;
+    }
+    void (async () => {
+      const { data, error } = await stagingBackend.rpc('staging_update_my_room', {
+        p_room_id: roomId, p_title: title, p_welcome_message: welcome,
+      });
+      if (error || data !== true) throw error ?? new Error('Room update not confirmed');
       const rows = await fetchRealRooms();
-      setRooms(rows.map(mapRoomToUi));
-      setActiveRoom(prev => prev?.id === roomId ? { ...prev, title, announcement: welcome } : prev);
-    }).catch(error => {
+      const saved = rows.find(room => room.id === roomId);
+      if (!saved || saved.title !== title) throw new Error('Saved room title did not match requested title');
+      const mapped = rows.map(mapRoomToUi);
+      setRooms(mapped);
+      setActiveRoom(prev => prev?.id === roomId ? {
+        ...prev, title: saved.title, announcement: saved.welcome_message ?? '',
+      } : prev);
+      alert('تم حفظ اسم الغرفة بنجاح على الخادم.');
+    })().catch(error => {
       console.error('Room update failed:', error);
-      alert('تعذر تعديل الغرفة من الخادم.');
+      alert('تعذر حفظ اسم الغرفة. لم يتم تأكيد التغيير على الخادم.');
     });
   };
 
