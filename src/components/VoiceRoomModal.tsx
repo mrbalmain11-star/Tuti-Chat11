@@ -1934,8 +1934,7 @@ export const VoiceRoomModal: React.FC = () => {
                   onClick={() => {
                     sounds.playClick();
                     if (selectedMicUser.user.id === currentUser.id) {
-                      if (!myMicMuted) toggleMyMic();
-                      else showToast('مايكك مكتوم بالفعل. افتحه من زر المايك الشخصي.');
+                      toggleMyMic();
                     } else {
                       void handleVoiceModeration(selectedMicUser.user.id, 'mute');
                     }
@@ -1946,7 +1945,7 @@ export const VoiceRoomModal: React.FC = () => {
                   <div className="w-10 h-10 rounded-full bg-slate-800/90 flex items-center justify-center border border-slate-700 shadow-sm">
                     <MicOff className="w-5 h-5 text-rose-400" />
                   </div>
-                  <span className="text-xs font-bold">حظر مايك</span>
+                  <span className="text-xs font-bold">{selectedMicUser.user.id === currentUser.id ? (myMicMuted ? 'فتح المايك' : 'كتم المايك') : 'حظر مايك'}</span>
                 </button>
               </div>
             </div>
