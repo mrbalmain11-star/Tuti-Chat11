@@ -26,7 +26,6 @@ import {
   Rocket,
   Heart,
   Check,
-  CheckCircle2,
   Sparkles,
   Users,
   Volume1,
@@ -53,7 +52,6 @@ import {
   LogOut,
   Gift,
 } from 'lucide-react';
-import confetti from 'canvas-confetti';
 import { useApp } from '../context/AppContext';
 import { MicSeat, UserProfile } from '../types';
 import { sounds } from '../utils/audio';
@@ -190,21 +188,9 @@ export const VoiceRoomModal: React.FC = () => {
     }
   }, [activeRoom?.id, activeRoom?.backgroundUrl]);
 
-  // Mic Permissions & Room Mode States
-  const [isMicsRestricted, setIsMicsRestricted] = useState<boolean>(() => {
-    try {
-      const saved = localStorage.getItem(`toti_mics_restricted_${activeRoom?.id}`);
-      return saved === 'true';
-    } catch {
-      return false;
-    }
-  });
   const [showRoomModeModal, setShowRoomModeModal] = useState(false);
 
   // Tools Drawer Sub-Modals
-  const [showRedPacketModal, setShowRedPacketModal] = useState(false);
-  const [redPacketClaimed, setRedPacketClaimed] = useState(false);
-  const [claimedAmount, setClaimedAmount] = useState(888);
   const [showMusicPlayerModal, setShowMusicPlayerModal] = useState(false);
   const [isPlayingMusic, setIsPlayingMusic] = useState(false);
   const [showTasksModal, setShowTasksModal] = useState(false);
@@ -402,21 +388,6 @@ export const VoiceRoomModal: React.FC = () => {
     if (activeRoom?.titleColorTheme === 'cyan') return 'text-cyan-300 drop-shadow-[0_0_8px_rgba(6,182,212,0.8)]';
     if (activeRoom?.titleColorTheme === 'pink') return 'text-pink-300 drop-shadow-[0_0_8px_rgba(244,114,182,0.8)]';
     return 'text-white';
-  };
-
-  const handleOpenRedPacket = () => {
-    sounds.playLevelUp();
-    try {
-      confetti({
-        particleCount: 70,
-        spread: 60,
-        origin: { y: 0.6 },
-      });
-    } catch (_) {}
-    const randomCoins = Math.floor(Math.random() * 800) + 200;
-    setClaimedAmount(randomCoins);
-    setRedPacketClaimed(true);
-    showToast(`تهانينا! حصلت على ${randomCoins} عملة ذهبية من الظرف الأحمر 🧧`);
   };
 
   // Get current messages
@@ -1330,7 +1301,7 @@ export const VoiceRoomModal: React.FC = () => {
                     onClick={() => {
                       sounds.playClick();
                       setShowToolsDrawer(false);
-                      setShowRedPacketModal(true);
+                      showToast('الظرف الأحمر غير متاح حتى ربط المكافآت بالخادم.');
                     }}
                     className="flex flex-col items-center gap-1.5 cursor-pointer group active:scale-95 transition"
                   >
@@ -1668,63 +1639,9 @@ export const VoiceRoomModal: React.FC = () => {
               </div>
 
               <div className="space-y-3">
-                {/* Mode 1: صعود تلقائي */}
-                <div
-                  onClick={() => {
-                    sounds.playClick();
-                    setIsMicsRestricted(false);
-                    try {
-                      localStorage.setItem(`toti_mics_restricted_${activeRoom.id}`, 'false');
-                    } catch (_) {}
-                    setShowRoomModeModal(false);
-                    showToast('تم تفعيل: الصعود التلقائي للمايكات بنجاح 🎙️ (متاح للجميع)');
-                  }}
-                  className={`p-3.5 rounded-2xl border cursor-pointer transition active:scale-98 flex items-center justify-between ${
-                    !isMicsRestricted
-                      ? 'bg-purple-900/40 border-[#26d0b2] shadow-[0_0_15px_rgba(38,208,178,0.3)]'
-                      : 'bg-white/5 border-white/10 hover:bg-white/10'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-[#26d0b2]/20 text-[#26d0b2] flex items-center justify-center">
-                      <Mic className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-black text-white">صعود تلقائي ومفتوح للجميع</h4>
-                      <p className="text-[10px] text-slate-300">يصعد أي مستخدم للمايك بنقرة واحدة مباشرة</p>
-                    </div>
-                  </div>
-                  {!isMicsRestricted && <CheckCircle2 className="w-5 h-5 text-[#26d0b2]" />}
-                </div>
-
-                {/* Mode 2: بإذن المالك فقط (عضوية أو إشراف) */}
-                <div
-                  onClick={() => {
-                    sounds.playClick();
-                    setIsMicsRestricted(true);
-                    try {
-                      localStorage.setItem(`toti_mics_restricted_${activeRoom.id}`, 'true');
-                    } catch (_) {}
-                    setShowRoomModeModal(false);
-                    showToast('تم تفعيل: المايكات بإذن المالك أو بمنح عضوية وإشراف 🔒');
-                  }}
-                  className={`p-3.5 rounded-2xl border cursor-pointer transition active:scale-98 flex items-center justify-between ${
-                    isMicsRestricted
-                      ? 'bg-purple-900/40 border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.3)]'
-                      : 'bg-white/5 border-white/10 hover:bg-white/10'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-amber-400/20 text-amber-300 flex items-center justify-center">
-                      <Lock className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-black text-white">بإذن المالك (عضوية أو إشراف)</h4>
-                      <p className="text-[10px] text-slate-300">يتطلب موافقة مالك الغرفة أو منحه إشراف/عضوية</p>
-                    </div>
-                  </div>
-                  {isMicsRestricted && <CheckCircle2 className="w-5 h-5 text-amber-400" />}
-                </div>
+                <p role="status" className="p-3.5 rounded-2xl border border-white/10 bg-white/5 text-xs text-slate-300">
+                  تغيير صلاحيات الصعود للمايك غير متاح حالياً حتى ربطه بالخادم.
+                </p>
 
                 {/* Mode 3: تغيير خلفية الغرفة (متاح لصاحب الغرفة والمشرفين) */}
                 <div
@@ -1757,56 +1674,6 @@ export const VoiceRoomModal: React.FC = () => {
                   <span className="text-xs text-purple-300 font-bold">تعديل ←</span>
                 </div>
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* =========================================================================
-            LUCKY RED ENVELOPE MODAL (ظرف أحمر 🧧)
-            ========================================================================= */}
-        {showRedPacketModal && (
-          <div
-            onClick={() => setShowRedPacketModal(false)}
-            className="fixed inset-0 z-60 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in"
-          >
-            <div
-              onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-xs bg-gradient-to-b from-[#d9223a] via-[#be123c] to-[#881337] rounded-3xl p-6 shadow-2xl text-center border-2 border-amber-300 text-white flex flex-col items-center animate-in zoom-in-95"
-            >
-              <button
-                onClick={() => setShowRedPacketModal(false)}
-                className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/30 text-white flex items-center justify-center hover:bg-black/50"
-              >
-                <X className="w-4 h-4" />
-              </button>
-
-              <span className="text-5xl mb-2 filter drop-shadow-md">🧧</span>
-              <h3 className="text-lg font-black text-amber-200">ظرف أحمر محظوظ</h3>
-              <p className="text-xs text-rose-100 mt-1 mb-5">
-                هدية خاصة من إدارة الروم للمستمعين المتواجدين
-              </p>
-
-              {!redPacketClaimed ? (
-                <button
-                  onClick={handleOpenRedPacket}
-                  className="w-20 h-20 rounded-full bg-gradient-to-b from-amber-300 to-yellow-500 border-4 border-yellow-100 text-slate-950 font-black text-xl shadow-[0_0_25px_rgba(250,204,21,0.8)] active:scale-90 transition cursor-pointer flex items-center justify-center animate-pulse"
-                >
-                  فتح
-                </button>
-              ) : (
-                <div className="space-y-3">
-                  <div className="p-3 bg-black/30 rounded-2xl border border-amber-300/40">
-                    <span className="text-xs text-amber-200 block">لقد حصلت على:</span>
-                    <span className="text-3xl font-black text-amber-300 font-mono">+{claimedAmount} 🪙</span>
-                  </div>
-                  <button
-                    onClick={() => setShowRedPacketModal(false)}
-                    className="w-full py-2.5 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs"
-                  >
-                    استلام وإغلاق
-                  </button>
-                </div>
-              )}
             </div>
           </div>
         )}
