@@ -70,7 +70,7 @@ export const InternalProfileModal: React.FC = () => {
     setVerifiedAgency(null);
     if (!stagingBackend || !user.id) return;
     const loadAgency = async () => {
-      const { data, error } = await stagingBackend.rpc('staging_profile_agency', { p_user_id: user.id });
+      const { data, error } = await stagingBackend!.rpc('staging_profile_agency', { p_user_id: user.id });
       if (error) throw error;
       if (active) setVerifiedAgency(data && typeof data.name === 'string' && /^\\d{6}$/.test(String(data.public_id)) ? data : null);
     };
