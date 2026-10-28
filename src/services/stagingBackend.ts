@@ -30,6 +30,7 @@ export type BackendRoom = {
   welcome_message: string;
   cover_path: string | null;
   background_path: string | null;
+  background_url?: string;
 };
 
 export type BackendProfile = {
@@ -61,7 +62,14 @@ export async function fetchRealRooms(): Promise<BackendRoom[]> {
   for (const room of [...(ownedRooms.data ?? []), ...(publicRooms.data ?? [])] as BackendRoom[]) {
     unique.set(room.id, room);
   }
-  return [...unique.values()];
+  const rooms = [...unique.values()];
+  await Promise.all(rooms.map(async room => {
+    if (!room.background_path) return;
+    const { data, error } = await client.storage.from('totichat-room-images')
+      .createSignedUrl(room.background_path, 3600);
+    if (!error && data?.signedUrl) room.background_url = data.signedUrl;
+  }));
+  return rooms;
 }
 
 export async function fetchMyProfile(): Promise<BackendProfile | null> {
