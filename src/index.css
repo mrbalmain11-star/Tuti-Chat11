@@ -317,3 +317,24 @@ img, svg { max-width: 100%; }
 @media (max-width: 360px) {
   .font-\\['Cairo'\\,sans-serif\\] { letter-spacing: normal; }
 }
+
+/* Profile Android WebView compatibility: avoid GPU filter tile artifacts on low-end devices. */
+.profile-android-safe { isolation: isolate; }
+.profile-android-safe .drop-shadow-xs,
+.profile-android-safe [class*="drop-shadow-"],
+.profile-android-safe .blur-3xl,
+.profile-android-safe .backdrop-blur-xs,
+.profile-android-safe .backdrop-blur-md { filter: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+.profile-android-safe .vip-shine-1,
+.profile-android-safe .vip-shine-2,
+.profile-android-safe .vip-shine-3,
+.profile-android-safe .vip-shine-4,
+.profile-android-safe .vip-shine-5,
+.profile-android-safe .vip-shine-6,
+.profile-android-safe .vip-shine-7,
+.profile-android-safe .vip-shine-8,
+.profile-android-safe .vip-shine-9,
+.profile-android-safe .vip-shine-10,
+.profile-android-safe .vip-shine-11,
+.profile-android-safe .vip-shine-12 { animation: none !important; }
+.profile-android-safe img { transform: translateZ(0); }
