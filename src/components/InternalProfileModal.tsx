@@ -28,6 +28,7 @@ import {
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
 import { UserProfile } from '../types';
+import { getLevelFromExp } from '../utils/levelUtils';
 import { CharmBadge, WealthBadge, GameBadge } from './LevelBadgeIcons';
 import { processImageFile } from '../utils/imageUpload';
 import { fetchMyProfile, saveMyProfile, uploadMyAvatar, uploadMyCover, getMyAvatarUrl, stagingBackend } from '../services/stagingBackend';
@@ -72,7 +73,7 @@ export const InternalProfileModal: React.FC = () => {
     const loadAgency = async () => {
       const { data, error } = await stagingBackend!.rpc('staging_profile_agency', { p_user_id: user.id });
       if (error) throw error;
-      if (active) setVerifiedAgency(data && typeof data.name === 'string' && /^\d{6}$/.test(String(data.public_id)) ? data : null);
+      if (active) setVerifiedAgency(data && typeof data.name === 'string' && Number.isInteger(Number(data.public_id)) ? data : null);
     };
     void loadAgency().catch(error => console.error('Verified agency unavailable:', error));
     const refresh = () => { void loadAgency().catch(error => console.error('Agency refresh failed:', error)); };
@@ -82,6 +83,24 @@ export const InternalProfileModal: React.FC = () => {
   const [myPublicId, setMyPublicId] = useState<number | null>(null);
   const [displaySpecialId, setDisplaySpecialId] = useState<string | null>(null);
   const [savedCover, setSavedCover] = useState<string>('');
+  const [visitorStatus, setVisitorStatus] = useState<{ wealthLevel: number; charmLevel: number; vipLevel: number } | null>(null);
+  useEffect(() => {
+    let active = true;
+    setVisitorStatus(null);
+    if (!openInternalProfileModal || isSelf || !stagingBackend || !user.id) return;
+    void Promise.resolve(stagingBackend.rpc('staging_visited_profile_status', { p_user_id: user.id }))
+      .then(({ data, error }) => {
+        if (error) throw error;
+        if (!active || !data) return;
+        setVisitorStatus({
+          wealthLevel: getLevelFromExp(Number(data.wealth_exp) || 0, 260),
+          charmLevel: getLevelFromExp(Number(data.charm_exp) || 0, 260),
+          vipLevel: Math.max(0, Number(data.vip_tier) || 0),
+        });
+      }).catch(error => console.error('Visitor levels load failed:', error));
+    return () => { active = false; };
+  }, [openInternalProfileModal, isSelf, user.id]);
+  const displayedUser = !isSelf && visitorStatus ? { ...user, ...visitorStatus } : user;
   const [visitorPublicId, setVisitorPublicId] = useState<string>('');
   const [visitorCover, setVisitorCover] = useState<string>('');
   const [visitorAvatar, setVisitorAvatar] = useState<string>('');
@@ -446,7 +465,7 @@ export const InternalProfileModal: React.FC = () => {
             <h1 className="text-xl font-black tracking-wide text-right select-none">
               <VipName
                 name={user.name || 'دولة العراق'}
-                vipLevel={user.vipLevel}
+                vipLevel={displayedUser.vipLevel}
                 fallbackColor="text-slate-900"
                 className="text-xl font-black drop-shadow-xs"
               />
@@ -479,7 +498,7 @@ export const InternalProfileModal: React.FC = () => {
 
             {/* Charm / Magic Level Badge (مستوى السحر) */}
             <CharmBadge
-              level={user.charmLevel || 1}
+              level={displayedUser.charmLevel || 1}
               size="compact"
               onClick={() => {
                 sounds.playClick();
@@ -491,7 +510,7 @@ export const InternalProfileModal: React.FC = () => {
 
             {/* Wealth Level Badge (مستوى الثروة) */}
             <WealthBadge
-              level={user.wealthLevel || 1}
+              level={displayedUser.wealthLevel || 1}
               size="compact"
               onClick={() => {
                 sounds.playClick();
@@ -514,9 +533,9 @@ export const InternalProfileModal: React.FC = () => {
             />
 
             {/* Subscribed VIP/VLP Level Badge (مستوى VLP/VIP المشترك فيه) */}
-            {user.vipLevel && user.vipLevel > 0 ? (
+            {displayedUser.vipLevel && displayedUser.vipLevel > 0 ? (
               <VipBadge
-                vipLevel={user.vipLevel}
+                vipLevel={displayedUser.vipLevel}
                 size="compact"
                 className="shadow-xs"
                 onClick={() => {
@@ -747,7 +766,7 @@ export const InternalProfileModal: React.FC = () => {
               {/* Text on Right in RTL */}
               <div className="text-right">
                 <span className="text-xl font-black text-amber-950 block font-sans tracking-wide">
-                  Lv. {user.wealthLevel || 1}
+                  Lv. {displayedUser.wealthLevel || 1}
                 </span>
                 <span className="text-xs text-amber-800 font-black mt-0.5 block flex items-center gap-1">
                   <span>👑</span>
@@ -787,7 +806,7 @@ export const InternalProfileModal: React.FC = () => {
               {/* Text on Right in RTL */}
               <div className="text-right">
                 <span className="text-xl font-black text-purple-950 block font-sans tracking-wide">
-                  Lv. {user.charmLevel || 1}
+                  Lv. {displayedUser.charmLevel || 1}
                 </span>
                 <span className="text-xs text-purple-800 font-black mt-0.5 block flex items-center gap-1">
                   <span>✨</span>
@@ -827,32 +846,32 @@ export const InternalProfileModal: React.FC = () => {
 
           {/* Subscribed VIP Level Card (مستوى VLP/VIP المشترك فيه) */}
           <div className="mt-3">
-            {user.vipLevel && user.vipLevel > 0 ? (
+            {displayedUser.vipLevel && displayedUser.vipLevel > 0 ? (
               <div
                 onClick={() => {
                   sounds.playClick();
                   setOpenVipModal(true);
                 }}
                 className={`rounded-2xl p-3.5 border-2 bg-gradient-to-r ${
-                  VIP_BEAST_METADATA[user.vipLevel]?.innerBg || 'from-[#451a03] to-[#78350f]'
+                  VIP_BEAST_METADATA[displayedUser.vipLevel]?.innerBg || 'from-[#451a03] to-[#78350f]'
                 } text-white flex items-center justify-between cursor-pointer active:scale-98 transition shadow-md border-amber-300/80 hover:border-amber-200`}
               >
                 <div className="text-right">
                   <div className="flex items-center gap-2">
                     <span className="text-lg font-black text-amber-300 font-sans tracking-wide">
-                      {VIP_BEAST_METADATA[user.vipLevel]?.label || `VLP ${user.vipLevel}`}
+                      {VIP_BEAST_METADATA[displayedUser.vipLevel]?.label || `VLP ${displayedUser.vipLevel}`}
                     </span>
                     <span className="text-xs px-2 py-0.5 rounded-full bg-amber-400/20 border border-amber-300/50 text-amber-200 font-bold">
                       مشترك مفعّل
                     </span>
                   </div>
                   <span className="text-xs text-white/90 font-medium mt-1 block">
-                    {VIP_BEAST_METADATA[user.vipLevel]?.name || `VIP ${user.vipLevel}`} - {VIP_BEAST_METADATA[user.vipLevel]?.beast}
+                    {VIP_BEAST_METADATA[displayedUser.vipLevel]?.name || `VIP ${displayedUser.vipLevel}`} - {VIP_BEAST_METADATA[displayedUser.vipLevel]?.beast}
                   </span>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <VipBadge vipLevel={user.vipLevel} size="md" />
+                  <VipBadge vipLevel={displayedUser.vipLevel} size="md" />
                 </div>
               </div>
             ) : isSelf ? (
