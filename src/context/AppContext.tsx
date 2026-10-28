@@ -271,15 +271,42 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return;
     }
     let active = true;
-    fetchMyWallet().then(wallet => {
-      if (active) setCurrentUser(prev => ({
-        ...prev, coins: wallet.coins, diamonds: wallet.diamonds,
-      }));
-    }).catch(error => {
-      console.error('Failed to load authenticated staging wallet:', error);
-      if (active) setCurrentUser(prev => ({ ...prev, coins: 0, diamonds: 0 }));
-    });
-    return () => { active = false; };
+    let inFlight = false;
+    let refreshAgain = false;
+    const refreshWallet = async () => {
+      if (inFlight) { refreshAgain = true; return; }
+      inFlight = true;
+      try {
+        do {
+          refreshAgain = false;
+          const wallet = await fetchMyWallet();
+          if (active) setCurrentUser(prev => ({
+            ...prev, coins: wallet.coins, diamonds: wallet.diamonds,
+          }));
+        } while (active && refreshAgain);
+      } catch (error) {
+        // Never replace the last verified wallet balance with a fabricated zero.
+        console.error('Failed to refresh authenticated staging wallet:', error);
+      } finally { inFlight = false; }
+    };
+    void refreshWallet();
+    const onFocus = () => { if (active) void refreshWallet(); };
+    const onVisible = () => { if (document.visibilityState === 'visible') onFocus(); };
+    const onWalletChanged = () => { if (active) void refreshWallet(); };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('totichat:wallet-changed', onWalletChanged);
+    const client = stagingBackend;
+    const channel = client?.channel('staging-my-wallet-refresh')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'wallets' }, () => { void refreshWallet(); })
+      .subscribe();
+    return () => {
+      active = false;
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('totichat:wallet-changed', onWalletChanged);
+      if (channel && client) void client.removeChannel(channel);
+    };
   }, [isLoggedIn]);
 
   const [activeTab, setActiveTab] = useState<'home' | 'messages' | 'profile'>('home');
