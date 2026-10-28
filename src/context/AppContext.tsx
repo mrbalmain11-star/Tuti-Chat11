@@ -930,9 +930,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const toggleLockSeat = (seatNumber: number): void => {
     if (!activeRoom || !stagingBackend || !Number.isInteger(seatNumber)) return;
     const roomId = activeRoom.id;
-    void stagingBackend.rpc('phase2_room_toggle_seat_lock', {
+    void Promise.resolve(stagingBackend.rpc('phase2_room_toggle_seat_lock', {
       p_room_id: roomId, p_seat: seatNumber,
-    }).then(({ data, error }) => {
+    })).then(({ data, error }) => {
       if (error || typeof data !== 'boolean') throw error ?? new Error('Lock not confirmed');
       setActiveRoom(prev => prev?.id !== roomId ? prev : ({
         ...prev,
