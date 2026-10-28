@@ -22,7 +22,7 @@ import { processImageFile } from '../utils/imageUpload';
 import { CharmBadge, WealthBadge, GameBadge } from '../components/LevelBadgeIcons';
 import { VipName } from '../components/VipName';
 import { VipBadge } from '../components/VipBadge';
-import { fetchMyProfile, fetchMyAdminAccess, saveMyProfile, uploadMyAvatar, getMyAvatarUrl, type AdminAccess, stagingBackend } from '../services/stagingBackend';
+import { fetchMyProfile, fetchMyAdminAccess, saveMyProfile, uploadMyAvatar, uploadMyCover, getMyAvatarUrl, type AdminAccess, stagingBackend } from '../services/stagingBackend';
 import { AdminCenterView } from './AdminCenterView';
 
 export const ProfileView: React.FC = () => {
@@ -73,6 +73,7 @@ export const ProfileView: React.FC = () => {
     const revision = ++profileRevision.current;
     setPublicId(null);
     setSpecialId(null);
+    setCoverUrl('');
     if (stagingBackend && currentUser.id) {
       void Promise.resolve(stagingBackend.rpc('phase5_special_id_status', { p_target: currentUser.id })).then(({ data, error }) => {
         const status = data as { assigned?: boolean; publicId?: string } | null;
@@ -83,6 +84,10 @@ export const ProfileView: React.FC = () => {
       const profile = await fetchMyProfile();
       if (!active || revision !== profileRevision.current || !profile) return;
       setPublicId(profile.public_id);
+      if (profile.cover_path) {
+        const cover = await getMyAvatarUrl(profile.cover_path);
+        if (active && revision === profileRevision.current) setCoverUrl(cover);
+      }
       const avatar = profile.avatar_url ? await getMyAvatarUrl(profile.avatar_url) : '';
       if (!active || revision !== profileRevision.current) return;
       updateUserProfile({
@@ -97,6 +102,7 @@ export const ProfileView: React.FC = () => {
     return () => { active = false; };
   }, [currentUser.id]);
   const [uploadingCover, setUploadingCover] = useState(false);
+  const [coverUrl, setCoverUrl] = useState<string>('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
@@ -149,13 +155,28 @@ export const ProfileView: React.FC = () => {
 
     try {
       setUploadingCover(true);
+      if (!file.type.startsWith('image/')) throw new Error('اختر صورة صالحة');
       const dataUrl = await processImageFile(file);
-      void dataUrl;
-      setProfileError('الغلاف: حفظ صورة الغلاف على الخادم غير متاح في هذه النسخة. لم يتم تغيير الغلاف.');
-      setToastMessage('تعذر حفظ الغلاف على الخادم');
-      setTimeout(() => setToastMessage(null), 3000);
-    } catch {
-      setToastMessage('تعذر رفع صورة الغلاف، يرجى المحاولة مرة أخرى');
+      const image = new Image();
+      image.src = dataUrl;
+      await image.decode();
+      const canvas = document.createElement('canvas');
+      const scale = Math.min(1, 1200 / Math.max(image.width, image.height));
+      canvas.width = Math.max(1, Math.round(image.width * scale));
+      canvas.height = Math.max(1, Math.round(image.height * scale));
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('تعذر تجهيز الغلاف');
+      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+      const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob(value => value ? resolve(value) : reject(new Error('تعذر تحويل الغلاف')), 'image/webp', 0.78));
+      setProfileError(null);
+      const path = await uploadMyCover(blob);
+      const url = await getMyAvatarUrl(path);
+      ++profileRevision.current;
+      setCoverUrl(url);
+      setToastMessage('تم حفظ غلاف الحساب بنجاح');
+    } catch (error) {
+      setProfileError('الغلاف: ' + (error instanceof Error ? error.message : String(error)));
+      setToastMessage('تعذر حفظ الغلاف، راجع تفاصيل الخطأ');
       setTimeout(() => setToastMessage(null), 3000);
     } finally {
       setUploadingCover(false);
@@ -261,6 +282,7 @@ export const ProfileView: React.FC = () => {
       <div className="relative w-full h-36 md:h-44 overflow-hidden border-b border-amber-200/70 shadow-xs">
         <img
           src={
+            coverUrl ||
             currentUser.cover ||
             '/placeholder-cover.svg'
           }
