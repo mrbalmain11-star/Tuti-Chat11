@@ -322,8 +322,7 @@ export const VoiceRoomModal: React.FC = () => {
       });
       if (error || !data?.success) throw error ?? new Error('Server did not confirm role change');
       showToast(isMod ? `تم سحب إشراف ${userName}` : `تم منح ${userName} صلاحية المشرف`);
-      // Refresh is required before trusting moderator state across clients.
-      window.location.reload();
+      // Preserve the active voice session; do not reload the entire app.
     } catch (error) {
       console.error('Moderator update failed:', error);
       showToast('رفض الخادم تغيير الصلاحية. تحقق من عضوية المستخدم وصلاحية المالك.');
@@ -337,12 +336,10 @@ export const VoiceRoomModal: React.FC = () => {
       showToast('🔒 طرد الأعضاء متاح للإدارة والمشرفين فقط');
       return;
     }
-    const seatWithUser = activeRoom.seats.find((s) => s.user?.id === userId);
-    if (seatWithUser) {
-      leaveSeat(seatWithUser.seatNumber);
-    }
+    // This action requires a voice-relay-backed server operation.
+    // Never remove the caller's seat or claim a kick succeeded.
     sounds.playError();
-    showToast(`تم طرد المستخدم ${userName} من الغرفة 🚫`);
+    showToast('طرد الأعضاء غير متاح حتى تفعيل أمر الإدارة الآمن.');
   };
 
   const handleApplyDecoration = (type: 'mic' | 'frame' | 'title', value: string) => {
