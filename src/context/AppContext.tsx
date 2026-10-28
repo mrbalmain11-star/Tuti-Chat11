@@ -70,7 +70,7 @@ interface AppContextType {
   toggleFollowHost: (hostId: string) => void;
   createVoiceRoom: (title: string, tag: string) => void;
   updateRoom: (roomId: string, updates: Partial<VoiceRoom>) => void;
-  changeRoomBackground: (roomId: string, backgroundUrl: string) => boolean;
+  changeRoomBackground: (roomId: string, backgroundUrl: string) => Promise<boolean>;
   // Modals state
   openGiftStore: boolean;
   setOpenGiftStore: (open: boolean) => void;
@@ -1316,9 +1316,42 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
-  const changeRoomBackground = (_roomId: string, _backgroundUrl: string): boolean => {
-    alert('تغيير خلفية الغرفة غير متاح حتى ربطه بصلاحيات الخادم.');
-    return false;
+  const changeRoomBackground = async (roomId: string, backgroundUrl: string): Promise<boolean> => {
+    if (!stagingBackend || !activeRoom || activeRoom.id !== roomId || activeRoom.hostId !== currentUser.id) {
+      throw new Error('يجب أن تكون مالك الغرفة ومسجلاً للدخول لتغيير الخلفية.');
+    }
+    const response = await fetch(backgroundUrl);
+    if (!response.ok) throw new Error('تعذر قراءة الصورة المحددة.');
+    const blob = await response.blob();
+    if (!blob.type.startsWith('image/') || blob.size > 5 * 1024 * 1024) {
+      throw new Error('الصورة غير مدعومة أو حجمها أكبر من 5 ميجابايت.');
+    }
+    const bitmap = await createImageBitmap(blob);
+    const canvas = document.createElement('canvas');
+    const scale = Math.min(1, 1440 / Math.max(bitmap.width, bitmap.height));
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('تعذر معالجة الصورة على الجهاز.');
+    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+    const webp = await new Promise<Blob>((resolve, reject) =>
+      canvas.toBlob(file => file ? resolve(file) : reject(new Error('تعذر تحويل الصورة إلى WEBP')), 'image/webp', 0.82));
+    const path = roomId + '/background.webp';
+    const { error: uploadError } = await stagingBackend.storage.from('totichat-room-images')
+      .upload(path, webp, { upsert: true, contentType: 'image/webp', cacheControl: '60' });
+    if (uploadError) throw uploadError;
+    const { data, error } = await stagingBackend.rpc('phase2_room_customize', {
+      p_room_id: roomId, p_background_path: path,
+    });
+    if (error || data !== true) throw error ?? new Error('لم يؤكد الخادم حفظ الخلفية.');
+    const { data: signed, error: signError } = await stagingBackend.storage.from('totichat-room-images')
+      .createSignedUrl(path, 3600);
+    if (signError || !signed?.signedUrl) throw signError ?? new Error('تعذر عرض الخلفية المحفوظة.');
+    const verifiedUrl = signed.signedUrl + (signed.signedUrl.includes('?') ? '&' : '?') + 'v=' + Date.now();
+    setActiveRoom(prev => prev?.id === roomId ? { ...prev, backgroundUrl: verifiedUrl } : prev);
+    setRooms(prev => prev.map(room => room.id === roomId ? { ...room, backgroundUrl: verifiedUrl } : room));
+    return true;
   };
 
   const deleteRoom = (_roomId: string): void => {
