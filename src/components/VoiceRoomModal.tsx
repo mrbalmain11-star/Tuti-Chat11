@@ -1933,7 +1933,12 @@ export const VoiceRoomModal: React.FC = () => {
                 <button
                   onClick={() => {
                     sounds.playClick();
-                    void handleVoiceModeration(selectedMicUser.user.id, 'mute');
+                    if (selectedMicUser.user.id === currentUser.id) {
+                      if (!myMicMuted) toggleMyMic();
+                      else showToast('مايكك مكتوم بالفعل. افتحه من زر المايك الشخصي.');
+                    } else {
+                      void handleVoiceModeration(selectedMicUser.user.id, 'mute');
+                    }
                     setSelectedMicUser(null);
                   }}
                   className="flex flex-col items-center gap-1 text-slate-300 hover:text-white transition active:scale-95 cursor-pointer"
