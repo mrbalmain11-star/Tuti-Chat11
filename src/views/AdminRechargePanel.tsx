@@ -47,6 +47,11 @@ export const AdminRechargePanel: React.FC = () => {
   return <section className="bg-white border border-amber-200 rounded-2xl p-4 mb-5">
     <h2 className="font-black text-lg mb-2">الشحن والمحفظة — السجلات المالية</h2>
     <button type="button" disabled={busy} className="border border-amber-500 rounded-xl px-4 py-2" onClick={() => void refresh()}>{busy ? 'جاري التحميل...' : 'عرض الأرصدة والطلبات'}</button>
+    {state?.isOwner && <div className="mt-4 border border-amber-300 rounded-xl p-3 space-y-3">
+      <h3 className="font-black">إصدار عملات للخزينة</h3>
+      <p className="text-xs">هذه العملية متاحة للمالك فقط وتحتاج تأكيداً قبل التنفيذ.</p>
+      <button type="button" className="bg-amber-700 text-white rounded-xl px-4 py-3 font-bold" onClick={() => window.alert('يجب تفعيل إجراء الإصدار الآمن قبل استخدام هذا الزر')}>إصدار العملات</button>
+    </div>}
     <div className="mt-4 border border-amber-300 rounded-xl p-3 space-y-3">
       <h3 className="font-black">شحن مستخدم بواسطة ID الحساب</h3>
       <input inputMode="numeric" aria-label="ID المستخدم" value={recipientId} onChange={e => setRecipientId(e.target.value)} placeholder="ID المستخدم (مثال: 100000)" className="w-full border rounded-lg p-3" />
