@@ -39,6 +39,7 @@ export type BackendProfile = {
   display_name: string;
   bio: string;
   avatar_url: string | null;
+  cover_path: string | null;
 };
 
 function requireBackend() {
@@ -78,7 +79,7 @@ export async function fetchMyProfile(): Promise<BackendProfile | null> {
   if (authError) throw authError;
   if (!auth.user) return null;
   const { data, error } = await client.from('profiles')
-    .select('id,public_id,display_name,bio,avatar_url').eq('id', auth.user.id).maybeSingle();
+    .select('id,public_id,display_name,bio,avatar_url,cover_path').eq('id', auth.user.id).maybeSingle();
   if (error) throw error;
   return data as BackendProfile | null;
 }
@@ -260,14 +261,14 @@ export async function fetchOwnerDashboardRecent(): Promise<OwnerDashboardRecent>
 }
 
 /** Persist only editable profile fields for the authenticated account. */
-export async function saveMyProfile(changes: { display_name?: string; bio?: string; avatar_url?: string | null }): Promise<BackendProfile> {
+export async function saveMyProfile(changes: { display_name?: string; bio?: string; avatar_url?: string | null; cover_path?: string | null }): Promise<BackendProfile> {
   const client = requireBackend();
   const { data: { user }, error: authError } = await client.auth.getUser();
   if (authError) throw authError;
   if (!user) throw new Error('يرجى تسجيل الدخول مجدداً');
   const { data, error } = await client.from('profiles')
     .update(changes).eq('id', user.id)
-    .select('id,public_id,display_name,bio,avatar_url').single();
+    .select('id,public_id,display_name,bio,avatar_url,cover_path').single();
   if (error) {
     console.error('Profile save failed', { code: error.code, message: error.message, details: error.details });
     if (error.code === 'PGRST116') throw new Error('تعذر العثور على ملف حسابك أو لا توجد صلاحية لتعديله. سجّل الدخول مجدداً ثم حاول.');
@@ -302,4 +303,23 @@ export async function getMyAvatarUrl(path: string): Promise<string> {
   const { data, error } = await client.storage.from('profile-avatars').createSignedUrl(path, 3600);
   if (error) throw new Error(`تعذر قراءة الصورة المحفوظة: ${error.message}`);
   return data.signedUrl;
+}
+
+/** Save a separate profile cover using the existing owner-scoped image storage policy. */
+export async function uploadMyCover(file: Blob): Promise<string> {
+  const client = requireBackend();
+  const { data: { user }, error: authError } = await client.auth.getUser();
+  if (authError) throw authError;
+  if (!user) throw new Error('يرجى تسجيل الدخول مجدداً');
+  if (file.type !== 'image/webp' || file.size > 2 * 1024 * 1024) throw new Error('الغلاف يجب أن يكون WebP وبحجم لا يتجاوز 2MB');
+  const path = user.id + '/' + crypto.randomUUID() + '.webp';
+  const { error: uploadError } = await client.storage.from('profile-avatars').upload(path, file, { contentType: 'image/webp', upsert: false });
+  if (uploadError) throw new Error('فشل رفع الغلاف: ' + uploadError.message);
+  try {
+    await saveMyProfile({ cover_path: path });
+  } catch (error) {
+    await client.storage.from('profile-avatars').remove([path]);
+    throw error;
+  }
+  return path;
 }
