@@ -19,12 +19,13 @@ export const GiftStoreModal: React.FC = () => {
     setSelectedGiftReceiver,
   } = useApp();
 
-  const [activeCategory, setActiveCategory] = useState<string>('الأمة');
+  const [activeCategory, setActiveCategory] = useState<string>('هدية');
   const [selectedGiftId, setSelectedGiftId] = useState<string | null>(null);
   const selectedGift = gifts.find(g => g.id === selectedGiftId) ?? gifts[0] ?? null;
   const [selectedCount, setSelectedCount] = useState<number>(1);
   const [selectedReceiverIndex, setSelectedReceiverIndex] = useState<number>(0);
   const [showCountDropdown, setShowCountDropdown] = useState<boolean>(false);
+  const [sending, setSending] = useState(false);
 
   if (!openGiftStore) return null;
 
@@ -75,7 +76,6 @@ export const GiftStoreModal: React.FC = () => {
     return g.category === activeCategory;
   });
 
-  const [sending, setSending] = useState(false);
   const handleSend = async () => {
     if (sending) return;
     if (!selectedGift || !currentReceiver?.id) {
