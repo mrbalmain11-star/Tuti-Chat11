@@ -130,6 +130,7 @@ export const AdminRechargePanel: React.FC = () => {
       setStatus(`اكتملت العملية: ${intent.label} — ${money(result.coins)} عملة. المرجع: ${result.id}`);
       clearPending(actor);
       setIssueOpen(false); setTypedAmount(''); setCoins(''); setNote(''); setAllocation(''); setAllocationNote('');
+      window.dispatchEvent(new Event('totichat:wallet-changed'));
       try { await refresh(); }
       catch (e) { setState(null); setError(`العملية مكتملة، لكن تحديث الأرصدة فشل: ${message(e)}`); }
     } catch (e) {
