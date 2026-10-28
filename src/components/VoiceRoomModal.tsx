@@ -558,30 +558,11 @@ export const VoiceRoomModal: React.FC = () => {
 
         {/* =========================================================================
             2. TOP HEADER SECTION (Matching Screenshot 1 & 2)
-            - Android Status Bar: ١٢:٥٣, Bluetooth, WiFi, Signal, 7% ⚡
             - Left: Power button (⏻), Share button (↗), Seat 1 Badge (👑 ○ 1)
             - Right: Capsule Card: Heart in teal circle, "العراق الع...", ID:5716905 (يحمل معرف الحساب)
             - Directly under Capsule: 254K 🏆 (كأس الروم)
             ========================================================================= */}
         <div className="relative z-20 pt-2 pb-1 px-3.5 flex flex-col gap-1.5">
-          {/* Android Mobile Status Bar Simulation */}
-          <div className="flex items-center justify-between text-[11px] text-white/85 font-mono tracking-wider px-1 pt-0.5 opacity-90">
-            {/* Left: Signal, Wifi, Bluetooth, Battery */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-bold border border-white/60 rounded px-1 py-0.2 flex items-center gap-0.5">
-                <span>7</span>
-                <span className="text-[9px]">⚡</span>
-              </span>
-              <span>📶</span>
-              <span>📶</span>
-              <span className="text-xs">ᛒ</span>
-            </div>
-            {/* Right: Time */}
-            <div className="flex items-center gap-1 font-bold">
-              <span>١٢:٥٣</span>
-            </div>
-          </div>
-
           {/* Main Action Header Row */}
           <div className="flex items-start justify-between mt-1">
             {/* Left side: Power button, Share button, Crown Seat 1 */}
