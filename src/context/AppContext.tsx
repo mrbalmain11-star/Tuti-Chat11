@@ -309,6 +309,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, [isLoggedIn]);
 
+  // Rehydrate verified wealth EXP on login and when returning to the app.
+  useEffect(() => {
+    if (!isLoggedIn || !stagingBackend) return;
+    let active = true;
+    const refreshWealth = async () => {
+      const { data, error } = await stagingBackend!.rpc('staging_my_wealth_exp');
+      if (error) throw error;
+      const exp = Number(data);
+      if (active && Number.isSafeInteger(exp) && exp >= 0) {
+        setCurrentUser(prev => ({
+          ...prev,
+          wealthExp: exp,
+          wealthLevel: getLevelFromExp(exp, 240),
+        }));
+      }
+    };
+    const onFocus = () => { void refreshWealth().catch(error => console.error('Wealth refresh failed:', error)); };
+    const onVisible = () => { if (document.visibilityState === 'visible') onFocus(); };
+    onFocus();
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('totichat:wallet-changed', onFocus);
+    return () => {
+      active = false;
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('totichat:wallet-changed', onFocus);
+    };
+  }, [isLoggedIn]);
+
   // VIP entitlements are read from the server, never changed through profile writes.
   useEffect(() => {
     if (!isLoggedIn || !stagingBackend) return;
