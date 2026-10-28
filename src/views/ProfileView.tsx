@@ -24,6 +24,7 @@ import { VipName } from '../components/VipName';
 import { VipBadge } from '../components/VipBadge';
 import { fetchMyProfile, fetchMyAdminAccess, saveMyProfile, uploadMyAvatar, uploadMyCover, getMyAvatarUrl, type AdminAccess, stagingBackend } from '../services/stagingBackend';
 import { AdminCenterView } from './AdminCenterView';
+import { AgencyProfileCard } from '../components/AgencyProfileCard';
 
 export const ProfileView: React.FC = () => {
   const {
@@ -49,6 +50,21 @@ export const ProfileView: React.FC = () => {
     agencyMemberCount,
   } = useApp();
 
+  const [verifiedAgency, setVerifiedAgency] = useState<{ name: string; public_id: number; member_count: number; role: string } | null>(null);
+  useEffect(() => {
+    let active = true;
+    setVerifiedAgency(null);
+    if (!stagingBackend || !currentUser.id) return;
+    const loadAgency = async () => {
+      const { data, error } = await stagingBackend.rpc('staging_profile_agency', { p_user_id: currentUser.id });
+      if (error) throw error;
+      if (active) setVerifiedAgency(data && typeof data.name === 'string' && /^\\d{6}$/.test(String(data.public_id)) ? data : null);
+    };
+    void loadAgency().catch(error => console.error('Verified agency unavailable:', error));
+    const refresh = () => { void loadAgency().catch(error => console.error('Agency refresh failed:', error)); };
+    window.addEventListener('focus', refresh);
+    return () => { active = false; window.removeEventListener('focus', refresh); };
+  }, [currentUser.id]);
   const [copied, setCopied] = useState(false);
   const [adminAccess, setAdminAccess] = useState<AdminAccess | null>(null);
   const [adminPanelOpen, setAdminPanelOpen] = useState(false);
@@ -540,7 +556,17 @@ export const ProfileView: React.FC = () => {
             Realistic Dynamic Agency Rectangle (مستطيل الوكالة الفعلي بالمعلومات الحقيقية)
             يعرض صورة الوكيل الحقيقية، ومعرف الوكيل (ID)، وعدد المضيفين المتغير تلقائياً
             ========================================================================= */}
-        {/* Agency card hidden until a real membership is loaded from the backend. */}
+        {verifiedAgency && (
+          <AgencyProfileCard
+            avatar={currentUser.avatar}
+            agencyName={verifiedAgency.name}
+            agencyId={String(verifiedAgency.public_id)}
+            memberCount={verifiedAgency.member_count}
+            roleLabel={verifiedAgency.role}
+            onClick={() => setOpenAgencyModal(true)}
+            className="mt-3.5"
+          />
+        )}
 
         {/* =========================================================================
             Stats Row: (الزوار | المعجبون | متابعة | الأصدقاء)
