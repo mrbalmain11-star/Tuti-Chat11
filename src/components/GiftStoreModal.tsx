@@ -56,14 +56,7 @@ export const GiftStoreModal: React.FC = () => {
         ...roomUserReceivers,
         selfReceiver, // available inside room only
       ]
-    : [
-        {
-          id: 'host-1',
-          name: 'إبن سوريا (الداعم الملكي)',
-          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
-          isSelf: false,
-        },
-      ];
+    : [];
 
   const receivers = selectedGiftReceiver
     ? [
@@ -107,12 +100,12 @@ export const GiftStoreModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-xs font-['Cairo',sans-serif] animate-in fade-in">
-      <div className="w-full max-w-md bg-slate-950/95 border-t border-amber-500/30 text-white rounded-t-3xl p-4 shadow-2xl flex flex-col max-h-[85vh]">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm font-['Cairo',sans-serif] animate-in fade-in">
+      <div className="w-full max-w-md h-[min(74dvh,620px)] min-h-0 bg-gradient-to-b from-[#172434] via-[#101b29] to-[#0b1420] border-t border-amber-400/40 text-white rounded-t-[28px] px-4 pt-3 pb-[max(14px,env(safe-area-inset-bottom))] shadow-[0_-16px_60px_rgba(0,0,0,0.55)] flex flex-col overflow-hidden">
         {/* Top Header & Categories (Exact Screenshot 18) */}
-        <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+        <div className="flex-none flex items-center justify-between gap-2 pb-3 border-b border-amber-500/20">
           {/* Categories Tab */}
-          <div className="flex items-center gap-4 text-xs font-bold">
+          <div className="flex items-center gap-3 text-xs font-bold overflow-x-auto whitespace-nowrap no-scrollbar min-w-0">
             {['هدية', 'الأمة', 'مخصص', 'حظ', 'CP'].map((cat) => (
               <button
                 key={cat}
@@ -148,7 +141,7 @@ export const GiftStoreModal: React.FC = () => {
 
         {/* Receiver Select Bar with Self Support Quick Toggle, 1 Coin = 1 EXP & Diamonds Guarantee */}
         {receivers.length > 0 && (
-          <div className="py-2 flex flex-col gap-1.5 border-b border-slate-900">
+          <div className="flex-none py-2 flex flex-col gap-1.5 border-b border-slate-700/50">
             <div className="flex items-center justify-between text-xs gap-2">
               <span className="text-slate-400 font-medium shrink-0">إرسال الدعم إلى:</span>
               
@@ -191,26 +184,12 @@ export const GiftStoreModal: React.FC = () => {
               </div>
             </div>
 
-            {/* EXP and Diamonds Guarantee Notice with Self-Support Highlight */}
-            <div className="flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-950/60 via-slate-900 to-sky-950/60 border border-amber-500/30 text-[10px]">
-              <span className="text-amber-300 font-bold flex items-center gap-1">
-                <span>⭐</span>
-                <span>كل 1 كوينز = 1 خبرة صعود مستوى</span>
-              </span>
-              <span className="text-sky-300 font-bold flex items-center gap-1">
-                <span>💎</span>
-                <span>
-                  {isSupportingSelf
-                    ? `تستلم لحسابك ${Math.floor(((selectedGift?.price ?? 0) * selectedCount) * 0.7).toLocaleString('en-US')} ألماسة`
-                    : `المستلم يحصل على ${Math.floor((selectedGift.price * selectedCount) * 0.7).toLocaleString('en-US')} ألماسة`}
-                </span>
-              </span>
-            </div>
+            <div className="text-[10px] text-slate-400 px-1">اختر المستلم والهدية والكمية قبل الإرسال</div>
           </div>
         )}
 
         {/* Gifts Grid (matching Screenshot 18) */}
-        <div className="py-3 flex-1 overflow-y-auto no-scrollbar grid grid-cols-4 gap-2.5">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain no-scrollbar py-3 grid grid-cols-4 auto-rows-[104px] content-start gap-2">
           {filteredGifts.map((gift) => {
             const isSelected = selectedGift?.id === gift.id;
 
@@ -221,7 +200,7 @@ export const GiftStoreModal: React.FC = () => {
                   sounds.playClick();
                   setSelectedGiftId(gift.id);
                 }}
-                className={`relative rounded-2xl p-2 flex flex-col items-center justify-between cursor-pointer border transition-all ${
+                className={`relative min-w-0 rounded-xl p-2 flex flex-col items-center justify-between cursor-pointer border transition-colors ${
                   isSelected
                     ? 'border-amber-400 bg-gradient-to-b from-amber-500/20 to-slate-900 shadow-lg scale-102'
                     : 'border-slate-800/80 bg-slate-900/60 hover:border-slate-700'
@@ -235,7 +214,7 @@ export const GiftStoreModal: React.FC = () => {
                 )}
 
                 {/* Gift Large Animated Icon */}
-                <div className="w-12 h-12 flex items-center justify-center text-3xl my-1 drop-shadow-md">
+                <div className="w-11 h-11 flex-none items-center justify-center text-[28px] my-1 drop-shadow-md">
                   {gift.icon}
                 </div>
 
@@ -255,9 +234,9 @@ export const GiftStoreModal: React.FC = () => {
         </div>
 
         {/* Bottom Bar: Coins Balance + Recharging + Count Selector + Send Button */}
-        <div className="pt-3 border-t border-slate-800 flex items-center justify-between gap-2">
+        <div className="flex-none pt-3 border-t border-amber-500/20 flex items-center justify-between gap-2 bg-[#0b1420]">
           {/* User Balance & Recharge Button */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 min-w-0">
             <div
               className="flex items-center gap-1 text-xs font-bold text-amber-400 bg-amber-950/40 border border-amber-500/30 px-2.5 py-1 rounded-full"
               title={currentUser.coins.toLocaleString('en-US')}
