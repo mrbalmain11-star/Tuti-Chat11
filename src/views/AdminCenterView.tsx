@@ -12,6 +12,7 @@ import { fetchMyAdminAccess, fetchOwnerDashboardCounts, fetchOwnerDashboardRecen
 
 type Props = { onClose: () => void };
 export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
+  const [adminPage, setAdminPage] = useState<string | null>(null);
   const [access, setAccess] = useState<AdminAccess | null>(null);
   const [counts, setCounts] = useState<OwnerDashboardCounts | null>(null);
   const [recent, setRecent] = useState<OwnerDashboardRecent | null>(null);
@@ -40,52 +41,44 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
         {loading && <p className="text-slate-500">جاري التحقق من صلاحياتك وقراءة البيانات...</p>}
         {error && <div role="alert" className="bg-red-50 border border-red-200 p-4 rounded-xl text-red-700">{error}</div>}
         {!loading && access && <>
-          <div className="rounded-2xl bg-white border border-amber-200 p-5 mb-5 shadow-sm">
-            <p className="text-sm text-slate-500">الصلاحية المعتمدة من الخادم</p>
-            <p className="font-black text-xl">{access.role === 'owner' ? 'المالك' : access.role}</p>
-            <button type="button" onClick={() => void reload()} className="text-amber-700 text-sm flex items-center gap-2 mt-3"><RefreshCw size={16}/> تحديث البيانات</button>
-          </div>
-          {access.role === 'owner' && <section className="grid grid-cols-3 gap-3 mb-6">
-            {([{label:'المستخدمون',value:counts?.users_count,Icon:Users},{label:'الوكالات',value:counts?.agencies_count,Icon:Building2},{label:'الغرف',value:counts?.rooms_count,Icon:Radio}]).map(({label,value,Icon})=><div key={label} className="rounded-2xl bg-white border border-amber-200 p-3 text-center shadow-sm"><Icon className="mx-auto mb-2 text-amber-700" size={22}/><div className="font-black text-xl">{value ?? '—'}</div><div className="text-xs text-slate-500">{label}</div></div>)}
-          </section>}
-          {access.role === 'owner' && recent && <section className="rounded-2xl border border-amber-200 bg-white p-4 mb-5">
-            <h2 className="font-black mb-3">السجلات الأخيرة</h2>
-            <div className="flex gap-2 mb-4">
-              {([{key:'users',label:'المستخدمون'},{key:'agencies',label:'الوكالات'},{key:'rooms',label:'الغرف'}] as const).map(item =>
-                <button type="button" key={item.key} onClick={() => setSection(item.key)} className={`rounded-xl px-3 py-2 text-sm border ${section === item.key ? 'bg-amber-100 border-amber-400 font-bold' : 'border-slate-200'}`}>{item.label}</button>
-              )}
-            </div>
-            {recent[section].length === 0 ? <p className="text-sm text-slate-500">لا توجد سجلات في هذا القسم.</p> :
-              <div className="divide-y divide-slate-100">{recent[section].map((item,index) =>
-                <div key={item.id ?? String(item.public_id ?? index)} className="py-3 flex justify-between items-center gap-3 text-sm">
-                  <span className="font-semibold break-words">{item.display_name ?? item.name ?? item.title ?? 'بدون اسم'}</span>
-                  <span className="text-slate-500 shrink-0" dir="ltr">{item.public_id ?? item.id?.slice(0,8) ?? '—'}</span>
-                </div>
-              )}</div>}
-          </section>}
-          {access.role === 'owner' && <AdminOperationsPanel />}
-          {access.role === 'owner' && <AdminSpecialIdPanel />}
-          {access.role === 'owner' && <AdminRoomModerationPanel />}
-          {access.role === 'owner' && <AdminAgencyActionsPanel />}
-          {access.role === 'owner' && <AdminReportsPanel />}
-          {access.role === 'owner' && <AdminRechargePanel />}
-          {access.role === 'owner' && <AdminStaffPanel />}
-          {access.role === 'owner' && <AdminBannersPanel />}
-          <section className="rounded-2xl border border-amber-200 bg-white p-5">
-            <h2 className="font-black mb-3">أقسام الإدارة</h2>
-            <p className="text-sm text-slate-500 mb-4">تفاصيل الأقسام والوظائف المتوفرة حالياً. سجلات المستخدمين والغرف والوكالات موجودة في التبويبات أعلاه.</p>
-            {[
-              { title: 'إدارة المستخدمين', detail: 'عرض الحسابات والبحث عنها، ومنح آيدي مميز للمالك' },
-              { title: 'إدارة الوكالات', detail: 'عرض وكالات المضيفين والشحن والطلبات والانضمامات' },
-              { title: 'إدارة الغرف', detail: 'عرض الغرف والبحث عنها؛ إجراءات الإشراف قيد الربط' },
-              { title: 'الشحن والخزينة', detail: 'إصدار للمالك، شحن حسب ID، تخصيص للوكالات وسجلات مالية فعلية' },
-              { title: 'الصلاحيات', detail: 'عرض سجلات الصلاحيات؛ تعديل الأدوار غير مفعّل' },
-              { title: 'التقارير', detail: 'سجل التدقيق متاح؛ التقارير المالية التفصيلية قيد الربط' },
-            ].map(item => <div key={item.title} className="border-t border-amber-100 py-3">
-              <p className="font-semibold text-sm">{item.title}</p>
-              <p className="text-slate-500 text-xs mt-1">{item.detail}</p>
-            </div>)}
-          </section>
+          {(() => {
+            const tiles = [
+              {id:'stats',label:'الإحصائيات',Icon:Radio},
+              {id:'users',label:'المستخدمون',Icon:Users},
+              {id:'agencies',label:'الوكالات',Icon:Building2},
+              {id:'rooms',label:'الغرف',Icon:Radio},
+              {id:'operations',label:'العمليات',Icon:ShieldCheck},
+              {id:'ids',label:'الآيديات',Icon:Users},
+              {id:'moderation',label:'إشراف الغرف',Icon:Radio},
+              {id:'agencyActions',label:'طلبات الوكالات',Icon:Building2},
+              {id:'reports',label:'البلاغات',Icon:ShieldCheck},
+              {id:'recharge',label:'الشحن',Icon:Building2},
+              {id:'staff',label:'الصلاحيات',Icon:ShieldCheck},
+              {id:'banners',label:'البنرات',Icon:Radio},
+            ];
+            return <div className="space-y-5">
+              {!adminPage ? <div className="grid grid-cols-3 gap-3">
+                {tiles.map(({id,label,Icon}) => <button key={id} type="button" onClick={() => setAdminPage(id)}
+                  className="rounded-2xl bg-white border border-amber-200 p-4 min-h-28 shadow-sm flex flex-col items-center justify-center gap-3 active:bg-amber-50">
+                  <Icon size={28} className="text-amber-700" />
+                  <span className="text-sm font-bold">{label}</span>
+                </button>)}
+              </div> : <>
+                <button type="button" onClick={() => setAdminPage(null)} className="rounded-xl bg-white border border-amber-200 px-4 py-2 text-amber-800 font-bold">رجوع للأقسام</button>
+                <h2 className="font-black text-xl">{tiles.find(t => t.id === adminPage)?.label}</h2>
+                {adminPage === 'stats' && <div className="grid grid-cols-3 gap-3">{([{label:'المستخدمون',value:counts?.users_count,Icon:Users},{label:'الوكالات',value:counts?.agencies_count,Icon:Building2},{label:'الغرف',value:counts?.rooms_count,Icon:Radio}]).map(({label,value,Icon}) => <div key={label} className="rounded-2xl bg-white border border-amber-200 p-3 text-center"><Icon className="mx-auto text-amber-700"/><strong className="block text-xl">{value ?? '—'}</strong><span className="text-xs">{label}</span></div>)}</div>}
+                {['users','agencies','rooms'].includes(adminPage) && recent && <div className="rounded-2xl bg-white border border-amber-200 p-4 space-y-3">{recent[adminPage as 'users'|'agencies'|'rooms'].map((item,index) => <div key={item.id ?? index} className="flex justify-between border-b border-slate-100 py-2"><span>{item.display_name ?? item.name ?? item.title ?? 'بدون اسم'}</span><span dir="ltr">{item.public_id ?? '—'}</span></div>)}</div>}
+                {adminPage === 'operations' && <AdminOperationsPanel />}
+                {adminPage === 'ids' && <AdminSpecialIdPanel />}
+                {adminPage === 'moderation' && <AdminRoomModerationPanel />}
+                {adminPage === 'agencyActions' && <AdminAgencyActionsPanel />}
+                {adminPage === 'reports' && <AdminReportsPanel />}
+                {adminPage === 'recharge' && <AdminRechargePanel />}
+                {adminPage === 'staff' && <AdminStaffPanel />}
+                {adminPage === 'banners' && <AdminBannersPanel />}
+              </>}
+            </div>;
+          })()}
         </>}
       </main>
     </div>
