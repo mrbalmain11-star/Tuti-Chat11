@@ -750,12 +750,12 @@ export const VoiceRoomModal: React.FC = () => {
                     {isOccupied && seat.user ? (
                       <div
                         className={`relative w-full h-full rounded-full overflow-visible border-2 shadow-md ${
-                          (seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel) > 0
+                          Number(seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel || 0) > 0
                             ? 'border-amber-300 ring-[3px] ring-fuchsia-500/80 shadow-[0_0_16px_4px_rgba(236,72,153,0.65)]'
                             : 'border-white/80'
                         }`}
                       >
-                        {(seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel) >= 1 && (
+                        {Number(seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel || 0) >= 1 && (
                           <Crown className="absolute -top-1 left-1/2 -translate-x-1/2 z-20 w-5 h-5 text-amber-200 fill-amber-500 drop-shadow-[0_0_5px_#facc15] pointer-events-none" />
                         )}
                         <img
@@ -825,12 +825,12 @@ export const VoiceRoomModal: React.FC = () => {
                     {isOccupied && seat.user ? (
                       <div
                         className={`relative w-full h-full rounded-full overflow-visible border-2 shadow-md ${
-                          (seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel) > 0
+                          Number(seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel || 0) > 0
                             ? 'border-amber-300 ring-[3px] ring-fuchsia-500/80 shadow-[0_0_16px_4px_rgba(236,72,153,0.65)]'
                             : 'border-white/80'
                         }`}
                       >
-                        {(seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel) >= 1 && (
+                        {Number(seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel || 0) >= 1 && (
                           <Crown className="absolute -top-1 left-1/2 -translate-x-1/2 z-20 w-5 h-5 text-amber-200 fill-amber-500 drop-shadow-[0_0_5px_#facc15] pointer-events-none" />
                         )}
                         <img
@@ -896,12 +896,12 @@ export const VoiceRoomModal: React.FC = () => {
                     {isOccupied && seat.user ? (
                       <div
                         className={`relative w-full h-full rounded-full overflow-visible border-2 shadow-md ${
-                          (seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel) > 0
+                          Number(seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel || 0) > 0
                             ? 'border-amber-300 ring-[3px] ring-fuchsia-500/80 shadow-[0_0_16px_4px_rgba(236,72,153,0.65)]'
                             : 'border-white/80'
                         }`}
                       >
-                        {(seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel) >= 1 && (
+                        {Number(seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel || 0) >= 1 && (
                           <Crown className="absolute -top-1 left-1/2 -translate-x-1/2 z-20 w-5 h-5 text-amber-200 fill-amber-500 drop-shadow-[0_0_5px_#facc15] pointer-events-none" />
                         )}
                         <img
