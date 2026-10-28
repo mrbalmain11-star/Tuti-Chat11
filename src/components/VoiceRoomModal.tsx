@@ -192,12 +192,11 @@ export const VoiceRoomModal: React.FC = () => {
 
   // Tools Drawer Sub-Modals
   const [showMusicPlayerModal, setShowMusicPlayerModal] = useState(false);
-  const [isPlayingMusic, setIsPlayingMusic] = useState(false);
   const [showTasksModal, setShowTasksModal] = useState(false);
   const [tasksClaimed, setTasksClaimed] = useState<Record<string, boolean>>({});
 
   // Audio / Sound states
-  const [roomSoundMuted, setRoomSoundMuted] = useState(false);
+  const roomSoundMuted = false;
   const [audioModeHQ, setAudioModeHQ] = useState(true);
 
   // Floating animated emojis
@@ -1173,8 +1172,7 @@ export const VoiceRoomModal: React.FC = () => {
             <button
               onClick={() => {
                 sounds.playClick();
-                setRoomSoundMuted(!roomSoundMuted);
-                showToast(roomSoundMuted ? 'تم تفعيل صوت الغرفة 🔊' : 'تم كتم صوت الغرفة 🔇');
+                showToast('الصوت غير متاح حالياً حتى اكتمال ربط الخدمة.');
               }}
               className={`w-10 h-10 rounded-full border transition active:scale-95 shadow-md cursor-pointer flex items-center justify-center ${
                 !roomSoundMuted
@@ -1401,8 +1399,7 @@ export const VoiceRoomModal: React.FC = () => {
                   <div
                     onClick={() => {
                       sounds.playClick();
-                      setRoomSoundMuted(!roomSoundMuted);
-                      showToast(roomSoundMuted ? 'تم تشغيل الصوت 🔊' : 'تم كتم الصوت 🔇');
+                      showToast('الصوت غير متاح حالياً حتى اكتمال ربط الخدمة.');
                     }}
                     className="flex flex-col items-center gap-1.5 cursor-pointer group active:scale-95 transition"
                   >
@@ -1703,26 +1700,7 @@ export const VoiceRoomModal: React.FC = () => {
                 </button>
               </div>
 
-              <div className="p-3 bg-purple-950/40 rounded-2xl border border-purple-500/20 text-center space-y-2">
-                <div className="w-12 h-12 rounded-full bg-purple-600/40 border border-purple-400/40 flex items-center justify-center mx-auto text-purple-200">
-                  <Music className={`w-6 h-6 ${isPlayingMusic ? 'animate-spin' : ''}`} />
-                </div>
-                <div className="text-xs font-bold text-slate-200">ألحان شرقية هادئة (Royal Oud Mix)</div>
-                <div className="text-[10px] text-purple-300 font-mono">3:45 / 4:20</div>
-              </div>
-
-              <div className="flex items-center justify-center gap-4">
-                <button
-                  onClick={() => {
-                    sounds.playClick();
-                    setIsPlayingMusic(!isPlayingMusic);
-                    showToast(isPlayingMusic ? 'تم إيقاف الموسيقى ⏸️' : 'تم تشغيل الموسيقى الملكية ▶️');
-                  }}
-                  className="px-6 py-2 rounded-full bg-purple-600 hover:bg-purple-500 font-bold text-xs active:scale-95 transition"
-                >
-                  {isPlayingMusic ? 'إيقاف مؤقت ⏸' : 'تشغيل الموسيقى ▶'}
-                </button>
-              </div>
+              <p role="status" className="text-xs text-slate-300">تشغيل موسيقى الغرفة غير متاح حالياً حتى اكتمال ربط الخدمة.</p>
             </div>
           </div>
         )}
@@ -1832,7 +1810,7 @@ export const VoiceRoomModal: React.FC = () => {
                   <span>
                     {selectedMicUser.user.id === activeRoom.hostId
                       ? 'مالك الغرفة'
-                      : (selectedMicUser.user.agencyRole || 'المصمم')}
+                      : (selectedMicUser.user.agencyRole || 'عضو')}
                   </span>
                   <span className="font-serif">R</span>
                 </div>
@@ -1853,51 +1831,6 @@ export const VoiceRoomModal: React.FC = () => {
                 <span className="text-rose-500 font-black">❗</span>
               </h3>
 
-              {/* Badges Row: Level + VIP + Gender/Age + Country Flag + User Icon */}
-              <div className="flex items-center justify-center flex-wrap gap-1.5 mt-2">
-                {/* Level Badge (101 🌸) */}
-                <div
-                  onClick={() => {
-                    sounds.playClick();
-                    setLevelsModalTab('wealth');
-                    setOpenLevelsModal(true);
-                    setSelectedMicUser(null);
-                  }}
-                  className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-500 border border-purple-300/40 text-white font-black text-xs flex items-center gap-1 shadow-xs cursor-pointer active:scale-95 transition"
-                >
-                  <span className="text-xs">🌸</span>
-                  <span>{selectedMicUser.user.wealthLevel && selectedMicUser.user.wealthLevel > 1 ? selectedMicUser.user.wealthLevel : 101}</span>
-                </div>
-
-                {/* VIP Badge */}
-                <div
-                  onClick={() => {
-                    sounds.playClick();
-                    setOpenVipModal(true);
-                    setSelectedMicUser(null);
-                  }}
-                  className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-blue-700 via-cyan-600 to-blue-600 border border-cyan-300/50 text-white font-black text-xs flex items-center gap-1 shadow-xs cursor-pointer active:scale-95 transition"
-                >
-                  <span>VIP{selectedMicUser.user.vipLevel || 6}</span>
-                </div>
-
-                {/* Gender & Age */}
-                <div className="px-2.5 py-0.5 rounded-full bg-cyan-600 text-white font-bold text-xs flex items-center gap-1">
-                  <span>{selectedMicUser.user.gender === 'أنثى' ? '♀' : '♂'}</span>
-                  <span>{selectedMicUser.user.gender === 'أنثى' ? '24' : '27'}</span>
-                </div>
-
-                {/* Country Flag */}
-                <div className="px-2 py-0.5 rounded-md bg-slate-800 border border-slate-700 flex items-center justify-center">
-                  <span className="text-sm">{selectedMicUser.user.countryFlag || '🇮🇶'}</span>
-                </div>
-
-                {/* User Icon */}
-                <div className="w-6 h-6 rounded-md bg-amber-600/90 flex items-center justify-center text-white text-xs shadow-xs">
-                  <span>👤</span>
-                </div>
-              </div>
-
               {/* ID Row with Copy */}
               <div
                 onClick={() => {
@@ -1917,18 +1850,6 @@ export const VoiceRoomModal: React.FC = () => {
                 <span className="px-1.5 py-0.2 rounded-full bg-cyan-600 text-white font-mono text-[10px] font-bold">
                   ID
                 </span>
-              </div>
-
-              {/* Verified Ribbon (موثق 🎙️) */}
-              <div className="mx-auto mt-2 px-4 py-0.8 rounded-full bg-gradient-to-r from-pink-600 via-fuchsia-600 to-pink-500 border border-pink-300/40 text-white font-bold text-xs flex items-center gap-1.5 shadow-md w-fit">
-                <span>🎙️</span>
-                <span>موثق</span>
-              </div>
-
-              {/* Diamonds Count Row */}
-              <div className="flex items-center justify-center gap-1.5 text-xs text-slate-300 mt-2 font-mono">
-                <span>👁️</span>
-                <span>ماسة: {selectedMicUser.user.diamonds ?? 0}</span>
               </div>
 
               {/* Central Large Gift Button (ارسل الهدايا 🎁) */}
@@ -1957,7 +1878,6 @@ export const VoiceRoomModal: React.FC = () => {
                     sounds.playClick();
                     leaveSeat(selectedMicUser.seatNumber);
                     setSelectedMicUser(null);
-                    showToast('تم النزول من المايك 💺');
                   }}
                   className="flex flex-col items-center gap-1 text-slate-300 hover:text-white transition active:scale-95 cursor-pointer"
                 >
@@ -1973,7 +1893,6 @@ export const VoiceRoomModal: React.FC = () => {
                     sounds.playClick();
                     toggleMuteSeat(selectedMicUser.seatNumber);
                     setSelectedMicUser(null);
-                    showToast('تم حظر/كتم المايك 🔇');
                   }}
                   className="flex flex-col items-center gap-1 text-slate-300 hover:text-white transition active:scale-95 cursor-pointer"
                 >
