@@ -1056,8 +1056,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       alert('اسم الغرفة يجب أن يكون بين حرفين و60 حرفاً.');
       return;
     }
-    if (!stagingBackend) {
-      alert('الاتصال بالخادم غير مهيأ.');
+    if (!stagingBackend || !currentUser.id) {
+      alert('يجب تسجيل الدخول قبل إنشاء غرفة.');
+      return;
+    }
+    // Client-side UX guard; the server must enforce a unique owner constraint
+    // to prevent duplicate rooms from simultaneous devices or requests.
+    if (rooms.some(room => room.hostId === currentUser.id)) {
+      alert('لديك غرفة بالفعل. لا يمكن إنشاء غرفتين بنفس الحساب.');
       return;
     }
     void Promise.resolve(stagingBackend.rpc('staging_create_my_room', { p_title: trimmed })).then(async ({ data, error }) => {
