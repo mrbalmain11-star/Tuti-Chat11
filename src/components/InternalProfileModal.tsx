@@ -28,7 +28,6 @@ import {
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
 import { UserProfile } from '../types';
-import { mockAgencies } from '../mockData';
 import { CharmBadge, WealthBadge, GameBadge } from './LevelBadgeIcons';
 import { processImageFile } from '../utils/imageUpload';
 import { fetchMyProfile, saveMyProfile, uploadMyAvatar, getMyAvatarUrl } from '../services/stagingBackend';
