@@ -75,7 +75,8 @@ export const ProfileView: React.FC = () => {
     setSpecialId(null);
     if (stagingBackend && currentUser.id) {
       void stagingBackend.rpc('phase5_special_id_status', { p_target: currentUser.id }).then(({ data, error }) => {
-        if (!error && active && data?.assigned && data?.publicId) setSpecialId(String(data.publicId));
+        const status = data as { assigned?: boolean; publicId?: string } | null;
+        if (!error && active && status?.assigned && status?.publicId) setSpecialId(String(status.publicId));
       }).catch(error => console.error('Special ID unavailable:', error));
     }
     void (async () => {
