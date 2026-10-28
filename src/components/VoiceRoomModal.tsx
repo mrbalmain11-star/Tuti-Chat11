@@ -2309,11 +2309,11 @@ export const VoiceRoomModal: React.FC = () => {
                 <div className="p-3 bg-white/5 rounded-2xl border border-white/10 flex items-center justify-between">
                   <div>
                     <span className="text-[10px] text-slate-400 block">معرّف الغرفة (Room ID):</span>
-                    <span className="text-xs font-mono font-bold text-amber-300">{activeRoom.id}</span>
+                    <span className="text-xs font-mono font-bold text-amber-300">{activeRoom.publicId ?? '—'}</span>
                   </div>
                   <button
                     type="button"
-                    onClick={() => handleCopyId(activeRoom.id)}
+                    onClick={() => activeRoom.publicId && handleCopyId(String(activeRoom.publicId))}
                     className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs flex items-center gap-1 active:scale-95 transition"
                   >
                     <Copy className="w-3.5 h-3.5" />
