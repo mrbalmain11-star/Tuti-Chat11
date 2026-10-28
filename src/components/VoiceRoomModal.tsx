@@ -527,6 +527,22 @@ export const VoiceRoomModal: React.FC = () => {
       className="fixed inset-0 z-50 flex items-center justify-center bg-black select-none overflow-hidden font-['Cairo',sans-serif]"
       dir="rtl"
     >
+      {vipEntrance && (
+        <div className="absolute top-20 inset-x-3 z-[90] pointer-events-none flex justify-center animate-in slide-in-from-right-12 fade-in duration-500">
+          <div className="relative w-full max-w-sm overflow-hidden rounded-2xl border-2 border-amber-300/90 bg-gradient-to-r from-[#260b34] via-[#7b174f] to-[#301047] px-4 py-3 shadow-[0_0_28px_rgba(251,191,36,0.65)]">
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-300/15 via-transparent to-fuchsia-400/20" />
+            <div className="relative flex items-center justify-center gap-3 text-amber-100" dir="rtl">
+              <Crown className="w-9 h-9 shrink-0 fill-amber-400 text-yellow-100 drop-shadow-[0_0_8px_#fbbf24]" />
+              <div className="min-w-0 text-center">
+                <div className="text-[10px] font-black tracking-wide text-amber-300">✦ دخول ملكي ✦ VIP {currentUser.vipLevel}</div>
+                <div className="text-sm font-black truncate">{currentUser.nickname || currentUser.name || 'عضو VIP'} انضم إلى الغرفة</div>
+              </div>
+              <Sparkles className="w-7 h-7 shrink-0 text-fuchsia-200" />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Toast Notification */}
       {toastMessage && (
         <div className="absolute top-14 z-50 px-4 py-2 rounded-full bg-black/90 border border-purple-500/60 text-white text-xs font-bold shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-4 max-w-[90%] text-center">
@@ -733,7 +749,7 @@ export const VoiceRoomModal: React.FC = () => {
                   >
                     {isOccupied && seat.user ? (
                       <div
-                        className={`relative w-full h-full rounded-full overflow-hidden border-2 shadow-md ${
+                        className={`relative w-full h-full rounded-full overflow-visible border-2 shadow-md ${
                           (seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel) > 0
                             ? 'border-amber-300 ring-[3px] ring-fuchsia-500/80 shadow-[0_0_16px_4px_rgba(236,72,153,0.65)]'
                             : 'border-white/80'
@@ -745,7 +761,7 @@ export const VoiceRoomModal: React.FC = () => {
                         <img
                           src={seat.user.avatar}
                           alt={seat.user.name}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full rounded-full object-cover"
                         />
                         {seat.isMuted && (
                           <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
@@ -808,7 +824,7 @@ export const VoiceRoomModal: React.FC = () => {
                   >
                     {isOccupied && seat.user ? (
                       <div
-                        className={`relative w-full h-full rounded-full overflow-hidden border-2 shadow-md ${
+                        className={`relative w-full h-full rounded-full overflow-visible border-2 shadow-md ${
                           (seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel) > 0
                             ? 'border-amber-300 ring-[3px] ring-fuchsia-500/80 shadow-[0_0_16px_4px_rgba(236,72,153,0.65)]'
                             : 'border-white/80'
@@ -820,7 +836,7 @@ export const VoiceRoomModal: React.FC = () => {
                         <img
                           src={seat.user.avatar}
                           alt={seat.user.name}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full rounded-full object-cover"
                         />
                         {seat.isMuted && (
                           <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
@@ -879,7 +895,7 @@ export const VoiceRoomModal: React.FC = () => {
                   >
                     {isOccupied && seat.user ? (
                       <div
-                        className={`relative w-full h-full rounded-full overflow-hidden border-2 shadow-md ${
+                        className={`relative w-full h-full rounded-full overflow-visible border-2 shadow-md ${
                           (seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel) > 0
                             ? 'border-amber-300 ring-[3px] ring-fuchsia-500/80 shadow-[0_0_16px_4px_rgba(236,72,153,0.65)]'
                             : 'border-white/80'
@@ -891,7 +907,7 @@ export const VoiceRoomModal: React.FC = () => {
                         <img
                           src={seat.user.avatar}
                           alt={seat.user.name}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full rounded-full object-cover"
                         />
                         {seat.isMuted && (
                           <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
