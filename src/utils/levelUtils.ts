@@ -1,37 +1,27 @@
-// Level and Experience calculation utilities
-// Formula: 1 Coin = 1 EXP (1 كوينز دعم = 1 خبرة)
-
+// Official cumulative gift EXP thresholds. Sending gifts increases wealth;
+// receiving gifts increases charm. Wallet balances are never used as EXP.
 export const MAX_LEVEL = 260;
-export const MAX_WEALTH_LEVEL = 240;
+export const MAX_WEALTH_LEVEL = 260;
 export const MAX_CHARM_LEVEL = 260;
 export const MAX_GAME_LEVEL = 100;
 
-// Cumulative experience required to reach each level (1 to 240+)
-// Continuous curve: base scaling
+const GIFT_LEVEL_THRESHOLDS: readonly number[] = [0,10000,20000,30000,40000,50000,60000,70000,80000,90000,100000,120000,140000,160000,180000,200000,225000,250000,275000,300000,325000,350000,400000,450000,500000,550000,600000,650000,700000,750000,800000,850000,900000,950000,1000000,1100000,1200000,1300000,1400000,1500000,1600000,1700000,1800000,1900000,2000000,2100000,2200000,2300000,2400000,2500000,2600000,2800000,3000000,3200000,3400000,3600000,3800000,4000000,4200000,4400000,4600000,4800000,5000000,5200000,5400000,5600000,5800000,6000000,6200000,6400000,6600000,6900000,7200000,7500000,7800000,8100000,8400000,8700000,9000000,9300000,9600000,9900000,10200000,10500000,10800000,11100000,11400000,11700000,12000000,12500000,13000000,13500000,14000000,14500000,15000000,15500000,16000000,17000000,18000000,19000000,20000000,25000000,26000000,27000000,28000000,29000000,30000000,31000000,32000000,33000000,34000000,35000000,36000000,37000000,38000000,39000000,40000000,42000000,44000000,46000000,48000000,50000000,52000000,54000000,56000000,58000000,60000000,62000000,64000000,66000000,68000000,70000000,72000000,74000000,76000000,78000000,80000000,82000000,84000000,86000000,88000000,90000000,92000000,94000000,96000000,98000000,100000000,105000000,110000000,115000000,120000000,130000000,140000000,150000000,160000000,170000000,180000000,190000000,200000000,210000000,220000000,230000000,240000000,250000000,260000000,270000000,280000000,290000000,300000000,320000000,340000000,360000000,380000000,400000000,420000000,440000000,460000000,480000000,500000000,520000000,540000000,560000000,580000000,600000000,620000000,640000000,660000000,680000000,700000000,720000000,740000000,760000000,780000000,800000000,820000000,840000000,860000000,880000000,900000000,950000000,1000000000,1100000000,1200000000,1300000000,1400000000,1500000000,1600000000,1700000000,1800000000,1900000000,2000000000,2100000000,2200000000,2300000000,2400000000,2500000000,2600000000,2700000000,2800000000,2900000000,3000000000,3100000000,3200000000,3300000000,3400000000,3500000000,3600000000,3700000000,3800000000,3900000000,4000000000,4100000000,4200000000,4300000000,4400000000,4500000000,4600000000,4700000000,4800000000,4900000000,5000000000,5200000000,5400000000,5600000000,5800000000,6000000000,6200000000,6400000000,6600000000,6800000000,7000000000,7500000000,8000000000,8500000000,9000000000,10000000000,12000000000,15000000000,20000000000,30000000000,50000000000];
+
+// Level zero is shown until the first 10,000 cumulative gift points.
 export const calculateCumulativeExpForLevel = (level: number): number => {
-  if (level <= 1) return 0;
-  return Math.floor(100 * Math.pow(level - 1, 2.85));
+  const index = Math.max(0, Math.min(MAX_LEVEL, Math.trunc(level)));
+  return GIFT_LEVEL_THRESHOLDS[index];
 };
 
-// Given cumulative EXP, find corresponding level (1 to maxLevel)
 export const getLevelFromExp = (exp: number, maxLevel: number = MAX_LEVEL): number => {
-  if (!exp || exp <= 0) return 1;
-  let low = 1;
-  let high = maxLevel;
-  let current = 1;
-
+  const total = Number.isFinite(exp) ? Math.max(0, exp) : 0;
+  let low = 0, high = Math.max(0, Math.min(MAX_LEVEL, Math.trunc(maxLevel))), result = 0;
   while (low <= high) {
     const mid = Math.floor((low + high) / 2);
-    const required = calculateCumulativeExpForLevel(mid);
-    if (exp >= required) {
-      current = mid;
-      low = mid + 1;
-    } else {
-      high = mid - 1;
-    }
+    if (total >= GIFT_LEVEL_THRESHOLDS[mid]) { result = mid; low = mid + 1; }
+    else high = mid - 1;
   }
-
-  return Math.min(maxLevel, Math.max(1, current));
+  return result;
 };
 
 export interface LevelProgress {
@@ -46,32 +36,16 @@ export interface LevelProgress {
 }
 
 export const getLevelProgress = (exp: number, maxLevel: number = MAX_LEVEL): LevelProgress => {
-  const safeExp = Math.max(0, exp || 0);
+  const safeExp = Number.isFinite(exp) ? Math.max(0, exp) : 0;
   const level = getLevelFromExp(safeExp, maxLevel);
-  const nextLevel = Math.min(maxLevel, level + 1);
-
+  const nextLevel = Math.min(MAX_LEVEL, Math.max(0, maxLevel), level + 1);
   const expForCurrentLevel = calculateCumulativeExpForLevel(level);
   const expForNextLevel = calculateCumulativeExpForLevel(nextLevel);
-
   const span = expForNextLevel - expForCurrentLevel;
-  const expInCurrentLevel = safeExp - expForCurrentLevel;
-  const neededForNextLevel = Math.max(0, expForNextLevel - safeExp);
-
-  const progressPercent =
-    level >= maxLevel
-      ? 100
-      : span > 0
-      ? Math.min(100, Math.max(0, Math.round((expInCurrentLevel / span) * 100)))
-      : 0;
-
+  const expInCurrentLevel = Math.max(0, safeExp - expForCurrentLevel);
   return {
-    level,
-    nextLevel,
-    currentExp: safeExp,
-    expForCurrentLevel,
-    expForNextLevel,
-    expInCurrentLevel,
-    neededForNextLevel,
-    progressPercent,
+    level, nextLevel, currentExp: safeExp, expForCurrentLevel, expForNextLevel,
+    expInCurrentLevel, neededForNextLevel: Math.max(0, expForNextLevel - safeExp),
+    progressPercent: level >= maxLevel ? 100 : span > 0 ? Math.min(100, Math.max(0, Math.round(expInCurrentLevel / span * 100))) : 0,
   };
 };
