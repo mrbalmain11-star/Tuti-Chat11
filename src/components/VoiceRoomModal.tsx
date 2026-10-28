@@ -138,6 +138,7 @@ export const VoiceRoomModal: React.FC = () => {
 
   // Owner & Management Modals
   const [showRoomInfoModal, setShowRoomInfoModal] = useState(false);
+  const [showExitOptions, setShowExitOptions] = useState(false);
   const [showMembersModal, setShowMembersModal] = useState(false);
   const [showAgencyInfoModal, setShowAgencyInfoModal] = useState(false);
   const [showHostCenterModal, setShowHostCenterModal] = useState(false);
@@ -302,8 +303,6 @@ export const VoiceRoomModal: React.FC = () => {
       announcement: editAnnouncementInput.trim() || activeRoom.announcement,
       tag: editTagInput.trim() || activeRoom.tag,
     });
-    sounds.playLevelUp();
-    showToast('تم حفظ وتحديث معلومات الغرفة بنجاح 👑');
     setShowRoomInfoModal(false);
   };
 
@@ -543,6 +542,19 @@ export const VoiceRoomModal: React.FC = () => {
         </div>
       )}
 
+      {showExitOptions && (
+        <div className="absolute inset-0 z-[120] flex items-center justify-center bg-black/70 px-6" onClick={() => setShowExitOptions(false)}>
+          <div className="w-full max-w-xs rounded-3xl border border-amber-400/50 bg-[#17112b] p-5 shadow-2xl" onClick={event => event.stopPropagation()} dir="rtl">
+            <h3 className="text-center text-lg font-black text-amber-200 mb-4">خيارات الغرفة</h3>
+            <div className="flex flex-col gap-3">
+              <button onClick={() => { setShowExitOptions(false); setIsRoomMinimized(true); }} className="w-full rounded-xl border border-amber-400/40 bg-amber-400/10 py-3 font-bold text-amber-100 flex items-center justify-center gap-2"><Maximize2 className="w-5 h-5" /> تصغير الغرفة</button>
+              <button onClick={() => { setShowExitOptions(false); leaveRoom(); }} className="w-full rounded-xl border border-red-400/40 bg-red-500/10 py-3 font-bold text-red-100 flex items-center justify-center gap-2"><LogOut className="w-5 h-5" /> مغادرة الغرفة</button>
+            </div>
+            <button onClick={() => setShowExitOptions(false)} className="w-full mt-3 py-2 text-sm text-slate-300">إلغاء</button>
+          </div>
+        </div>
+      )}
+
       {/* Toast Notification */}
       {toastMessage && (
         <div className="absolute top-14 z-50 px-4 py-2 rounded-full bg-black/90 border border-purple-500/60 text-white text-xs font-bold shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-4 max-w-[90%] text-center">
@@ -605,10 +617,10 @@ export const VoiceRoomModal: React.FC = () => {
                 <button
                   onClick={() => {
                     sounds.playClick();
-                    leaveRoom();
+                    setShowExitOptions(true);
                   }}
                   className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 text-white/90 flex items-center justify-center transition active:scale-95 cursor-pointer"
-                  title="الخروج من الغرفة"
+                  title="خيارات الغرفة"
                 >
                   <Power className="w-5 h-5 text-white stroke-[2.2]" />
                 </button>
