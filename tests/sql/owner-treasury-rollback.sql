@@ -67,6 +67,7 @@ begin
  answer:=public.phase4_recharge_state();
  assert (answer->>'treasury')::bigint=starting_balance+700,'Wrong treasury';
  assert (answer->>'issued')::bigint=starting_issued+1000,'Issue duplicated';
+ assert (select count(*) from public.financial_operations where actor_id=owner_id and request_id in(issue_request,topup_request,allocate_request))=3,'Owner cannot read persisted transaction history';
  assert exists(select 1 from jsonb_array_elements(answer->'agencies') a where a->>'id'=agency::text and (a->>'treasury')::bigint=200),'Agency balance missing';
  reset role;
  assert (select coins from public.wallets where user_id=recipient)=100,'Wrong recipient wallet';
@@ -76,6 +77,11 @@ begin
  update public.agencies set is_active=false where id=agency;
  set local role authenticated;
  perform pg_temp.expect_error(format('select public.phase4_recharge_action(''allocate'',%L::jsonb,%L::uuid)',jsonb_build_object('coins',1,'note','rollback inactive agency','agency_id',agency),gen_random_uuid()),'Active recharge agency required');
+ reset role;
+ perform set_config('request.jwt.claims',jsonb_build_object('sub',recipient,'role','authenticated','session_id',member_session,'aal','aal1')::text,true);
+ set local role authenticated;
+ assert not exists(select 1 from public.financial_operations where actor_id=owner_id),'Member can read Owner transaction history';
+ assert not exists(select 1 from jsonb_array_elements(public.phase4_recharge_state()->'agencies') a where a->>'treasury' is not null),'Member can read agency treasury balances';
  reset role;
  perform set_config('request.jwt.claims','{}',true);
  set local role anon;

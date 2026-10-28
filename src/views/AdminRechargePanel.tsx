@@ -28,6 +28,7 @@ export const AdminRechargePanel: React.FC = () => {
   const [state, setState] = useState<Recharge | null>(null);
   const [history, setHistory] = useState<Row[]>([]);
   const [actor, setActor] = useState('');
+  const actorRef = useRef('');
   const [busy, setBusy] = useState(false);
   const lock = useRef(false);
   const [error, setError] = useState('');
@@ -51,6 +52,7 @@ export const AdminRechargePanel: React.FC = () => {
     if (authError) throw authError;
     if (!auth.user) throw new Error('يرجى تسجيل الدخول');
     const saved = localStorage.getItem(storageKey(auth.user.id));
+    actorRef.current = auth.user.id;
     setActor(auth.user.id);
     setPending(saved ? JSON.parse(saved) as TreasuryIntent : null);
     const { data, error: rpcError } = await stagingBackend.rpc('phase4_recharge_state');
@@ -77,12 +79,22 @@ export const AdminRechargePanel: React.FC = () => {
 
   useEffect(() => {
     void read(); // Read only. Money movement is exclusively in confirmed event handlers.
-    const subscription = stagingBackend?.auth.onAuthStateChange((event) => {
+    const subscription = stagingBackend?.auth.onAuthStateChange((event, session) => {
       if (event !== 'SIGNED_OUT' && event !== 'SIGNED_IN') return;
+      if (event === 'SIGNED_IN' && session?.user.id === actorRef.current) return;
+      actorRef.current = '';
       setState(null); setActor(''); setRecipient(null); setConfirmation(null); setHistory([]); setPending(null);
     });
     return () => subscription?.data.subscription.unsubscribe();
   }, [read]);
+
+  useEffect(() => {
+    const changed = (event: StorageEvent) => {
+      if (actor && event.key === storageKey(actor)) void read();
+    };
+    window.addEventListener('storage', changed);
+    return () => window.removeEventListener('storage', changed);
+  }, [actor, read]);
 
   const clearPending = (id: string) => {
     localStorage.removeItem(storageKey(id));
