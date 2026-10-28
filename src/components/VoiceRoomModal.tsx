@@ -274,20 +274,21 @@ export const VoiceRoomModal: React.FC = () => {
     reader.readAsDataURL(file);
   };
 
-  const handleSaveBackground = () => {
+  const handleSaveBackground = async () => {
     if (!activeRoom) return;
-    const isOwner = activeRoom.hostId === currentUser.id;
-    if (!isOwner && !currentUser.isSuperAdmin) {
-      sounds.playError();
-      showToast('🔒 عذراً، لا تمتلك صلاحية تعديل خلفية هذه الغرفة');
-      setShowChangeBgModal(false);
+    if (activeRoom.hostId !== currentUser.id) {
+      showToast('تغيير خلفية الغرفة متاح للمالك فقط.');
       return;
     }
-
-    changeRoomBackground(activeRoom.id, selectedBgPreview);
-    sounds.playLevelUp();
-    showToast('تم حفظ وتحديث خلفية الغرفة وتطبيقها على جميع المستخدمين بنجاح ✨');
-    setShowChangeBgModal(false);
+    try {
+      await changeRoomBackground(activeRoom.id, selectedBgPreview);
+      sounds.playLevelUp();
+      showToast('تم حفظ الخلفية على الخادم بنجاح.');
+      setShowChangeBgModal(false);
+    } catch (error) {
+      console.error('Room background save failed:', error);
+      showToast(error instanceof Error ? error.message : 'فشل حفظ الخلفية على الخادم.');
+    }
   };
 
   const handleSaveRoomInfo = (e: React.FormEvent) => {
