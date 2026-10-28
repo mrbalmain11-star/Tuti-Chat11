@@ -9,7 +9,6 @@ export const EditProfileModal: React.FC = () => {
 
   const [name, setName] = useState(currentUser.name);
   const [nickname, setNickname] = useState(currentUser.nickname);
-  const [userId, setUserId] = useState(currentUser.id || '313');
   const [bio, setBio] = useState(currentUser.bio || '');
   const [country, setCountry] = useState(currentUser.country);
   const [avatar, setAvatar] = useState(currentUser.avatar);
@@ -23,7 +22,6 @@ export const EditProfileModal: React.FC = () => {
     if (openEditProfileModal) {
       setName(currentUser.name || '');
       setNickname(currentUser.nickname || '');
-      setUserId(currentUser.id || '313');
       setBio(currentUser.bio || '');
       setCountry(currentUser.country || 'العراق');
       setAvatar(currentUser.avatar || '');
@@ -71,16 +69,9 @@ export const EditProfileModal: React.FC = () => {
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     sounds.playClick();
-    updateUserProfile({
-      id: userId.trim() || currentUser.id,
-      name,
-      nickname,
-      bio,
-      country,
-      avatar,
-      cover,
-      countryFlag: country === 'العراق' ? '🇮🇶' : country === 'المملكة العربية السعودية' ? '🇸🇦' : country === 'مصر' ? '🇪🇬' : '🇸🇾',
-    });
+    // The authenticated profile API supports display name and biography.
+    // Never submit an editable auth ID or unsupported profile fields.
+    updateUserProfile({ name: name.trim(), bio });
     setOpenEditProfileModal(false);
   };
 
@@ -192,17 +183,6 @@ export const EditProfileModal: React.FC = () => {
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
               className="w-full p-2.5 rounded-xl border border-slate-200 text-xs text-slate-800 text-right focus:outline-none focus:border-emerald-500"
-            />
-          </div>
-
-          <div className="text-right">
-            <label className="text-xs font-bold text-slate-600 block mb-1">معرف الحساب (ID):</label>
-            <input
-              type="text"
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-              placeholder="معرف الحساب (ID)"
-              className="w-full p-2.5 rounded-xl border border-slate-200 text-xs text-slate-800 text-left font-mono focus:outline-none focus:border-emerald-500 font-bold"
             />
           </div>
 
