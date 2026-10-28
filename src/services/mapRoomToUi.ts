@@ -4,6 +4,7 @@ import type { BackendRoom } from './stagingBackend';
 export function mapRoomToUi(room: BackendRoom): VoiceRoom {
   return {
     id: room.id,
+    publicId: room.public_id,
     title: room.title,
     hostId: room.owner_id,
     hostName: '',
