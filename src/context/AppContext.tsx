@@ -1115,6 +1115,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const wallet = await fetchMyWallet().catch(() => null);
       if (wallet) setCurrentUser(prev => ({ ...prev, coins: wallet.coins, diamonds: wallet.diamonds }));
       window.dispatchEvent(new Event('totichat:wallet-changed'));
+      const { data: wealthTotal, error: wealthError } = await stagingBackend.rpc('staging_my_wealth_exp');
+      if (!wealthError && typeof wealthTotal === 'number' && Number.isSafeInteger(wealthTotal)) {
+        setCurrentUser(prev => ({
+          ...prev,
+          wealthExp: wealthTotal,
+          wealthLevel: getLevelFromExp(wealthTotal, 240),
+        }));
+      }
       return true;
     } catch (error) {
       console.error('Gift delivery failed:', error);
