@@ -1222,11 +1222,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       alert('اختر وكالة مضيفين حقيقية قبل إرسال الطلب.');
       return;
     }
-    void stagingBackend.rpc('phase4_agency_action', {
+    void Promise.resolve(stagingBackend.rpc('phase4_agency_action', {
       p_action: 'join',
       p_data: { agency_id: agencyId, reason: 'طلب انضمام إلى وكالة مضيفين من التطبيق' },
       p_request_id: crypto.randomUUID(),
-    }).then(({ data, error }) => {
+    })).then(({ data, error }) => {
       if (error || !data?.id) throw error ?? new Error('Agency join not confirmed');
       alert('تم تسجيل طلب الانضمام، وينتظر موافقة الوكالة.');
     }).catch(error => {
@@ -1245,7 +1245,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       p_action: 'register',
       p_data: { kind: 'host', name: name.trim(), contact: 'in-app', reason: description.trim() },
       p_request_id: crypto.randomUUID(),
-    }).then(({ data, error }) => {
+    })).then(({ data, error }) => {
       if (error || !data?.id) throw error ?? new Error('Agency registration not confirmed');
       alert('تم تقديم طلب فتح وكالة مضيفين، بانتظار موافقة الإدارة.');
     }).catch(error => {
