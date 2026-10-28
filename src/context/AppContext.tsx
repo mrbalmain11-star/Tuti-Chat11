@@ -508,6 +508,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [isLoggedIn, currentUser.id]);
 
   const [agencies, setAgencies] = useState<Agency[]>([]);
+  // The directory is backed by approved, active agencies from the staging server.
+  useEffect(() => {
+    if (!isLoggedIn || !stagingBackend) { setAgencies([]); return; }
+    let active = true;
+    const load = async () => {
+      const { data, error } = await stagingBackend!.rpc('phase4_agency_state');
+      if (error) throw error;
+      if (!active) return;
+      const rows = Array.isArray(data?.agencies) ? data.agencies : [];
+      setAgencies(rows.filter((a: any) => a.is_active).map((a: any) => ({
+        id: String(a.id), agencyId: String(a.public_id ?? ''),
+        name: String(a.name || ''), logo: '', rank: 0,
+        leaderName: '', leaderAvatar: '', country: '', countryFlag: '',
+        memberCount: 0, totalIncome: '0', monthlyScore: '0',
+        description: a.kind === 'recharge' ? 'وكالة شحن معتمدة' : 'وكالة مضيفين معتمدة',
+        members: [],
+      })));
+    };
+    void load().catch(error => console.error('Agency directory unavailable:', error));
+    const onFocus = () => { void load().catch(error => console.error('Agency refresh failed:', error)); };
+    document.addEventListener('visibilitychange', onFocus);
+    return () => { active = false; document.removeEventListener('visibilitychange', onFocus); };
+  }, [isLoggedIn]);
   const [followedRoomHosts, setFollowedRoomHosts] = useState<Set<string>>(new Set());
   useEffect(() => {
     safeStorage.removeItem('toti_followed_room_hosts_v2');
