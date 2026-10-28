@@ -92,6 +92,49 @@ export const AgencyModal: React.FC = () => {
   // Toast message
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  const [applicationKind, setApplicationKind] = useState<'host' | 'recharge'>('host');
+  const [applicationName, setApplicationName] = useState('');
+  const [applicationContact, setApplicationContact] = useState('');
+  const [applicationReason, setApplicationReason] = useState('');
+  const [applicationOpen, setApplicationOpen] = useState(false);
+  const [applicationBusy, setApplicationBusy] = useState(false);
+  const [applicationStatus, setApplicationStatus] = useState('');
+  const submitAgencyApplication = async () => {
+    if (applicationBusy) return;
+    if (applicationName.trim().length < 2 || applicationName.trim().length > 80 ||
+        applicationContact.trim().length < 3 || applicationContact.trim().length > 100 ||
+        applicationReason.trim().length < 3 || applicationReason.trim().length > 500) {
+      setApplicationStatus('أدخل اسم الوكالة ووسيلة التواصل وسبب الطلب بصورة صحيحة.');
+      return;
+    }
+    setApplicationBusy(true);
+    setApplicationStatus('');
+    try {
+      const { stagingBackend } = await import('../services/stagingBackend');
+      if (!stagingBackend) throw new Error('الاتصال بخادم الوكالات غير مهيأ');
+      const { data, error } = await stagingBackend.rpc('phase4_agency_action', {
+        p_action: 'register',
+        p_data: {
+          kind: applicationKind,
+          name: applicationName.trim(),
+          contact: applicationContact.trim(),
+          reason: applicationReason.trim(),
+        },
+        p_request_id: crypto.randomUUID(),
+      });
+      if (error) throw error;
+      if (!data?.id || data.status !== 'pending') throw new Error('لم يؤكد الخادم استلام الطلب');
+      setApplicationStatus('تم استلام الطلب على الخادم، وحالته: بانتظار مراجعة الإدارة.');
+      setApplicationName('');
+      setApplicationContact('');
+      setApplicationReason('');
+    } catch (error) {
+      setApplicationStatus(error instanceof Error ? error.message : 'تعذر تقديم الطلب');
+    } finally {
+      setApplicationBusy(false);
+    }
+  };
+
   if (!openAgencyModal) return null;
 
   const showToast = (msg: string) => {
@@ -143,6 +186,27 @@ export const AgencyModal: React.FC = () => {
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-0 sm:p-4 select-none font-['Cairo',sans-serif]"
       dir="rtl"
     >
+      {applicationOpen && (
+        <div className="absolute inset-0 z-[90] bg-[#060c1b] flex items-center justify-center p-4" dir="rtl">
+          <div className="w-full max-w-sm rounded-3xl border border-amber-500/40 bg-[#111b30] p-5 space-y-4 text-white shadow-2xl">
+            <div className="flex justify-between items-center">
+              <h2 className="font-black text-lg text-amber-300">طلب فتح وكالة</h2>
+              <button onClick={() => setApplicationOpen(false)} aria-label="إغلاق الطلب"><X size={22}/></button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button className={`rounded-xl p-3 text-sm font-bold ${applicationKind === 'host' ? 'bg-amber-500 text-black' : 'bg-slate-700'}`} onClick={() => setApplicationKind('host')}>وكالة مضيفين</button>
+              <button className={`rounded-xl p-3 text-sm font-bold ${applicationKind === 'recharge' ? 'bg-amber-500 text-black' : 'bg-slate-700'}`} onClick={() => setApplicationKind('recharge')}>وكالة شحن</button>
+            </div>
+            <input value={applicationName} onChange={e => setApplicationName(e.target.value)} maxLength={80} placeholder="اسم الوكالة" className="w-full rounded-xl bg-slate-800 p-3 text-sm outline-none border border-slate-600" />
+            <input value={applicationContact} onChange={e => setApplicationContact(e.target.value)} maxLength={100} placeholder="رقم الهاتف أو وسيلة التواصل" className="w-full rounded-xl bg-slate-800 p-3 text-sm outline-none border border-slate-600" />
+            <textarea value={applicationReason} onChange={e => setApplicationReason(e.target.value)} maxLength={500} rows={3} placeholder="سبب طلب فتح الوكالة" className="w-full rounded-xl bg-slate-800 p-3 text-sm outline-none border border-slate-600" />
+            <p className="text-xs text-slate-300">إرسال الطلب لا يمنح صلاحيات الوكالة تلقائياً. يجب موافقة الإدارة.</p>
+            {applicationStatus && <p role="status" className="text-sm text-amber-200">{applicationStatus}</p>}
+            <button disabled={applicationBusy} onClick={() => void submitAgencyApplication()} className="w-full rounded-xl bg-amber-500 text-black font-black p-3 disabled:opacity-50">{applicationBusy ? 'جاري الإرسال...' : 'إرسال طلب الوكالة'}</button>
+          </div>
+        </div>
+      )}
+      <button onClick={() => { setApplicationStatus(''); setApplicationOpen(true); }} className="absolute z-[85] bottom-5 left-5 rounded-full bg-amber-500 text-black px-4 py-3 text-xs font-black shadow-xl border-2 border-amber-200">+ طلب فتح وكالة</button>
       {/* Toast Notification */}
       {toastMessage && (
         <div className="absolute top-6 z-50 px-5 py-2.5 rounded-full bg-slate-900/95 border border-amber-400 text-amber-200 text-xs font-bold shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-4 max-w-[90%] text-center">
