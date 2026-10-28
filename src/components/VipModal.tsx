@@ -20,7 +20,7 @@ import confetti from 'canvas-confetti';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
 import { VipName } from './VipName';
-import { fetchMyProfile } from '../services/stagingBackend';
+import { fetchMyProfile, stagingBackend } from '../services/stagingBackend';
 import { VipBadge, VIP_BEAST_METADATA } from './VipBadge';
 
 export interface VipTierData {
@@ -306,6 +306,7 @@ export const VipModal: React.FC = () => {
   } = useApp();
 
   const [myPublicId, setMyPublicId] = useState<number | null>(null);
+  const [vipPurchaseBusy, setVipPurchaseBusy] = useState(false);
   useEffect(() => {
     if (!openVipModal) { setMyPublicId(null); return; }
     let active = true;
@@ -352,82 +353,42 @@ export const VipModal: React.FC = () => {
     setActiveTierIdx((prev) => (prev - 1 + VIP_TIERS.length) % VIP_TIERS.length);
   };
 
-  // Buy or Activate VIP
-  const handleAction = () => {
+  // All VIP purchases are settled atomically by Supabase, never by profile edits.
+  const handleAction = async () => {
+    if (vipPurchaseBusy) return;
     sounds.playClick();
-
-    // If already owned, allow toggling or equipping this tier visual
     if (isAlreadyOwned) {
+      setGiftSuccessToast('هذه الرتبة مملوكة بالفعل؛ لا حاجة إلى شراء جديد.');
+      return;
+    }
+    if (!stagingBackend) {
+      alert('تعذر الاتصال بخادم الشراء.');
+      return;
+    }
+    setVipPurchaseBusy(true);
+    try {
+      const { data, error } = await stagingBackend.rpc('staging_purchase_vip', {
+        p_tier: activeTier.level,
+        p_request_id: crypto.randomUUID(),
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error('VIP purchase not confirmed');
+      window.dispatchEvent(new Event('totichat:wallet-changed'));
+      updateUserProfile({ vipLevel: Number(data.tier), vipExpiry: String(data.expiresAt) });
       sounds.playLevelUp();
-      updateUserProfile({
-        vipLevel: activeTier.level,
-        vipExpiry: '2028/01/01',
-      });
-      confetti({
-        particleCount: 80,
-        spread: 70,
-        origin: { y: 0.5 },
-        colors: [activeTier.themeColor, '#f59e0b', '#ffffff'],
-      });
-      setGiftSuccessToast(`✨ تم تعيين رتبة ${activeTier.name} كرتبتك النشطة بنجاح!`);
-      setTimeout(() => setGiftSuccessToast(null), 3000);
-      return;
+      confetti({ particleCount: 150, spread: 100, origin: { y: 0.5 },
+        colors: [activeTier.themeColor, '#f59e0b', '#ffd700', '#ffffff'] });
+      setGiftSuccessToast(`🎉 تم شراء ${activeTier.name} بنجاح لمدة 30 يوماً!`);
+    } catch (error) {
+      console.error('VIP purchase rejected:', error);
+      alert('فشل شراء VIP. لم يتم تأكيد أي خصم. تحقق من الرصيد والاتصال ثم حاول مجدداً.');
+    } finally {
+      setVipPurchaseBusy(false);
     }
-
-    // Purchase check
-    if (currentUser.coins < activeTier.price) {
-      sounds.playError();
-      const diff = activeTier.price - currentUser.coins;
-      setGiftSuccessToast(`رصيد الكوينز غير كافٍ. تحتاج إلى ${diff.toLocaleString()} كوينز إضافية 🪙`);
-      setTimeout(() => {
-        setGiftSuccessToast(null);
-        setOpenRechargeModal(true);
-      }, 1500);
-      return;
-    }
-
-    // Successful purchase
-    sounds.playLevelUp();
-    updateUserProfile({
-      coins: currentUser.coins - activeTier.price,
-      vipLevel: activeTier.level,
-      vipExpiry: '2028/01/01',
-    });
-
-    confetti({
-      particleCount: 150,
-      spread: 100,
-      origin: { y: 0.5 },
-      colors: [activeTier.themeColor, '#f59e0b', '#ffd700', '#ffffff'],
-    });
-
-    setGiftSuccessToast(`🎉 تم شراء واشتراك ${activeTier.name} بنجاح لمدة 30 يوماً!`);
-    setTimeout(() => {
-      setGiftSuccessToast(null);
-    }, 3500);
   };
 
   const handleSendGift = () => {
-    sounds.playClick();
-    if (!targetFriendId.trim()) return;
-
-    if (currentUser.coins < activeTier.price) {
-      sounds.playError();
-      setOpenRechargeModal(true);
-      return;
-    }
-
-    sounds.playGiftFanfare();
-    updateUserProfile({
-      coins: currentUser.coins - activeTier.price,
-    });
-
-    setShowSendModal(false);
-    setTargetFriendId('');
-    setGiftSuccessToast(`🎁 تم إهداء اشتراك ${activeTier.name} إلى (${targetFriendId}) بنجاح!`);
-    setTimeout(() => {
-      setGiftSuccessToast(null);
-    }, 3500);
+    alert('إهداء VIP متوقف مؤقتاً حتى ربطه بعملية شراء آمنة على الخادم. لم يتم خصم أي عملات.');
   };
 
   return (
