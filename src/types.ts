@@ -56,6 +56,7 @@ export interface MicSeat {
 
 export interface VoiceRoom {
   id: string;
+  publicId?: number;
   title: string;
   hostName: string;
   hostAvatar: string;
