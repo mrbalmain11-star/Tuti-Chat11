@@ -1,14 +1,40 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { stagingBackend } from '../services/stagingBackend';
+import type { DirectConversation } from '../types';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
 
 export const MessagesView: React.FC = () => {
   const { conversations, setOpenChatThread, t, isRtl } = useApp();
 
+  const [systemFeed, setSystemFeed] = useState<DirectConversation | null>(null);
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      if (!stagingBackend) return;
+      const { data, error } = await stagingBackend.rpc('phase5_notification_feed', { p_limit: 50 });
+      if (error) throw error;
+      const entries = Array.isArray(data?.items) ? data.items : [];
+      const messages = entries.map((item: any) => ({
+        id: String(item.id), sender: 'them' as const, timestamp: String(item.created_at),
+        text: item.event_type === 'wallet_topup'
+          ? `تم شحن حسابك بمبلغ ${Number(item.context?.amount || 0).toLocaleString('ar-IQ')} عملة بنجاح.`
+          : `إشعار نظام: ${String(item.event_type || 'تحديث الحساب')}`,
+      })).reverse();
+      if (active) setSystemFeed({
+        id: 'system-1', userId: 'system-1', userName: 'رسائل النظام', userAvatar: '', isOnline: false,
+        isSystem: true, lastMessage: messages.at(-1)?.text || 'لا توجد رسائل نظام حتى الآن',
+        lastTime: messages.at(-1)?.timestamp || '', unreadCount: Number(data?.unreadCount || 0), messages,
+      });
+    };
+    void load().catch(error => console.error('Notification feed failed:', error));
+    return () => { active = false; };
+  }, []);
+
   // Find system and official or default
-  const systemConv = conversations.find((c) => c.isSystem || c.id === 'system-1');
+  const systemConv = systemFeed ?? conversations.find((c) => c.isSystem || c.id === 'system-1');
   const officialConv = conversations.find((c) => c.isOfficial || c.id === 'official-1');
-  const otherConvs = conversations.filter((c) => c.id !== systemConv?.id && c.id !== officialConv?.id);
+  const otherConvs = conversations.filter((c) => !c.isSystem && !c.isOfficial && c.id !== 'system-1' && c.id !== 'official-1');
 
   return (
     <div
