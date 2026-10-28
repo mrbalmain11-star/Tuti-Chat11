@@ -321,11 +321,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setCurrentUser(prev => ({
           ...prev,
           wealthExp: exp,
-          wealthLevel: getLevelFromExp(exp, 240),
+          wealthLevel: getLevelFromExp(exp, 260),
         }));
       }
     };
-    const onFocus = () => { void refreshWealth().catch(error => console.error('Wealth refresh failed:', error)); };
+    const refreshCharm = async () => {
+      const { data, error } = await stagingBackend!.rpc('staging_my_charm_exp');
+      if (error) throw error;
+      const exp = Number(data);
+      if (active && Number.isSafeInteger(exp) && exp >= 0) {
+        setCurrentUser(prev => ({ ...prev, charmExp: exp, charmLevel: getLevelFromExp(exp, 260) }));
+      }
+    };
+    const onFocus = () => {
+      void refreshWealth().catch(error => console.error('Wealth refresh failed:', error));
+      void refreshCharm().catch(error => console.error('Charm refresh failed:', error));
+    };
     const onVisible = () => { if (document.visibilityState === 'visible') onFocus(); };
     onFocus();
     window.addEventListener('focus', onFocus);
@@ -1204,7 +1215,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setCurrentUser(prev => ({
           ...prev,
           wealthExp: wealthTotal,
-          wealthLevel: getLevelFromExp(wealthTotal, 240),
+          wealthLevel: getLevelFromExp(wealthTotal, 260),
         }));
       }
       return true;
