@@ -13,6 +13,7 @@ async function toWebp(file: File): Promise<Blob> {
   if (file.size > 12 * 1024 * 1024) throw new Error('حجم الصورة يجب ألا يتجاوز 12MB');
   const image = await createImageBitmap(file);
   try {
+    if (image.width !== 1200 || image.height !== 600) throw new Error('قياس البنر غير صحيح. المطلوب 1200 × 600 بكسل بالضبط.');
     const canvas = document.createElement('canvas');
     canvas.width = 1200;
     canvas.height = 600;
