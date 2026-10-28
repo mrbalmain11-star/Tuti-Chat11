@@ -427,6 +427,23 @@ export const VoiceRoomModal: React.FC = () => {
     return 'text-white';
   };
 
+  // VIP entrance is shown once on a fresh room entry, never on every render.
+  const [vipEntrance, setVipEntrance] = useState(false);
+  const lastEnteredRoom = useRef<string | null>(null);
+  useEffect(() => {
+    if (!activeRoom || isRoomMinimized) {
+      if (!activeRoom) lastEnteredRoom.current = null;
+      setVipEntrance(false);
+      return;
+    }
+    if (lastEnteredRoom.current === activeRoom.id) return;
+    lastEnteredRoom.current = activeRoom.id;
+    if (currentUser.vipLevel < 1) return;
+    setVipEntrance(true);
+    const timer = window.setTimeout(() => setVipEntrance(false), 4500);
+    return () => window.clearTimeout(timer);
+  }, [activeRoom?.id, isRoomMinimized, currentUser.vipLevel]);
+
   // Get current messages
   const currentMessages = activeRoom ? roomMessages[activeRoom.id] || [] : [];
 
@@ -717,11 +734,14 @@ export const VoiceRoomModal: React.FC = () => {
                     {isOccupied && seat.user ? (
                       <div
                         className={`relative w-full h-full rounded-full overflow-hidden border-2 shadow-md ${
-                          seat.user.vipLevel && seat.user.vipLevel > 0
-                            ? 'border-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.6)]'
+                          (seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel) > 0
+                            ? 'border-amber-300 ring-[3px] ring-fuchsia-500/80 shadow-[0_0_16px_4px_rgba(236,72,153,0.65)]'
                             : 'border-white/80'
                         }`}
                       >
+                        {(seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel) >= 1 && (
+                          <Crown className="absolute -top-1 left-1/2 -translate-x-1/2 z-20 w-5 h-5 text-amber-200 fill-amber-500 drop-shadow-[0_0_5px_#facc15] pointer-events-none" />
+                        )}
                         <img
                           src={seat.user.avatar}
                           alt={seat.user.name}
@@ -789,11 +809,14 @@ export const VoiceRoomModal: React.FC = () => {
                     {isOccupied && seat.user ? (
                       <div
                         className={`relative w-full h-full rounded-full overflow-hidden border-2 shadow-md ${
-                          seat.user.vipLevel && seat.user.vipLevel > 0
-                            ? 'border-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.6)]'
+                          (seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel) > 0
+                            ? 'border-amber-300 ring-[3px] ring-fuchsia-500/80 shadow-[0_0_16px_4px_rgba(236,72,153,0.65)]'
                             : 'border-white/80'
                         }`}
                       >
+                        {(seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel) >= 1 && (
+                          <Crown className="absolute -top-1 left-1/2 -translate-x-1/2 z-20 w-5 h-5 text-amber-200 fill-amber-500 drop-shadow-[0_0_5px_#facc15] pointer-events-none" />
+                        )}
                         <img
                           src={seat.user.avatar}
                           alt={seat.user.name}
@@ -857,11 +880,14 @@ export const VoiceRoomModal: React.FC = () => {
                     {isOccupied && seat.user ? (
                       <div
                         className={`relative w-full h-full rounded-full overflow-hidden border-2 shadow-md ${
-                          seat.user.vipLevel && seat.user.vipLevel > 0
-                            ? 'border-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.6)]'
+                          (seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel) > 0
+                            ? 'border-amber-300 ring-[3px] ring-fuchsia-500/80 shadow-[0_0_16px_4px_rgba(236,72,153,0.65)]'
                             : 'border-white/80'
                         }`}
                       >
+                        {(seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel) >= 1 && (
+                          <Crown className="absolute -top-1 left-1/2 -translate-x-1/2 z-20 w-5 h-5 text-amber-200 fill-amber-500 drop-shadow-[0_0_5px_#facc15] pointer-events-none" />
+                        )}
                         <img
                           src={seat.user.avatar}
                           alt={seat.user.name}
