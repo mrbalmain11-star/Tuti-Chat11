@@ -13,13 +13,17 @@ async function toWebp(file: File): Promise<Blob> {
   if (file.size > 12 * 1024 * 1024) throw new Error('حجم الصورة يجب ألا يتجاوز 12MB');
   const image = await createImageBitmap(file);
   try {
-    const scale = Math.min(1, 1600 / image.width, 900 / image.height);
     const canvas = document.createElement('canvas');
-    canvas.width = Math.max(1, Math.round(image.width * scale));
-    canvas.height = Math.max(1, Math.round(image.height * scale));
+    canvas.width = 1200;
+    canvas.height = 600;
     const context = canvas.getContext('2d');
     if (!context) throw new Error('تعذر معالجة الصورة');
-    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    context.fillStyle = '#102b27';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    const scale = Math.min(canvas.width / image.width, canvas.height / image.height);
+    const width = image.width * scale;
+    const height = image.height * scale;
+    context.drawImage(image, (canvas.width - width) / 2, (canvas.height - height) / 2, width, height);
     const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/webp', 0.82));
     if (!blob || blob.type !== 'image/webp') throw new Error('الجهاز لا يدعم تحويل الصورة إلى WebP');
     return blob;
