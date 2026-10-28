@@ -5,7 +5,7 @@ import { useApp } from '../context/AppContext';
 import { GiftItem } from '../types';
 import { sounds } from '../utils/audio';
 
-const giftCounts = [1, 10, 66, 99, 520, 1314];
+const giftCounts = [1, 7, 17, 77, 777];
 
 export const GiftStoreModal: React.FC = () => {
   const {
@@ -21,7 +21,8 @@ export const GiftStoreModal: React.FC = () => {
   } = useApp();
 
   const [activeCategory, setActiveCategory] = useState<string>('الأمة');
-  const [selectedGift, setSelectedGift] = useState<GiftItem>(gifts[0]);
+  const [selectedGiftId, setSelectedGiftId] = useState<string | null>(null);
+  const selectedGift = gifts.find(g => g.id === selectedGiftId) ?? gifts[0] ?? null;
   const [selectedCount, setSelectedCount] = useState<number>(1);
   const [selectedReceiverIndex, setSelectedReceiverIndex] = useState<number>(0);
   const [showCountDropdown, setShowCountDropdown] = useState<boolean>(false);
@@ -74,8 +75,8 @@ export const GiftStoreModal: React.FC = () => {
       ]
     : baseReceivers;
 
-  const currentReceiver = receivers[selectedReceiverIndex] || receivers[0] || selfReceiver;
-  const isSupportingSelf = Boolean(activeRoom && currentReceiver.id === currentUser.id);
+  const currentReceiver = receivers[selectedReceiverIndex] || receivers[0] || null;
+  const isSupportingSelf = Boolean(activeRoom && currentReceiver?.id === currentUser.id);
 
   const filteredGifts = gifts.filter((g) => {
     if (activeCategory === 'الكل') return true;
@@ -83,6 +84,10 @@ export const GiftStoreModal: React.FC = () => {
   });
 
   const handleSend = () => {
+    if (!selectedGift || !currentReceiver?.id) {
+      window.alert('لا توجد هدية أو مستلم متاح. حاول مجدداً بعد تحميل البيانات.');
+      return;
+    }
     sounds.playClick();
     const success = sendGift(selectedGift, currentReceiver, selectedCount);
     if (success) {
@@ -191,7 +196,7 @@ export const GiftStoreModal: React.FC = () => {
                 <span>💎</span>
                 <span>
                   {isSupportingSelf
-                    ? `تستلم لحسابك ${Math.floor((selectedGift.price * selectedCount) * 0.7).toLocaleString('en-US')} ألماسة`
+                    ? `تستلم لحسابك ${Math.floor(((selectedGift?.price ?? 0) * selectedCount) * 0.7).toLocaleString('en-US')} ألماسة`
                     : `المستلم يحصل على ${Math.floor((selectedGift.price * selectedCount) * 0.7).toLocaleString('en-US')} ألماسة`}
                 </span>
               </span>
@@ -202,14 +207,14 @@ export const GiftStoreModal: React.FC = () => {
         {/* Gifts Grid (matching Screenshot 18) */}
         <div className="py-3 flex-1 overflow-y-auto no-scrollbar grid grid-cols-4 gap-2.5">
           {filteredGifts.map((gift) => {
-            const isSelected = selectedGift.id === gift.id;
+            const isSelected = selectedGift?.id === gift.id;
 
             return (
               <div
                 key={gift.id}
                 onClick={() => {
                   sounds.playClick();
-                  setSelectedGift(gift);
+                  setSelectedGiftId(gift.id);
                 }}
                 className={`relative rounded-2xl p-2 flex flex-col items-center justify-between cursor-pointer border transition-all ${
                   isSelected
