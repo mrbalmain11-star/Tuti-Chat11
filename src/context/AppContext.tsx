@@ -16,7 +16,7 @@ import { saveProfileChanges } from '../services/profileWrites';
 import { fetchMyLedger } from '../services/ledgerReads';
 import { fetchRealRoomMessages } from '../services/roomMessageReads';
 import { fetchRoomVisualMembers } from '../services/roomVisualMembers';
-import { reserveSeat, joinRoomMembership, leaveRoomMembership, sendRealRoomMessage, setMyRoomMute } from '../services/roomMembershipRpc';
+import { reserveSeat, joinRoomMembership, leaveRoomMembership, sendRealRoomMessage, setMyRoomMute, releaseMySeat } from '../services/roomMembershipRpc';
 import { Language, Translations, translations } from '../i18n/translations';
 import { StorageItem, BagItem } from '../data/storageItems';
 import { getLevelFromExp, calculateCumulativeExpForLevel } from '../utils/levelUtils';
@@ -912,7 +912,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const leaveSeat = (_seatNumber: number): void => {
-    alert('ترك المقعد غير متاح حتى اكتمال الربط الآمن بالخادم.');
+    if (!activeRoom) return;
+    const roomId = activeRoom.id;
+    void releaseMySeat(roomId).then(() => {
+      setActiveRoom(prev => prev?.id === roomId ? {
+        ...prev,
+        seats: prev.seats.map(seat => seat.user?.id === currentUser.id
+          ? { ...seat, user: null, isSpeaking: false } : seat),
+      } : prev);
+      setMyMicMuted(true);
+    }).catch(error => {
+      console.error('Seat release failed:', error);
+      alert('تعذر مغادرة المقعد. حاول مجدداً.');
+    });
   };
 
   const toggleLockSeat = (_seatNumber: number): void => {
