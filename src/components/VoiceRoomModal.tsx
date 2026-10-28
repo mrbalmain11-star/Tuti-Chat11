@@ -963,17 +963,18 @@ export const VoiceRoomModal: React.FC = () => {
             4 & 5. TABS ROW & CHAT STREAM (With Clear Screen Mode Support)
             ========================================================================= */}
         {clearScreen ? (
-          <div className="relative z-10 flex-1 flex flex-col items-center justify-center p-4">
+          <div className="relative z-10 flex-1 pointer-events-none">
             <button
+              type="button"
               onClick={() => {
                 sounds.playClick();
                 setClearScreen(false);
-                showToast('تم إلغاء مسح الشاشة واستعادة الدردشة 💬');
               }}
-              className="px-5 py-2.5 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-md border border-purple-400/50 text-white text-xs font-bold flex items-center gap-2 transition active:scale-95 cursor-pointer shadow-2xl animate-pulse"
+              className="absolute bottom-3 right-4 pointer-events-auto w-10 h-10 rounded-full bg-black/50 border border-purple-400/40 text-white flex items-center justify-center"
+              aria-label="إعادة إظهار الدردشة"
+              title="إعادة إظهار الدردشة"
             >
-              <Eye className="w-4 h-4 text-[#26d0b2]" />
-              <span>مسح الشاشة مفعّل (انقر لإعادة إظهار الدردشة 👁️)</span>
+              <Eye className="w-5 h-5 text-[#26d0b2]" />
             </button>
           </div>
         ) : (
@@ -1246,7 +1247,7 @@ export const VoiceRoomModal: React.FC = () => {
             <button
               onClick={() => {
                 sounds.playClick();
-                showToast('الصوت غير متاح حالياً حتى اكتمال ربط الخدمة.');
+                // The speaker control is not connected to a room audio output yet; do not show a persistent misleading toast.
               }}
               className={`w-10 h-10 rounded-full border transition active:scale-95 shadow-md cursor-pointer flex items-center justify-center ${
                 !roomSoundMuted
@@ -1473,7 +1474,7 @@ export const VoiceRoomModal: React.FC = () => {
                   <div
                     onClick={() => {
                       sounds.playClick();
-                      showToast('الصوت غير متاح حالياً حتى اكتمال ربط الخدمة.');
+                      // The speaker control is not connected to a room audio output yet; do not show a persistent misleading toast.
                     }}
                     className="flex flex-col items-center gap-1.5 cursor-pointer group active:scale-95 transition"
                   >
