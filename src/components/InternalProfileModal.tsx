@@ -64,6 +64,21 @@ export const InternalProfileModal: React.FC = () => {
   // The user being displayed: either targeted user or current user
   const user: UserProfile = internalProfileUser?.id === currentUser.id ? currentUser : (internalProfileUser || currentUser);
   const isSelf = user.id === currentUser.id;
+  const [verifiedAgency, setVerifiedAgency] = useState<{ name: string; public_id: number; member_count: number; role: string } | null>(null);
+  useEffect(() => {
+    let active = true;
+    setVerifiedAgency(null);
+    if (!stagingBackend || !user.id) return;
+    const loadAgency = async () => {
+      const { data, error } = await stagingBackend.rpc('staging_profile_agency', { p_user_id: user.id });
+      if (error) throw error;
+      if (active) setVerifiedAgency(data && typeof data.name === 'string' && /^\\d{6}$/.test(String(data.public_id)) ? data : null);
+    };
+    void loadAgency().catch(error => console.error('Verified agency unavailable:', error));
+    const refresh = () => { void loadAgency().catch(error => console.error('Agency refresh failed:', error)); };
+    window.addEventListener('focus', refresh);
+    return () => { active = false; window.removeEventListener('focus', refresh); };
+  }, [user.id]);
   const [myPublicId, setMyPublicId] = useState<number | null>(null);
   const [displaySpecialId, setDisplaySpecialId] = useState<string | null>(null);
   const [savedCover, setSavedCover] = useState<string>('');
@@ -530,16 +545,17 @@ export const InternalProfileModal: React.FC = () => {
           </div>
 
           {/* Realistic Dynamic Agency Rectangle (مستطيل الوكالة الفعلي مطابق للصورة تماماً) */}
-          <AgencyProfileCard
-            avatar={isSelf ? currentUser.avatar : user.avatar}
-            agencyName={isSelf ? (currentUser.agencyName || 'وكالة العراقين') : (user.agencyName || 'وكالة العراقين')}
-            agencyId={isSelf ? currentUser.id : user.id}
-            memberCount={isSelf ? agencyMemberCount : (user.followersCount ? Math.max(1, Math.floor(user.followersCount / 10)) : 1)}
-            roleLabel={user.agencyRole === 'وكيل' || isSelf ? 'مالك وكالة' : 'مضيف وكالة'}
-            onClick={() => setOpenAgencyModal(true)}
-            className="mt-3.5"
-          />
-
+          {verifiedAgency && (
+            <AgencyProfileCard
+              avatar={isSelf ? currentUser.avatar : user.avatar}
+              agencyName={verifiedAgency.name}
+              agencyId={String(verifiedAgency.public_id)}
+              memberCount={verifiedAgency.member_count}
+              roleLabel={verifiedAgency.role}
+              onClick={() => setOpenAgencyModal(true)}
+              className="mt-3.5"
+            />
+          )}
           {/* Stats Row: (الزوار | المعجبون | متابعة | الأصدقاء) */}
           <div className="grid grid-cols-4 gap-2 text-center mt-4 p-2.5 rounded-2xl bg-white/95 border border-amber-200/90 shadow-xs">
             {/* الأصدقاء */}
