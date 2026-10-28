@@ -8,13 +8,14 @@ export const AdminBannersPanel: React.FC = () => {
   const [start, setStart] = useState('');
   const [end, setEnd] = useState('');
   const [file, setFile] = useState<File | null>(null);
+  const [fileSizeValid, setFileSizeValid] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const refresh = async () => { setItems(await listAdminBanners()); };
   useEffect(() => { void refresh().catch(e => setError(String(e))); }, []);
   const create = async () => {
-    if (!file) { setError('اختر صورة البنر أولاً'); return; }
+    if (!file || !fileSizeValid) { setError('اختر صورة بقياس 1200 × 600 بكسل بالضبط'); return; }
     setBusy(true); setError(''); setNotice('');
     try {
       await createAdminBanner(file, title, { link_kind: target === 'none' ? 'none' : 'screen', link_target: target === 'none' ? null : target, starts_at: start ? new Date(start).toISOString() : null, ends_at: end ? new Date(end).toISOString() : null });
@@ -49,9 +50,9 @@ export const AdminBannersPanel: React.FC = () => {
     <label className="block text-sm mb-2">نهاية الظهور (اختياري)</label>
     <input type="datetime-local" className="w-full border rounded-xl p-3 mb-3" value={end} onChange={e => setEnd(e.target.value)} />
     <label className="block text-sm mb-2">صورة البنر</label>
-    <input className="w-full border rounded-xl p-3 mb-3" type="file" accept="image/*" onChange={e => setFile(e.target.files?.[0] ?? null)} />
-    <p className="text-xs text-slate-500 mb-3">تُحوّل الصورة إلى WebP، وتُرفع كمسودة. النشر يتطلب ضغطة منفصلة.</p>
-    <button type="button" disabled={busy || !file || !title.trim()} onClick={() => void create()} className="bg-amber-700 text-white rounded-xl px-4 py-3 disabled:opacity-40">رفع البنر</button>
+    <input className="w-full border rounded-xl p-3 mb-3" type="file" accept="image/*" onChange={e => { const selected = e.target.files?.[0]; setFile(null); setFileSizeValid(false); setError(''); if (!selected) return; void createImageBitmap(selected).then(img => { const valid = img.width === 1200 && img.height === 600; img.close(); if (!valid) { setError('مرفوض: يجب أن يكون قياس البنر 1200 × 600 بكسل بالضبط.'); return; } setFile(selected); setFileSizeValid(true); }).catch(() => setError('الصورة غير صالحة أو لا يمكن قراءتها.')); }} />
+    <p className="text-xs text-slate-500 mb-3">المقاس الإلزامي 1200 × 600 بكسل. تُرفض الصور المختلفة، وتُحوّل الصورة المطابقة إلى WebP قبل رفعها كمسودة.</p>
+    <button type="button" disabled={busy || !file || !fileSizeValid || !title.trim()} onClick={() => void create()} className="bg-amber-700 text-white rounded-xl px-4 py-3 disabled:opacity-40">رفع البنر</button>
     {error && <p role="alert" className="text-red-700 mt-3">{error}</p>}
     {notice && <p role="status" className="text-green-700 mt-3">{notice}</p>}
     <h3 className="font-bold mt-6 mb-3">البنرات المحفوظة</h3>
