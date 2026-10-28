@@ -1030,8 +1030,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
-  const toggleMuteSeat = (_seatNumber: number): void => {
-    alert('كتم أعضاء الغرفة يتطلب صلاحيات المشرف والتحقق من الخادم.');
+  const toggleMuteSeat = (seatNumber: number): void => {
+    if (!activeRoom || !stagingBackend) return;
+    const roomId = activeRoom.id;
+    const seat = activeRoom.seats.find(item => item.seatNumber === seatNumber);
+    const target = seat?.user?.id;
+    if (!target || target === currentUser.id) return;
+    const action = seat.isMuted ? 'allow_mic' : 'mute';
+    void Promise.resolve(stagingBackend.rpc('phase2_room_moderate', {
+      p_room_id: roomId,
+      p_target: target,
+      p_action: action,
+      p_request_id: crypto.randomUUID(),
+      p_reason: 'Room microphone moderation',
+    })).then(({ data, error }) => {
+      if (error || !data || (typeof data === 'object' && 'success' in data && data.success !== true)) {
+        throw error ?? new Error('Moderation not confirmed');
+      }
+      setActiveRoom(prev => prev?.id !== roomId ? prev : ({
+        ...prev,
+        seats: prev.seats.map(item => item.user?.id === target
+          ? { ...item, isMuted: true, isSpeaking: false } : item),
+      }));
+    }).catch(error => {
+      console.error('Room microphone moderation failed:', error);
+      alert('تعذر تنفيذ أمر المايك. تأكد من صلاحية المشرف ووجود العضو في الغرفة.');
+    });
   };
 
   const toggleMyMic = (): void => {
