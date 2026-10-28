@@ -1241,7 +1241,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       alert('أدخل اسم الوكالة وسبب الطلب بصورة صحيحة.');
       return;
     }
-    void stagingBackend.rpc('phase4_agency_action', {
+    void Promise.resolve(stagingBackend.rpc('phase4_agency_action', {
       p_action: 'register',
       p_data: { kind: 'host', name: name.trim(), contact: 'in-app', reason: description.trim() },
       p_request_id: crypto.randomUUID(),
