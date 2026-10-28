@@ -319,9 +319,10 @@ export const VoiceRoomModal: React.FC = () => {
       ? currentMods.filter((id) => id !== userId)
       : [...currentMods, userId];
 
-    updateRoom(activeRoom.id, { moderatorIds: updatedMods });
-    sounds.playClick();
-    showToast(isMod ? `تم إزالة الإشراف عن ${userName} 🛡️` : `تم ترقية ${userName} مشرفاً في الغرفة بنجاح 🛡️✨`);
+    // The current room update RPC only supports title/announcement.
+    // Never claim moderator permissions changed without a server-side RPC.
+    sounds.playError();
+    showToast('تعديل صلاحيات المشرفين غير متاح حتى تفعيل التحقق والحفظ من الخادم.');
   };
 
   const handleKickMember = (userId: string, userName: string) => {
