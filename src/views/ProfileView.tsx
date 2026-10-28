@@ -22,7 +22,7 @@ import { processImageFile } from '../utils/imageUpload';
 import { CharmBadge, WealthBadge, GameBadge } from '../components/LevelBadgeIcons';
 import { VipName } from '../components/VipName';
 import { VipBadge } from '../components/VipBadge';
-import { fetchMyProfile, fetchMyAdminAccess, saveMyProfile, uploadMyAvatar, getMyAvatarUrl, type AdminAccess } from '../services/stagingBackend';
+import { fetchMyProfile, fetchMyAdminAccess, saveMyProfile, uploadMyAvatar, getMyAvatarUrl, type AdminAccess, stagingBackend } from '../services/stagingBackend';
 import { AdminCenterView } from './AdminCenterView';
 
 export const ProfileView: React.FC = () => {
@@ -61,6 +61,7 @@ export const ProfileView: React.FC = () => {
     return () => { active = false; };
   }, [currentUser.id]);
   const [publicId, setPublicId] = useState<number | null>(null);
+  const [specialId, setSpecialId] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [, setSavingProfile] = useState(false);
@@ -71,6 +72,12 @@ export const ProfileView: React.FC = () => {
     let active = true;
     const revision = ++profileRevision.current;
     setPublicId(null);
+    setSpecialId(null);
+    if (stagingBackend && currentUser.id) {
+      void stagingBackend.rpc('phase5_special_id_status', { p_target: currentUser.id }).then(({ data, error }) => {
+        if (!error && active && data?.assigned && data?.publicId) setSpecialId(String(data.publicId));
+      }).catch(error => console.error('Special ID unavailable:', error));
+    }
     void (async () => {
       const profile = await fetchMyProfile();
       if (!active || revision !== profileRevision.current || !profile) return;
@@ -184,7 +191,7 @@ export const ProfileView: React.FC = () => {
   };
 
   const handleCopyId = () => {
-    const idToCopy = publicId?.toString();
+    const idToCopy = specialId || publicId?.toString();
     if (!idToCopy) return;
     navigator.clipboard?.writeText(idToCopy);
     setCopied(true);
@@ -399,7 +406,7 @@ export const ProfileView: React.FC = () => {
                   <Copy className="w-3.5 h-3.5 text-amber-600" />
                 )}
                 <span className="font-semibold tracking-wider">
-                  ID: {publicId ?? '—'}
+                  ID: {specialId || publicId || '—'}
                 </span>
               </button>
 
