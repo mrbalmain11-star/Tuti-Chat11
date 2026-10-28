@@ -25,6 +25,8 @@ jobs:
           npm pkg get scripts dependencies.@capacitor/core dependencies.@capacitor/android devDependencies.typescript
       - name: Install dependencies
         run: npm install --no-audit --no-fund
+      - name: Treasury protocol tests
+        run: node --experimental-strip-types tests/treasury.test.mjs
       - name: TypeScript validation
         run: npm run lint
       - name: Production bundle validation
