@@ -4,6 +4,7 @@ import { AdminOperationsPanel } from './AdminOperationsPanel';
 import { AdminSpecialIdPanel } from './AdminSpecialIdPanel';
 import { AdminRoomModerationPanel } from './AdminRoomModerationPanel';
 import { AdminAgencyActionsPanel } from './AdminAgencyActionsPanel';
+import { AdminAgencyRegistrationRequestsPanel } from './AdminAgencyRegistrationRequestsPanel';
 import { AdminReportsPanel } from './AdminReportsPanel';
 import { AdminRechargePanel } from './AdminRechargePanel';
 import { AdminStaffPanel } from './AdminStaffPanel';
@@ -50,7 +51,8 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
               {id:'operations',label:'العمليات',Icon:ShieldCheck},
               {id:'ids',label:'الآيديات',Icon:Users},
               {id:'moderation',label:'إشراف الغرف',Icon:Radio},
-              {id:'agencyActions',label:'طلبات الوكالات',Icon:Building2},
+              {id:'agencyActions',label:'إجراءات الوكالات',Icon:Building2},
+              {id:'agencyRegistrations',label:'طلبات فتح وكالة',Icon:Building2},
               {id:'reports',label:'البلاغات',Icon:ShieldCheck},
               {id:'recharge',label:'الشحن',Icon:Building2},
               {id:'staff',label:'الصلاحيات',Icon:ShieldCheck},
@@ -72,6 +74,7 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
                 {adminPage === 'ids' && <AdminSpecialIdPanel />}
                 {adminPage === 'moderation' && <AdminRoomModerationPanel />}
                 {adminPage === 'agencyActions' && <AdminAgencyActionsPanel />}
+                {adminPage === 'agencyRegistrations' && <AdminAgencyRegistrationRequestsPanel />}
                 {adminPage === 'reports' && <AdminReportsPanel />}
                 {adminPage === 'recharge' && <AdminRechargePanel />}
                 {adminPage === 'staff' && <AdminStaffPanel />}
