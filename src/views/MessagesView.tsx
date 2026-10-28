@@ -6,8 +6,8 @@ export const MessagesView: React.FC = () => {
   const { conversations, setOpenChatThread, t, isRtl } = useApp();
 
   // Find system and official or default
-  const systemConv = conversations.find((c) => c.isSystem || c.id === 'system-1') || conversations[0];
-  const officialConv = conversations.find((c) => c.isOfficial || c.id === 'official-1') || conversations[1];
+  const systemConv = conversations.find((c) => c.isSystem || c.id === 'system-1');
+  const officialConv = conversations.find((c) => c.isOfficial || c.id === 'official-1');
   const otherConvs = conversations.filter((c) => c.id !== systemConv?.id && c.id !== officialConv?.id);
 
   return (
@@ -48,16 +48,16 @@ export const MessagesView: React.FC = () => {
             <div className="flex flex-col text-right min-w-0">
               <h3 className="text-base font-black text-slate-900 leading-snug">رسائل النظام</h3>
               <p className="text-xs text-[#8aa192] font-semibold truncate max-w-[210px] sm:max-w-xs mt-0.5">
-                تهانينا! لقد حصلت على حزمة مكافأة المستخدم الجديد: [...
+                {systemConv?.lastMessage || 'لا توجد رسائل نظام حتى الآن'}
               </p>
             </div>
           </div>
 
           {/* Left side: Date & Unread Badge */}
           <div className="flex flex-col items-center gap-1.5 shrink-0 pl-1">
-            <span className="text-[11px] text-[#8aa192] font-semibold">الجمعة</span>
+            <span className="text-[11px] text-[#8aa192] font-semibold">{systemConv?.lastTime ? new Date(systemConv.lastTime).toLocaleDateString('ar-IQ') : ''}</span>
             <span className="w-5 h-5 rounded-full bg-[#f43f5e] text-white text-[10px] font-black flex items-center justify-center shadow-sm">
-              1
+              {systemConv?.unreadCount ?? 0}
             </span>
           </div>
         </div>
@@ -88,7 +88,7 @@ export const MessagesView: React.FC = () => {
             <div className="flex flex-col text-right min-w-0">
               <h3 className="text-base font-black text-slate-900 leading-snug">رسائل رسمية</h3>
               <p className="text-xs text-[#a0b0a6] font-medium truncate max-w-[210px] sm:max-w-xs mt-0.5">
-                No message
+                {officialConv?.lastMessage || 'لا توجد رسائل رسمية حتى الآن'}
               </p>
             </div>
           </div>
