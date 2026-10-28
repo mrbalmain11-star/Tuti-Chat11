@@ -83,13 +83,18 @@ export const GiftStoreModal: React.FC = () => {
     return g.category === activeCategory;
   });
 
-  const handleSend = () => {
+  const [sending, setSending] = useState(false);
+  const handleSend = async () => {
+    if (sending) return;
     if (!selectedGift || !currentReceiver?.id) {
       window.alert('لا توجد هدية أو مستلم متاح. حاول مجدداً بعد تحميل البيانات.');
       return;
     }
     sounds.playClick();
-    const success = sendGift(selectedGift, currentReceiver, selectedCount);
+    setSending(true);
+    let success = false;
+    try { success = await sendGift(selectedGift, currentReceiver, selectedCount); }
+    finally { setSending(false); }
     if (success) {
       confetti({
         particleCount: 80,
@@ -310,7 +315,7 @@ export const GiftStoreModal: React.FC = () => {
 
             {/* Royal Send Button */}
             <button
-              onClick={handleSend}
+              onClick={handleSend} disabled={sending}
               className="bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 text-slate-950 font-black text-xs px-5 py-2 rounded-full shadow-lg active:scale-95 hover:brightness-110 transition flex items-center gap-1"
             >
               <span>{isSupportingSelf ? 'دعم حسابي 🌟' : 'إرسال'}</span>
