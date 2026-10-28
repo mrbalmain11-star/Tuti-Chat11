@@ -374,7 +374,7 @@ export const VipModal: React.FC = () => {
       if (error) throw error;
       if (!data?.success) throw new Error('VIP purchase not confirmed');
       window.dispatchEvent(new Event('totichat:wallet-changed'));
-      updateUserProfile({ vipLevel: Number(data.tier), vipExpiry: String(data.expiresAt) });
+      window.dispatchEvent(new Event('totichat:vip-changed'));
       sounds.playLevelUp();
       confetti({ particleCount: 150, spread: 100, origin: { y: 0.5 },
         colors: [activeTier.themeColor, '#f59e0b', '#ffd700', '#ffffff'] });
