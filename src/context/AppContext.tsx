@@ -1092,19 +1092,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return false;
     }
     try {
-      const { data, error } = await stagingBackend.rpc('phase3_send_gift', {
-        p_room_id: activeRoom.id,
-        p_recipient_id: receiver.id,
-        p_gift_id: gift.id,
-        p_quantity: count,
-        p_request_id: crypto.randomUUID(),
-        p_expected_price: gift.price,
-      });
+      const isSelfSupport = receiver.id === currentUser.id;
+      const { data, error } = isSelfSupport
+        ? await stagingBackend.rpc('staging_self_support_gift', {
+            p_room_id: activeRoom.id,
+            p_gift_id: gift.id,
+            p_quantity: count,
+            p_request_id: crypto.randomUUID(),
+            p_expected_price: gift.price,
+          })
+        : await stagingBackend.rpc('phase3_send_gift', {
+            p_room_id: activeRoom.id,
+            p_recipient_id: receiver.id,
+            p_gift_id: gift.id,
+            p_quantity: count,
+            p_request_id: crypto.randomUUID(),
+            p_expected_price: gift.price,
+          });
       if (error) throw error;
       if (!data?.id) throw new Error('Gift event not confirmed');
       setActiveGiftAnimation({ gift, sender: currentUser.name, receiver: receiver.name, count });
       const wallet = await fetchMyWallet().catch(() => null);
       if (wallet) setCurrentUser(prev => ({ ...prev, coins: wallet.coins, diamonds: wallet.diamonds }));
+      window.dispatchEvent(new Event('totichat:wallet-changed'));
       return true;
     } catch (error) {
       console.error('Gift delivery failed:', error);
