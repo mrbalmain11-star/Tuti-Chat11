@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { X, Plus, ChevronDown, Check } from 'lucide-react';
-import confetti from 'canvas-confetti';
 import { useApp } from '../context/AppContext';
 import { GiftItem } from '../types';
 import { sounds } from '../utils/audio';
@@ -85,17 +84,14 @@ export const GiftStoreModal: React.FC = () => {
     }
     sounds.playClick();
     setSending(true);
-    let success = false;
-    try { success = await sendGift(selectedGift, currentReceiver, selectedCount); }
-    finally { setSending(false); }
-    if (success) {
-      confetti({
-        particleCount: 80,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#f59e0b', '#10b981', '#ec4899', '#6366f1'],
-      });
-      setOpenGiftStore(false);
+    try {
+      const success = await sendGift(selectedGift, currentReceiver, selectedCount);
+      if (success) setOpenGiftStore(false);
+    } catch (error) {
+      console.error('Gift sheet send handler failed:', error);
+      window.alert('تعذر إكمال إرسال الهدية. افحص رصيدك وسجل العمليات قبل إعادة المحاولة.');
+    } finally {
+      setSending(false);
     }
   };
 
