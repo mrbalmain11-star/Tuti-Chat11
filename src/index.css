@@ -338,3 +338,8 @@ img, svg { max-width: 100%; }
 .profile-android-safe .vip-shine-11,
 .profile-android-safe .vip-shine-12 { animation: none !important; }
 .profile-android-safe img { transform: translateZ(0); }
+
+/* Consistent Android layout sizing across screen densities and font scales. */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+html, body, #root { width: 100%; overflow-x: hidden; }
+*, *::before, *::after { box-sizing: border-box; }
