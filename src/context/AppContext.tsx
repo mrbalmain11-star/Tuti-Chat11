@@ -1037,12 +1037,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const target = seat?.user?.id;
     if (!target || target === currentUser.id) return;
     const action = seat.isMuted ? 'allow_mic' : 'mute';
-    void Promise.resolve(stagingBackend.rpc('phase2_room_moderate', {
+    void Promise.resolve(stagingBackend.rpc('staging_moderate_room_microphone', {
       p_room_id: roomId,
       p_target: target,
       p_action: action,
       p_request_id: crypto.randomUUID(),
-      p_reason: 'Room microphone moderation',
     })).then(({ data, error }) => {
       if (error || !data || (typeof data === 'object' && 'success' in data && data.success !== true)) {
         throw error ?? new Error('Moderation not confirmed');
