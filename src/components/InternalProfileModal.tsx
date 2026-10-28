@@ -30,7 +30,7 @@ import { sounds } from '../utils/audio';
 import { UserProfile } from '../types';
 import { CharmBadge, WealthBadge, GameBadge } from './LevelBadgeIcons';
 import { processImageFile } from '../utils/imageUpload';
-import { fetchMyProfile, saveMyProfile, uploadMyAvatar, getMyAvatarUrl } from '../services/stagingBackend';
+import { fetchMyProfile, saveMyProfile, uploadMyAvatar, uploadMyCover, getMyAvatarUrl, stagingBackend } from '../services/stagingBackend';
 import { VipName } from './VipName';
 import { VipBadge, VIP_BEAST_METADATA } from './VipBadge';
 import { AgencyProfileCard } from './AgencyProfileCard';
@@ -65,12 +65,25 @@ export const InternalProfileModal: React.FC = () => {
   const user: UserProfile = internalProfileUser?.id === currentUser.id ? currentUser : (internalProfileUser || currentUser);
   const isSelf = user.id === currentUser.id;
   const [myPublicId, setMyPublicId] = useState<number | null>(null);
+  const [displaySpecialId, setDisplaySpecialId] = useState<string | null>(null);
+  const [savedCover, setSavedCover] = useState<string>('');
   useEffect(() => {
-    if (!openInternalProfileModal || !isSelf) { setMyPublicId(null); return; }
+    if (!openInternalProfileModal || !isSelf) { setMyPublicId(null); setDisplaySpecialId(null); setSavedCover(''); return; }
     let active = true;
-    void fetchMyProfile().then(profile => {
-      if (active) setMyPublicId(profile?.public_id ?? null);
-    }).catch(error => console.error('Unable to load public ID:', error));
+    void (async () => {
+      const profile = await fetchMyProfile();
+      if (!active) return;
+      setMyPublicId(profile?.public_id ?? null);
+      if (profile?.cover_path) {
+        const url = await getMyAvatarUrl(profile.cover_path);
+        if (active) setSavedCover(url);
+      }
+      if (stagingBackend && profile?.id) {
+        const { data, error } = await stagingBackend.rpc('phase5_special_id_status', { p_target: profile.id });
+        const status = data as { assigned?: boolean; publicId?: string } | null;
+        if (!error && active) setDisplaySpecialId(status?.assigned ? String(status.publicId || '') : null);
+      }
+    })().catch(error => console.error('Unable to load profile identity or cover:', error));
     return () => { active = false; };
   }, [openInternalProfileModal, isSelf, currentUser.id]);
 
@@ -142,12 +155,25 @@ export const InternalProfileModal: React.FC = () => {
 
     try {
       setUploadingCover(true);
+      if (!isSelf) throw new Error('لا يمكن تعديل غلاف حساب آخر');
       const dataUrl = await processImageFile(file);
-      updateUserProfile({ cover: dataUrl });
+      const image = new Image();
+      image.src = dataUrl;
+      await image.decode();
+      const canvas = document.createElement('canvas');
+      const scale = Math.min(1, 1200 / Math.max(image.width, image.height));
+      canvas.width = Math.max(1, Math.round(image.width * scale));
+      canvas.height = Math.max(1, Math.round(image.height * scale));
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('تعذر تجهيز الصورة');
+      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+      const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob(value => value ? resolve(value) : reject(new Error('تعذر تحويل الغلاف')), 'image/webp', 0.78));
+      const path = await uploadMyCover(blob);
+      setSavedCover(await getMyAvatarUrl(path));
       sounds.playCoin();
-      showToast('تم تغيير غلاف الملف الشخصي بنجاح! 🖼️');
-    } catch {
-      showToast('تعذر رفع صورة الغلاف، يرجى المحاولة مرة أخرى');
+      showToast('تم حفظ غلاف الملف الشخصي على الخادم');
+    } catch (error) {
+      showToast('تعذر حفظ الغلاف: ' + (error instanceof Error ? error.message : String(error)));
     } finally {
       setUploadingCover(false);
       if (coverInputRef.current) coverInputRef.current.value = '';
@@ -182,7 +208,7 @@ export const InternalProfileModal: React.FC = () => {
   };
 
   const handleCopyId = () => {
-    const idToCopy = isSelf ? myPublicId?.toString() : user.id;
+    const idToCopy = isSelf ? (displaySpecialId || myPublicId?.toString()) : user.id;
     if (!idToCopy) return;
     navigator.clipboard.writeText(idToCopy);
     setCopiedId(true);
@@ -250,6 +276,7 @@ export const InternalProfileModal: React.FC = () => {
           {/* Cover Image: Large, clear and vibrant */}
           <img
             src={
+              (isSelf && savedCover) ||
               user.cover ||
               'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?w=800&auto=format&fit=crop&q=80'
             }
@@ -478,7 +505,7 @@ export const InternalProfileModal: React.FC = () => {
               <Copy className="w-3.5 h-3.5 text-slate-500" />
             )}
             <span className="font-semibold tracking-wider">
-              ID: {isSelf ? (myPublicId ?? '—') : (user.id || '—')}
+              ID: {isSelf ? (displaySpecialId || myPublicId || '—') : (user.id || '—')}
             </span>
           </button>
 
