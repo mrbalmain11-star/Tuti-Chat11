@@ -461,7 +461,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [isLoggedIn]);
 
   const [conversations, setConversations] = useState<DirectConversation[]>([]);
-  const [openChatThread, setOpenChatThread] = useState<DirectConversation | null>(null);
+  const [openChatThread, setOpenChatThreadState] = useState<DirectConversation | null>(null);
+  const setOpenChatThread = (thread: DirectConversation | null) => {
+    setOpenChatThreadState(thread);
+    if (thread && !thread.isSystem && !thread.isOfficial && stagingBackend) {
+      const peerId = thread.userId;
+      void Promise.resolve(stagingBackend.rpc('staging_dm_mark_read', { p_peer: peerId }))
+        .then(({ error }) => {
+          if (error) throw error;
+          setConversations(prev => prev.map(c => c.userId === peerId ? { ...c, unreadCount: 0 } : c));
+        }).catch(error => console.error('Mark DM read failed:', error));
+    }
+  };
+  useEffect(() => {
+    if (!isLoggedIn || !stagingBackend) return;
+    const ping = () => {
+      void Promise.resolve(stagingBackend!.rpc('staging_presence_ping'))
+        .then(({ error }) => { if (error) throw error; })
+        .catch(error => console.error('Presence heartbeat failed:', error));
+    };
+    ping();
+    const timer = window.setInterval(() => { if (document.visibilityState === 'visible') ping(); }, 30000);
+    const visible = () => { if (document.visibilityState === 'visible') ping(); };
+    document.addEventListener('visibilitychange', visible);
+    return () => { window.clearInterval(timer); document.removeEventListener('visibilitychange', visible); };
+  }, [isLoggedIn]);
   useEffect(() => {
     if (!isLoggedIn || !stagingBackend || !currentUser.id) {
       setConversations([]);
@@ -490,7 +514,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const peer = names.get(peerId);
         if (!threads.has(peerId)) threads.set(peerId, {
           id: peerId, userId: peerId, userName: peer?.display_name ?? 'مستخدم',
-          userAvatar: '', isOnline: false, lastMessage: m.body,
+          userAvatar: peer?.avatar_url ? (peer.avatar_url.startsWith('http') ? peer.avatar_url : client.storage.from('profile-avatars').getPublicUrl(peer.avatar_url).data.publicUrl) : '', isOnline: false, lastMessage: m.body,
           lastTime: m.created_at, unreadCount: 0, messages: [],
         });
         const thread = threads.get(peerId)!;
@@ -503,8 +527,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       if (active) {
         const refreshed = [...threads.values()];
+        const openPeer = openChatThread?.userId;
+        if (openPeer) {
+          void Promise.resolve(client.rpc('staging_dm_mark_read', { p_peer: openPeer })).then(({ error }) => {
+            if (error) throw error;
+            setConversations(prev => prev.map(c => c.userId === openPeer ? { ...c, unreadCount: 0 } : c));
+          }).catch(error => console.error('Read sync failed:', error));
+        }
         setConversations(refreshed);
-        setOpenChatThread(previous => {
+        setOpenChatThreadState(previous => {
           if (!previous) return null;
           return refreshed.find(thread => thread.userId === previous.userId) ?? previous;
         });
@@ -517,6 +548,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }).subscribe();
     return () => { active = false; void client.removeChannel(channel); };
   }, [isLoggedIn, currentUser.id]);
+
+  useEffect(() => {
+    if (!isLoggedIn || !stagingBackend) return;
+    const check = async () => {
+      const peers = [...new Set(conversations.map(c => c.userId))];
+      if (openChatThread?.userId && !peers.includes(openChatThread.userId)) peers.push(openChatThread.userId);
+      const results = await Promise.all(peers.map(async id => {
+        const { data, error } = await stagingBackend!.rpc('staging_presence_online', { p_peer: id });
+        return [id, !error && data === true] as const;
+      }));
+      const statuses = new Map(results);
+      setConversations(prev => prev.map(c => ({ ...c, isOnline: statuses.get(c.userId) ?? false })));
+      setOpenChatThreadState(prev => prev ? { ...prev, isOnline: statuses.get(prev.userId) ?? false } : null);
+    };
+    void check();
+    const timer = window.setInterval(() => { if (document.visibilityState === 'visible') void check(); }, 20000);
+    return () => window.clearInterval(timer);
+  }, [isLoggedIn, conversations.length, openChatThread?.userId]);
 
   const [agencies, setAgencies] = useState<Agency[]>([]);
   // The directory is backed by approved, active agencies from the staging server.
