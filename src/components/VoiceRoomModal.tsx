@@ -1245,16 +1245,13 @@ export const VoiceRoomModal: React.FC = () => {
 
             {/* 5. Speaker Button (🔊): Toggle room volume */}
             <button
-              onClick={() => {
-                sounds.playClick();
-                // The speaker control is not connected to a room audio output yet; do not show a persistent misleading toast.
-              }}
+              disabled
               className={`w-10 h-10 rounded-full border transition active:scale-95 shadow-md cursor-pointer flex items-center justify-center ${
                 !roomSoundMuted
                   ? 'bg-[#241747]/90 hover:bg-[#342263] border-purple-400/25 text-white'
                   : 'bg-rose-950/70 border-rose-500/40 text-rose-300'
               }`}
-              title={roomSoundMuted ? 'تفعيل الصوت' : 'كتم الصوت'}
+              title="التحكم بصوت الغرفة غير متاح حالياً"
             >
               {roomSoundMuted ? (
                 <VolumeX className="w-5 h-5 text-rose-300 stroke-[2]" />
@@ -1472,11 +1469,9 @@ export const VoiceRoomModal: React.FC = () => {
 
                   {/* الصوت */}
                   <div
-                    onClick={() => {
-                      sounds.playClick();
-                      // The speaker control is not connected to a room audio output yet; do not show a persistent misleading toast.
-                    }}
-                    className="flex flex-col items-center gap-1.5 cursor-pointer group active:scale-95 transition"
+                    aria-disabled="true"
+                    title="التحكم بصوت الغرفة غير متاح حالياً"
+                    className="flex flex-col items-center gap-1.5 opacity-60"
                   >
                     <div className="w-13 h-13 rounded-2xl bg-[#281a4b] border border-white/10 flex items-center justify-center shadow-md group-hover:border-purple-400/50">
                       {roomSoundMuted ? (
