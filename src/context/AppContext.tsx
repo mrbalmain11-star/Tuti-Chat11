@@ -1217,12 +1217,41 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
   };
 
-  const joinAgency = (_agencyId: string): void => {
-    alert('الانضمام للوكالات غير متاح حتى التحقق من العضوية في الخادم.');
+  const joinAgency = (agencyId: string): void => {
+    if (!stagingBackend || !/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(agencyId)) {
+      alert('اختر وكالة مضيفين حقيقية قبل إرسال الطلب.');
+      return;
+    }
+    void stagingBackend.rpc('phase4_agency_action', {
+      p_action: 'join',
+      p_data: { agency_id: agencyId, reason: 'طلب انضمام إلى وكالة مضيفين من التطبيق' },
+      p_request_id: crypto.randomUUID(),
+    }).then(({ data, error }) => {
+      if (error || !data?.id) throw error ?? new Error('Agency join not confirmed');
+      alert('تم تسجيل طلب الانضمام، وينتظر موافقة الوكالة.');
+    }).catch(error => {
+      console.error('Agency join failed:', error);
+      alert('تعذر تسجيل طلب الانضمام. تحقق من حالة الوكالة وعضويتك.');
+    });
   };
 
-  const createAgency = (_name: string, _description: string): void => {
-    alert('إنشاء الوكالات غير متاح حتى ربطه بصلاحيات الخادم.');
+  const createAgency = (name: string, description: string): void => {
+    if (!stagingBackend || name.trim().length < 2 || name.trim().length > 80 ||
+        description.trim().length < 3 || description.trim().length > 500) {
+      alert('أدخل اسم الوكالة وسبب الطلب بصورة صحيحة.');
+      return;
+    }
+    void stagingBackend.rpc('phase4_agency_action', {
+      p_action: 'register',
+      p_data: { kind: 'host', name: name.trim(), contact: 'in-app', reason: description.trim() },
+      p_request_id: crypto.randomUUID(),
+    }).then(({ data, error }) => {
+      if (error || !data?.id) throw error ?? new Error('Agency registration not confirmed');
+      alert('تم تقديم طلب فتح وكالة مضيفين، بانتظار موافقة الإدارة.');
+    }).catch(error => {
+      console.error('Agency registration failed:', error);
+      alert('تعذر تقديم طلب الوكالة. تحقق من البيانات وحالة الطلبات السابقة.');
+    });
   };
 
   const createVoiceRoom = (title: string, _tag: string): void => {
