@@ -12,7 +12,7 @@ export const SearchModal: React.FC = () => {
   const matchedRooms = rooms.filter(
     (r) =>
       r.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      r.hostId.includes(searchTerm) ||
+      String(r.publicId ?? '').includes(searchTerm.trim()) ||
       r.hostName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -76,7 +76,7 @@ export const SearchModal: React.FC = () => {
                           <img src={r.hostAvatar} alt="host" className="w-8 h-8 rounded-full object-cover" />
                           <div className="text-right">
                             <p className="text-xs font-bold text-slate-900">{r.title}</p>
-                            <span className="text-[10px] text-slate-500 font-mono">ID: {r.hostId}</span>
+                            <span className="text-[10px] text-slate-500 font-mono">ID: {r.publicId ?? '—'}</span>
                           </div>
                         </div>
                         <span className="text-xs text-emerald-600 font-bold">دخول 🎙️</span>
