@@ -46,7 +46,7 @@ export const BannerSlider: React.FC = () => {
     }
   };
   return <div className="px-4 pt-2 pb-2" dir="rtl">
-    <div className="relative overflow-hidden rounded-2xl h-40 border border-amber-400/50 shadow-lg bg-gradient-to-br from-emerald-900 to-slate-900"
+    <div className="relative overflow-hidden rounded-2xl aspect-[2/1] border border-amber-400/50 shadow-lg bg-gradient-to-br from-emerald-900 to-slate-900"
       onTouchStart={e => { startX.current = e.touches[0]?.clientX ?? null; }}
       onTouchEnd={e => {
         if (startX.current === null || items.length < 2) return;
