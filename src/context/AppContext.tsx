@@ -309,6 +309,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, [isLoggedIn]);
 
+  // VIP entitlements are read from the server, never changed through profile writes.
+  useEffect(() => {
+    if (!isLoggedIn || !stagingBackend) return;
+    let active = true;
+    const refreshVip = async () => {
+      const { data: auth, error: authError } = await stagingBackend!.auth.getUser();
+      if (authError || !auth.user) return;
+      const { data, error } = await stagingBackend!.from('vip_entitlements')
+        .select('tier,expires_at').eq('user_id', auth.user.id).maybeSingle();
+      if (error) throw error;
+      if (active) setCurrentUser(prev => ({
+        ...prev,
+        vipLevel: data && (!data.expires_at || new Date(data.expires_at).getTime() > Date.now())
+          ? Number(data.tier) : 0,
+        vipExpiry: data?.expires_at ?? '',
+      }));
+    };
+    void refreshVip().catch(error => console.error('VIP entitlement refresh failed:', error));
+    const onChanged = () => { void refreshVip().catch(error => console.error('VIP refresh failed:', error)); };
+    window.addEventListener('totichat:vip-changed', onChanged);
+    window.addEventListener('focus', onChanged);
+    return () => {
+      active = false;
+      window.removeEventListener('totichat:vip-changed', onChanged);
+      window.removeEventListener('focus', onChanged);
+    };
+  }, [isLoggedIn]);
+
   const [activeTab, setActiveTab] = useState<'home' | 'messages' | 'profile'>('home');
   const [homeSubTab, setHomeSubTab] = useState<'party' | 'royal' | 'discover'>('party');
   const [rooms, setRooms] = useState<VoiceRoom[]>([]);
