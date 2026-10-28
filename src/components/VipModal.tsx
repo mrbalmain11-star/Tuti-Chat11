@@ -300,7 +300,6 @@ export const VipModal: React.FC = () => {
     vipModalInitialPopup,
     setVipModalInitialPopup,
     currentUser,
-    updateUserProfile,
     setOpenRechargeModal,
     conversations,
   } = useApp();
@@ -986,19 +985,8 @@ export const VipModal: React.FC = () => {
                     {currentUser.vipLevel >= activeTier.level ? (
                       <button
                         onClick={() => {
-                          sounds.playLevelUp();
-                          updateUserProfile({
-                            vipLevel: activeTier.level,
-                            vipExpiry: '2028/01/01',
-                          });
-                          confetti({
-                            particleCount: 80,
-                            spread: 70,
-                            origin: { y: 0.65 },
-                            colors: [activeTier.themeColor, '#f59e0b', '#ffffff'],
-                          });
-                          setGiftSuccessToast(`✨ تم تفعيل شعار ${activeTier.name} على حسابك بنجاح!`);
-                          setTimeout(() => setGiftSuccessToast(null), 3000);
+                          sounds.playClick();
+                          setGiftSuccessToast('رتبة VIP المملوكة مفعّلة على الحساب تلقائياً.');
                         }}
                         className="w-full h-12.5 rounded-full bg-gradient-to-r from-[#FFE58A] via-[#FFD666] to-[#F5A623] hover:brightness-105 active:scale-98 transition shadow-[0_4px_18px_rgba(245,166,35,0.45)] cursor-pointer flex items-center justify-center gap-2 text-[#3D2105] font-black text-sm"
                       >
