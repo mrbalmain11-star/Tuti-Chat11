@@ -329,6 +329,21 @@ export const VoiceRoomModal: React.FC = () => {
     }
   };
 
+  const handleAllowMic = async (userId: string) => {
+    if (!activeRoom || (!isOwner && !isModerator) || !stagingBackend) return;
+    try {
+      const { data, error } = await stagingBackend.rpc('phase2_room_moderate', {
+        p_room_id: activeRoom.id, p_target: userId,
+        p_action: 'allow_mic', p_request_id: crypto.randomUUID(),
+      });
+      if (error || !data?.success) throw error ?? new Error('Permission not confirmed');
+      showToast('تم رفع حظر المايك من الخادم. العضو يفتح مايكه بنفسه.');
+    } catch (error) {
+      console.error('Allow microphone failed:', error);
+      showToast('الخادم رفض رفع حظر المايك.');
+    }
+  };
+
   const handleKickMember = (userId: string, userName: string) => {
     if (!activeRoom) return;
     if (!isOwner && !isModerator) {
@@ -1879,7 +1894,11 @@ export const VoiceRoomModal: React.FC = () => {
                 <button
                   onClick={() => {
                     sounds.playClick();
-                    leaveSeat(selectedMicUser.seatNumber);
+                    if (selectedMicUser.user.id === currentUser.id) {
+                      leaveSeat(selectedMicUser.seatNumber);
+                    } else {
+                      showToast('إنزال عضو آخر يتطلب خدمة إدارة الصوت الآمنة.');
+                    }
                     setSelectedMicUser(null);
                   }}
                   className="flex flex-col items-center gap-1 text-slate-300 hover:text-white transition active:scale-95 cursor-pointer"
@@ -1894,7 +1913,7 @@ export const VoiceRoomModal: React.FC = () => {
                 <button
                   onClick={() => {
                     sounds.playClick();
-                    toggleMuteSeat(selectedMicUser.seatNumber);
+                    void handleAllowMic(selectedMicUser.user.id);
                     setSelectedMicUser(null);
                   }}
                   className="flex flex-col items-center gap-1 text-slate-300 hover:text-white transition active:scale-95 cursor-pointer"
@@ -1902,7 +1921,7 @@ export const VoiceRoomModal: React.FC = () => {
                   <div className="w-10 h-10 rounded-full bg-slate-800/90 flex items-center justify-center border border-slate-700 shadow-sm">
                     <MicOff className="w-5 h-5 text-rose-400" />
                   </div>
-                  <span className="text-xs font-bold">حظر مايك</span>
+                  <span className="text-xs font-bold">رفع حظر المايك</span>
                 </button>
               </div>
             </div>
