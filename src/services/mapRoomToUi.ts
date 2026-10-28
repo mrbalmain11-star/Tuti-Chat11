@@ -23,6 +23,6 @@ export function mapRoomToUi(room: BackendRoom): VoiceRoom {
     seats: Array.from({ length: 15 }, (_, i) => ({
       seatNumber: i + 1, user: null, isLocked: false, isMuted: true, isSpeaking: false,
     })),
-    backgroundUrl: '',
+    backgroundUrl: room.background_url ?? '',
   };
 }
