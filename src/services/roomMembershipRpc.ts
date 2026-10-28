@@ -70,3 +70,17 @@ export async function setMyRoomMute(roomId: string, muted: boolean): Promise<boo
   if (data !== muted) throw new Error('Mute update not confirmed');
   return data;
 }
+
+/** Release only the authenticated user's own seat; server verifies membership. */
+export async function releaseMySeat(roomId: string): Promise<void> {
+  if (!stagingBackend) throw new Error('Staging not configured');
+  const { data: auth, error: authError } = await stagingBackend.auth.getUser();
+  if (authError) throw authError;
+  if (!auth.user) throw new Error('Not authenticated');
+  const { data, error } = await stagingBackend.rpc('phase2_room_take_seat', {
+    p_room_id: roomId,
+    p_seat: null,
+  });
+  if (error) throw error;
+  if (data !== null) throw new Error('Seat release not confirmed');
+}
