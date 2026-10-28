@@ -82,6 +82,36 @@ export const InternalProfileModal: React.FC = () => {
   const [myPublicId, setMyPublicId] = useState<number | null>(null);
   const [displaySpecialId, setDisplaySpecialId] = useState<string | null>(null);
   const [savedCover, setSavedCover] = useState<string>('');
+  const [visitorPublicId, setVisitorPublicId] = useState<string>('');
+  const [visitorCover, setVisitorCover] = useState<string>('');
+  const [visitorAvatar, setVisitorAvatar] = useState<string>('');
+  useEffect(() => {
+    let active = true;
+    setVisitorPublicId('');
+    setVisitorCover('');
+    setVisitorAvatar('');
+    if (!openInternalProfileModal || isSelf || !stagingBackend || !user.id) return;
+    const client = stagingBackend;
+    void (async () => {
+      const { data: profile, error } = await client.from('profiles')
+        .select('public_id,cover_path,avatar_url').eq('id', user.id).maybeSingle();
+      if (error) throw error;
+      const { data: special } = await client.rpc('phase5_special_id_status', { p_target: user.id });
+      const status = special as { assigned?: boolean; publicId?: string } | null;
+      if (!active) return;
+      setVisitorPublicId(status?.assigned && status.publicId ? String(status.publicId) : String(profile?.public_id || ''));
+      if (profile?.cover_path) {
+        const { data } = client.storage.from('profile-avatars').getPublicUrl(profile.cover_path);
+        setVisitorCover(data.publicUrl);
+      }
+      if (profile?.avatar_url) {
+        const { data } = client.storage.from('profile-avatars').getPublicUrl(profile.avatar_url);
+        setVisitorAvatar(data.publicUrl);
+      }
+    })().catch(error => console.error('Visitor profile load failed:', error));
+    return () => { active = false; };
+  }, [openInternalProfileModal, isSelf, user.id]);
+
   useEffect(() => {
     if (!openInternalProfileModal || !isSelf) { setMyPublicId(null); setDisplaySpecialId(null); setSavedCover(''); return; }
     let active = true;
@@ -223,7 +253,7 @@ export const InternalProfileModal: React.FC = () => {
   };
 
   const handleCopyId = () => {
-    const idToCopy = isSelf ? (displaySpecialId || myPublicId?.toString()) : user.id;
+    const idToCopy = isSelf ? (displaySpecialId || myPublicId?.toString()) : visitorPublicId;
     if (!idToCopy) return;
     navigator.clipboard.writeText(idToCopy);
     setCopiedId(true);
@@ -292,6 +322,7 @@ export const InternalProfileModal: React.FC = () => {
           <img
             src={
               (isSelf && savedCover) ||
+              visitorCover ||
               user.cover ||
               'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?w=800&auto=format&fit=crop&q=80'
             }
@@ -520,7 +551,7 @@ export const InternalProfileModal: React.FC = () => {
               <Copy className="w-3.5 h-3.5 text-slate-500" />
             )}
             <span className="font-semibold tracking-wider">
-              ID: {isSelf ? (displaySpecialId || myPublicId || '—') : (user.id || '—')}
+              ID: {isSelf ? (displaySpecialId || myPublicId || '—') : (visitorPublicId || '—')}
             </span>
           </button>
 
