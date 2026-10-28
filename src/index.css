@@ -343,3 +343,9 @@ img, svg { max-width: 100%; }
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 html, body, #root { width: 100%; overflow-x: hidden; }
 *, *::before, *::after { box-sizing: border-box; }
+
+/* Disable expensive filter compositing on Android's embedded WebView. */
+@supports (-webkit-touch-callout: none) { }
+html.android-webview [class*="drop-shadow-"],
+html.android-webview [class*="backdrop-blur-"],
+html.android-webview .royal-glass { filter: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
