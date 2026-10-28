@@ -58,10 +58,7 @@ class ErrorBoundary extends React.Component<
           </p>
           <button
             onClick={() => {
-              try {
-                localStorage.removeItem('toti_user_v3');
-                localStorage.removeItem('toti_user_v4');
-              } catch (_) {}
+              // Preserve cached profile data when recovering from a UI crash.
               window.location.reload();
             }}
             className="px-6 py-2.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold text-sm shadow-lg shadow-emerald-500/30 active:scale-95 transition"
