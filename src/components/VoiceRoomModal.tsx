@@ -1,3 +1,4 @@
+import { stagingBackend } from '../services/stagingBackend';
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Mic,
@@ -306,23 +307,27 @@ export const VoiceRoomModal: React.FC = () => {
     setShowRoomInfoModal(false);
   };
 
-  const handleToggleModerator = (userId: string, userName: string) => {
-    if (!activeRoom) return;
-    if (!isOwner && !currentUser.isSuperAdmin) {
-      sounds.playError();
-      showToast('🔒 تعيين المشرفين متاح لمالك الغرفة فقط');
+  const handleToggleModerator = async (userId: string, userName: string) => {
+    if (!activeRoom || !isOwner || !stagingBackend) {
+      showToast('تعيين المشرفين يتطلب ملكية الغرفة والاتصال بالخادم.');
       return;
     }
-    const currentMods = activeRoom.moderatorIds || [];
-    const isMod = currentMods.includes(userId);
-    const updatedMods = isMod
-      ? currentMods.filter((id) => id !== userId)
-      : [...currentMods, userId];
-
-    // The current room update RPC only supports title/announcement.
-    // Never claim moderator permissions changed without a server-side RPC.
-    sounds.playError();
-    showToast('تعديل صلاحيات المشرفين غير متاح حتى تفعيل التحقق والحفظ من الخادم.');
+    const roomId = activeRoom.id;
+    const isMod = (activeRoom.moderatorIds || []).includes(userId);
+    try {
+      const { data, error } = await stagingBackend.rpc('phase2_room_moderate', {
+        p_room_id: roomId, p_target: userId,
+        p_action: isMod ? 'revoke_moderator' : 'grant_moderator',
+        p_request_id: crypto.randomUUID(),
+      });
+      if (error || !data?.success) throw error ?? new Error('Server did not confirm role change');
+      showToast(isMod ? `تم سحب إشراف ${userName}` : `تم منح ${userName} صلاحية المشرف`);
+      // Refresh is required before trusting moderator state across clients.
+      window.location.reload();
+    } catch (error) {
+      console.error('Moderator update failed:', error);
+      showToast('رفض الخادم تغيير الصلاحية. تحقق من عضوية المستخدم وصلاحية المالك.');
+    }
   };
 
   const handleKickMember = (userId: string, userName: string) => {
@@ -1979,9 +1984,6 @@ export const VoiceRoomModal: React.FC = () => {
                       onClick={() => {
                         toggleLockSeat(selectedEmptySeat);
                         setSelectedEmptySeat(null);
-                        showToast(
-                          `تم ${getSeat(selectedEmptySeat).isLocked ? 'فتح' : 'قفل'} المايك رقم ${selectedEmptySeat} 🔒`
-                        );
                       }}
                       className="w-full py-3 px-4 rounded-2xl bg-slate-800/90 hover:bg-slate-700/90 border border-slate-700 text-slate-200 font-bold text-sm flex items-center justify-center gap-2 shadow-md active:scale-98 transition cursor-pointer"
                     >
@@ -2012,9 +2014,6 @@ export const VoiceRoomModal: React.FC = () => {
                       onClick={() => {
                         toggleLockSeat(selectedEmptySeat);
                         setSelectedEmptySeat(null);
-                        showToast(
-                          `تم ${getSeat(selectedEmptySeat).isLocked ? 'فتح' : 'قفل'} المايك رقم ${selectedEmptySeat} 🔒`
-                        );
                       }}
                       className="w-full py-3 px-4 rounded-2xl bg-slate-800/90 hover:bg-slate-700/90 border border-slate-700 text-slate-200 font-bold text-sm flex items-center justify-center gap-2 shadow-md active:scale-98 transition cursor-pointer"
                     >
