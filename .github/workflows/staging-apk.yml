@@ -1,4 +1,4 @@
-name: Build TotiChat Staging APK V002
+name: Build TotiChat Staging APK V003
 on:
   push:
     branches:
