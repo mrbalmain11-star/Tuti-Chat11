@@ -212,7 +212,7 @@ export const ProfileView: React.FC = () => {
 
   return (
     <div
-      className="min-h-screen pb-28 font-['Cairo',sans-serif] bg-gradient-to-b from-[#FDFBF7] via-[#FAF6ED] to-[#F5EFE0] text-slate-800 select-none relative overflow-x-hidden"
+      className="min-h-screen pb-28 profile-android-safe font-['Cairo',sans-serif] bg-gradient-to-b from-[#FDFBF7] via-[#FAF6ED] to-[#F5EFE0] text-slate-800 select-none relative overflow-x-hidden"
       dir={isRtl ? 'rtl' : 'ltr'}
     >
       {adminPanelOpen && adminAccess && <AdminCenterView onClose={() => setAdminPanelOpen(false)} />}
@@ -285,9 +285,9 @@ export const ProfileView: React.FC = () => {
           ========================================================================= */}
       <div className="relative pt-3 pb-4 px-5">
         {/* Profile Card Row */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2 min-w-0">
           {/* Right Side: Avatar + Details */}
-          <div className="flex items-center gap-3.5">
+          <div className="flex items-center gap-3.5 min-w-0 flex-1">
             {/* Avatar Circle with Camera upload button */}
             <div className={`relative w-18 h-18 rounded-full shrink-0 group ${currentUser.vipLevel > 0 ? 'isolate' : ''}`}>
               {currentUser.vipLevel > 0 && (
@@ -354,16 +354,16 @@ export const ProfileView: React.FC = () => {
             </div>
 
             {/* User Info (Name, ID, Badges) */}
-            <div className="flex flex-col items-start text-right">
+            <div className="flex flex-col items-start text-right min-w-0 flex-1">
               {/* Name with Edit Pencil */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 min-w-0 max-w-full">
                 <h1
                   onClick={() => {
                     sounds.playClick();
                     setEditNameInput(currentUser.name || '');
                     setShowEditNameModal(true);
                   }}
-                  className="text-xl font-black tracking-wide cursor-pointer transition select-none"
+                  className="text-xl font-black tracking-wide cursor-pointer select-none min-w-0 max-w-full break-words"
                   title="انقر لتعديل الاسم"
                 >
                   <VipName
@@ -404,7 +404,7 @@ export const ProfileView: React.FC = () => {
               </button>
 
               {/* Badges Row: Flag + Gender/Age + Charm Level + Wealth Level */}
-              <div className="flex items-center gap-1.5 mt-2">
+              <div className="flex items-center gap-1.5 mt-2 flex-wrap max-w-full">
                 {/* Flag */}
                 {currentUser.countryFlag && <span className="text-base leading-none">{currentUser.countryFlag}</span>}
 
@@ -515,7 +515,7 @@ export const ProfileView: React.FC = () => {
         {/* =========================================================================
             Stats Row: (الزوار | المعجبون | متابعة | الأصدقاء)
             ========================================================================= */}
-        <div className="grid grid-cols-4 gap-2 text-center mt-6 pt-1 px-1">
+        <div className="grid grid-cols-4 gap-1 text-center mt-6 pt-1 px-1 min-w-0">
           {/* الأصدقاء (Friends) */}
           <div
             onClick={() => sounds.playClick()}
