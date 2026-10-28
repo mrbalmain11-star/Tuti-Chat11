@@ -1191,7 +1191,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     })).then(async ({ data, error }) => {
       if (error || !data) throw error ?? new Error('Message not confirmed');
       const sentAt = new Date().toISOString();
-      setOpenChatThread(prev => prev?.userId === recipientId ? {
+      setOpenChatThreadState((prev: DirectConversation | null) => prev?.userId === recipientId ? {
         ...prev,
         lastMessage: body,
         lastTime: sentAt,
