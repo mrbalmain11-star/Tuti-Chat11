@@ -289,14 +289,37 @@ export const ProfileView: React.FC = () => {
           {/* Right Side: Avatar + Details */}
           <div className="flex items-center gap-3.5">
             {/* Avatar Circle with Camera upload button */}
-            <div className="relative w-18 h-18 rounded-full shrink-0 group">
+            <div className={`relative w-18 h-18 rounded-full shrink-0 group ${currentUser.vipLevel > 0 ? 'isolate' : ''}`}>
+              {currentUser.vipLevel > 0 && (
+                <>
+                  <div
+                    aria-label={`إطار VIP ${currentUser.vipLevel} مفعل`}
+                    className="absolute -inset-2 rounded-full pointer-events-none"
+                    style={{
+                      background: currentUser.vipLevel >= 8
+                        ? 'conic-gradient(from 15deg, #fef3c7, #f59e0b, #be185d, #fbcfe8, #facc15, #9d174d, #fef3c7)'
+                        : 'conic-gradient(from 15deg, #fff7cc, #d97706, #facc15, #92400e, #fff7cc)',
+                      boxShadow: currentUser.vipLevel >= 8
+                        ? '0 0 15px 3px rgba(236,72,153,.55), inset 0 0 9px #fff1b8'
+                        : '0 0 12px 2px rgba(245,158,11,.45), inset 0 0 7px #fff1b8',
+                    }}
+                  />
+                  <div className="absolute -inset-1.5 rounded-full border-2 border-[#fff1a8] pointer-events-none" />
+                  <div className="absolute -top-5 left-1/2 -translate-x-1/2 z-20 text-amber-300 drop-shadow-[0_2px_3px_#4a044e] pointer-events-none">
+                    <Crown className="w-7 h-7 fill-amber-400 stroke-amber-100" />
+                  </div>
+                  <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 z-20 rounded-full bg-gradient-to-r from-amber-600 via-[#ffde87] to-amber-600 px-2 py-0.5 text-[9px] font-black text-[#40130c] border border-amber-100 shadow-lg whitespace-nowrap pointer-events-none">
+                    VIP {currentUser.vipLevel}
+                  </span>
+                </>
+              )}
               <div
                 onClick={() => {
                   sounds.playClick();
                   setInternalProfileUser(currentUser);
                   setOpenInternalProfileModal(true);
                 }}
-                className="w-full h-full rounded-full overflow-hidden border-2 border-amber-400 shadow-lg cursor-pointer active:scale-95 transition bg-white"
+                className="relative z-10 w-full h-full rounded-full overflow-hidden border-2 border-amber-100 shadow-lg cursor-pointer active:scale-95 transition bg-transparent"
                 title="عرض الملف الشخصي"
               >
                 <img
