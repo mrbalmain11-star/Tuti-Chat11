@@ -424,23 +424,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [myMicMuted, setMyMicMuted] = useState(false);
   const voiceRoomId = activeRoom?.id ?? null;
   const voiceSeat = activeRoom?.seats.some(seat => seat.user?.id === currentUser.id) ?? false;
+  const voicePublishRef = useRef(false);
+  const voiceConnectionRef = useRef<Awaited<ReturnType<typeof connectRoomVoice>> | null>(null);
+  voicePublishRef.current = voiceSeat && !myMicMuted;
   useEffect(() => {
     if (!isLoggedIn || !voiceRoomId) return;
     let cancelled = false;
     let connection: Awaited<ReturnType<typeof connectRoomVoice>> | null = null;
-    void connectRoomVoice(voiceRoomId, () => voiceSeat && !myMicMuted, message => {
+    void connectRoomVoice(voiceRoomId, () => voicePublishRef.current, message => {
       if (!cancelled) console.error('Room voice:', message);
     }).then(async connected => {
       if (cancelled) { await connected.close(); return; }
       connection = connected;
+      voiceConnectionRef.current = connected;
+      await connected.sync();
     }).catch(error => {
       if (!cancelled) {
         console.error('Voice connection failed:', error);
         alert('تعذر تشغيل صوت الغرفة: ' + (error instanceof Error ? error.message : 'خطأ اتصال'));
       }
     });
-    return () => { cancelled = true; if (connection) void connection.close(); };
-  }, [isLoggedIn, voiceRoomId, voiceSeat, myMicMuted]);
+    return () => {
+      cancelled = true;
+      if (voiceConnectionRef.current === connection) voiceConnectionRef.current = null;
+      if (connection) void connection.close();
+    };
+  }, [isLoggedIn, voiceRoomId]);
+  useEffect(() => {
+    if (!voiceConnectionRef.current) return;
+    void voiceConnectionRef.current.sync().catch(error => console.error('Voice microphone sync:', error));
+  }, [voiceSeat, myMicMuted]);
 
   useEffect(() => {
     if (isLoggedIn) return;
