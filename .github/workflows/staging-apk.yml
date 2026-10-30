@@ -1,5 +1,8 @@
 name: Build TotiChat Staging APK V010
 on:
+  push:
+    branches:
+      - integration/legacy-backend-staging
   workflow_dispatch:
     # V002 manual fallback; push builds should also run on staging.
 permissions:
