@@ -166,11 +166,21 @@ export const VoiceRoomModal: React.FC = () => {
     setSelectedMicPublicId('—');
     const target = selectedMicUser?.user.id;
     if (!target || !stagingBackend) return;
-    void Promise.resolve(stagingBackend.from('profiles').select('public_id').eq('id', target).maybeSingle())
-      .then(({ data, error }) => {
-        if (error) throw error;
-        if (active && data?.public_id != null) setSelectedMicPublicId(String(data.public_id));
-      }).catch(error => console.error('Seat profile ID lookup failed:', error));
+    // The seat card must use the same effective ID as the profile page:
+    // assigned special ID first, otherwise the six-digit public ID.
+    void (async () => {
+      const { data: special, error: specialError } = await stagingBackend.rpc('phase5_special_id_status', { p_target: target });
+      if (specialError) console.warn('Seat special ID lookup failed:', specialError);
+      const status = special as { assigned?: boolean; publicId?: string } | null;
+      if (!active) return;
+      if (!specialError && status?.assigned && status.publicId) {
+        setSelectedMicPublicId(String(status.publicId));
+        return;
+      }
+      const { data, error } = await stagingBackend.from('profiles').select('public_id').eq('id', target).maybeSingle();
+      if (error) throw error;
+      if (active && data?.public_id != null) setSelectedMicPublicId(String(data.public_id));
+    })().catch(error => console.error('Seat profile ID lookup failed:', error));
     return () => { active = false; };
   }, [selectedMicUser?.user.id]);
 
