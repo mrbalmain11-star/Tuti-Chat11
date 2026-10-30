@@ -471,7 +471,7 @@ export const AgencyModal: React.FC = () => {
                 <div
                   onClick={() => {
                     sounds.playClick();
-                    showToast('إجمالي رواتب الوكالة للشهر: $0');
+                    showToast('بيانات الرواتب غير متاحة حالياً');
                   }}
                   className="bg-white rounded-2xl p-2.5 text-center shadow-xs border border-slate-100 cursor-pointer active:scale-95 transition"
                 >
@@ -558,7 +558,7 @@ export const AgencyModal: React.FC = () => {
                   <span className="text-[#00BFA5] font-black">Lv0</span>
                   <span className="text-amber-500 font-mono flex items-center gap-1">
                     <span>🪙</span>
-                    <span>0/2500000</span>
+                    <span>غير متاح</span>
                   </span>
                 </div>
 
@@ -586,101 +586,7 @@ export const AgencyModal: React.FC = () => {
                   تفاصيل البيانات
                 </h4>
 
-                {/* Host 1 */}
-                <div className="w-full bg-white rounded-2xl p-3 shadow-xs border border-slate-100 space-y-2">
-                  <div
-                    onClick={() => setExpandedHostIndex(expandedHostIndex === 0 ? null : 0)}
-                    className="flex items-center justify-between cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-xs font-black text-slate-600 font-mono">1</span>
-
-                      <div className="w-10 h-10 rounded-full overflow-hidden border border-slate-200 bg-slate-100 shrink-0">
-                        <img
-                          src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80"
-                          alt="دولة العراق"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-
-                      <div className="text-right">
-                        <h5 className="text-xs font-black text-slate-900 flex items-center gap-1">
-                          <span>✗»دولة العراق...</span>
-                        </h5>
-                        <p className="text-[10px] text-slate-400 font-mono">ID: 1331</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
-                      <span className="text-amber-500">🪙</span>
-                      <span className="font-mono font-black">0.0k</span>
-                      <ChevronDown
-                        className={`w-4 h-4 text-slate-400 transition-transform ${
-                          expandedHostIndex === 0 ? 'rotate-180' : ''
-                        }`}
-                      />
-                    </div>
-                  </div>
-
-                  {expandedHostIndex === 0 && (
-                    <div className="w-full bg-[#F0FDF9] border border-teal-100 rounded-xl p-2.5 flex items-center justify-between text-xs animate-in fade-in">
-                      <span className="text-[#0D9488] font-bold">إجمالي الوقت: 0.00 ساعة</span>
-                      <div className="w-[1px] h-4 bg-teal-200" />
-                      <div className="flex items-center gap-1 text-[#0D9488] font-bold">
-                        <span>ايام فعالية: 0 يوم</span>
-                        <ChevronLeft className="w-3.5 h-3.5 text-[#0D9488]" />
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Host 2 */}
-                <div className="w-full bg-white rounded-2xl p-3 shadow-xs border border-slate-100 space-y-2">
-                  <div
-                    onClick={() => setExpandedHostIndex(expandedHostIndex === 1 ? null : 1)}
-                    className="flex items-center justify-between cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-xs font-black text-slate-600 font-mono">2</span>
-
-                      <div className="w-10 h-10 rounded-full overflow-hidden border border-slate-200 bg-slate-100 shrink-0">
-                        <img
-                          src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
-                          alt="نور الرافدين"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-
-                      <div className="text-right">
-                        <h5 className="text-xs font-black text-slate-900 flex items-center gap-1">
-                          <span>نور الرافدين</span>
-                        </h5>
-                        <p className="text-[10px] text-slate-400 font-mono">ID: 3088</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
-                      <span className="text-amber-500">🪙</span>
-                      <span className="font-mono font-black">0.0k</span>
-                      <ChevronDown
-                        className={`w-4 h-4 text-slate-400 transition-transform ${
-                          expandedHostIndex === 1 ? 'rotate-180' : ''
-                        }`}
-                      />
-                    </div>
-                  </div>
-
-                  {expandedHostIndex === 1 && (
-                    <div className="w-full bg-[#F0FDF9] border border-teal-100 rounded-xl p-2.5 flex items-center justify-between text-xs animate-in fade-in">
-                      <span className="text-[#0D9488] font-bold">إجمالي الوقت: 0.00 ساعة</span>
-                      <div className="w-[1px] h-4 bg-teal-200" />
-                      <div className="flex items-center gap-1 text-[#0D9488] font-bold">
-                        <span>ايام فعالية: 0 يوم</span>
-                        <ChevronLeft className="w-3.5 h-3.5 text-[#0D9488]" />
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <div className="rounded-2xl border border-slate-200 bg-white p-5 text-center text-sm text-slate-500" role="status">لا توجد بيانات أعضاء موثقة متاحة حالياً</div>
               </div>
             </div>
           </div>
