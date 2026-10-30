@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
+import { EpicGiftArtwork } from './EpicGiftArtwork';
 import { useApp } from '../context/AppContext';
 
 type EpicStyle = 'zulfiqar' | 'falcon' | 'throne' | 'dragon' | 'jet' | 'heart';
@@ -86,7 +87,7 @@ export const GiftAnimationOverlay: React.FC = () => {
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="toti-epic-halo absolute w-32 h-32 rounded-full" />
         <div className={`toti-epic-art relative flex flex-col items-center justify-center ${epic !== 'zulfiqar' ? 'toti-epic-' + epic : ''}`}>
-          {epic === 'zulfiqar' ? <SwordArt /> : <span role="img" aria-label={gift.name} className="text-[min(40vw,160px)] leading-none">{style.icon}</span>}
+          {epic === 'zulfiqar' ? <SwordArt /> : <EpicGiftArtwork kind={epic} />}
           {epic === 'zulfiqar' && <div dir="rtl" className="text-center text-sm sm:text-base font-black text-amber-200 max-w-[90vw] mt-2" style={{textShadow:'0 0 14px #36df93'}}>لا فتى إلا علي ولا سيف إلا ذو الفقار</div>}
           {epic === 'jet' && <div dir="rtl" className="text-xl font-black text-white mt-4">{receiver}</div>}
           {epic === 'heart' && <div dir="rtl" className="text-lg font-black text-rose-100 mt-4">{sender} ♥ {receiver}</div>}
