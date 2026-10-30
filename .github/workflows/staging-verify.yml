@@ -21,6 +21,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Set up Java 21 for Capacitor Android
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Verify Java 21 compiler
+        run: |
+          java -version
+          javac -version
+          test "$(javac -version 2>&1 | awk '{print $2}' | cut -d. -f1)" = "21"
       - name: Clean install dependencies
         id: stage1
         run: npm install --no-audit --no-fund
