@@ -155,6 +155,19 @@ export const VoiceRoomModal: React.FC = () => {
     return () => { active = false; };
   }, [currentUser.id]);
 
+  const [roomPublicId, setRoomPublicId] = useState<string>('—');
+  useEffect(() => {
+    let active = true;
+    setRoomPublicId('—');
+    if (!activeRoom?.id || !stagingBackend) return;
+    void Promise.resolve(stagingBackend.rpc('staging_room_public_id', { p_room_id: activeRoom.id }))
+      .then(({ data, error }) => {
+        if (error) throw error;
+        if (active && data != null) setRoomPublicId(String(data));
+      }).catch(error => console.error('Room ID lookup failed:', error));
+    return () => { active = false; };
+  }, [activeRoom?.id]);
+
   const [selectedMicUser, setSelectedMicUser] = useState<{ seatNumber: number; user: UserProfile } | null>(null);
   const [selectedEmptySeat, setSelectedEmptySeat] = useState<number | null>(null);
   const [followedUsers, setFollowedUsers] = useState<Record<string, boolean>>({});
@@ -520,7 +533,7 @@ export const VoiceRoomModal: React.FC = () => {
     setSelectedEmptySeat(seatNum);
   };
 
-  const hostAccountId = activeRoom.hostId === currentUser.id ? (myPublicId?.toString() ?? '—') : '—';
+  const hostAccountId = roomPublicId;
 
   return (
     <div
@@ -688,7 +701,7 @@ export const VoiceRoomModal: React.FC = () => {
                 className={`flex items-center gap-2 bg-[#211540]/85 backdrop-blur-md border rounded-full py-1 px-3 shadow-lg cursor-pointer transition active:scale-98 ${
                   isOwner ? 'border-amber-400/40 hover:border-amber-300' : 'border-purple-400/25 hover:border-purple-300/40'
                 }`}
-                title={isOwner ? 'إدارة معلومات وإعدادات غرفتي 👑' : 'معلومات الغرفة ومعرف الحساب (انقر للنسخ)'}
+                title={isOwner ? 'إدارة معلومات وإعدادات غرفتي 👑' : 'معلومات الغرفة ورقم الغرفة (انقر للنسخ)'}
               >
                 {/* Heart outline in teal circle badge (or crown if owner) */}
                 <div
