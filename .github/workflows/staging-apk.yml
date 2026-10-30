@@ -1,8 +1,5 @@
 name: Build TotiChat Staging APK V011
 on:
-  push:
-    branches:
-      - integration/legacy-backend-staging
   workflow_dispatch: {}
 permissions:
   contents: write
