@@ -50,10 +50,12 @@ export const ProfileView: React.FC = () => {
     agencyMemberCount,
   } = useApp();
 
+  const [agencyLoadError, setAgencyLoadError] = useState<string | null>(null);
   const [verifiedAgency, setVerifiedAgency] = useState<{ name: string; public_id: number; member_count: number; role: string } | null>(null);
   useEffect(() => {
     let active = true;
     setVerifiedAgency(null);
+    setAgencyLoadError(null);
     if (!stagingBackend || !currentUser.id) return;
     const loadAgency = async () => {
       // Use the authenticated UUID, not the visible/special ID from UI state.
@@ -61,9 +63,14 @@ export const ProfileView: React.FC = () => {
       if (authError || !auth.user) throw authError ?? new Error('Session unavailable');
       const { data, error } = await stagingBackend!.rpc('staging_profile_agency', { p_user_id: auth.user.id });
       if (error) throw error;
-      if (active) setVerifiedAgency(data && typeof data.name === 'string' && Number.isInteger(Number(data.public_id)) && Number(data.public_id) > 0 ? data : null);
+      const agency = data && typeof data.name === 'string' && Number.isInteger(Number(data.public_id)) && Number(data.public_id) > 0 ? data : null;
+      if (active) setVerifiedAgency(agency);
+      if (!agency && active) console.warn('No agency returned for authenticated profile');
     };
-    void loadAgency().catch(error => console.error('Verified agency unavailable:', error));
+    void loadAgency().catch(error => {
+      console.error('Verified agency unavailable:', error);
+      if (active) setAgencyLoadError(error instanceof Error ? error.message : 'تعذر تحميل بيانات الوكالة');
+    });
     const refresh = () => { void loadAgency().catch(error => console.error('Agency refresh failed:', error)); };
     window.addEventListener('focus', refresh);
     return () => { active = false; window.removeEventListener('focus', refresh); };
@@ -559,6 +566,7 @@ export const ProfileView: React.FC = () => {
             Realistic Dynamic Agency Rectangle (مستطيل الوكالة الفعلي بالمعلومات الحقيقية)
             يعرض صورة الوكيل الحقيقية، ومعرف الوكيل (ID)، وعدد المضيفين المتغير تلقائياً
             ========================================================================= */}
+        {agencyLoadError && <p role="alert" className="mt-3 text-xs text-red-400">تعذر عرض الوكالة: {agencyLoadError}</p>}
         {verifiedAgency && (
           <AgencyProfileCard
             avatar={currentUser.avatar}
