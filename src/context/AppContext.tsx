@@ -10,6 +10,7 @@ import {
   ChatMessage,
 } from '../types';
 import { sounds } from '../utils/audio';
+import { connectRoomVoice } from '../services/roomVoice';
 import { stagingBackend, fetchRealRooms, fetchMyProfile, fetchMyWallet, fetchRoomMembers, initializeNativeAuthLinks, getMyAvatarUrl } from '../services/stagingBackend';
 import { mapRoomToUi } from '../services/mapRoomToUi';
 import { saveProfileChanges } from '../services/profileWrites';
@@ -421,6 +422,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [activeRoom, setActiveRoom] = useState<VoiceRoom | null>(null);
   const [isRoomMinimized, setIsRoomMinimized] = useState(false);
   const [myMicMuted, setMyMicMuted] = useState(false);
+  const voiceRoomId = activeRoom?.id ?? null;
+  const voiceSeat = activeRoom?.seats.some(seat => seat.user?.id === currentUser.id) ?? false;
+  useEffect(() => {
+    if (!isLoggedIn || !voiceRoomId) return;
+    let cancelled = false;
+    let connection: Awaited<ReturnType<typeof connectRoomVoice>> | null = null;
+    void connectRoomVoice(voiceRoomId, () => voiceSeat && !myMicMuted, message => {
+      if (!cancelled) console.error('Room voice:', message);
+    }).then(async connected => {
+      if (cancelled) { await connected.close(); return; }
+      connection = connected;
+    }).catch(error => {
+      if (!cancelled) {
+        console.error('Voice connection failed:', error);
+        alert('تعذر تشغيل صوت الغرفة: ' + (error instanceof Error ? error.message : 'خطأ اتصال'));
+      }
+    });
+    return () => { cancelled = true; if (connection) void connection.close(); };
+  }, [isLoggedIn, voiceRoomId, voiceSeat, myMicMuted]);
+
   useEffect(() => {
     if (isLoggedIn) return;
     setActiveRoom(null);
