@@ -21,10 +21,13 @@ jobs:
         with:
           node-version: '22'
       - name: Clean install dependencies
+        id: stage1
         run: npm install --no-audit --no-fund
       - name: Validate TypeScript
+        id: stage2
         run: npm run lint
       - name: Require staging publishable key
+        id: stage3
         env:
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.STAGING_SUPABASE_PUBLISHABLE_KEY }}
         run: |
@@ -33,6 +36,7 @@ jobs:
             exit 1
           fi
       - name: Verify staging API key before packaging
+        id: stage4
         env:
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.STAGING_SUPABASE_PUBLISHABLE_KEY }}
         run: |
@@ -44,16 +48,19 @@ jobs:
           fi
           echo "Staging Auth API key check passed"
       - name: Build staging web bundle
+        id: stage5
         env:
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.STAGING_SUPABASE_PUBLISHABLE_KEY }}
         run: npm run build
       - name: Generate complete Android project in CI
+        id: stage6
         run: |
           # Existing checked-in Android folder is incomplete (Gradle wrapper missing).
           # Regenerate it only inside the disposable CI runner; repository stays unchanged.
           rm -rf android
           npx cap add android
       - name: Enable Android microphone permissions in generated Capacitor project
+        id: stage7
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -120,10 +127,13 @@ jobs:
           """)
           PY
       - name: Sync Capacitor assets
+        id: stage8
         run: npx cap sync android
       - name: Register Google OAuth callback
+        id: stage9
         run: node scripts/configure-android-oauth.mjs
       - name: Build Android debug APK
+        id: stage10
         working-directory: android
         run: |
           test -f gradle/wrapper/gradle-wrapper.jar
@@ -131,12 +141,14 @@ jobs:
           chmod +x gradlew
           ./gradlew --no-daemon assembleDebug
       - name: Verify microphone permission is packaged
+        id: stage11
         run: |
           set -euo pipefail
           AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -n 1)"
           "$AAPT" dump permissions android/app/build/outputs/apk/debug/app-debug.apk | tee /tmp/staging-permissions.txt
           grep -q 'android.permission.RECORD_AUDIO' /tmp/staging-permissions.txt
       - name: Verify generated APK integrity and signature
+        id: stage12
         run: |
           set -euo pipefail
           APK="android/app/build/outputs/apk/debug/app-debug.apk"
@@ -147,12 +159,14 @@ jobs:
           sha256sum "$APK" | tee android/app/build/outputs/apk/debug/app-debug.apk.sha256
           ls -lh "$APK"
       - uses: actions/upload-artifact@v4
+        id: stage_upload
         with:
           name: TotiChat-Staging-Debug-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
 
       - name: Publish directly downloadable staging APK
+        id: stage13
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -168,3 +182,19 @@ jobs:
             --notes "Android staging debug APK for testing. Direct APK download; no ZIP extraction needed." \
             --prerelease
 
+
+      - name: Report precise failing stage in Actions summary
+        if: failure()
+        env:
+          STAGE_RESULTS: ${{ toJSON(steps) }}
+        run: |
+          python3 - <<'PY'
+          import json,os
+          data=json.loads(os.environ['STAGE_RESULTS'])
+          failed=[(key,entry.get('conclusion')) for key,entry in data.items() if entry.get('conclusion')=='failure']
+          lines=['## TotiChat APK build failure', '', 'Failed steps:']
+          lines += ['- '+key+' : '+str(status) for key,status in failed] or ['- Unknown; inspect runner logs']
+          lines += ['', 'The Android APK was not published. Do not download an older artifact as the new build.']
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:f.write('\n'.join(lines)+'\n')
+          print('\n'.join(lines))
+          PY
