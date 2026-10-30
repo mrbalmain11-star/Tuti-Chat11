@@ -58,7 +58,7 @@ import { MicSeat, UserProfile } from '../types';
 import { sounds } from '../utils/audio';
 import { VipName } from './VipName';
 import { VipBadge } from './VipBadge';
-import { fetchMyProfile } from '../services/stagingBackend';
+
 
 const PRESET_BACKGROUNDS = [
   {
@@ -146,15 +146,6 @@ export const VoiceRoomModal: React.FC = () => {
   const [showDecorationsModal, setShowDecorationsModal] = useState<'mic' | 'frame' | 'title' | null>(null);
 
   // Mic Seat Profile Popup (Image 1 for own account, Image 2 for other users)
-  const [myPublicId, setMyPublicId] = useState<number | null>(null);
-  useEffect(() => {
-    let active = true;
-    void fetchMyProfile().then(profile => {
-      if (active) setMyPublicId(profile?.public_id ?? null);
-    }).catch(error => console.error('Room public ID unavailable:', error));
-    return () => { active = false; };
-  }, [currentUser.id]);
-
   const [roomPublicId, setRoomPublicId] = useState<string>('—');
   useEffect(() => {
     let active = true;
