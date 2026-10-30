@@ -387,7 +387,6 @@ export const RechargeModal: React.FC = () => {
     openRechargeModal,
     setOpenRechargeModal,
     currentUser,
-    rechargeCoins,
     convertDiamondsToCoins,
     transactions,
   } = useApp();
@@ -395,7 +394,6 @@ export const RechargeModal: React.FC = () => {
   // Two tabs: 'coins' (عملات معدنية) and 'diamonds' (ألماسي)
   const [activeTab, setActiveTab] = useState<'coins' | 'diamonds'>('coins');
   const [selectedPack, setSelectedPack] = useState<RechargePack>(rechargePacks[0]); // default 0.99$ selected like in image 1
-  const [isProcessing, setIsProcessing] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showOrderCheckModal, setShowOrderCheckModal] = useState(false);
   const [showExchangeModal, setShowExchangeModal] = useState(false);
@@ -410,24 +408,11 @@ export const RechargeModal: React.FC = () => {
     setTimeout(() => setToastMessage(null), 3200);
   };
 
-  // Confirm Recharge Handler
+  // Direct purchases are unavailable until verified billing is enabled.
+  // Never credit coins or show a success toast for an unavailable purchase.
   const handleConfirmRecharge = () => {
-    setIsProcessing(true);
     sounds.playClick();
-
-    setTimeout(() => {
-      rechargeCoins(selectedPack.coins);
-      setIsProcessing(false);
-      sounds.playCoin();
-
-      confetti({
-        particleCount: 110,
-        spread: 75,
-        origin: { y: 0.6 },
-      });
-
-      showToast(`تم شحن ${selectedPack.coins.toLocaleString('ar-EG')} عملة بنجاح! 🎉`);
-    }, 650);
+    window.alert('الشحن المباشر من التطبيق غير متاح. يرجى التواصل مع وكيل شحن معتمد.');
   };
 
   // Convert Diamonds to Coins Handler (30% rule: 100,000 Diamonds = 30,000 Coins)
@@ -616,14 +601,9 @@ export const RechargeModal: React.FC = () => {
             <div className="pt-2">
               <button
                 onClick={handleConfirmRecharge}
-                disabled={isProcessing}
                 className="w-full py-3.5 rounded-full bg-gradient-to-r from-[#20C98F] to-[#12B97C] hover:from-[#1eb883] hover:to-[#0fa66f] text-white font-black text-base shadow-lg shadow-emerald-500/20 active:scale-98 transition flex items-center justify-center gap-2"
               >
-                {isProcessing ? (
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <span>تأكيد الشحن</span>
-                )}
+                <span>تأكيد الشحن</span>
               </button>
             </div>
 
