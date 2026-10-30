@@ -455,30 +455,46 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setRealGifts([]);
       return;
     }
+    const client = stagingBackend;
     let active = true;
-    void (async () => {
-      const { data, error } = await stagingBackend.from('gift_catalog')
-        .select('id,name,price,icon,category_id,animation_type,rarity')
-        .eq('is_active', true).order('price', { ascending: true });
-      if (error) throw error;
-      const allowedAnimation = new Set<GiftItem['animationType']>([
-        'lion', 'mosque', 'sword', 'samurai', 'crown', 'car', 'diamond', 'rose',
-      ]);
-      const gifts = (data ?? []).map(g => ({
-        id: String(g.id), name: String(g.name), price: Number(g.price),
-        icon: String(g.icon),
-        category: (g.category_id === 'luck' ? 'حظ' : g.category_id === 'cp' ? 'CP' : 'هدية') as GiftItem['category'],
-        animationType: (allowedAnimation.has(g.animation_type as GiftItem['animationType'])
-          ? g.animation_type : 'rose') as GiftItem['animationType'],
-        rarity: (['legendary','epic','rare','common'].includes(g.rarity ?? '')
-          ? g.rarity : 'common') as GiftItem['rarity'],
-      }));
-      if (active) setRealGifts(gifts);
-    })().catch(error => {
-      console.error('Gift catalog load failed:', error);
-      if (active) setRealGifts([]);
-    });
-    return () => { active = false; };
+    let sequence = 0;
+    const refreshGifts = async () => {
+      const request = ++sequence;
+      try {
+        const { data, error } = await client.from('gift_catalog')
+          .select('id,name,price,icon,category_id,animation_type,rarity')
+          .eq('is_active', true).order('price', { ascending: true });
+        if (error) throw error;
+        const allowedAnimation = new Set<GiftItem['animationType']>([
+          'lion', 'mosque', 'sword', 'samurai', 'crown', 'car', 'diamond', 'rose',
+        ]);
+        const gifts = (data ?? []).map(g => ({
+          id: String(g.id), name: String(g.name), price: Number(g.price),
+          icon: String(g.icon),
+          category: (g.category_id === 'luck' ? 'حظ' : g.category_id === 'cp' ? 'CP' : 'هدية') as GiftItem['category'],
+          animationType: (allowedAnimation.has(g.animation_type as GiftItem['animationType'])
+            ? g.animation_type : 'rose') as GiftItem['animationType'],
+          rarity: (['legendary','epic','rare','common'].includes(g.rarity ?? '')
+            ? g.rarity : 'common') as GiftItem['rarity'],
+        }));
+        if (active && request === sequence) setRealGifts(gifts);
+      } catch (error) {
+        console.error('Gift catalog refresh failed:', error);
+        // Preserve last valid catalog if the network drops.
+      }
+    };
+    void refreshGifts();
+    const onOpen = () => { void refreshGifts(); };
+    window.addEventListener('totichat:gift-store-opened', onOpen);
+    const channel = client.channel('staging-gift-catalog')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'gift_catalog' }, () => {
+        void refreshGifts();
+      }).subscribe();
+    return () => {
+      active = false;
+      window.removeEventListener('totichat:gift-store-opened', onOpen);
+      void client.removeChannel(channel);
+    };
   }, [isLoggedIn]);
 
   const [conversations, setConversations] = useState<DirectConversation[]>([]);
