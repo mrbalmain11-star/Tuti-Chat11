@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 import { EpicGiftArtwork } from './EpicGiftArtwork';
 import { useApp } from '../context/AppContext';
 
-type EpicStyle = 'zulfiqar' | 'falcon' | 'throne' | 'dragon' | 'jet' | 'heart';
+type EpicStyle = 'zulfiqar' | 'falcon' | 'throne' | 'dragon' | 'jet' | 'heart' | 'castle' | 'tree' | 'cosmos' | 'ship';
 const epicStyles: Record<EpicStyle, { names: string[]; color: string; icon: string }> = {
   zulfiqar: { names: ['ذو الفقار', 'ذوالفقار', 'zulfiqar'], color: '#44df9b', icon: '⚔️' },
   falcon: { names: ['الصقر الإمبراطوري', 'imperial falcon'], color: '#f9cf6e', icon: '🦅' },
@@ -11,6 +11,10 @@ const epicStyles: Record<EpicStyle, { names: string[]; color: string; icon: stri
   dragon: { names: ['التنين الأسطوري', 'legendary dragon'], color: '#ff9154', icon: '🐉' },
   jet: { names: ['الطائرة الملكية', 'royal jet'], color: '#a7d9ff', icon: '✈️' },
   heart: { names: ['قلب العشاق الملكي', 'royal lovers'], color: '#ff78ae', icon: '💖' },
+  castle: { names: ['قلعة الأحلام'], color: '#e6bfff', icon: '🏰' },
+  tree: { names: ['شجرة الحياة'], color: '#ffce68', icon: '🌳' },
+  cosmos: { names: ['قلب الكون'], color: '#d68aff', icon: '💜' },
+  ship: { names: ['سفينة الحب الملكية'], color: '#8ddcff', icon: '⛵' },
 };
 
 function getEpicStyle(name: string): EpicStyle | null {
@@ -43,14 +47,14 @@ export const GiftAnimationOverlay: React.FC = () => {
   useEffect(() => {
     if (!activeGiftAnimation) return;
     const name = activeGiftAnimation.gift.name;
-    const isEpic = getEpicStyle(name) !== null && activeGiftAnimation.gift.price >= 10000;
+    const isEpic = getEpicStyle(name) !== null && activeGiftAnimation.gift.price > 10000;
     const timer = window.setTimeout(clearGiftAnimation, isEpic ? 7000 : 3500);
     return () => window.clearTimeout(timer);
   }, [activeGiftAnimation, clearGiftAnimation]);
 
   if (!activeGiftAnimation) return null;
   const { gift, sender, receiver, count } = activeGiftAnimation;
-  const epic = gift.price >= 10000 ? getEpicStyle(gift.name) : null;
+  const epic = gift.price > 10000 ? getEpicStyle(gift.name) : null;
   const style = epic ? epicStyles[epic] : null;
 
   if (!epic || !style) {
@@ -75,11 +79,16 @@ export const GiftAnimationOverlay: React.FC = () => {
         @keyframes totiDragon { 0% {transform:translate(85vw,-55vh) rotate(25deg) scale(.3);opacity:0} 32% {transform:translate(0,0) rotate(-7deg) scale(1.2);opacity:1} 72% {transform:translate(0,0) scale(1.1);opacity:1} 100% {transform:translate(-80vw,-30vh) rotate(-20deg) scale(.5);opacity:0} }
         @keyframes totiJet { 0% {transform:translate(-100vw,45vh) rotate(-12deg) scale(.4);opacity:0} 35% {transform:translate(0,0) rotate(-8deg) scale(1.15);opacity:1} 70% {transform:translate(0,0) rotate(-8deg);opacity:1} 100% {transform:translate(100vw,-50vh) scale(.45);opacity:0} }
         @keyframes totiHeart { 0% {transform:scale(.1) rotate(-25deg);opacity:0} 32% {transform:scale(1.3) rotate(5deg);opacity:1} 45%,80% {transform:scale(1);opacity:1} 100% {transform:scale(1.8);opacity:0} }
+        @keyframes totiCastle { 0% {transform:translateY(80vh) scale(.2);opacity:0} 35%,78% {transform:translateY(0) scale(1.1);opacity:1} 100% {transform:scale(1.6);opacity:0} }
+        @keyframes totiTree { 0% {transform:scale(.1) rotate(-10deg);opacity:0} 38%,75% {transform:scale(1.2) rotate(0);opacity:1} 100% {transform:scale(1.7);opacity:0} }
+        @keyframes totiCosmos { 0% {transform:scale(.2) rotate(-120deg);opacity:0} 40%,78% {transform:scale(1.15) rotate(0);opacity:1} 100% {transform:scale(1.6) rotate(45deg);opacity:0} }
+        @keyframes totiShip { 0% {transform:translateX(-95vw) rotate(-12deg) scale(.5);opacity:0} 38%,75% {transform:translateX(0) rotate(0) scale(1.2);opacity:1} 100% {transform:translateX(95vw) scale(.7);opacity:0} }
         @keyframes totiShine { 0%,100% {opacity:.4;transform:scale(.85)} 50% {opacity:1;transform:scale(1.2)} }
         @keyframes totiTicker { 0% {transform:translateX(120vw);opacity:0} 10%,80% {transform:translateX(0);opacity:1} 100% {transform:translateX(-120vw);opacity:0} }
         .toti-epic-stage {animation:totiVeil 7s ease both;background:radial-gradient(ellipse at 50% 45%,color-mix(in srgb,var(--epic-glow) 23%,#090d1b),#030711 80%)}
         .toti-epic-art {animation:totiSword 7s ease-in-out both;filter:drop-shadow(0 0 35px var(--epic-glow));will-change:transform,opacity}
         .toti-epic-falcon {animation-name:totiFalcon}.toti-epic-throne {animation-name:totiThrone}.toti-epic-dragon {animation-name:totiDragon}.toti-epic-jet {animation-name:totiJet}.toti-epic-heart {animation-name:totiHeart}
+        .toti-epic-castle{animation-name:totiCastle}.toti-epic-tree{animation-name:totiTree}.toti-epic-cosmos{animation-name:totiCosmos}.toti-epic-ship{animation-name:totiShip}
         .toti-epic-halo {animation:totiShine 2.3s ease-in-out infinite;box-shadow:0 0 90px 50px var(--epic-glow);opacity:.25}
         .toti-epic-ticker {animation:totiTicker 7s ease-in-out both}
         @media(prefers-reduced-motion:reduce){.toti-epic-art,.toti-epic-ticker,.toti-epic-stage{animation:none}.toti-epic-halo{animation:none}}
@@ -87,7 +96,7 @@ export const GiftAnimationOverlay: React.FC = () => {
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="toti-epic-halo absolute w-32 h-32 rounded-full" />
         <div className={`toti-epic-art relative flex flex-col items-center justify-center ${epic !== 'zulfiqar' ? 'toti-epic-' + epic : ''}`}>
-          {epic === 'zulfiqar' ? <SwordArt /> : <EpicGiftArtwork kind={epic} />}
+          {epic === 'zulfiqar' ? <SwordArt /> : ['castle','tree','cosmos','ship'].includes(epic) ? <div role="img" aria-label={gift.name} className="text-[min(42vw,180px)] drop-shadow-[0_0_40px_var(--epic-glow)]">{style.icon}</div> : <EpicGiftArtwork kind={epic as 'falcon' | 'throne' | 'dragon' | 'jet' | 'heart'} />}
           {epic === 'zulfiqar' && <div dir="rtl" className="text-center text-sm sm:text-base font-black text-amber-200 max-w-[90vw] mt-2" style={{textShadow:'0 0 14px #36df93'}}>لا فتى إلا علي ولا سيف إلا ذو الفقار</div>}
           {epic === 'jet' && <div dir="rtl" className="text-xl font-black text-white mt-4">{receiver}</div>}
           {epic === 'heart' && <div dir="rtl" className="text-lg font-black text-rose-100 mt-4">{sender} ♥ {receiver}</div>}
