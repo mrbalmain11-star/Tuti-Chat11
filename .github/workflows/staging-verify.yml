@@ -1,11 +1,11 @@
-name: Staging Integration Verification
+name: Staging Verification and APK Build
 on:
   push:
     branches:
       - integration/legacy-backend-staging
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -31,6 +31,152 @@ jobs:
         run: npm run lint
       - name: Production bundle validation
         run: npm run build
+      - name: Generate staging APK from verified source
+        run: echo "Beginning Android staging packaging"
+      - name: Require staging publishable key
+        env:
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.STAGING_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          if [ -z "$VITE_SUPABASE_PUBLISHABLE_KEY" ]; then
+            echo "::error::Configure STAGING_SUPABASE_PUBLISHABLE_KEY before building a functional APK"
+            exit 1
+          fi
+      - name: Verify staging API key before packaging
+        env:
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.STAGING_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          set -euo pipefail
+          status=$(curl --silent --show-error --output /tmp/auth-health.json --write-out '%{http_code}' --header "apikey: $VITE_SUPABASE_PUBLISHABLE_KEY" "https://rziaedugbdwefbefcxjt.supabase.co/auth/v1/health")
+          if [ "$status" != "200" ]; then
+            echo "::error::Staging Supabase API key was rejected by Auth (HTTP $status)"
+            exit 1
+          fi
+          echo "Staging Auth API key check passed"
+      - name: Build staging web bundle
+        env:
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.STAGING_SUPABASE_PUBLISHABLE_KEY }}
+        run: npm run build
+      - name: Generate complete Android project in CI
+        run: |
+          # Existing checked-in Android folder is incomplete (Gradle wrapper missing).
+          # Regenerate it only inside the disposable CI runner; repository stays unchanged.
+          rm -rf android
+          npx cap add android
+      - name: Enable Android microphone permissions in generated Capacitor project
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          manifest = Path("android/app/src/main/AndroidManifest.xml")
+          source = manifest.read_text()
+          permission = '<uses-permission android:name="android.permission.RECORD_AUDIO" />'
+          if permission not in source:
+              source = source.replace('<application', permission + '\n    <application', 1)
+          manifest.write_text(source)
+          main = Path("android/app/src/main/java/com/numyar/totichat/staging/MainActivity.java")
+          main.parent.mkdir(parents=True, exist_ok=True)
+          main.write_text("""package com.numyar.totichat.staging;
+
+          import android.Manifest;
+          import android.content.pm.PackageManager;
+          import android.webkit.PermissionRequest;
+          import android.os.Bundle;
+          import androidx.core.app.ActivityCompat;
+          import androidx.core.content.ContextCompat;
+          import com.getcapacitor.BridgeActivity;
+          import com.getcapacitor.BridgeWebChromeClient;
+
+          public class MainActivity extends BridgeActivity {
+              private PermissionRequest pendingMicrophoneRequest;
+              private static final int MICROPHONE_PERMISSION_CODE = 2401;
+
+              @Override public void onCreate(Bundle state) {
+                  super.onCreate(state);
+                  getBridge().getWebView().setWebChromeClient(new BridgeWebChromeClient(getBridge()) {
+                      @Override public void onPermissionRequest(PermissionRequest request) {
+                          boolean audioRequested = false;
+                          for (String resource : request.getResources()) {
+                              if (PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(resource)) audioRequested = true;
+                          }
+                          if (!audioRequested) {
+                              request.deny();
+                              return;
+                          }
+                          runOnUiThread(() -> {
+                              if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                                  request.grant(new String[]{PermissionRequest.RESOURCE_AUDIO_CAPTURE});
+                              } else {
+                                  pendingMicrophoneRequest = request;
+                                  ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.RECORD_AUDIO}, MICROPHONE_PERMISSION_CODE);
+                              }
+                          });
+                      }
+                  });
+              }
+
+              @Override public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+                  super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+                  if (requestCode == MICROPHONE_PERMISSION_CODE && pendingMicrophoneRequest != null) {
+                      PermissionRequest request = pendingMicrophoneRequest;
+                      pendingMicrophoneRequest = null;
+                      if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                          request.grant(new String[]{PermissionRequest.RESOURCE_AUDIO_CAPTURE});
+                      } else {
+                          request.deny();
+                      }
+                  }
+              }
+          }
+          """)
+          PY
+      - name: Sync Capacitor assets
+        run: npx cap sync android
+      - name: Register Google OAuth callback
+        run: node scripts/configure-android-oauth.mjs
+      - name: Build Android debug APK
+        working-directory: android
+        run: |
+          test -f gradle/wrapper/gradle-wrapper.jar
+          test -f gradle/wrapper/gradle-wrapper.properties
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDebug
+      - name: Verify microphone permission is packaged
+        run: |
+          set -euo pipefail
+          AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -n 1)"
+          "$AAPT" dump permissions android/app/build/outputs/apk/debug/app-debug.apk | tee /tmp/staging-permissions.txt
+          grep -q 'android.permission.RECORD_AUDIO' /tmp/staging-permissions.txt
+      - name: Verify generated APK integrity and signature
+        run: |
+          set -euo pipefail
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          unzip -t "$APK" | tail -n 2
+          unzip -Z1 "$APK" | grep -qx "AndroidManifest.xml"
+          jarsigner -verify "$APK"
+          sha256sum "$APK" | tee android/app/build/outputs/apk/debug/app-debug.apk.sha256
+          ls -lh "$APK"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TotiChat-Staging-Debug-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+
+      - name: Publish directly downloadable staging APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          cp "$APK" "TotiChat-Staging-${GITHUB_SHA:0:8}.apk"
+          TAG="staging-apk-${GITHUB_SHA:0:8}"
+          gh release create "$TAG" "TotiChat-Staging-${GITHUB_SHA:0:8}.apk" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "TotiChat Staging APK ${GITHUB_SHA:0:8}" \
+            --notes "Android staging debug APK for testing. Direct APK download; no ZIP extraction needed." \
+            --prerelease
+
       - name: Summarize verification
         if: always()
         run: |
