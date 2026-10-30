@@ -9,6 +9,7 @@ concurrency:
   cancel-in-progress: true
 permissions:
   contents: write
+  issues: write
 jobs:
   build-apk:
     runs-on: ubuntu-latest
@@ -198,3 +199,24 @@ jobs:
           with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:f.write('\n'.join(lines)+'\n')
           print('\n'.join(lines))
           PY
+
+      - name: Publish failure diagnosis as GitHub issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STAGE_RESULTS: ${{ toJSON(steps) }}
+        run: |
+          python3 - <<'PY'
+          import json,os
+          data=json.loads(os.environ['STAGE_RESULTS'])
+          failed=[key for key,entry in data.items() if entry.get('conclusion')=='failure']
+          with open('/tmp/totichat-build-diagnosis.md','w') as f:
+              f.write('## TotiChat staging APK build diagnosis\n\n')
+              f.write('Commit: '+os.environ['GITHUB_SHA']+'\n\n')
+              f.write('Run: '+os.environ['GITHUB_SERVER_URL']+'/'+os.environ['GITHUB_REPOSITORY']+'/actions/runs/'+os.environ['GITHUB_RUN_ID']+'\n\n')
+              f.write('Failed step IDs: '+(', '.join(failed) if failed else 'Unknown')+'\n\n')
+              f.write('All step results:\n\n')
+              for key,entry in data.items():
+                  f.write('- '+key+': '+str(entry.get('conclusion','unknown'))+'\n')
+          PY
+          gh issue create --repo "$GITHUB_REPOSITORY" --title "TotiChat APK build failure diagnosis - ${GITHUB_SHA:0:8}" --body-file /tmp/totichat-build-diagnosis.md || true
