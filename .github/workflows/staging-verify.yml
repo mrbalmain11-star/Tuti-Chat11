@@ -169,6 +169,30 @@ jobs:
           jarsigner -verify "$APK"
           sha256sum "$APK" | tee android/app/build/outputs/apk/debug/app-debug.apk.sha256
           ls -lh "$APK"
+      - name: Package and verify single-APK ZIP for Android phones
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile, ZIP_STORED, is_zipfile
+          import hashlib
+          apk=Path('android/app/build/outputs/apk/debug/app-debug.apk')
+          assert apk.is_file() and apk.stat().st_size>1000000, 'Missing or unexpectedly small APK'
+          name='TotiChat-Staging-'+__import__('os').environ['GITHUB_SHA'][:8]
+          target=Path(name+'.zip')
+          with ZipFile(target,'w',compression=ZIP_STORED,allowZip64=True) as archive:
+              archive.write(apk,arcname=name+'.apk')
+          assert is_zipfile(target)
+          with ZipFile(target) as archive:
+              assert archive.namelist()==[name+'.apk']
+              assert archive.testzip() is None
+              assert hashlib.sha256(archive.read(name+'.apk')).digest()==hashlib.sha256(apk.read_bytes()).digest()
+          print('Verified Android-compatible ZIP:',target,'size:',target.stat().st_size)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TotiChat-Staging-ZIP
+          path: TotiChat-Staging-*.zip
+          if-no-files-found: error
       - uses: actions/upload-artifact@v4
         id: stage_upload
         with:
@@ -186,7 +210,7 @@ jobs:
           test -s "$APK"
           NAME="TotiChat-Staging-${GITHUB_SHA:0:8}"
           cp "$APK" "$NAME.apk"
-          zip -0 "$NAME.zip" "$NAME.apk"
+          test -s "$NAME.zip"
           unzip -t "$NAME.zip" | tee /tmp/totichat-zip-check.txt
           test "$(unzip -Z1 "$NAME.zip" | wc -l)" -eq 1
           test "$(unzip -Z1 "$NAME.zip")" = "$NAME.apk"
