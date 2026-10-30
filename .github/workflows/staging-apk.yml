@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     # V002 manual fallback; push builds should also run on staging.
 permissions:
-  contents: read
+  contents: write
 jobs:
   android-debug:
     runs-on: ubuntu-latest
@@ -86,3 +86,19 @@ jobs:
             android/app/build/outputs/apk/debug/app-debug.apk
             android/app/build/outputs/apk/debug/app-debug.apk.sha256
           if-no-files-found: error
+
+      - name: Publish directly downloadable staging APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          cp "$APK" "TotiChat-Staging-${GITHUB_SHA:0:8}.apk"
+          TAG="staging-apk-${GITHUB_SHA:0:8}"
+          gh release create "$TAG" "TotiChat-Staging-${GITHUB_SHA:0:8}.apk" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "TotiChat Staging APK ${GITHUB_SHA:0:8}" \
+            --notes "Android staging debug APK for testing. Direct APK download; no ZIP extraction needed." \
+            --prerelease
