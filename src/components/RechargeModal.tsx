@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ChevronRight, FileText, X, Check, ArrowRightLeft, Sparkles, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ChevronRight, ChevronDown, FileText, X, Check, ArrowRightLeft, Sparkles, AlertCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
@@ -400,6 +400,30 @@ export const RechargeModal: React.FC = () => {
   const [exchangeAmount, setExchangeAmount] = useState<number>(100000);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  const [rechargeMode, setRechargeMode] = useState<'app' | 'agents'>('app');
+  const [modeMenuOpen, setModeMenuOpen] = useState(false);
+  const [rechargeAgents, setRechargeAgents] = useState<Array<{ id: string; name: string; public_id: number }>>([]);
+  const [agentsError, setAgentsError] = useState('');
+  const [agentsLoading, setAgentsLoading] = useState(false);
+  useEffect(() => {
+    if (!openRechargeModal || rechargeMode !== 'agents') return;
+    let active = true;
+    setAgentsLoading(true);
+    setAgentsError('');
+    void (async () => {
+      const { stagingBackend } = await import('../services/stagingBackend');
+      if (!stagingBackend) throw new Error('خادم الوكالات غير متصل');
+      // Never show host agencies, unapproved applications or placeholder agents.
+      const { data, error } = await stagingBackend.from('agencies')
+        .select('id,name,public_id,kind,status')
+        .eq('kind', 'recharge').eq('status', 'approved').order('name');
+      if (error) throw error;
+      if (active) setRechargeAgents((data ?? []).filter(a => /^\\d{6}$/.test(String(a.public_id))));
+    })().catch(e => { if (active) { setRechargeAgents([]); setAgentsError(e instanceof Error ? e.message : 'تعذر تحميل وكلاء الشحن'); } })
+      .finally(() => { if (active) setAgentsLoading(false); });
+    return () => { active = false; };
+  }, [openRechargeModal, rechargeMode]);
+
   if (!openRechargeModal) return null;
 
   // Trigger Toast Notification
@@ -548,9 +572,20 @@ export const RechargeModal: React.FC = () => {
             </div>
 
             {/* Section Title: "كمية الشحن" */}
-            <div className="text-right pt-1">
-              <h3 className="text-sm font-black text-slate-800">كمية الشحن</h3>
+            <div className="text-right pt-1 relative" dir="rtl">
+              <button type="button" onClick={() => setModeMenuOpen(!modeMenuOpen)} className="flex items-center gap-2 text-sm font-black text-slate-800" aria-expanded={modeMenuOpen}>
+                كمية الشحن <ChevronDown className="w-4 h-4" />
+              </button>
+              {modeMenuOpen && <div className="absolute right-0 top-full z-30 mt-1 min-w-48 rounded-xl bg-white shadow-lg border border-slate-200 overflow-hidden">
+                <button className="block w-full text-right p-3 text-sm" onClick={() => { setRechargeMode('app'); setModeMenuOpen(false); }}>الشحن من التطبيق</button>
+                <button className="block w-full text-right p-3 text-sm border-t" onClick={() => { setRechargeMode('agents'); setModeMenuOpen(false); }}>وكلاء الشحن</button>
+              </div>}
             </div>
+            {rechargeMode === 'agents' && <section className="space-y-3" dir="rtl">
+              <h3 className="font-bold text-slate-800">وكلاء الشحن المعتمدون</h3>
+              {agentsLoading ? <p>جاري تحميل الوكلاء...</p> : agentsError ? <p role="alert" className="text-red-600">تعذر تحميل الوكلاء: {agentsError}</p> : rechargeAgents.length === 0 ? <p className="text-slate-500">لا توجد وكالات شحن معتمدة حالياً</p> : rechargeAgents.map(agent => <div key={agent.id} className="rounded-xl border border-emerald-200 bg-emerald-50 p-4"><strong className="block">{agent.name}</strong><span className="text-sm">ID: {agent.public_id}</span></div>)}
+            </section>}
+            {rechargeMode === 'app' && <>
 
             {/* 6 Packages Grid (3 Columns x 2 Rows) */}
             <div className="grid grid-cols-3 gap-2.5">
@@ -606,6 +641,8 @@ export const RechargeModal: React.FC = () => {
                 <span>تأكيد الشحن</span>
               </button>
             </div>
+
+            </>}
 
             {/* Footer Notice & Verification Link */}
             <div className="text-center pt-1 pb-3 text-xs leading-relaxed space-y-0.5">
