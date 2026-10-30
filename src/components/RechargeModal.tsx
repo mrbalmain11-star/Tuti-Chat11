@@ -415,8 +415,8 @@ export const RechargeModal: React.FC = () => {
       if (!stagingBackend) throw new Error('خادم الوكالات غير متصل');
       // Never show host agencies, unapproved applications or placeholder agents.
       const { data, error } = await stagingBackend.from('agencies')
-        .select('id,name,public_id,kind,status')
-        .eq('kind', 'recharge').eq('status', 'approved').order('name');
+        .select('id,name,public_id')
+        .eq('kind', 'recharge').eq('is_active', true).order('name');
       if (error) throw error;
       if (active) setRechargeAgents((data ?? []).filter(a => /^\\d{6}$/.test(String(a.public_id))));
     })().catch(e => { if (active) { setRechargeAgents([]); setAgentsError(e instanceof Error ? e.message : 'تعذر تحميل وكلاء الشحن'); } })
