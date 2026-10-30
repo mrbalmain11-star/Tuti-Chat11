@@ -205,6 +205,8 @@ export const GiftStoreModal: React.FC = () => {
           )}
           {filteredGifts.map((gift) => {
             const isSelected = selectedGift?.id === gift.id;
+            const cinematic = gift.price > 10000;
+            const palette = cinematic ? 'from-[#352047] via-[#141a36] to-[#090d1a]' : 'from-[#24203d] via-[#171b34] to-[#101827]';
 
             return (
               <div
@@ -213,12 +215,13 @@ export const GiftStoreModal: React.FC = () => {
                   sounds.playClick();
                   setSelectedGiftId(gift.id);
                 }}
-                className={`relative min-w-0 rounded-xl p-2 flex flex-col items-center justify-between cursor-pointer border transition-colors ${
+                className={`relative min-w-0 rounded-xl p-2 flex flex-col items-center justify-between cursor-pointer border transition-all duration-200 bg-gradient-to-b ${palette} ${
                   isSelected
                     ? 'border-amber-400 bg-gradient-to-b from-amber-500/20 to-slate-900 shadow-lg scale-102'
                     : 'border-slate-800/80 bg-slate-900/60 hover:border-slate-700'
                 }`}
               >
+                {cinematic && <span className="absolute top-1 right-1 text-[8px] font-black text-amber-200 bg-amber-800/60 border border-amber-400/40 rounded-full px-1.5 py-0.5">سينمائية</span>}
                 {/* Selected Checkmark */}
                 {isSelected && (
                   <div className="absolute top-1 left-1 w-4 h-4 rounded-full bg-amber-400 text-slate-950 flex items-center justify-center shadow-xs">
@@ -227,8 +230,9 @@ export const GiftStoreModal: React.FC = () => {
                 )}
 
                 {/* Gift Large Animated Icon */}
-                <div className="w-11 h-11 flex-none items-center justify-center text-[28px] my-1 drop-shadow-md">
-                  {gift.icon}
+                <div className="relative w-14 h-14 flex-none flex items-center justify-center text-[33px] my-1 rounded-full border border-amber-400/25 shadow-[inset_0_0_15px_rgba(251,191,36,0.12),0_0_16px_rgba(168,85,247,0.18)]">
+                  <span className="absolute inset-0 rounded-full bg-amber-300/10 blur-md" aria-hidden="true" />
+                  <span className="relative z-10 drop-shadow-[0_0_12px_rgba(255,206,116,0.7)]">{gift.icon}</span>
                 </div>
 
                 {/* Name */}
