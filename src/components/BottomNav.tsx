@@ -134,10 +134,6 @@ export const BottomNav: React.FC = () => {
         </button>
       </div>
 
-      {/* Bottom gesture line indicator */}
-      <div className="w-full flex justify-center pb-1 pt-0.5">
-        <div className="w-32 h-1 bg-[#334155] rounded-full" />
-      </div>
     </nav>
   );
 };
