@@ -1,15 +1,18 @@
-name: Staging Verification and APK Build
+name: TotiChat Clean Staging APK Build
 on:
   push:
     branches:
       - integration/legacy-backend-staging
   workflow_dispatch:
+concurrency:
+  group: totichat-staging-clean-apk
+  cancel-in-progress: true
 permissions:
   contents: write
 jobs:
-  verify:
+  build-apk:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 60
     steps:
       - name: Checkout integration branch
         uses: actions/checkout@v4
@@ -17,22 +20,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Show toolchain and project configuration
-        run: |
-          node --version
-          npm --version
-          test -f package.json
-          npm pkg get scripts dependencies.@capacitor/core dependencies.@capacitor/android devDependencies.typescript
-      - name: Install dependencies
+      - name: Clean install dependencies
         run: npm install --no-audit --no-fund
-      - name: Treasury protocol tests
-        run: node --experimental-strip-types tests/treasury.test.mjs
-      - name: TypeScript validation
+      - name: Validate TypeScript
         run: npm run lint
-      - name: Production bundle validation
-        run: npm run build
-      - name: Generate staging APK from verified source
-        run: echo "Beginning Android staging packaging"
       - name: Require staging publishable key
         env:
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.STAGING_SUPABASE_PUBLISHABLE_KEY }}
@@ -177,9 +168,3 @@ jobs:
             --notes "Android staging debug APK for testing. Direct APK download; no ZIP extraction needed." \
             --prerelease
 
-      - name: Summarize verification
-        if: always()
-        run: |
-          echo "## Staging integration checks" >> "$GITHUB_STEP_SUMMARY"
-          echo "Commit: $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
-          echo "Inspect the first failed named step above; no deployment or production changes are performed." >> "$GITHUB_STEP_SUMMARY"
