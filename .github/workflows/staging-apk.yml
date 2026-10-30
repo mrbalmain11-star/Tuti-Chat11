@@ -58,6 +58,72 @@ jobs:
           # Regenerate it only inside the disposable CI runner; repository stays unchanged.
           rm -rf android
           npx cap add android
+      - name: Enable Android microphone permissions in generated Capacitor project
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          manifest = Path("android/app/src/main/AndroidManifest.xml")
+          source = manifest.read_text()
+          permission = '<uses-permission android:name="android.permission.RECORD_AUDIO" />'
+          if permission not in source:
+              source = source.replace('<application', permission + '\n    <application', 1)
+          manifest.write_text(source)
+          main = Path("android/app/src/main/java/com/numyar/totichat/staging/MainActivity.java")
+          main.parent.mkdir(parents=True, exist_ok=True)
+          main.write_text("""package com.numyar.totichat.staging;
+
+          import android.Manifest;
+          import android.content.pm.PackageManager;
+          import android.webkit.PermissionRequest;
+          import android.os.Bundle;
+          import androidx.core.app.ActivityCompat;
+          import androidx.core.content.ContextCompat;
+          import com.getcapacitor.BridgeActivity;
+          import com.getcapacitor.BridgeWebChromeClient;
+
+          public class MainActivity extends BridgeActivity {
+              private PermissionRequest pendingMicrophoneRequest;
+              private static final int MICROPHONE_PERMISSION_CODE = 2401;
+
+              @Override public void onCreate(Bundle state) {
+                  super.onCreate(state);
+                  getBridge().getWebView().setWebChromeClient(new BridgeWebChromeClient(getBridge()) {
+                      @Override public void onPermissionRequest(PermissionRequest request) {
+                          boolean audioRequested = false;
+                          for (String resource : request.getResources()) {
+                              if (PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(resource)) audioRequested = true;
+                          }
+                          if (!audioRequested) {
+                              request.deny();
+                              return;
+                          }
+                          runOnUiThread(() -> {
+                              if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                                  request.grant(new String[]{PermissionRequest.RESOURCE_AUDIO_CAPTURE});
+                              } else {
+                                  pendingMicrophoneRequest = request;
+                                  ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.RECORD_AUDIO}, MICROPHONE_PERMISSION_CODE);
+                              }
+                          });
+                      }
+                  });
+              }
+
+              @Override public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+                  super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+                  if (requestCode == MICROPHONE_PERMISSION_CODE && pendingMicrophoneRequest != null) {
+                      PermissionRequest request = pendingMicrophoneRequest;
+                      pendingMicrophoneRequest = null;
+                      if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                          request.grant(new String[]{PermissionRequest.RESOURCE_AUDIO_CAPTURE});
+                      } else {
+                          request.deny();
+                      }
+                  }
+              }
+          }
+          """)
+          PY
       - name: Sync Capacitor assets
         run: npx cap sync android
       - name: Register Google OAuth callback
