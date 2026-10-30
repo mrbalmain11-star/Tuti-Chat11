@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, Plus, ChevronDown, Check } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { GiftItem } from '../types';
@@ -28,6 +28,10 @@ export const GiftStoreModal: React.FC = () => {
   const [selectedReceiverIndex, setSelectedReceiverIndex] = useState<number>(0);
   const [showCountDropdown, setShowCountDropdown] = useState<boolean>(false);
   const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    if (openGiftStore) window.dispatchEvent(new Event('totichat:gift-store-opened'));
+  }, [openGiftStore]);
 
   if (!openGiftStore) return null;
 
@@ -196,6 +200,9 @@ export const GiftStoreModal: React.FC = () => {
 
         {/* Gifts Grid (matching Screenshot 18) */}
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain no-scrollbar py-3 grid grid-cols-4 auto-rows-[104px] content-start gap-2">
+          {filteredGifts.length === 0 && (
+            <div className="col-span-4 text-center text-slate-300 text-sm py-8">لا توجد هدايا متاحة في هذا القسم حالياً.</div>
+          )}
           {filteredGifts.map((gift) => {
             const isSelected = selectedGift?.id === gift.id;
 
