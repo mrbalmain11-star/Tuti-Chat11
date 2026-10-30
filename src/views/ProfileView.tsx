@@ -58,7 +58,7 @@ export const ProfileView: React.FC = () => {
     const loadAgency = async () => {
       const { data, error } = await stagingBackend!.rpc('staging_profile_agency', { p_user_id: currentUser.id });
       if (error) throw error;
-      if (active) setVerifiedAgency(data && typeof data.name === 'string' && /^\d{6}$/.test(String(data.public_id)) ? data : null);
+      if (active) setVerifiedAgency(data && typeof data.name === 'string' && Number.isInteger(Number(data.public_id)) && Number(data.public_id) > 0 ? data : null);
     };
     void loadAgency().catch(error => console.error('Verified agency unavailable:', error));
     const refresh = () => { void loadAgency().catch(error => console.error('Agency refresh failed:', error)); };
