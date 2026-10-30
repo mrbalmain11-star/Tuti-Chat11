@@ -417,8 +417,8 @@ export const RechargeModal: React.FC = () => {
       const { data, error } = await stagingBackend.from('agencies')
         .select('id,name,public_id')
         .eq('kind', 'recharge').eq('is_active', true).order('name');
-      if (error) throw error;
-      if (active) setRechargeAgents((data ?? []).filter(a => /^\\d{6}$/.test(String(a.public_id))));
+      if (error) throw new Error(`فشل قراءة الوكالات (${error.code ?? 'unknown'}): ${error.message}`);
+      if (active) setRechargeAgents((data ?? []).filter(a => Number.isInteger(Number(a.public_id)) && Number(a.public_id) > 0));
     })().catch(e => { if (active) { setRechargeAgents([]); setAgentsError(e instanceof Error ? e.message : 'تعذر تحميل وكلاء الشحن'); } })
       .finally(() => { if (active) setAgentsLoading(false); });
     return () => { active = false; };
