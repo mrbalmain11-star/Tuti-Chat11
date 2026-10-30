@@ -164,9 +164,10 @@ export const AgencyModal: React.FC = () => {
   };
 
   // Switch role and apply it directly to currentUser profile in AppContext
-  const handleSwitchAndApplyRole = (_newRole: 'user' | 'host' | 'agent') => {
+  const handleSwitchAndApplyRole = (newRole: 'user' | 'host' | 'agent') => {
     sounds.playClick();
-    showToast('تغيير صفة الوكالة يتطلب موافقة الإدارة والتحقق من الخادم');
+    setActiveSubView(null);
+    setRole(newRole); // UI preview only; never changes backend permissions.
   };
 
   // The server must approve membership; never grant host status locally.
