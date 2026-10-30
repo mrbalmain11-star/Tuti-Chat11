@@ -25,7 +25,7 @@ export const AgencyProfileCard: React.FC<AgencyProfileCardProps> = ({
   const { setOpenAgencyModal } = useApp();
 
   // Never substitute a user's UUID or a stock agency for missing backend data.
-  if (!agencyName || !agencyId || !/^\\d{6}$/.test(agencyId)) return null;
+  if (!agencyName || !agencyId || !/^\d{6}$/.test(agencyId)) return null;
   const displayAvatar = avatar;
   const displayAgencyName = agencyName;
   const displayAgencyId = agencyId;
