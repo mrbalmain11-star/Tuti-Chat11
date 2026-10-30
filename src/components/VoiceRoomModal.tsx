@@ -159,7 +159,21 @@ export const VoiceRoomModal: React.FC = () => {
     return () => { active = false; };
   }, [activeRoom?.id]);
 
+  const [selectedMicPublicId, setSelectedMicPublicId] = useState<string>('—');
   const [selectedMicUser, setSelectedMicUser] = useState<{ seatNumber: number; user: UserProfile } | null>(null);
+  useEffect(() => {
+    let active = true;
+    setSelectedMicPublicId('—');
+    const target = selectedMicUser?.user.id;
+    if (!target || !stagingBackend) return;
+    void Promise.resolve(stagingBackend.from('profiles').select('public_id').eq('id', target).maybeSingle())
+      .then(({ data, error }) => {
+        if (error) throw error;
+        if (active && data?.public_id != null) setSelectedMicPublicId(String(data.public_id));
+      }).catch(error => console.error('Seat profile ID lookup failed:', error));
+    return () => { active = false; };
+  }, [selectedMicUser?.user.id]);
+
   const [selectedEmptySeat, setSelectedEmptySeat] = useState<number | null>(null);
   const [followedUsers, setFollowedUsers] = useState<Record<string, boolean>>({});
   const [mutedUsersLocally, setMutedUsersLocally] = useState<Record<string, boolean>>({});
@@ -1909,7 +1923,7 @@ export const VoiceRoomModal: React.FC = () => {
               <div
                 onClick={() => {
                   sounds.playClick();
-                  const copyId = selectedMicUser.user.id === currentUser.id ? myPublicId?.toString() : undefined;
+                  const copyId = selectedMicPublicId !== '—' ? selectedMicPublicId : undefined;
                   if (!copyId) return;
                   if (navigator.clipboard) {
                     navigator.clipboard.writeText(copyId);
@@ -1920,7 +1934,7 @@ export const VoiceRoomModal: React.FC = () => {
                 title="انقر لنسخ المعرف"
               >
                 <Copy className="w-3.5 h-3.5 text-slate-400" />
-                <span className="font-mono font-bold tracking-wider">{selectedMicUser.user.id === currentUser.id ? (myPublicId ?? '—') : '—'}</span>
+                <span className="font-mono font-bold tracking-wider">{selectedMicPublicId}</span>
                 <span className="px-1.5 py-0.2 rounded-full bg-cyan-600 text-white font-mono text-[10px] font-bold">
                   ID
                 </span>
