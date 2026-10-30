@@ -1267,67 +1267,9 @@ export const InternalProfileModal: React.FC = () => {
                 </span>
               </div>
 
-              {/* Top 3 Supporters Podium */}
-              <div className="w-full grid grid-cols-3 gap-2 mb-3">
-                {/* 2nd Place */}
-                <div
-                  onClick={() => sounds.playCoin()}
-                  className="p-2.5 rounded-2xl bg-gradient-to-b from-slate-100 to-slate-200 border border-slate-300 flex flex-col items-center justify-center text-center cursor-pointer active:scale-95 transition shadow-2xs"
-                >
-                  <div className="relative">
-                    <span className="text-xl">🥈</span>
-                    <span className="absolute -bottom-1 -right-1 text-[9px] bg-slate-400 text-white font-black px-1 rounded-full">2</span>
-                  </div>
-                  <span className="text-[11px] font-black text-slate-900 mt-1 line-clamp-1">أميرة الشرق</span>
-                  <span className="text-[10px] text-slate-600 font-medium">890K</span>
-                  <span className="text-[9px] text-slate-500 mt-0.5">داعم ماسي</span>
-                </div>
-
-                {/* 1st Place (Center - Elevated) */}
-                <div
-                  onClick={() => sounds.playCoin()}
-                  className="p-3 -mt-2 rounded-2xl bg-gradient-to-b from-amber-100 via-yellow-100 to-amber-200 border-2 border-amber-400 flex flex-col items-center justify-center text-center cursor-pointer active:scale-95 transition shadow-sm relative"
-                >
-                  <div className="relative">
-                    <span className="text-2xl">🥇</span>
-                    <Crown className="w-3.5 h-3.5 text-amber-600 absolute -top-1 -right-2 rotate-12" />
-                  </div>
-                  <span className="text-xs font-black text-amber-950 mt-1 line-clamp-1">ابن العراق الملكي</span>
-                  <span className="text-[11px] font-black text-amber-700">1,500,000</span>
-                  <span className="text-[9px] font-bold text-amber-800 bg-amber-200/80 px-1.5 py-0.2 rounded-full mt-0.5">
-                    الداعم الأسطوري
-                  </span>
-                </div>
-
-                {/* 3rd Place */}
-                <div
-                  onClick={() => sounds.playCoin()}
-                  className="p-2.5 rounded-2xl bg-gradient-to-b from-amber-50 to-orange-100 border border-orange-200 flex flex-col items-center justify-center text-center cursor-pointer active:scale-95 transition shadow-2xs"
-                >
-                  <div className="relative">
-                    <span className="text-xl">🥉</span>
-                    <span className="absolute -bottom-1 -right-1 text-[9px] bg-amber-700 text-white font-black px-1 rounded-full">3</span>
-                  </div>
-                  <span className="text-[11px] font-black text-amber-950 mt-1 line-clamp-1">فارس الليل</span>
-                  <span className="text-[10px] text-amber-800 font-medium">480K</span>
-                  <span className="text-[9px] text-amber-700 mt-0.5">داعم بلاتيني</span>
-                </div>
-              </div>
-
-              {/* Honorary Badges Row */}
-              <div className="w-full flex items-center justify-between gap-1.5 pt-2 border-t border-amber-200/80">
-                <div className="flex-1 p-1.5 rounded-xl bg-amber-50/80 border border-amber-200/60 text-center">
-                  <Award className="w-3.5 h-3.5 text-amber-600 mx-auto" />
-                  <span className="text-[10px] font-bold text-amber-900 block mt-0.5">وسام العطاء</span>
-                </div>
-                <div className="flex-1 p-1.5 rounded-xl bg-amber-50/80 border border-amber-200/60 text-center">
-                  <Shield className="w-3.5 h-3.5 text-indigo-600 mx-auto" />
-                  <span className="text-[10px] font-bold text-amber-900 block mt-0.5">درع الوفاء</span>
-                </div>
-                <div className="flex-1 p-1.5 rounded-xl bg-amber-50/80 border border-amber-200/60 text-center">
-                  <Sparkles className="w-3.5 h-3.5 text-purple-600 mx-auto" />
-                  <span className="text-[10px] font-bold text-amber-900 block mt-0.5">نجمة التميز</span>
-                </div>
+              {/* No rankings or badges are shown without verified backend records. */}
+              <div className="w-full rounded-2xl border border-amber-200 bg-amber-50/70 px-4 py-8 text-center text-sm font-bold text-amber-900" role="status">
+                لا توجد بيانات موثقة في لوحة الشرف حالياً
               </div>
             </div>
           )}
