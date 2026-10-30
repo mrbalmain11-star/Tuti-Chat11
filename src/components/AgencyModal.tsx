@@ -37,6 +37,7 @@ export const AgencyModal: React.FC = () => {
   // 'user'  -> مستخدم عادي: تظهر له فقط شاشة "لا توجد بيانات"
   // 'host'  -> مضيف منضم: تظهر له بطاقة "مركز البيانات" وبيانات المضيف فقط
   // 'agent' -> وكيل مفعّل: تظهر له بطاقات الوكيل الثلاث (اعضاء الوكالة، مركز البيانات، المكافأة)
+  const [hasApprovedAgency, setHasApprovedAgency] = useState(false);
   const [role, setRole] = useState<'user' | 'host' | 'agent'>(() => {
     if (currentUser.agencyRole === 'وكيل') return 'agent';
     if (currentUser.agencyRole === 'مضيف' || currentUser.isHost) return 'host';
@@ -58,6 +59,7 @@ export const AgencyModal: React.FC = () => {
   useEffect(() => {
     if (!openAgencyModal) return;
     let active = true;
+    setHasApprovedAgency(false);
     void (async () => {
       const { stagingBackend } = await import('../services/stagingBackend');
       if (!stagingBackend) return;
@@ -65,6 +67,7 @@ export const AgencyModal: React.FC = () => {
       if (authError || !auth.user) return;
       const { data, error } = await stagingBackend.rpc('staging_profile_agency', { p_user_id: auth.user.id });
       if (error || !active || !data) return;
+      setHasApprovedAgency(Number(data.public_id) > 0);
       const verifiedRole = String(data.role ?? '');
       if (verifiedRole.includes('مالك') || verifiedRole.includes('وكيل')) setRole('agent');
       else if (verifiedRole.includes('مضيف')) setRole('host');
@@ -224,7 +227,7 @@ export const AgencyModal: React.FC = () => {
           </div>
         </div>
       )}
-      <button onClick={() => { setApplicationStatus(''); setApplicationOpen(true); }} className="absolute z-[85] bottom-5 left-5 rounded-full bg-amber-500 text-black px-4 py-3 text-xs font-black shadow-xl border-2 border-amber-200">+ طلب فتح وكالة</button>
+      {!hasApprovedAgency && <button onClick={() => { setApplicationStatus(''); setApplicationOpen(true); }} className="absolute z-[85] bottom-5 left-5 rounded-full bg-amber-500 text-black px-4 py-3 text-xs font-black shadow-xl border-2 border-amber-200">+ طلب فتح وكالة</button>}
       {/* Toast Notification */}
       {toastMessage && (
         <div className="absolute top-6 z-50 px-5 py-2.5 rounded-full bg-slate-900/95 border border-amber-400 text-amber-200 text-xs font-bold shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-4 max-w-[90%] text-center">
