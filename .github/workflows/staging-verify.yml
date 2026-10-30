@@ -184,13 +184,18 @@ jobs:
           set -euo pipefail
           APK="android/app/build/outputs/apk/debug/app-debug.apk"
           test -s "$APK"
-          cp "$APK" "TotiChat-Staging-${GITHUB_SHA:0:8}.apk"
+          NAME="TotiChat-Staging-${GITHUB_SHA:0:8}"
+          cp "$APK" "$NAME.apk"
+          zip -0 "$NAME.zip" "$NAME.apk"
+          unzip -t "$NAME.zip" | tee /tmp/totichat-zip-check.txt
+          test "$(unzip -Z1 "$NAME.zip" | wc -l)" -eq 1
+          test "$(unzip -Z1 "$NAME.zip")" = "$NAME.apk"
           TAG="staging-apk-${GITHUB_SHA:0:8}"
-          gh release create "$TAG" "TotiChat-Staging-${GITHUB_SHA:0:8}.apk" \
+          gh release create "$TAG" "$NAME.apk" "$NAME.zip" \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
             --title "TotiChat Staging APK ${GITHUB_SHA:0:8}" \
-            --notes "Android staging debug APK for testing. Direct APK download; no ZIP extraction needed." \
+            --notes "ZIP contains one installable APK; ZIP archive integrity verified before release." \
             --prerelease
 
 
