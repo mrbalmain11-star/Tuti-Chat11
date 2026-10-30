@@ -54,6 +54,24 @@ export const AgencyModal: React.FC = () => {
     }
   }, [currentUser.agencyRole, currentUser.isHost]);
 
+  // Resolve the approved agency from the authenticated backend, not a stale local role.
+  useEffect(() => {
+    if (!openAgencyModal) return;
+    let active = true;
+    void (async () => {
+      const { stagingBackend } = await import('../services/stagingBackend');
+      if (!stagingBackend) return;
+      const { data: auth, error: authError } = await stagingBackend.auth.getUser();
+      if (authError || !auth.user) return;
+      const { data, error } = await stagingBackend.rpc('staging_profile_agency', { p_user_id: auth.user.id });
+      if (error || !active || !data) return;
+      const verifiedRole = String(data.role ?? '');
+      if (verifiedRole.includes('مالك') || verifiedRole.includes('وكيل')) setRole('agent');
+      else if (verifiedRole.includes('مضيف')) setRole('host');
+    })().catch(error => console.error('Agency role lookup failed:', error));
+    return () => { active = false; };
+  }, [openAgencyModal, currentUser.id]);
+
   // Sub-views for Host and Agent:
   // null: Main view for the selected role
   // 'host_data_details': Host Data Center details (بيانات المضيف فقط)
