@@ -1160,7 +1160,7 @@ export const AgencyModal: React.FC = () => {
                         <div className="text-right">
                           <h5 className="font-black text-white">{m.name}</h5>
                           <span className="text-[10px] text-amber-300 font-bold block">{m.role}</span>
-                          <span className="text-[9px] text-slate-400 font-mono">ID: {m.id}</span>
+                          <span className="text-[9px] text-slate-400 font-mono">ID: {/^[0-9]{4,10}$/.test(String(m.id)) ? m.id : '—'}</span>
                         </div>
                       </div>
 
