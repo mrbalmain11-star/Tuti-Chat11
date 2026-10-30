@@ -23,6 +23,8 @@ export const GiftStoreModal: React.FC = () => {
   const [selectedGiftId, setSelectedGiftId] = useState<string | null>(null);
   const selectedGift = gifts.find(g => g.id === selectedGiftId) ?? gifts[0] ?? null;
   const [selectedCount, setSelectedCount] = useState<number>(1);
+  const totalCost = selectedGift ? selectedGift.price * selectedCount : 0;
+  const hasEnoughCoins = Number.isSafeInteger(totalCost) && totalCost <= currentUser.coins;
   const [selectedReceiverIndex, setSelectedReceiverIndex] = useState<number>(0);
   const [showCountDropdown, setShowCountDropdown] = useState<boolean>(false);
   const [sending, setSending] = useState(false);
@@ -80,6 +82,14 @@ export const GiftStoreModal: React.FC = () => {
     if (sending) return;
     if (!selectedGift || !currentReceiver?.id) {
       window.alert('لا توجد هدية أو مستلم متاح. حاول مجدداً بعد تحميل البيانات.');
+      return;
+    }
+    if (!Number.isSafeInteger(totalCost) || totalCost <= 0) {
+      window.alert('مبلغ الهدية غير صالح.');
+      return;
+    }
+    if (!hasEnoughCoins) {
+      window.alert('رصيدك غير كافٍ لهذه الكمية. يرجى الشحن أو تقليل العدد.');
       return;
     }
     sounds.playClick();
@@ -229,6 +239,10 @@ export const GiftStoreModal: React.FC = () => {
           })}
         </div>
 
+        <div className="flex-none flex items-center justify-between px-1 py-1.5 text-[11px]" dir="rtl">
+          <span className="text-slate-300">إجمالي الهدية ×{selectedCount}</span>
+          <span className={hasEnoughCoins ? 'text-amber-300 font-black' : 'text-red-400 font-black'}>{totalCost.toLocaleString('en-US')} 🪙{!hasEnoughCoins ? ' · رصيد غير كافٍ' : ''}</span>
+        </div>
         {/* Bottom Bar: Coins Balance + Recharging + Count Selector + Send Button */}
         <div className="flex-none pt-3 border-t border-amber-500/20 flex items-center justify-between gap-2 bg-[#0b1420]">
           {/* User Balance & Recharge Button */}
@@ -290,10 +304,11 @@ export const GiftStoreModal: React.FC = () => {
 
             {/* Royal Send Button */}
             <button
-              onClick={handleSend} disabled={sending}
+              onClick={handleSend} disabled={sending || !hasEnoughCoins || !selectedGift || !currentReceiver}
+              title={selectedGift ? `الإجمالي: ${totalCost.toLocaleString('en-US')} عملة` : 'اختر هدية'}
               className="bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 text-slate-950 font-black text-xs px-5 py-2 rounded-full shadow-lg active:scale-95 hover:brightness-110 transition flex items-center gap-1"
             >
-              <span>{isSupportingSelf ? 'دعم حسابي 🌟' : 'إرسال'}</span>
+              <span>{sending ? 'جارٍ الإرسال…' : isSupportingSelf ? 'دعم حسابي 🌟' : 'إرسال'}</span>
             </button>
           </div>
         </div>
