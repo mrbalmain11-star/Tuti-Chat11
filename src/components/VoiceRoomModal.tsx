@@ -152,7 +152,7 @@ export const VoiceRoomModal: React.FC = () => {
     let active = true;
     setRoomPublicId('—');
     if (!activeRoom?.id || !stagingBackend) return;
-    void Promise.resolve(stagingBackend.rpc('staging_room_public_id', { p_room_id: activeRoom.id }))
+    void Promise.resolve(stagingBackend.rpc('totichat_room_owner_official_id', { p_room_id: activeRoom.id }))
       .then(({ data, error }) => {
         if (error) throw error;
         if (active && data != null) setRoomPublicId(String(data));
@@ -499,7 +499,7 @@ export const VoiceRoomModal: React.FC = () => {
           />
         </div>
         <div className="flex flex-col text-right">
-          <span className="text-[11px] font-black text-white">{activeRoom.title || 'العراق الع...'}</span>
+          <span className="text-[11px] font-black text-white">{activeRoom.title || 'غرفة صوتية'}</span>
           <span className="text-[9px] text-purple-200">انقر للعودة 🎙️</span>
         </div>
         <Maximize2 className="w-4 h-4 text-purple-300 mr-1" />
