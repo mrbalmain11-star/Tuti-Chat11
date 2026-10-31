@@ -5,7 +5,7 @@ import { sounds } from '../utils/audio';
 
 export const CreateRoomModal: React.FC = () => {
   const { openCreateRoomModal, setOpenCreateRoomModal, createVoiceRoom } = useApp();
-  const [roomName, setRoomName] = useState('دولة العراق');
+  const [roomName, setRoomName] = useState('');
   const [welcomeMessage, setWelcomeMessage] = useState('اهلا وسهلا');
   const [coverImage, setCoverImage] = useState<string>('/src/assets/images/iraq_flag_cover_1790177322445.jpg');
   const fileInputRef = useRef<HTMLInputElement>(null);
