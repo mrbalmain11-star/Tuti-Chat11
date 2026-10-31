@@ -40,7 +40,6 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
     removeAudio(key);
     const element = track.attach() as HTMLAudioElement;
     element.autoplay = true;
-    element.playsInline = true;
     element.style.display = 'none';
     document.body.appendChild(element);
     audio.set(key, element);
@@ -113,7 +112,6 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
     await micQueue.catch(() => {});
     await room.localParticipant.setMicrophoneEnabled(false).catch(() => {});
     room.disconnect();
-    closing = true;
     clearAudio();
   } };
 }
