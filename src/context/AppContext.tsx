@@ -246,26 +246,51 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return () => { cancelled = true; dispose?.(); };
   }, []);
 
-  // Load only authenticated profile fields from the staging backend.
+  // Keep the authenticated profile synchronized without requiring app restart.
   useEffect(() => {
-    if (!isLoggedIn) return;
+    if (!isLoggedIn || !stagingBackend) return;
     let active = true;
-    void (async () => {
-      const profile = await fetchMyProfile();
-      if (!active || !profile) return;
-      const avatar = profile.avatar_url ? await getMyAvatarUrl(profile.avatar_url) : '';
-      if (!active) return;
-      setCurrentUser(prev => ({
-        ...prev,
-        id: profile.id,
-        name: profile.display_name,
-        nickname: profile.display_name,
-        bio: profile.bio ?? '',
-        avatar,
-      }));
-    })().catch(error => console.error('Failed to load staging profile:', error));
-    return () => { active = false; };
-  }, [isLoggedIn]);
+    let loading = false;
+    let pending = false;
+    const refreshProfile = async () => {
+      if (loading) { pending = true; return; }
+      loading = true;
+      try {
+        do {
+          pending = false;
+          const profile = await fetchMyProfile();
+          if (!active || !profile) return;
+          const avatar = profile.avatar_url ? await getMyAvatarUrl(profile.avatar_url) : '';
+          if (!active) return;
+          setCurrentUser(prev => ({
+            ...prev, id: profile.id, name: profile.display_name,
+            nickname: profile.display_name, bio: profile.bio ?? '', avatar,
+          }));
+        } while (active && pending);
+      } catch (error) {
+        console.error('Failed to synchronize staging profile:', error);
+      } finally { loading = false; }
+    };
+    void refreshProfile();
+    const onChanged = () => { if (active) void refreshProfile(); };
+    const onVisible = () => { if (document.visibilityState === 'visible') onChanged(); };
+    window.addEventListener('totichat:profile-changed', onChanged);
+    window.addEventListener('focus', onChanged);
+    document.addEventListener('visibilitychange', onVisible);
+    const client = stagingBackend;
+    const channel = client.channel('staging-my-profile-refresh')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' },
+        payload => { if ((payload.new as {id?:string})?.id === currentUser.id ||
+          (payload.old as {id?:string})?.id === currentUser.id) onChanged(); })
+      .subscribe();
+    return () => {
+      active = false;
+      window.removeEventListener('totichat:profile-changed', onChanged);
+      window.removeEventListener('focus', onChanged);
+      document.removeEventListener('visibilitychange', onVisible);
+      void client.removeChannel(channel);
+    };
+  }, [isLoggedIn, currentUser.id]);
 
   useEffect(() => {
     if (!isLoggedIn) {
