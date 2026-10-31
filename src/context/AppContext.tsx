@@ -786,32 +786,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, [currentUser.id]);
 
-  const equipBagItem = (item: BagItem) => {
-    sounds.playLevelUp();
-    setBagItems((prev) =>
-      prev.map((i) => {
-        if (i.category === item.category) {
-          return { ...i, isEquipped: i.id === item.id };
-        }
-        return i;
-      })
-    );
-    if (item.category === 'frames') setEquippedFrame(item.id);
-    if (item.category === 'bubbles') setEquippedBubble(item.id);
-    if (item.category === 'entrances') setEquippedEntrance(item.id);
-    if (item.category === 'mounts') setEquippedMount(item.id);
+  const changeEquippedItem = async (item: BagItem, equipped: boolean) => {
+    if (!stagingBackend || !currentUser.id || !bagItems.some(i => i.id === item.id)) return;
+    const { error } = await stagingBackend.rpc('phase3_equip_store', {
+      p_item_id: item.id,
+      p_equipped: equipped,
+    });
+    if (error) {
+      console.error('Server equip rejected', error);
+      alert('تعذر تحديث التجهيز على الخادم. لم يتغير العنصر.');
+      return;
+    }
+    window.dispatchEvent(new Event('totichat:inventory-changed'));
   };
-
-  const unequipBagItem = (item: BagItem) => {
-    sounds.playClick();
-    setBagItems((prev) =>
-      prev.map((i) => (i.id === item.id ? { ...i, isEquipped: false } : i))
-    );
-    if (item.category === 'frames' && equippedFrame === item.id) setEquippedFrame('');
-    if (item.category === 'bubbles' && equippedBubble === item.id) setEquippedBubble('');
-    if (item.category === 'entrances' && equippedEntrance === item.id) setEquippedEntrance('');
-    if (item.category === 'mounts' && equippedMount === item.id) setEquippedMount('');
-  };
+  const equipBagItem = (item: BagItem) => { void changeEquippedItem(item, true); };
+  const unequipBagItem = (item: BagItem) => { void changeEquippedItem(item, false); };
 
   // Store purchases must be settled by the server ledger and ownership table.
   // The legacy client-only deduction/inventory path is deliberately disabled:
