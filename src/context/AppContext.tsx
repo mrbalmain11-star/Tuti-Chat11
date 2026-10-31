@@ -437,6 +437,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (cancelled) { await connected.close(); return; }
       connection = connected;
       voiceConnectionRef.current = connected;
+      // Membership/seat state can change while LiveKit is connecting.
+      // Apply the latest desired microphone state after connection completes.
+      await connected.sync().catch(error => console.error('Initial microphone sync:', error));
     }).catch(error => {
       if (!cancelled) {
         console.error('Voice connection failed:', error);
@@ -973,7 +976,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                     id: member.user_id,
                     name: member.display_name,
                     nickname: member.display_name,
-                    avatar: (member.user_id === currentUser.id ? (currentUser.avatar || member.avatar_url) : member.avatar_url) || '',
+                    avatar: member.avatar_url || (member.user_id === currentUser.id ? currentUser.avatar : '') || '',
                   } : null,
                   isMuted: member?.is_muted ?? true,
                   isSpeaking: false,
@@ -1073,7 +1076,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 id: member.user_id,
                 name: member.display_name,
                 nickname: member.display_name,
-                avatar: (member.user_id === currentUser.id ? (currentUser.avatar || member.avatar_url) : member.avatar_url) || '',
+                avatar: member.avatar_url || (member.user_id === currentUser.id ? currentUser.avatar : '') || '',
                 coins: 0,
                 diamonds: 0,
                 isSuperAdmin: false,
