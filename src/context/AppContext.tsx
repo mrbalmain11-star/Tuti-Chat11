@@ -1139,7 +1139,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
     }).catch(error => {
       console.error('Seat reservation failed:', error);
-      alert('تعذر حجز المقعد من الخادم.');
+      const reason = error instanceof Error ? error.message.toLowerCase() : '';
+      alert(reason.includes('seat locked') ? 'هذا المقعد مقفول من إدارة الغرفة.' :
+        reason.includes('occupied') ? 'هذا المقعد مشغول، اختر مقعداً آخر.' :
+        reason.includes('join room first') ? 'عضويتك بالغرفة غير متزامنة. اخرج وادخل الغرفة مجدداً.' :
+        'تعذر حجز المقعد من الخادم. ' + (error instanceof Error ? error.message : ''));
     });
   };
 
