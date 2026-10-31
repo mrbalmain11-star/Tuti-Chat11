@@ -2005,8 +2005,8 @@ export const VoiceRoomModal: React.FC = () => {
                 </button>
               </div>
 
-              {/* Bottom Action Bar: نزل من المايك & حظر مايك */}
-              <div className="border-t border-slate-800/90 pt-3 flex items-center justify-around">
+              {/* Only the seat owner or authorized moderators may see mic controls. */}
+              {(selectedMicUser.user.id === currentUser.id || isOwner || isModerator) && <div className="border-t border-slate-800/90 pt-3 flex items-center justify-around">
                 {/* Action 1: نزل من المايك */}
                 <button
                   onClick={() => {
@@ -2048,7 +2048,7 @@ export const VoiceRoomModal: React.FC = () => {
                   </div>
                   <span className="text-xs font-bold">{selectedMicUser.user.id === currentUser.id ? (myMicMuted ? 'فتح المايك' : 'كتم المايك') : (activeRoom?.seats.find(seat => seat.seatNumber === selectedMicUser.seatNumber)?.isMuted ? 'فك حظر المايك' : 'حظر مايك')}</span>
                 </button>
-              </div>
+              </div>}
             </div>
           </div>
         )}
