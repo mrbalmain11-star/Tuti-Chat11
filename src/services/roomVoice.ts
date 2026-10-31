@@ -15,7 +15,14 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
     element.style.display = 'none';
     document.body.appendChild(element);
     audio.set(participant.identity + ':' + track.sid, element);
-    void element.play().catch(() => onError('اضغط على الشاشة للسماح بتشغيل الصوت'));
+    void element.play().catch(() => {
+      // Retry from the next real user gesture; WebView may block autoplay.
+      const resume = () => {
+        void element.play().then(() => document.removeEventListener('pointerdown', resume)).catch(() => {});
+      };
+      document.addEventListener('pointerdown', resume, { once: true });
+      onError('اضغط على الشاشة للسماح بتشغيل الصوت');
+    });
   });
   room.on(RoomEvent.TrackUnsubscribed, (track, _publication, participant) => {
     track.detach().forEach(el => el.remove());
