@@ -736,13 +736,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [equippedMount, setEquippedMount] = useState<string>('');
 
   useEffect(() => {
-    if (!stagingBackend || !currentUser.id) {
+    const client = stagingBackend;
+    if (!client || !currentUser.id) {
       setBagItems([]);
       return;
     }
     let live = true;
     const refreshBag = async () => {
-      const { data, error } = await stagingBackend
+      const { data, error } = await client
         .from('store_ownership')
         .select('item_id,equipped,expires_at,store_catalog(name,category)')
         .eq('user_id', currentUser.id);
@@ -776,13 +777,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     void refreshBag();
     const onRefresh = () => { void refreshBag(); };
     window.addEventListener('totichat:inventory-changed', onRefresh);
-    const channel = stagingBackend.channel('inventory-' + currentUser.id)
+    const channel = client.channel('inventory-' + currentUser.id)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'store_ownership', filter: 'user_id=eq.' + currentUser.id }, onRefresh)
       .subscribe();
     return () => {
       live = false;
       window.removeEventListener('totichat:inventory-changed', onRefresh);
-      void stagingBackend.removeChannel(channel);
+      void client.removeChannel(channel);
     };
   }, [currentUser.id]);
 
