@@ -35,6 +35,7 @@ import { fetchMyProfile, saveMyProfile, uploadMyAvatar, uploadMyCover, getMyAvat
 import { VipName } from './VipName';
 import { VipBadge, VIP_BEAST_METADATA } from './VipBadge';
 import { AgencyProfileCard } from './AgencyProfileCard';
+import { CpSearchModal } from './CpSearchModal';
 
 export const InternalProfileModal: React.FC = () => {
   const {
@@ -65,6 +66,7 @@ export const InternalProfileModal: React.FC = () => {
   // The user being displayed: either targeted user or current user
   const user: UserProfile = internalProfileUser?.id === currentUser.id ? currentUser : (internalProfileUser || currentUser);
   const isSelf = user.id === currentUser.id;
+  const [showCpSearch,setShowCpSearch] = useState(false);
   const [verifiedAgency, setVerifiedAgency] = useState<{ name: string; public_id: number; member_count: number; role: string } | null>(null);
   useEffect(() => {
     let active = true;
@@ -409,7 +411,7 @@ export const InternalProfileModal: React.FC = () => {
             <div
               onClick={() => {
                 sounds.playClick();
-                showToast('ابحث عن شريك CP المفضل لديك! 💛');
+                setShowCpSearch(true);
               }}
               className="w-13 h-13 rounded-full bg-gradient-to-b from-amber-400 to-amber-600 border-2 border-amber-200 shadow-[0_0_15px_rgba(245,158,11,0.4)] flex items-center justify-center cursor-pointer active:scale-95 transition backdrop-blur-md relative overflow-hidden group"
             >
@@ -421,7 +423,7 @@ export const InternalProfileModal: React.FC = () => {
             <button
               onClick={() => {
                 sounds.playClick();
-                showToast('جاري البحث عن CP...');
+                setShowCpSearch(true);
               }}
               className="px-3 py-1 rounded-full bg-white/95 border border-amber-300 text-[11px] font-black text-amber-950 shadow-md hover:bg-amber-50 transition active:scale-95 cursor-pointer backdrop-blur-md"
             >
@@ -1430,6 +1432,7 @@ export const InternalProfileModal: React.FC = () => {
           </div>
         </div>
       )}
+      {showCpSearch && <CpSearchModal onClose={() => setShowCpSearch(false)} />}
     </div>
   );
 };
