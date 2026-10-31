@@ -16,6 +16,7 @@ import { VipModal } from './components/VipModal';
 import { AgencyModal } from './components/AgencyModal';
 import { EditProfileModal } from './components/EditProfileModal';
 import { SearchModal } from './components/SearchModal';
+import { OffersPopup } from './components/OffersPopup';
 import { DirectChatModal } from './components/DirectChatModal';
 import { CreateRoomModal } from './components/CreateRoomModal';
 import { StorageModal } from './components/StorageModal';
@@ -113,6 +114,7 @@ const AppContent: React.FC = () => {
         <AgencyModal />
         <EditProfileModal />
         <SearchModal />
+        <OffersPopup />
         <DirectChatModal />
         <CreateRoomModal />
         <StorageModal />
