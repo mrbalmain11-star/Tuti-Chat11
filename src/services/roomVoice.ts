@@ -33,8 +33,11 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
       try {
         await room.localParticipant.setMicrophoneEnabled(publish);
       } catch (error) {
+        const name = error instanceof Error ? error.name : 'UnknownError';
         const detail = error instanceof Error ? error.message : String(error);
-        onError('فشل تشغيل الميكروفون: ' + detail);
+        const devices = navigator.mediaDevices;
+        const context = !devices?.getUserMedia ? ' [getUserMedia unavailable]' : '';
+        onError('فشل تشغيل الميكروفون [' + name + ']: ' + detail + context);
         // Android WebView may reject capture before runtime permission is granted.
         // Do not silently report a successful unmute.
         throw error;
