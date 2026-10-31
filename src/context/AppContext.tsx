@@ -883,6 +883,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setOpenInternalProfileModal(true);
   };
 
+  // Each room entry starts a fresh visible chat session. Do not erase shared server history.
+  const chatSessionRef = useRef<{roomId:string;since:string}|null>(null);
+  if (!activeRoom) {
+    chatSessionRef.current = null;
+  } else if (chatSessionRef.current?.roomId !== activeRoom.id) {
+    chatSessionRef.current = {roomId:activeRoom.id,since:new Date().toISOString()};
+  }
   // Live room messages stream
   const [roomMessages, setRoomMessages] = useState<Record<string, ChatMessage[]>>({});
   useEffect(() => {
@@ -892,7 +899,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
     const roomId = activeRoom.id;
     let active = true;
-    void fetchRealRoomMessages(roomId).then(messages => {
+    void fetchRealRoomMessages(roomId, chatSessionRef.current?.roomId === roomId ? chatSessionRef.current.since : new Date().toISOString()).then(messages => {
       if (active) setRoomMessages({ [roomId]: messages });
     }).catch(error => {
       console.error('Failed to read room messages:', error);
@@ -916,7 +923,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       try {
         do {
           refreshAgain = false;
-          const messages = await fetchRealRoomMessages(roomId);
+          const messages = await fetchRealRoomMessages(roomId, chatSessionRef.current?.roomId === roomId ? chatSessionRef.current.since : new Date().toISOString());
           if (active) setRoomMessages(prev => ({ ...prev, [roomId]: messages }));
         } while (active && refreshAgain);
       } catch (error) {
@@ -1213,7 +1220,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!text.trim() || !activeRoom || activeRoom.id !== roomId) return;
     void sendRealRoomMessage(roomId, text).then(async () => {
       try {
-        const messages = await fetchRealRoomMessages(roomId);
+        const messages = await fetchRealRoomMessages(roomId, chatSessionRef.current?.roomId === roomId ? chatSessionRef.current.since : new Date().toISOString());
         setRoomMessages(prev => prev[roomId] === undefined ? prev : ({ ...prev, [roomId]: messages }));
       } catch (error) {
         console.error('Message sent but refresh failed:', error);
