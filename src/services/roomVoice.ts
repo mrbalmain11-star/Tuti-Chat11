@@ -30,7 +30,15 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
       if (closing) return;
       const publish = Boolean(data.canPublish && shouldPublish());
       if (room.localParticipant.isMicrophoneEnabled === publish) return;
-      await room.localParticipant.setMicrophoneEnabled(publish);
+      try {
+        await room.localParticipant.setMicrophoneEnabled(publish);
+      } catch (error) {
+        const detail = error instanceof Error ? error.message : String(error);
+        onError('فشل تشغيل الميكروفون: ' + detail);
+        // Android WebView may reject capture before runtime permission is granted.
+        // Do not silently report a successful unmute.
+        throw error;
+      }
     });
     return micQueue;
   };
