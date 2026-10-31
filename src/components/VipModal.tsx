@@ -169,7 +169,7 @@ export const VIP_TIERS: VipTierData[] = [
     beastName: 'النمر اللهبي الأزرق الفاخر',
     price: 8000000,
     durationDays: 30,
-    cardImage: '/assets/aistudio/IMG-20261026-WA0047_a9a12b99.jpg',
+    cardImage: '/assets/aistudio/IMG-20261026-WA0046_be379335.jpg',
     themeColor: '#2563eb',
     glowColor: 'rgba(37, 99, 235, 0.8)',
     badgeGradient: 'from-blue-600 via-sky-400 to-indigo-900',
@@ -190,7 +190,7 @@ export const VIP_TIERS: VipTierData[] = [
     beastName: 'الفيل الملكي الوردي الأسطوري',
     price: 18000000,
     durationDays: 30,
-    cardImage: '/assets/aistudio/IMG-20261026-WA0046_be379335.jpg',
+    cardImage: '/assets/aistudio/IMG-20261026-WA0047_a9a12b99.jpg',
     themeColor: '#ca8a04',
     glowColor: 'rgba(202, 138, 4, 0.85)',
     badgeGradient: 'from-amber-500 via-yellow-300 to-stone-900',
@@ -451,13 +451,14 @@ export const VipModal: React.FC = () => {
         {/* TOP VIP LEVEL SELECTOR (VIP 1 TO SVIP 12)                                 */}
         {/* ========================================================================= */}
         <div className="relative z-20 px-3 py-2 bg-black/60 border-b border-white/5">
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1" aria-label="اختيار مستوى VIP">
             {VIP_TIERS.map((tier, idx) => {
               const isSelected = activeTierIdx === idx;
               const isOwned = currentUser.vipLevel >= tier.level;
               return (
                 <button
                   key={tier.level}
+                  aria-pressed={isSelected}
                   onClick={() => {
                     sounds.playClick();
                     setActiveTierIdx(idx);
@@ -503,6 +504,9 @@ export const VipModal: React.FC = () => {
                 alt={activeTier.name}
                 className="block w-full h-auto object-contain select-none"
               />
+
+              {/* The selected tier is always labelled independently of the artwork. */}
+              <div className="absolute top-3 right-3 z-30 rounded-full bg-black/85 border border-amber-300/80 px-3 py-1 text-xs font-black text-amber-100 shadow-lg" dir="ltr">{activeTier.name}</div>
 
               {/* Status Badge overlay in top left of image */}
               <div className="absolute top-3 left-3 z-20">
