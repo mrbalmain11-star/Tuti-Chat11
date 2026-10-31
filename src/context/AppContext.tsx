@@ -425,16 +425,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const voiceRoomId = activeRoom?.id ?? null;
   const voiceSeat = activeRoom?.seats.some(seat => seat.user?.id === currentUser.id) ?? false;
   const voicePublishRef = useRef(false);
+  const voiceCloseRef = useRef<Promise<void>>(Promise.resolve());
   const voiceConnectionRef = useRef<Awaited<ReturnType<typeof connectRoomVoice>> | null>(null);
   voicePublishRef.current = voiceSeat && !myMicMuted;
   useEffect(() => {
     if (!isLoggedIn || !voiceRoomId) return;
     let cancelled = false;
     let connection: Awaited<ReturnType<typeof connectRoomVoice>> | null = null;
-    void connectRoomVoice(voiceRoomId, () => voicePublishRef.current, message => {
+    void voiceCloseRef.current.catch(() => {}).then(() => {
+      if (cancelled) return null;
+      return connectRoomVoice(voiceRoomId, () => voicePublishRef.current, message => {
       if (!cancelled) console.error('Room voice:', message);
+      });
     }).then(async connected => {
-      if (cancelled) { await connected.close(); return; }
+      if (!connected) return;
+      if (cancelled) { voiceCloseRef.current = connected.close(); await voiceCloseRef.current; return; }
       connection = connected;
       voiceConnectionRef.current = connected;
       // Membership/seat state can change while LiveKit is connecting.
@@ -449,7 +454,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return () => {
       cancelled = true;
       if (voiceConnectionRef.current === connection) voiceConnectionRef.current = null;
-      if (connection) void connection.close();
+      if (connection) voiceCloseRef.current = connection.close();
     };
   }, [isLoggedIn, voiceRoomId, voiceSeat && !myMicMuted]);
   useEffect(() => {
