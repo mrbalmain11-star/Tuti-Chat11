@@ -16,7 +16,10 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
     document.body.appendChild(element);
     const key = participant.identity + ':' + track.sid;
     const previous = audio.get(key);
-    if (previous) previous.remove();
+    if (previous) {
+      track.detach(previous);
+      previous.remove();
+    }
     audio.set(key, element);
     void element.play().catch(() => {
       // Retry from the next real user gesture; WebView may block autoplay.
