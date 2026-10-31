@@ -2,7 +2,6 @@ import React from 'react';
 import { VoiceRoom } from '../types';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
-import { ImageIcon } from 'lucide-react';
 
 interface RoomCardProps {
   room: VoiceRoom;
@@ -22,7 +21,11 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
     >
       {/* Cover Image Container */}
       <div className="relative aspect-[1/1] w-full rounded-2xl overflow-hidden bg-slate-200 border border-slate-200/80 shadow-md group-hover:shadow-lg transition">
-        {room.coverImage ? <img src={room.coverImage} alt={room.title} className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-500" onError={event => { event.currentTarget.style.display = 'none'; }} /> : <div className="w-full h-full bg-gradient-to-br from-emerald-900 via-teal-700 to-amber-700 flex items-center justify-center"><ImageIcon size={40} className="text-white/60" /></div>}
+        <img
+          src={room.coverImage}
+          alt={room.title}
+          className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-500"
+        />
 
         {/* Subtle dark gradient overlay at top and bottom for readability */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/65 pointer-events-none" />
@@ -126,7 +129,7 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
           {/* Soundwave + Listeners Count */}
           <div className="flex items-center gap-1 text-white text-xs font-black drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
             <span className="text-white text-sm tracking-tighter">ılı</span>
-            <span className="font-sans font-bold">{room.listenersCount ?? 0}</span>
+            <span className="font-sans font-bold">{room.listenersCount ?? 50}</span>
           </div>
 
           {/* Single Host Avatar in Circle with White Border matching Screenshot */}
