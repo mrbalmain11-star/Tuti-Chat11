@@ -398,10 +398,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const onChanged = () => { void refreshVip().catch(error => console.error('VIP refresh failed:', error)); };
     window.addEventListener('totichat:vip-changed', onChanged);
     window.addEventListener('focus', onChanged);
+    const onVisible = () => { if (document.visibilityState === 'visible') onChanged(); };
+    document.addEventListener('visibilitychange', onVisible);
+    const vipClient = stagingBackend!;
+    const vipChannel = vipClient.channel('staging-my-vip-refresh')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'vip_entitlements' },
+        () => { if (active) onChanged(); })
+      .subscribe();
     return () => {
       active = false;
       window.removeEventListener('totichat:vip-changed', onChanged);
       window.removeEventListener('focus', onChanged);
+      document.removeEventListener('visibilitychange', onVisible);
+      void vipClient.removeChannel(vipChannel);
     };
   }, [isLoggedIn]);
 
