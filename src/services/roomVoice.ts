@@ -6,7 +6,8 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
   if (!stagingBackend) throw new Error('Voice backend unavailable');
   const { data, error } = await stagingBackend.functions.invoke('phase2-voice-token', { body: { roomId } });
   if (error || !data?.token || !data?.url) throw new Error(String(data?.error || error?.message || 'Voice token unavailable'));
-  const room = new Room({ adaptiveStream: true, dynacast: true });
+  // Keep voice playback on the low-latency path; adaptive video features are unnecessary for audio-only rooms.
+  const room = new Room({ adaptiveStream: false, dynacast: false });
   const audio = new Map<string, HTMLAudioElement>();
   const pendingPlayback = new Set<HTMLAudioElement>();
   let closing = false;
