@@ -121,7 +121,7 @@ export const StorageModal: React.FC = () => {
         p_expected_currency: catalog.currency,
       });
       if (error) throw error;
-      if (!data || data.success === false) throw new Error('Purchase not confirmed by server');
+      if (!data || data.status !== 'completed' || data.item_id !== item.id) throw new Error('Purchase not confirmed by server');
       window.dispatchEvent(new Event('totichat:wallet-changed'));
       window.dispatchEvent(new Event('totichat:inventory-changed'));
       sounds.playSuccess();
