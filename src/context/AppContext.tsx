@@ -451,7 +451,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (voiceConnectionRef.current === connection) voiceConnectionRef.current = null;
       if (connection) void connection.close();
     };
-  }, [isLoggedIn, voiceRoomId]);
+  }, [isLoggedIn, voiceRoomId, voiceSeat && !myMicMuted]);
   useEffect(() => {
     if (!voiceConnectionRef.current) return;
     void voiceConnectionRef.current.sync().catch(error => console.error('Voice microphone sync:', error));
