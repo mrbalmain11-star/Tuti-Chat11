@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AdminBannersPanel } from './AdminBannersPanel';
+import { AdminOffersPanel } from './AdminOffersPanel';
 import { AdminOperationsPanel } from './AdminOperationsPanel';
 import { AdminSpecialIdPanel } from './AdminSpecialIdPanel';
 import { AdminRoomModerationPanel } from './AdminRoomModerationPanel';
@@ -58,6 +59,7 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
               {id:'recharge',label:'الشحن',Icon:Building2},
               {id:'staff',label:'الصلاحيات',Icon:ShieldCheck},
               {id:'banners',label:'البنرات',Icon:Radio},
+              {id:'offers',label:'العروض',Icon:Gift},
               ...(access.role === 'owner' ? [{id:'testerBadges',label:'شارات المختبرين',Icon:ShieldCheck}] : []),
             ];
             return <div className="space-y-5">
@@ -81,6 +83,7 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
                 {adminPage === 'recharge' && <AdminRechargePanel />}
                 {adminPage === 'staff' && <AdminStaffPanel />}
                 {adminPage === 'banners' && <AdminBannersPanel />}
+                {adminPage === 'offers' && <AdminOffersPanel />}
                 {adminPage === 'testerBadges' && access.role === 'owner' && <AdminTesterBadgesPanel />}
               </>}
             </div>;
