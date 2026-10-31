@@ -2005,7 +2005,11 @@ export const VoiceRoomModal: React.FC = () => {
                     if (selectedMicUser.user.id === currentUser.id) {
                       toggleMyMic();
                     } else {
-                      void handleVoiceModeration(selectedMicUser.user.id, 'mute');
+                      if (activeRoom?.seats.find(seat => seat.seatNumber === selectedMicUser.seatNumber)?.isMuted) {
+                        void handleAllowMic(selectedMicUser.user.id);
+                      } else {
+                        void handleVoiceModeration(selectedMicUser.user.id, 'mute');
+                      }
                     }
                     setSelectedMicUser(null);
                   }}
@@ -2014,7 +2018,7 @@ export const VoiceRoomModal: React.FC = () => {
                   <div className="w-10 h-10 rounded-full bg-slate-800/90 flex items-center justify-center border border-slate-700 shadow-sm">
                     <MicOff className="w-5 h-5 text-rose-400" />
                   </div>
-                  <span className="text-xs font-bold">{selectedMicUser.user.id === currentUser.id ? (myMicMuted ? 'فتح المايك' : 'كتم المايك') : 'حظر مايك'}</span>
+                  <span className="text-xs font-bold">{selectedMicUser.user.id === currentUser.id ? (myMicMuted ? 'فتح المايك' : 'كتم المايك') : (activeRoom?.seats.find(seat => seat.seatNumber === selectedMicUser.seatNumber)?.isMuted ? 'فك حظر المايك' : 'حظر مايك')}</span>
                 </button>
               </div>
             </div>
