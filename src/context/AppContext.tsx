@@ -1194,7 +1194,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setActiveRoom(prev => prev?.id !== roomId ? prev : ({
         ...prev,
         seats: prev.seats.map(item => item.user?.id === target
-          ? { ...item, isMuted: true, isSpeaking: false } : item),
+          ? { ...item, isMuted: action === 'mute', isSpeaking: false } : item),
       }));
     }).catch(error => {
       console.error('Room microphone moderation failed:', error);
