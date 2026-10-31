@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { imageUrl } from '../services/imageUrl';
 import {
   UserProfile,
   VoiceRoom,
@@ -566,7 +567,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const peer = names.get(peerId);
         if (!threads.has(peerId)) threads.set(peerId, {
           id: peerId, userId: peerId, userName: peer?.display_name ?? 'مستخدم',
-          userAvatar: peer?.avatar_url ? (peer.avatar_url.startsWith('http') ? peer.avatar_url : client.storage.from('profile-avatars').getPublicUrl(peer.avatar_url).data.publicUrl) : '', isOnline: false, lastMessage: m.body,
+          userAvatar: peer?.avatar_url ? (imageUrl(peer.avatar_url,'profile-avatars')) : '', isOnline: false, lastMessage: m.body,
           lastTime: m.created_at, unreadCount: 0, messages: [],
         });
         const thread = threads.get(peerId)!;
@@ -952,16 +953,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, [isLoggedIn, activeRoom?.id]);
 
-  const resolveRoomAvatars = async <T extends {avatar_url?:string|null}>(members:T[]):Promise<(T & {resolvedAvatar:string})[]> => {
-    if (!stagingBackend) return members.map(m=>({...m,resolvedAvatar:m.avatar_url||''}));
-    return Promise.all(members.map(async member=>{
-      const path=member.avatar_url||'';
-      if (!path) return {...member,resolvedAvatar:''};
-      if (/^https?:\\/\\//i.test(path) || path.startsWith('data:')) return {...member,resolvedAvatar:path};
-      const {data,error}=await stagingBackend!.storage.from('profile-avatars').createSignedUrl(path,3600);
-      return {...member,resolvedAvatar:error?'':data?.signedUrl||''};
-    }));
-  };
+  const resolveRoomAvatars = async <T extends {avatar_url?:string|null}>(members:T[]):Promise<(T & {resolvedAvatar:string})[]> =>
+    members.map(member=>({...member,resolvedAvatar:imageUrl(member.avatar_url,'profile-avatars')}));
   useEffect(() => {
     if (!isLoggedIn || !activeRoom || !stagingBackend) return;
     const roomId = activeRoom.id;
