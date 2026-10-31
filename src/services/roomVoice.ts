@@ -54,7 +54,7 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
     track.detach().forEach(el => el.remove());
     removeAudio(participant.identity + ':' + track.sid);
   });
-  room.on(RoomEvent.Disconnected, () => onError('انقطع اتصال الصوت بالغرفة'));
+  room.on(RoomEvent.Disconnected, () => { if (!closing) onError('انقطع اتصال الصوت بالغرفة'); });
   // Android WebView can require a real user gesture before remote audio playback.
   // Avoid repeatedly calling startAudio from its own status-change event.
   const unlockAudio = () => {
@@ -99,10 +99,9 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
     await sync();
   } catch (error) {
     // A failed Android capture must not leave a LiveKit connection alive.
-    await room.localParticipant.setMicrophoneEnabled(false).catch(() => {});
-    document.removeEventListener('pointerdown', unlockAudio);
-    room.disconnect();
     closing = true;
+    document.removeEventListener('pointerdown', unlockAudio);
+    await room.disconnect();
     clearAudio();
     throw error;
   }
@@ -110,8 +109,7 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
     closing = true;
     document.removeEventListener('pointerdown', unlockAudio);
     await micQueue.catch(() => {});
-    await room.localParticipant.setMicrophoneEnabled(false).catch(() => {});
-    room.disconnect();
+    await room.disconnect();
     clearAudio();
   } };
 }
