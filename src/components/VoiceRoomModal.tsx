@@ -470,7 +470,7 @@ export const VoiceRoomModal: React.FC = () => {
     lastEnteredRoom.current = activeRoom.id;
     if (currentUser.vipLevel < 1) return;
     setVipEntrance(true);
-    const timer = window.setTimeout(() => setVipEntrance(false), 4500);
+    const timer = window.setTimeout(() => setVipEntrance(false), 3400);
     return () => window.clearTimeout(timer);
   }, [activeRoom?.id, isRoomMinimized, currentUser.vipLevel]);
 
@@ -558,17 +558,12 @@ export const VoiceRoomModal: React.FC = () => {
       dir="rtl"
     >
       {vipEntrance && (
-        <div className="absolute top-20 inset-x-3 z-[90] pointer-events-none flex justify-center animate-in slide-in-from-right-12 fade-in duration-500">
-          <div className="relative w-full max-w-sm overflow-hidden rounded-2xl border-2 border-amber-300/90 bg-gradient-to-r from-[#260b34] via-[#7b174f] to-[#301047] px-4 py-3 shadow-[0_0_28px_rgba(251,191,36,0.65)]">
-            <div className="absolute inset-0 bg-gradient-to-br from-amber-300/15 via-transparent to-fuchsia-400/20" />
-            <div className="relative flex items-center justify-center gap-3 text-amber-100" dir="rtl">
-              <Crown className="w-9 h-9 shrink-0 fill-amber-400 text-yellow-100 drop-shadow-[0_0_8px_#fbbf24]" />
-              <div className="min-w-0 text-center">
-                <div className="text-[10px] font-black tracking-wide text-amber-300">✦ دخول ملكي ✦ VIP {currentUser.vipLevel}</div>
-                <div className="text-sm font-black truncate">{currentUser.nickname || currentUser.name || 'عضو VIP'} انضم إلى الغرفة</div>
-              </div>
-              <Sparkles className="w-7 h-7 shrink-0 text-fuchsia-200" />
-            </div>
+        <div className="toti-vip-entry-track absolute top-20 inset-x-0 z-[90] pointer-events-none overflow-hidden" dir="ltr">
+          <div className={`toti-vip-entry-banner relative flex items-center gap-2 w-max max-w-[82vw] min-h-9 rounded-full border px-3 py-1.5 shadow-lg ${currentUser.vipLevel >= 7 ? 'border-amber-300 bg-gradient-to-r from-[#2b123f] via-[#71325d] to-[#3a1845] text-amber-100 shadow-amber-500/30' : currentUser.vipLevel >= 4 ? 'border-fuchsia-300 bg-gradient-to-r from-[#241238] to-[#542464] text-fuchsia-100' : 'border-emerald-300 bg-gradient-to-r from-[#112e32] to-[#244d47] text-emerald-100'}`} dir="rtl">
+            <Crown className="w-4 h-4 shrink-0 text-amber-300" aria-hidden="true" />
+            <span className="text-[10px] font-black whitespace-nowrap">VIP {currentUser.vipLevel}</span>
+            <span className="text-[11px] font-bold truncate max-w-[42vw]">{currentUser.nickname || currentUser.name || 'عضو VIP'} دخل الغرفة</span>
+            <Sparkles className="w-3.5 h-3.5 shrink-0 text-amber-200" aria-hidden="true" />
           </div>
         </div>
       )}
@@ -1104,7 +1099,7 @@ export const VoiceRoomModal: React.FC = () => {
                 </div>
 
                 {/* Chat Messages Column */}
-                <div className="flex-1 space-y-2 overflow-y-auto max-h-56 no-scrollbar pr-1">
+                <div className="flex-1 space-y-1.5 overflow-y-auto max-h-48 no-scrollbar pr-1">
                   {/* 1. Official System Notice */}
                   <div className="bg-[#180f33]/85 backdrop-blur-md rounded-2xl p-3 border border-purple-500/20 text-xs text-slate-200 leading-relaxed shadow-lg">
                     مرحباً بك في Huwaa. يرجى احترام الآخرين في المحادثات. سيتم حظر الحسابات التي تنشر محتوى مبتذلاً أو احتيالياً أو غير قانوني.
@@ -1148,7 +1143,7 @@ export const VoiceRoomModal: React.FC = () => {
                   {/* 3. Real-time User Sent Messages */}
                   {currentMessages.map((msg) => (
                     <div key={msg.id} className="flex justify-end">
-                      <div className="bg-[#1c123d]/90 backdrop-blur-md rounded-2xl py-2 px-3 border border-purple-400/20 text-xs text-white shadow-md">
+                      <div className="toti-chat-bubble bg-[#1c123d]/88 rounded-2xl rounded-tr-sm py-1.5 px-2.5 border border-amber-300/25 text-[11px] text-white shadow-sm max-w-[85%] break-words">
                         <span className="text-amber-300 font-bold ml-1">{msg.senderName}:</span>
                         <span>{msg.text}</span>
                       </div>
