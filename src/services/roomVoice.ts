@@ -55,6 +55,23 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
     removeAudio(participant.identity + ':' + track.sid);
   });
   room.on(RoomEvent.Disconnected, () => { if (!closing) onError('انقطع اتصال الصوت بالغرفة'); });
+  // Distinguish network degradation from microphone or playback failures.
+  // These events do not restart the microphone or interrupt a working stream.
+  room.on(RoomEvent.ConnectionQualityChanged, (quality, participant) => {
+    if (closing) return;
+    console.info('[RoomVoice] connection quality', {
+      participant: participant.identity,
+      quality,
+      roomId,
+    });
+  });
+  room.on(RoomEvent.Reconnecting, () => {
+    if (!closing) console.warn('[RoomVoice] transport reconnecting', { roomId });
+  });
+  room.on(RoomEvent.Reconnected, () => {
+    if (!closing) console.info('[RoomVoice] transport reconnected', { roomId });
+  });
+
   // Android WebView can require a real user gesture before remote audio playback.
   // Avoid repeatedly calling startAudio from its own status-change event.
   const unlockAudio = () => {
