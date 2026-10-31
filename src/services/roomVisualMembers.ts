@@ -6,6 +6,7 @@ export interface RoomVisualMember {
   avatar_url: string | null;
   seat_no: number | null;
   is_muted: boolean;
+  vip_level: number;
 }
 
 export async function fetchRoomVisualMembers(roomId: string): Promise<RoomVisualMember[]> {
