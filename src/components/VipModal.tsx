@@ -513,10 +513,10 @@ export const VipModal: React.FC = () => {
                   event.currentTarget.style.display = 'block';
                   event.currentTarget.parentElement?.removeAttribute('data-vip-image-missing');
                 }}
-                className="block w-full h-auto object-contain select-none"
+                className="relative z-10 block w-full h-auto object-contain select-none"
               />
 
-              <div className="absolute inset-0 -z-0 flex items-center justify-center bg-gradient-to-br from-slate-950 via-purple-950 to-amber-950 text-amber-200" aria-hidden="true">
+              <div className="absolute inset-0 z-0 flex items-center justify-center bg-gradient-to-br from-slate-950 via-purple-950 to-amber-950 text-amber-200" aria-hidden="true">
                 <span className="text-5xl font-black opacity-35">{activeTier.name}</span>
               </div>
               {/* The selected tier is always labelled independently of the artwork. */}
