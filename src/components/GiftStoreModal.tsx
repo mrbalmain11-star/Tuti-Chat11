@@ -3,6 +3,7 @@ import { X, Plus, ChevronDown, Check } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { GiftItem } from '../types';
 import { EpicGiftArtwork } from './EpicGiftArtwork';
+import { SwordArt } from './GiftAnimationOverlay';
 import { sounds } from '../utils/audio';
 
 const giftCounts = [1, 7, 17, 77, 777];
@@ -200,9 +201,9 @@ export const GiftStoreModal: React.FC = () => {
         )}
 
         {/* Gifts Grid (matching Screenshot 18) */}
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain no-scrollbar py-3 grid grid-cols-4 auto-rows-[104px] content-start gap-2">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain no-scrollbar py-3 grid grid-cols-3 auto-rows-[144px] content-start gap-2">
           {filteredGifts.length === 0 && (
-            <div className="col-span-4 text-center text-slate-300 text-sm py-8">لا توجد هدايا متاحة في هذا القسم حالياً.</div>
+            <div className="col-span-3 text-center text-slate-300 text-sm py-8">لا توجد هدايا متاحة في هذا القسم حالياً.</div>
           )}
           {filteredGifts.map((gift) => {
             const isSelected = selectedGift?.id === gift.id;
@@ -217,7 +218,7 @@ export const GiftStoreModal: React.FC = () => {
                   sounds.playClick();
                   setSelectedGiftId(gift.id);
                 }}
-                className={`relative min-w-0 rounded-xl p-2 flex flex-col items-center justify-between cursor-pointer border transition-all duration-200 bg-gradient-to-b ${palette} ${
+                className={`relative min-w-0 rounded-2xl p-2 flex flex-col items-center justify-between cursor-pointer border transition-all duration-200 bg-gradient-to-b ${palette} ${
                   isSelected
                     ? 'border-amber-400 bg-gradient-to-b from-amber-500/20 to-slate-900 shadow-lg scale-102'
                     : 'border-slate-800/80 bg-slate-900/60 hover:border-slate-700'
@@ -232,9 +233,9 @@ export const GiftStoreModal: React.FC = () => {
                 )}
 
                 {/* Gift Large Animated Icon */}
-                <div className="relative w-14 h-14 flex-none flex items-center justify-center text-[33px] my-1 rounded-full border border-amber-400/25 shadow-[inset_0_0_15px_rgba(251,191,36,0.12),0_0_16px_rgba(168,85,247,0.18)]">
+                <div className="relative w-[74px] h-[74px] flex-none flex items-center justify-center text-[35px] my-1 rounded-2xl border border-amber-400/25 shadow-[inset_0_0_15px_rgba(251,191,36,0.12),0_0_16px_rgba(168,85,247,0.18)]">
                   <span className="absolute inset-0 rounded-full bg-amber-300/10 blur-md" aria-hidden="true" />
-                  {epicKind ? <div className="relative z-10 w-full h-full flex items-center justify-center [&_svg]:!w-[55px] [&_svg]:!h-[55px]"><EpicGiftArtwork kind={epicKind} /></div> : <span className="relative z-10 drop-shadow-[0_0_12px_rgba(255,206,116,0.7)]">{gift.icon}</span>}
+                  {gift.id==='epic-zulfiqar'?<div className="relative z-10 w-full h-full flex items-center justify-center [&_svg]:!w-[45px] [&_svg]:!h-[75px]"><SwordArt /></div> : epicKind ? <div className="relative z-10 w-full h-full flex items-center justify-center [&_svg]:!w-[72px] [&_svg]:!h-[72px]"><EpicGiftArtwork kind={epicKind} /></div> : <span className="relative z-10 drop-shadow-[0_0_12px_rgba(255,206,116,0.7)]">{gift.icon}</span>}
                 </div>
 
                 {/* Name */}
