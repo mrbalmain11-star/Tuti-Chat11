@@ -10,7 +10,7 @@ import { AdminReportsPanel } from './AdminReportsPanel';
 import { AdminRechargePanel } from './AdminRechargePanel';
 import { AdminStaffPanel } from './AdminStaffPanel';
 import { AdminTesterBadgesPanel } from './AdminTesterBadgesPanel';
-import { ArrowRight, RefreshCw, ShieldCheck, Users, Building2, Radio } from 'lucide-react';
+import { ArrowRight, RefreshCw, ShieldCheck, Users, Building2, Radio, Gift } from 'lucide-react';
 import { fetchMyAdminAccess, fetchOwnerDashboardCounts, fetchOwnerDashboardRecent, type OwnerDashboardRecent, type AdminAccess, type OwnerDashboardCounts } from '../services/stagingBackend';
 
 type Props = { onClose: () => void };
