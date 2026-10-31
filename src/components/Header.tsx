@@ -98,10 +98,10 @@ export const Header: React.FC = () => {
               sounds.playClick();
               setOpenSearchModal(true);
             }}
-            className="w-9 h-9 rounded-xl border border-white/35 bg-white/15 text-white shadow-sm flex items-center justify-center transition active:scale-90 cursor-pointer"
+            className="toti-premium-icon-button w-9 h-9 rounded-xl border border-white/35 bg-white/15 text-white shadow-sm flex items-center justify-center transition active:scale-90 cursor-pointer"
             title="بحث"
           >
-            <Search size={21} strokeWidth={2.2} aria-hidden="true" />
+            <Search className="toti-premium-icon" size={21} strokeWidth={2.2} aria-hidden="true" />
           </button>
 
           {/* Golden Palace / Mosque with Plus Button (🕌➕) */}
@@ -110,10 +110,10 @@ export const Header: React.FC = () => {
               sounds.playClick();
               setOpenCreateRoomModal(true);
             }}
-            className="relative w-9 h-9 rounded-xl border border-amber-200/65 bg-gradient-to-br from-amber-300 to-amber-500 text-emerald-950 shadow-sm flex items-center justify-center transition active:scale-90 cursor-pointer group"
+            className="toti-premium-icon-button relative w-9 h-9 rounded-xl border border-amber-200/65 bg-gradient-to-br from-amber-300 to-amber-500 text-emerald-950 shadow-sm flex items-center justify-center transition active:scale-90 cursor-pointer group"
             title="إنشاء غرفة"
           >
-            <DoorOpen size={21} strokeWidth={2.1} aria-hidden="true" />
+            <DoorOpen className="toti-premium-icon toti-premium-icon-active" size={21} strokeWidth={2.1} aria-hidden="true" />
             <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-amber-400 border border-white text-emerald-950 flex items-center justify-center shadow-sm">
               <Plus size={11} strokeWidth={3} aria-hidden="true" />
             </span>
