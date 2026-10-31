@@ -22,6 +22,11 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
     audio.delete(participant.identity + ':' + track.sid);
   });
   room.on(RoomEvent.Disconnected, () => onError('انقطع اتصال الصوت بالغرفة'));
+  room.on(RoomEvent.AudioPlaybackStatusChanged, () => {
+    if (!room.canPlaybackAudio) {
+      void room.startAudio().catch(error => onError('تعذر تشغيل الصوت المستلم: ' + String(error)));
+    }
+  });
   await room.connect(data.url, data.token, { autoSubscribe: true });
   let micQueue: Promise<void> = Promise.resolve();
   let closing = false;
