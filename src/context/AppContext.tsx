@@ -425,26 +425,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const voiceRoomId = activeRoom?.id ?? null;
   const voiceSeat = activeRoom?.seats.some(seat => seat.user?.id === currentUser.id) ?? false;
   const voicePublishRef = useRef(false);
-  const voiceCloseRef = useRef<Promise<void>>(Promise.resolve());
-  const voiceConnectionRef = useRef<Awaited<ReturnType<typeof connectRoomVoice>> | null>(null);
+  const voiceLifecycleRef = useRef<Promise<void>>(Promise.resolve());
   voicePublishRef.current = voiceSeat && !myMicMuted;
   useEffect(() => {
     if (!isLoggedIn || !voiceRoomId) return;
     let cancelled = false;
     let connection: Awaited<ReturnType<typeof connectRoomVoice>> | null = null;
-    // Chain both connection setup and teardown: a pending connect must finish
-    // and release its audio track before a replacement can acquire the mic.
-    const previous = voiceCloseRef.current;
-    const lifecycle = previous.catch(() => {}).then(async () => {
+    const setup = voiceLifecycleRef.current.catch(() => {}).then(async () => {
       if (cancelled) return;
       try {
         const connected = await connectRoomVoice(voiceRoomId, () => voicePublishRef.current, message => {
           if (!cancelled) console.error('Room voice:', message);
         });
         connection = connected;
-        if (cancelled) return;
-        voiceConnectionRef.current = connected;
-        await connected.sync();
+        if (!cancelled) await connected.sync();
       } catch (error) {
         if (!cancelled) {
           console.error('Voice connection failed:', error);
@@ -452,18 +446,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
       }
     });
-    voiceCloseRef.current = lifecycle.then(async () => {
-      if (connection && cancelled) await connection.close();
-    });
+    voiceLifecycleRef.current = setup;
     return () => {
       cancelled = true;
-      if (voiceConnectionRef.current === connection) voiceConnectionRef.current = null;
+      // Cleanup is queued after setup, including microphone acquisition.
+      // Next connection must wait for this queued close to finish.
+      voiceLifecycleRef.current = setup.then(async () => {
+        if (connection) await connection.close();
+      });
     };
   }, [isLoggedIn, voiceRoomId, voiceSeat && !myMicMuted]);
-  useEffect(() => {
-    if (!voiceConnectionRef.current) return;
-    void voiceConnectionRef.current.sync().catch(error => console.error('Voice microphone sync:', error));
-  }, [voiceSeat, myMicMuted]);
 
   useEffect(() => {
     if (isLoggedIn) return;
