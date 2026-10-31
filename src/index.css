@@ -1,5 +1,19 @@
 @import "tailwindcss";
 
+/* TotiChat Classic: shared typography and icon sizing across all screens. */
+@layer base {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  body, button, input, select, textarea {
+    font-family: 'Cairo', 'Noto Sans Arabic', system-ui, sans-serif;
+  }
+  body { font-size: 14px; line-height: 1.55; font-weight: 500; }
+  button, input, select, textarea { letter-spacing: normal; }
+  button { line-height: 1.4; }
+  h1, h2, h3, h4 { line-height: 1.35; letter-spacing: normal; }
+  svg.lucide { stroke-width: 1.85; flex-shrink: 0; }
+}
+
+
 @layer utilities {
   .no-scrollbar::-webkit-scrollbar {
     display: none;
