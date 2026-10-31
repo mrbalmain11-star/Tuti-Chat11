@@ -8,28 +8,52 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
   if (error || !data?.token || !data?.url) throw new Error(String(data?.error || error?.message || 'Voice token unavailable'));
   const room = new Room({ adaptiveStream: true, dynacast: true });
   const audio = new Map<string, HTMLAudioElement>();
+  const pendingPlayback = new Set<HTMLAudioElement>();
+  let closing = false;
+  const retryPlayback = () => {
+    for (const element of [...pendingPlayback]) {
+      if (!element.isConnected) {
+        pendingPlayback.delete(element);
+        continue;
+      }
+      void element.play().then(() => pendingPlayback.delete(element)).catch(() => {});
+    }
+    if (pendingPlayback.size === 0) document.removeEventListener('pointerdown', retryPlayback);
+  };
+  const removeAudio = (key: string) => {
+    const element = audio.get(key);
+    if (!element) return;
+    pendingPlayback.delete(element);
+    element.pause();
+    element.remove();
+    audio.delete(key);
+    if (pendingPlayback.size === 0) document.removeEventListener('pointerdown', retryPlayback);
+  };
+  const clearAudio = () => {
+    for (const key of [...audio.keys()]) removeAudio(key);
+    pendingPlayback.clear();
+    document.removeEventListener('pointerdown', retryPlayback);
+  };
   room.on(RoomEvent.TrackSubscribed, (track, _publication, participant) => {
-    if (track.kind !== 'audio') return;
+    if (closing || track.kind !== 'audio') return;
+    const key = participant.identity + ':' + track.sid;
+    removeAudio(key);
     const element = track.attach() as HTMLAudioElement;
     element.autoplay = true;
+    element.playsInline = true;
     element.style.display = 'none';
     document.body.appendChild(element);
-    const key = participant.identity + ':' + track.sid;
-    const previous = audio.get(key);
-    if (previous) previous.remove();
     audio.set(key, element);
     void element.play().catch(() => {
-      // Retry from the next real user gesture; WebView may block autoplay.
-      const resume = () => {
-        void element.play().then(() => document.removeEventListener('pointerdown', resume)).catch(() => {});
-      };
-      document.addEventListener('pointerdown', resume, { once: true });
+      if (closing || !element.isConnected) return;
+      pendingPlayback.add(element);
+      document.addEventListener('pointerdown', retryPlayback);
       onError('اضغط على الشاشة للسماح بتشغيل الصوت');
     });
   });
   room.on(RoomEvent.TrackUnsubscribed, (track, _publication, participant) => {
     track.detach().forEach(el => el.remove());
-    audio.delete(participant.identity + ':' + track.sid);
+    removeAudio(participant.identity + ':' + track.sid);
   });
   room.on(RoomEvent.Disconnected, () => onError('انقطع اتصال الصوت بالغرفة'));
   // Android WebView can require a real user gesture before remote audio playback.
@@ -52,7 +76,6 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
     throw error;
   }
   let micQueue: Promise<void> = Promise.resolve();
-  let closing = false;
   const sync = (): Promise<void> => {
     micQueue = micQueue.catch(() => {}).then(async () => {
       if (closing) return;
@@ -80,8 +103,8 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
     await room.localParticipant.setMicrophoneEnabled(false).catch(() => {});
     document.removeEventListener('pointerdown', unlockAudio);
     room.disconnect();
-    audio.forEach(el => el.remove());
-    audio.clear();
+    closing = true;
+    clearAudio();
     throw error;
   }
   return { sync, close: async () => {
@@ -90,7 +113,7 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
     await micQueue.catch(() => {});
     await room.localParticipant.setMicrophoneEnabled(false).catch(() => {});
     room.disconnect();
-    audio.forEach(el => el.remove());
-    audio.clear();
+    closing = true;
+    clearAudio();
   } };
 }
