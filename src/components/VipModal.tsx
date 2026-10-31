@@ -500,11 +500,25 @@ export const VipModal: React.FC = () => {
               style={{ borderColor: activeTier.themeColor }}
             >
               <img
+                key={activeTier.level}
                 src={activeTier.cardImage}
                 alt={activeTier.name}
+                loading="eager"
+                onError={(event) => {
+                  const img = event.currentTarget;
+                  img.style.display = 'none';
+                  img.parentElement?.setAttribute('data-vip-image-missing', String(activeTier.level));
+                }}
+                onLoad={(event) => {
+                  event.currentTarget.style.display = 'block';
+                  event.currentTarget.parentElement?.removeAttribute('data-vip-image-missing');
+                }}
                 className="block w-full h-auto object-contain select-none"
               />
 
+              <div className="absolute inset-0 -z-0 flex items-center justify-center bg-gradient-to-br from-slate-950 via-purple-950 to-amber-950 text-amber-200" aria-hidden="true">
+                <span className="text-5xl font-black opacity-35">{activeTier.name}</span>
+              </div>
               {/* The selected tier is always labelled independently of the artwork. */}
               <div className="absolute top-3 right-3 z-30 rounded-full bg-black/85 border border-amber-300/80 px-3 py-1 text-xs font-black text-amber-100 shadow-lg" dir="ltr">{activeTier.name}</div>
 
