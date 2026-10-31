@@ -25,7 +25,7 @@ export const CategoryCards: React.FC = () => {
 
         {/* 3 Podium Avatars */}
         <div className="flex items-center justify-center mt-2 mb-1 text-amber-200/80" aria-label="التصنيف بدون بيانات ترتيب مفبركة"><span className="text-2xl">✦</span></div>
-      </div></div>
+      </div>
 
       {/* 2. الجاذبية (Charm Card - Center in RTL, Royal Gold & Sapphire) */}
       <div
@@ -45,7 +45,7 @@ export const CategoryCards: React.FC = () => {
 
         {/* 3 Podium Avatars */}
         <div className="flex items-center justify-center mt-2 mb-1 text-amber-200/80" aria-label="التصنيف بدون بيانات ترتيب مفبركة"><span className="text-2xl">✦</span></div>
-      </div></div>
+      </div>
 
       {/* 3. Room Card */}
       <div
@@ -65,7 +65,7 @@ export const CategoryCards: React.FC = () => {
 
         {/* 3 Podium Avatars */}
         <div className="flex items-center justify-center mt-2 mb-1 text-amber-200/80" aria-label="التصنيف بدون بيانات ترتيب مفبركة"><span className="text-2xl">✦</span></div>
-      </div></div>
+      </div>
     </div>
   );
 };
