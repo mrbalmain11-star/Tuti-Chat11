@@ -22,12 +22,25 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
     audio.delete(participant.identity + ':' + track.sid);
   });
   room.on(RoomEvent.Disconnected, () => onError('انقطع اتصال الصوت بالغرفة'));
-  room.on(RoomEvent.AudioPlaybackStatusChanged, () => {
-    if (!room.canPlaybackAudio) {
-      void room.startAudio().catch(error => onError('تعذر تشغيل الصوت المستلم: ' + String(error)));
+  // Android WebView can require a real user gesture before remote audio playback.
+  // Avoid repeatedly calling startAudio from its own status-change event.
+  const unlockAudio = () => {
+    if (room.canPlaybackAudio) {
+      document.removeEventListener('pointerdown', unlockAudio);
+      return;
     }
-  });
-  await room.connect(data.url, data.token, { autoSubscribe: true });
+    void room.startAudio().then(() => {
+      document.removeEventListener('pointerdown', unlockAudio);
+    }).catch(error => onError('تعذر تشغيل الصوت المستلم: ' + String(error)));
+  };
+  document.addEventListener('pointerdown', unlockAudio);
+  try {
+    await room.connect(data.url, data.token, { autoSubscribe: true });
+  } catch (error) {
+    document.removeEventListener('pointerdown', unlockAudio);
+    room.disconnect();
+    throw error;
+  }
   let micQueue: Promise<void> = Promise.resolve();
   let closing = false;
   const sync = (): Promise<void> => {
@@ -55,6 +68,7 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
   } catch (error) {
     // A failed Android capture must not leave a LiveKit connection alive.
     await room.localParticipant.setMicrophoneEnabled(false).catch(() => {});
+    document.removeEventListener('pointerdown', unlockAudio);
     room.disconnect();
     audio.forEach(el => el.remove());
     audio.clear();
