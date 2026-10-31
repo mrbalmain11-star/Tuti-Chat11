@@ -1,38 +1,39 @@
 import React, { useState } from 'react';
-import { X, Search, Radio, User, Building2 } from 'lucide-react';
+import { X, Search, Radio, ImageIcon, Building2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
 
 export const SearchModal: React.FC = () => {
   const { openSearchModal, setOpenSearchModal, rooms, enterRoom, agencies, setOpenAgencyModal } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
+  const normalized = searchTerm.trim().toLocaleLowerCase();
 
   if (!openSearchModal) return null;
 
   const matchedRooms = rooms.filter(
     (r) =>
-      r.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      String(r.publicId ?? '').includes(searchTerm.trim()) ||
-      r.hostName.toLowerCase().includes(searchTerm.toLowerCase())
+      r.title.toLowerCase().includes(normalized) ||
+      String(r.publicId ?? '').includes(normalized) ||
+      (r.hostName || '').toLowerCase().includes(normalized)
   );
 
   const matchedAgencies = agencies.filter((a) =>
-    a.name.toLowerCase().includes(searchTerm.toLowerCase())
+    a.name.toLowerCase().includes(normalized)
   );
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 backdrop-blur-xs font-['Cairo',sans-serif] p-4 pt-10 animate-in fade-in">
-      <div className="w-full max-w-sm bg-white rounded-3xl p-4 shadow-2xl flex flex-col max-h-[85vh]">
+      <div className="w-full max-w-sm bg-[#fffdf9] rounded-3xl p-4 shadow-2xl border border-emerald-200 flex flex-col max-h-[85vh]">
         {/* Search input bar */}
         <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
-          <div className="flex-1 flex items-center gap-2 bg-slate-100 px-3 py-2 rounded-full">
+          <div className="flex-1 flex items-center gap-2 bg-emerald-50 border border-emerald-200 focus-within:ring-2 focus-within:ring-emerald-300 px-3 py-3 rounded-2xl">
             <Search className="w-4 h-4 text-slate-400" />
             <input
               type="text"
               autoFocus
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="ابحث بالاسم أو ID الغرفة..."
+              placeholder="ابحث عن غرفة أو وكالة أو ID..."
               className="w-full bg-transparent text-xs text-slate-900 focus:outline-none text-right"
             />
           </div>
@@ -73,7 +74,7 @@ export const SearchModal: React.FC = () => {
                         className="p-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200/60 flex items-center justify-between cursor-pointer transition"
                       >
                         <div className="flex items-center gap-2">
-                          <img src={r.hostAvatar} alt="host" className="w-8 h-8 rounded-full object-cover" />
+                          {(r.coverImage || r.hostAvatar) ? <img src={r.coverImage || r.hostAvatar} alt={r.title} className="w-10 h-10 rounded-xl object-cover bg-emerald-100" /> : <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-700"><ImageIcon size={19}/></div>}
                           <div className="text-right">
                             <p className="text-xs font-bold text-slate-900">{r.title}</p>
                             <span className="text-[10px] text-slate-500 font-mono">ID: {r.publicId ?? '—'}</span>
@@ -107,7 +108,7 @@ export const SearchModal: React.FC = () => {
                         className="p-2.5 rounded-xl bg-slate-50 hover:bg-blue-50 border border-slate-200/60 flex items-center justify-between cursor-pointer transition"
                       >
                         <div className="flex items-center gap-2">
-                          <img src={a.logo} alt="agency" className="w-8 h-8 rounded-lg object-cover" />
+                          {a.logo ? <img src={a.logo} alt={a.name} className="w-9 h-9 rounded-lg object-cover" /> : <div className="w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center"><Building2 size={18}/></div>}
                           <div className="text-right">
                             <p className="text-xs font-bold text-slate-900">{a.name}</p>
                             <span className="text-[10px] text-slate-500">{a.countryFlag} • {a.memberCount} عضو</span>
