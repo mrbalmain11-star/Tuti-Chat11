@@ -766,7 +766,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           isEquipped: Boolean(row.equipped),
           isPermanent: !row.expires_at,
         } as BagItem;
-      }).filter((item: BagItem | null): item is BagItem => item !== null);
+      }).filter(Boolean) as BagItem[];
       setBagItems(rows);
       setEquippedFrame(rows.find(i => i.category === 'frames' && i.isEquipped)?.id || '');
       setEquippedBubble(rows.find(i => i.category === 'bubbles' && i.isEquipped)?.id || '');
