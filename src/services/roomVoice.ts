@@ -23,12 +23,21 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
   });
   room.on(RoomEvent.Disconnected, () => onError('انقطع اتصال الصوت بالغرفة'));
   await room.connect(data.url, data.token, { autoSubscribe: true });
-  const sync = async () => {
-    const publish = Boolean(data.canPublish && shouldPublish());
-    await room.localParticipant.setMicrophoneEnabled(publish);
+  let micQueue: Promise<void> = Promise.resolve();
+  let closing = false;
+  const sync = (): Promise<void> => {
+    micQueue = micQueue.catch(() => {}).then(async () => {
+      if (closing) return;
+      const publish = Boolean(data.canPublish && shouldPublish());
+      if (room.localParticipant.isMicrophoneEnabled === publish) return;
+      await room.localParticipant.setMicrophoneEnabled(publish);
+    });
+    return micQueue;
   };
   await sync();
   return { sync, close: async () => {
+    closing = true;
+    await micQueue.catch(() => {});
     await room.localParticipant.setMicrophoneEnabled(false).catch(() => {});
     room.disconnect();
     audio.forEach(el => el.remove());
