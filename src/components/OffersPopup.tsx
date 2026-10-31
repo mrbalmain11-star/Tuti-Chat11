@@ -15,12 +15,10 @@ export const OffersPopup: React.FC = () => {
     if(!stagingBackend)return;
     let alive=true;
     const refresh=async()=>{
-      const [banners,offers]=await Promise.all([stagingBackend!.from('home_banners').select('id,title,image_url,link_kind,link_target,starts_at,ends_at').eq('status','published').order('sort_order',{ascending:true}).limit(10),stagingBackend!.from('recharge_offers').select('id,title,description,image_url,price_iqd,coins,bonus_coins,starts_at,ends_at').eq('status','published').order('created_at',{ascending:false}).limit(10)]);
-      const {data,error}=banners;
-      if(offers.error) console.error('Recharge offers load failed',offers.error);
-      if(error){console.error('Offers load failed',error);return;}
+      const offers=await stagingBackend!.from('recharge_offers').select('id,title,description,image_url,price_iqd,coins,bonus_coins,starts_at,ends_at').eq('status','published').order('created_at',{ascending:false}).limit(10);
+      if(offers.error){console.error('Recharge offers load failed',offers.error);return;}
       const now=Date.now();
-      const merged:Offer[]=[...(offers.data??[]).map(o=>({...o,link_kind:'offer',link_target:null})),...(data??[])];
+      const merged:Offer[]=(offers.data??[]).map(o=>({...o,link_kind:'offer',link_target:null}));
       const active=merged.filter(b=>(!b.starts_at||Date.parse(b.starts_at)<=now)&&(!b.ends_at||Date.parse(b.ends_at)>now));
       if(alive){setItems(active);if(active.length&&!disabled&&!sessionStorage.getItem('totichat:offers:seen')){setOpen(true);sessionStorage.setItem('totichat:offers:seen','yes');}}
     };
