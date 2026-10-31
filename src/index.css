@@ -352,3 +352,12 @@ html, body, #root { width: 100%; overflow-x: hidden; }
 html.android-webview [class*="drop-shadow-"],
 html.android-webview [class*="backdrop-blur-"],
 html.android-webview .royal-glass { filter: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+
+/* Premium restrained micro-interactions for vector icons. */
+@keyframes toti-icon-breathe { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-1.5px) scale(1.045); } }
+@keyframes toti-icon-sheen { 0%,100% { opacity: .45; } 50% { opacity: .9; } }
+.toti-premium-icon { transform-origin: center; transition: transform 180ms ease, filter 180ms ease; will-change: transform; }
+.toti-premium-icon-active { animation: toti-icon-breathe 3.4s ease-in-out infinite; }
+.toti-premium-icon-button:active .toti-premium-icon { transform: scale(.88); }
+@media (hover:hover) and (pointer:fine) { .toti-premium-icon-button:hover .toti-premium-icon { transform: translateY(-2px) scale(1.07); filter: drop-shadow(0 2px 3px rgba(183,139,55,.3)); } }
+@media (prefers-reduced-motion: reduce) { .toti-premium-icon, .toti-premium-icon-active { animation: none !important; transition: none !important; will-change: auto; } }
