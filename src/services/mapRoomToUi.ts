@@ -9,7 +9,7 @@ export function mapRoomToUi(room: BackendRoom): VoiceRoom {
     hostId: room.owner_id,
     hostName: '',
     hostAvatar: '',
-    coverImage: '',
+    coverImage: room.cover_url ?? '',
     rank: 0,
     country: '',
     countryFlag: '',
