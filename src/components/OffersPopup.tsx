@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Gift, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { stagingBackend } from '../services/stagingBackend';
 import { useApp } from '../context/AppContext';
 
@@ -8,6 +8,7 @@ const hiddenKey = 'totichat:offers:hidden';
 export const OffersPopup: React.FC = () => {
   const [items,setItems] = useState<Offer[]>([]);
   const [open,setOpen] = useState(false);
+  const [index,setIndex] = useState(0);
   const [disabled,setDisabled] = useState(() => localStorage.getItem(hiddenKey)==='yes');
   const app=useApp();
   useEffect(()=>{
@@ -38,25 +39,32 @@ export const OffersPopup: React.FC = () => {
       default:break;
     }
   };
+  const selected=items[Math.min(index,Math.max(0,items.length-1))];
   return <>
-    {items.length>0&&<button type="button" onClick={()=>setOpen(true)} className="fixed bottom-24 right-4 z-40 rounded-full bg-gradient-to-r from-amber-500 to-yellow-600 text-white shadow-lg border border-amber-200 p-3" aria-label="العروض والإعلانات"><Gift size={23}/></button>}
-    {open&&items.length>0&&<div className="fixed inset-0 z-[110] bg-black/75 backdrop-blur-sm flex items-center justify-center p-5" dir="rtl" role="dialog" aria-modal="true" aria-label="العروض">
-      <div className="bg-white w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl border border-amber-300">
-        <div className="flex justify-between items-center p-4 bg-gradient-to-l from-emerald-900 to-emerald-700 text-white">
-          <strong className="flex items-center gap-2"><Gift size={20}/> العروض والإعلانات</strong>
-          <button type="button" onClick={()=>setOpen(false)} aria-label="إغلاق العروض" className="p-2 rounded-full bg-white/15"><X size={20}/></button>
+    {open&&selected&&<div className="fixed inset-0 z-[110] bg-black/70 backdrop-blur-[3px] flex items-center justify-center p-4" dir="rtl" role="dialog" aria-modal="true" aria-label="العروض والإعلانات">
+      <div className="bg-[#fffdf7] w-full max-w-sm rounded-[26px] overflow-hidden shadow-2xl border border-[#e6c778]">
+        <div className="flex justify-between items-center px-4 py-3 bg-gradient-to-l from-[#075d46] to-[#064534] text-white">
+          <strong className="text-base">العروض والإعلانات</strong>
+          <button type="button" onClick={()=>setOpen(false)} aria-label="إغلاق العروض" className="w-9 h-9 flex items-center justify-center rounded-full bg-white/15"><X size={21}/></button>
         </div>
-        <div className="max-h-[55vh] overflow-y-auto p-3 space-y-3">
-          {items.map(item=><button key={item.id} type="button" onClick={()=>navigate(item)} className="w-full overflow-hidden rounded-2xl border border-amber-200 text-right bg-[#faf7ef]">
-            {item.image_url ? <img src={item.image_url} alt={item.title} className="w-full aspect-[2/1] object-contain bg-emerald-950"/> : <div className="w-full bg-gradient-to-l from-emerald-900 to-amber-700 text-white p-6 flex justify-center"><Gift size={36}/></div>}
-            {item.link_kind==='offer'&&<div className="px-3 pt-3 text-emerald-900 font-black">{Number(item.price_iqd).toLocaleString('ar-IQ')} د.ع مقابل {Number((item.coins??0)+(item.bonus_coins??0)).toLocaleString('ar-IQ')} عملة</div>}
-            {item.description&&<div className="px-3 pt-1 text-sm text-slate-600">{item.description}</div>}
-            <div className="p-3 font-bold text-slate-800">{item.title}</div>
-          </button>)}
+        <div className="p-3">
+          <div className="rounded-2xl overflow-hidden border border-[#e6d9b0] bg-[#f7f2e5]">
+            {selected.image_url?<img src={selected.image_url} alt={selected.title} className="w-full aspect-[2/1] object-contain"/>:<div className="aspect-[2/1] flex items-center justify-center bg-gradient-to-br from-[#075d46] to-[#bd913a] text-white text-center font-black p-4">{selected.title}</div>}
+          </div>
+          <div className="pt-3 px-1 text-center">
+            <h3 className="text-base font-black text-[#172c26]">{selected.title}</h3>
+            {selected.link_kind==='offer'&&<p className="text-sm font-bold text-emerald-800 mt-1">{Number(selected.price_iqd).toLocaleString('ar-IQ')} د.ع مقابل {(Number(selected.coins??0)+Number(selected.bonus_coins??0)).toLocaleString('ar-IQ')} عملة</p>}
+            {selected.description&&<p className="text-xs text-slate-600 mt-1 line-clamp-2">{selected.description}</p>}
+          </div>
+          {items.length>1&&<div className="flex items-center justify-between mt-3">
+            <button onClick={()=>setIndex(i=>(i-1+items.length)%items.length)} aria-label="العرض السابق" className="p-2 rounded-full bg-emerald-50 text-emerald-900"><ChevronRight size={20}/></button>
+            <span className="text-xs text-slate-500" dir="ltr">{index+1} / {items.length}</span>
+            <button onClick={()=>setIndex(i=>(i+1)%items.length)} aria-label="العرض التالي" className="p-2 rounded-full bg-emerald-50 text-emerald-900"><ChevronLeft size={20}/></button>
+          </div>}
         </div>
-        <div className="flex items-center justify-between gap-2 p-4 border-t border-slate-100">
-          <label className="text-sm text-slate-600 flex items-center gap-2"><input type="checkbox" checked={disabled} onChange={e=>{setDisabled(e.target.checked);localStorage.setItem(hiddenKey,e.target.checked?'yes':'no');}}/> لا تعرض تلقائياً</label>
-          <button onClick={()=>setOpen(false)} className="px-5 py-2 rounded-xl bg-emerald-700 text-white font-bold">إغلاق</button>
+        <div className="flex items-center justify-between gap-3 px-4 pb-4">
+          <label className="text-xs text-slate-600 flex items-center gap-2"><input type="checkbox" checked={disabled} onChange={e=>{setDisabled(e.target.checked);localStorage.setItem(hiddenKey,e.target.checked?'yes':'no');}}/> لا تعرض تلقائياً</label>
+          <button onClick={()=>selected.link_kind==='screen'?navigate(selected):setOpen(false)} className="px-5 py-2.5 rounded-xl bg-[#087653] text-white font-bold">{selected.link_kind==='screen'?'انتقل الآن':'إغلاق'}</button>
         </div>
       </div>
     </div>}
