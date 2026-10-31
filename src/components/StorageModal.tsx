@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { stagingBackend } from '../services/stagingBackend';
 import {
   ChevronRight,
   ShoppingBag,
@@ -42,7 +43,6 @@ export const StorageModal: React.FC = () => {
     equippedMount,
     equipBagItem,
     unequipBagItem,
-    buyStoreItem,
     currentUser,
     setOpenRechargeModal,
     setOpenVipModal,
@@ -62,6 +62,7 @@ export const StorageModal: React.FC = () => {
 
   // Purchase confirmation & toast state
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [purchaseBusy, setPurchaseBusy] = useState(false);
 
   if (!openStorageModal) return null;
 
@@ -84,17 +85,53 @@ export const StorageModal: React.FC = () => {
   const currentBagList = bagItems.filter((i) => i.category === bagCategory);
 
   // Handle Buy Action
-  const handleBuy = (item: StorageItem) => {
-    if (currentUser.coins < item.price) {
-      sounds.playClick();
-      showToast('رصيد العملات غير كافٍ! يرجى شحن الرصيد');
-      return;
-    }
-
-    const success = buyStoreItem(item);
-    if (success) {
-      showToast(`تم شراء وتجهيز ${item.name} بنجاح!`);
+  const handleBuy = async (item: StorageItem) => {
+    if (purchaseBusy) return;
+    if (!stagingBackend) { showToast('الخادم غير متصل، لم يتم الخصم'); return; }
+    setPurchaseBusy(true);
+    try {
+      // Only catalog-backed items may be sold. Prices are verified server-side.
+      const { data: catalog, error: catalogError } = await stagingBackend
+        .from('store_catalog')
+        .select('id,price,currency,is_active')
+        .eq('id', item.id)
+        .eq('is_active', true)
+        .maybeSingle();
+      if (catalogError) throw catalogError;
+      if (!catalog) {
+        showToast('هذا العنصر غير متاح للشراء على الخادم حالياً');
+        return;
+      }
+      if (catalog.currency !== 'gold') {
+        showToast('عملة هذا العنصر غير مدعومة في واجهة الشراء الحالية');
+        return;
+      }
+      if (Number(catalog.price) !== item.price) {
+        showToast('السعر تغيّر، يرجى تحديث المتجر قبل تأكيد الشراء');
+        return;
+      }
+      if (currentUser.coins < Number(catalog.price)) {
+        showToast('رصيد العملات غير كافٍ');
+        return;
+      }
+      const { data, error } = await stagingBackend.rpc('phase3_purchase_store', {
+        p_item_id: item.id,
+        p_request_id: crypto.randomUUID(),
+        p_expected_price: Number(catalog.price),
+        p_expected_currency: catalog.currency,
+      });
+      if (error) throw error;
+      if (!data || data.success === false) throw new Error('Purchase not confirmed by server');
+      window.dispatchEvent(new Event('totichat:wallet-changed'));
+      window.dispatchEvent(new Event('totichat:inventory-changed'));
+      sounds.playSuccess();
+      showToast('تم الشراء بنجاح وحفظ العنصر في حسابك');
       setSelectedStoreItem(null);
+    } catch (error) {
+      console.error('Store purchase failed', error);
+      showToast('فشل الشراء أو لم يتم تأكيده، راجع رصيدك قبل المحاولة مجدداً');
+    } finally {
+      setPurchaseBusy(false);
     }
   };
 
@@ -481,12 +518,13 @@ export const StorageModal: React.FC = () => {
             <button
               onClick={() => {
                 if (selectedStoreItem) {
-                  handleBuy(selectedStoreItem);
+                  void handleBuy(selectedStoreItem);
                 } else {
                   sounds.playClick();
                   showToast('الرجاء اختيار عنصر من المتجر أولاً للشراء');
                 }
               }}
+              disabled={purchaseBusy}
               className="px-8 py-2 rounded-full bg-emerald-400 hover:bg-emerald-300 text-emerald-950 font-black text-sm shadow-md active:scale-95 transition"
             >
               شراء
@@ -550,7 +588,7 @@ export const StorageModal: React.FC = () => {
 
                   <button
                     onClick={() => {
-                      handleBuy(previewItem as StorageItem);
+                      void handleBuy(previewItem as StorageItem);
                       setPreviewItem(null);
                     }}
                     className="w-full py-2.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-emerald-950 font-black text-xs shadow-md active:scale-95 transition"
