@@ -20,7 +20,7 @@ import { fetchRealRoomMessages } from '../services/roomMessageReads';
 import { fetchRoomVisualMembers } from '../services/roomVisualMembers';
 import { reserveSeat, joinRoomMembership, leaveRoomMembership, sendRealRoomMessage, setMyRoomMute, releaseMySeat } from '../services/roomMembershipRpc';
 import { Language, Translations, translations } from '../i18n/translations';
-import { StorageItem, BagItem } from '../data/storageItems';
+import { StorageItem, BagItem, storeFrames, storeMounts, storeBubbles, storeEntrances } from '../data/storageItems';
 import { getLevelFromExp, calculateCumulativeExpForLevel } from '../utils/levelUtils';
 
 interface GiftAnimationPayload {
@@ -728,26 +728,63 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [openSearchModal, setOpenSearchModal] = useState(false);
   const [openStorageModal, setOpenStorageModal] = useState(false);
   const [storageTab, setStorageTab] = useState<'store' | 'bag'>('store');
-  const [bagItems, setBagItems] = useState<BagItem[]>(() => {
-    const saved = safeStorage.getItem('toti_bag_items_v2');
-    if (saved) {
-      try {
-        const parsed: BagItem[] = JSON.parse(saved);
-        return parsed.map((item) => (item.category === 'frames' ? { ...item, isEquipped: false } : item));
-      } catch {
-        return [];
-      }
-    }
-    return [];
-  });
+  // Ownership comes exclusively from Supabase, not device-local sample data.
+  const [bagItems, setBagItems] = useState<BagItem[]>([]);
   const [equippedFrame, setEquippedFrame] = useState<string>('');
   const [equippedBubble, setEquippedBubble] = useState<string>('');
-  const [equippedEntrance, setEquippedEntrance] = useState<string>('entrance-imperial-caravan');
-  const [equippedMount, setEquippedMount] = useState<string>('mount-rolls-royce');
+  const [equippedEntrance, setEquippedEntrance] = useState<string>('');
+  const [equippedMount, setEquippedMount] = useState<string>('');
 
   useEffect(() => {
-    safeStorage.setItem('toti_bag_items_v2', JSON.stringify(bagItems));
-  }, [bagItems]);
+    if (!stagingBackend || !currentUser.id) {
+      setBagItems([]);
+      return;
+    }
+    let live = true;
+    const refreshBag = async () => {
+      const { data, error } = await stagingBackend
+        .from('store_ownership')
+        .select('item_id,equipped,expires_at,store_catalog(name,category)')
+        .eq('user_id', currentUser.id);
+      if (error) { console.warn('Store inventory refresh failed', error); return; }
+      if (!live) return;
+      const definitions = [...storeFrames, ...storeMounts, ...storeBubbles, ...storeEntrances];
+      const rows: BagItem[] = (data || []).filter((row: any) =>
+        !row.expires_at || new Date(row.expires_at).getTime() > Date.now()
+      ).map((row: any) => {
+        const definition = definitions.find(item => item.id === row.item_id);
+        const catalog = Array.isArray(row.store_catalog) ? row.store_catalog[0] : row.store_catalog;
+        const category = definition?.category || (catalog?.category === 'cars' ? 'mounts' : catalog?.category);
+        if (!['frames','bubbles','entrances','mounts'].includes(category)) return null;
+        return {
+          id: row.item_id,
+          name: catalog?.name || definition?.name || row.item_id,
+          category,
+          iconType: definition?.iconType || 'crown',
+          colorScheme: definition?.colorScheme || 'gold',
+          expiry: row.expires_at ? new Date(row.expires_at).toLocaleDateString('ar-IQ') : 'دائم',
+          isEquipped: Boolean(row.equipped),
+          isPermanent: !row.expires_at,
+        } as BagItem;
+      }).filter((item: BagItem | null): item is BagItem => item !== null);
+      setBagItems(rows);
+      setEquippedFrame(rows.find(i => i.category === 'frames' && i.isEquipped)?.id || '');
+      setEquippedBubble(rows.find(i => i.category === 'bubbles' && i.isEquipped)?.id || '');
+      setEquippedEntrance(rows.find(i => i.category === 'entrances' && i.isEquipped)?.id || '');
+      setEquippedMount(rows.find(i => i.category === 'mounts' && i.isEquipped)?.id || '');
+    };
+    void refreshBag();
+    const onRefresh = () => { void refreshBag(); };
+    window.addEventListener('totichat:inventory-changed', onRefresh);
+    const channel = stagingBackend.channel('inventory-' + currentUser.id)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'store_ownership', filter: 'user_id=eq.' + currentUser.id }, onRefresh)
+      .subscribe();
+    return () => {
+      live = false;
+      window.removeEventListener('totichat:inventory-changed', onRefresh);
+      void stagingBackend.removeChannel(channel);
+    };
+  }, [currentUser.id]);
 
   const equipBagItem = (item: BagItem) => {
     sounds.playLevelUp();
