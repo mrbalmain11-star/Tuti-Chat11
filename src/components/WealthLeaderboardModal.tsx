@@ -1,5 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { stagingBackend } from '../services/stagingBackend';
+import { imageUrl } from '../services/imageUrl';
+
+const rankingImageFallback = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="50" fill="#e9d5a1"/><circle cx="50" cy="38" r="17" fill="#94753e"/><path d="M17 91c3-27 18-38 33-38s30 11 33 38" fill="#94753e"/></svg>');
+const onRankingImageError = (event: React.SyntheticEvent<HTMLImageElement>) => { if (event.currentTarget.src !== rankingImageFallback) event.currentTarget.src = rankingImageFallback; };
+
 import {
   ChevronRight,
   ChevronLeft,
@@ -732,7 +737,7 @@ export const WealthLeaderboardModal: React.FC = () => {
     const interval=setInterval(()=>void refresh(),30000);
     return()=>{alive=false;clearInterval(interval);};
   },[openWealthLeaderboardModal,period,leaderboardTab]);
-  const profileFor=(r:RankingRow):UserProfile=>({...currentUser,id:String(r.public_id),name:r.display_name,nickname:r.display_name,avatar:r.avatar_url||'',wealthExp:0,charmExp:0,coins:0,diamonds:0});
+  const profileFor=(r:RankingRow):UserProfile=>({...currentUser,id:String(r.public_id),name:r.display_name,nickname:r.display_name,avatar:imageUrl(r.avatar_url) || rankingImageFallback,wealthExp:0,charmExp:0,coins:0,diamonds:0});
 
 
   if (!openWealthLeaderboardModal) return null;
@@ -742,7 +747,7 @@ export const WealthLeaderboardModal: React.FC = () => {
   const topWealth1=rankedSupporters[0],topWealth2=rankedSupporters[1],topWealth3=rankedSupporters[2],restWealth7=rankedSupporters.slice(3,10);
   const rankedCharmList:CharmLeaderboardItem[]=leaderboardTab==='charm'?ranking.map((r,i)=>({rank:i+1,charmReceived:Number(r.score),user:profileFor(r)})):[];
   const topCharm1=rankedCharmList[0],topCharm2=rankedCharmList[1],topCharm3=rankedCharmList[2],restCharm7=rankedCharmList.slice(3,10);
-  const rankedRoomList:RoomLeaderboardItem[]=leaderboardTab==='room'?ranking.map((r,i)=>({id:r.entity_id,rank:i+1,title:r.display_name,coverImage:'',hostName:'',hostAvatar:'',roomCups:0,roomGiftsAmount:Number(r.score),activeListeners:0})):[];
+  const rankedRoomList:RoomLeaderboardItem[]=leaderboardTab==='room'?ranking.map((r,i)=>({id:r.entity_id,rank:i+1,title:r.display_name,coverImage:rankingImageFallback,hostName:'',hostAvatar:rankingImageFallback,roomCups:0,roomGiftsAmount:Number(r.score),activeListeners:0})):[];
   const topRoom1=rankedRoomList[0],topRoom2=rankedRoomList[1],topRoom3=rankedRoomList[2],restRoom7=rankedRoomList.slice(3,10);
 
   const handleOpenUser = (u: UserProfile) => {
@@ -955,7 +960,8 @@ export const WealthLeaderboardModal: React.FC = () => {
                         </span>
                         <div className="w-16 h-16 rounded-full p-1 bg-gradient-to-b from-slate-200 to-slate-400 border-2 border-slate-300 shadow-md">
                           <img
-                            src={topWealth2.user.avatar}
+                            src={topWealth2.user.avatar || rankingImageFallback}
+                            onError={onRankingImageError}
                             alt={topWealth2.user.name}
                             className="w-full h-full rounded-full object-cover"
                           />
@@ -992,7 +998,8 @@ export const WealthLeaderboardModal: React.FC = () => {
                       <div className="relative mb-1">
                         <div className="w-20 h-20 rounded-full p-1.5 bg-gradient-to-b from-amber-300 via-yellow-200 to-amber-500 border-2 border-amber-400 shadow-xl ring-3 ring-amber-300/40">
                           <img
-                            src={topWealth1.user.avatar}
+                            src={topWealth1.user.avatar || rankingImageFallback}
+                            onError={onRankingImageError}
                             alt={topWealth1.user.name}
                             className="w-full h-full rounded-full object-cover"
                           />
@@ -1020,6 +1027,8 @@ export const WealthLeaderboardModal: React.FC = () => {
                     </div>
                   )}
 
+                  {/* Keep the winner centered even if only two ranked users exist. */}
+                  {!topWealth3 && <div className="flex-1" aria-hidden="true" />}
                   {/* TOP 3 (Bronze Podium) */}
                   {topWealth3 && (
                     <div
@@ -1032,7 +1041,8 @@ export const WealthLeaderboardModal: React.FC = () => {
                         </span>
                         <div className="w-16 h-16 rounded-full p-1 bg-gradient-to-b from-amber-600 to-amber-800 border-2 border-amber-600 shadow-md">
                           <img
-                            src={topWealth3.user.avatar}
+                            src={topWealth3.user.avatar || rankingImageFallback}
+                            onError={onRankingImageError}
                             alt={topWealth3.user.name}
                             className="w-full h-full rounded-full object-cover"
                           />
@@ -1090,7 +1100,8 @@ export const WealthLeaderboardModal: React.FC = () => {
                         {/* Avatar with country flag */}
                         <div className="relative w-11 h-11 rounded-full p-0.5 bg-gradient-to-b from-amber-200 to-amber-400 border border-amber-300 shrink-0">
                           <img
-                            src={supporter.user.avatar}
+                            src={supporter.user.avatar || rankingImageFallback}
+                            onError={onRankingImageError}
                             alt={supporter.user.name}
                             className="w-full h-full rounded-full object-cover"
                           />
@@ -1159,7 +1170,8 @@ export const WealthLeaderboardModal: React.FC = () => {
                         </span>
                         <div className="w-16 h-16 rounded-full p-1 bg-gradient-to-b from-slate-200 to-slate-400 border-2 border-slate-300 shadow-md">
                           <img
-                            src={topCharm2.user.avatar}
+                            src={topCharm2.user.avatar || rankingImageFallback}
+                            onError={onRankingImageError}
                             alt={topCharm2.user.name}
                             className="w-full h-full rounded-full object-cover"
                           />
@@ -1199,7 +1211,8 @@ export const WealthLeaderboardModal: React.FC = () => {
                       <div className="relative mb-1">
                         <div className="w-20 h-20 rounded-full p-1.5 bg-gradient-to-b from-amber-300 via-yellow-200 to-amber-500 border-2 border-amber-400 shadow-xl ring-3 ring-amber-300/40">
                           <img
-                            src={topCharm1.user.avatar}
+                            src={topCharm1.user.avatar || rankingImageFallback}
+                            onError={onRankingImageError}
                             alt={topCharm1.user.name}
                             className="w-full h-full rounded-full object-cover"
                           />
@@ -1242,7 +1255,8 @@ export const WealthLeaderboardModal: React.FC = () => {
                         </span>
                         <div className="w-16 h-16 rounded-full p-1 bg-gradient-to-b from-amber-600 to-amber-800 border-2 border-amber-600 shadow-md">
                           <img
-                            src={topCharm3.user.avatar}
+                            src={topCharm3.user.avatar || rankingImageFallback}
+                            onError={onRankingImageError}
                             alt={topCharm3.user.name}
                             className="w-full h-full rounded-full object-cover"
                           />
@@ -1304,7 +1318,8 @@ export const WealthLeaderboardModal: React.FC = () => {
                         {/* Avatar with country flag */}
                         <div className="relative w-11 h-11 rounded-full p-0.5 bg-gradient-to-b from-amber-200 to-amber-400 border border-amber-300 shrink-0">
                           <img
-                            src={item.user.avatar}
+                            src={item.user.avatar || rankingImageFallback}
+                            onError={onRankingImageError}
                             alt={item.user.name}
                             className="w-full h-full rounded-full object-cover"
                           />
@@ -1376,7 +1391,8 @@ export const WealthLeaderboardModal: React.FC = () => {
                         {/* صورة الروم */}
                         <div className="w-16 h-16 rounded-2xl p-1 bg-gradient-to-b from-slate-200 to-slate-400 border-2 border-slate-300 shadow-md overflow-hidden">
                           <img
-                            src={topRoom2.coverImage}
+                            src={topRoom2.coverImage || rankingImageFallback}
+                            onError={onRankingImageError}
                             alt={topRoom2.title}
                             className="w-full h-full rounded-xl object-cover"
                           />
@@ -1410,7 +1426,8 @@ export const WealthLeaderboardModal: React.FC = () => {
                         {/* صورة الروم المركز الأول */}
                         <div className="w-20 h-20 rounded-2xl p-1.5 bg-gradient-to-b from-amber-300 via-yellow-200 to-amber-500 border-2 border-amber-400 shadow-xl ring-3 ring-amber-300/40 overflow-hidden">
                           <img
-                            src={topRoom1.coverImage}
+                            src={topRoom1.coverImage || rankingImageFallback}
+                            onError={onRankingImageError}
                             alt={topRoom1.title}
                             className="w-full h-full rounded-xl object-cover"
                           />
@@ -1446,7 +1463,8 @@ export const WealthLeaderboardModal: React.FC = () => {
                         {/* صورة الروم */}
                         <div className="w-16 h-16 rounded-2xl p-1 bg-gradient-to-b from-amber-600 to-amber-800 border-2 border-amber-600 shadow-md overflow-hidden">
                           <img
-                            src={topRoom3.coverImage}
+                            src={topRoom3.coverImage || rankingImageFallback}
+                            onError={onRankingImageError}
                             alt={topRoom3.title}
                             className="w-full h-full rounded-xl object-cover"
                           />
@@ -1500,7 +1518,8 @@ export const WealthLeaderboardModal: React.FC = () => {
                         {/* صورة الروم */}
                         <div className="relative w-11 h-11 rounded-xl p-0.5 bg-gradient-to-b from-amber-200 to-amber-400 border border-amber-300 shrink-0 overflow-hidden">
                           <img
-                            src={room.coverImage}
+                            src={room.coverImage || rankingImageFallback}
+                            onError={onRankingImageError}
                             alt={room.title}
                             className="w-full h-full rounded-lg object-cover"
                           />
