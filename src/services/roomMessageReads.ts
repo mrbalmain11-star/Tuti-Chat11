@@ -8,14 +8,16 @@ type MessageRow = {
   created_at: string;
 };
 
-export async function fetchRealRoomMessages(roomId: string): Promise<ChatMessage[]> {
+export async function fetchRealRoomMessages(roomId: string, since?: string): Promise<ChatMessage[]> {
   if (!stagingBackend) throw new Error('Staging not configured');
   const { data: auth, error: authError } = await stagingBackend.auth.getUser();
   if (authError) throw authError;
   if (!auth.user) throw new Error('Not authenticated');
-  const { data, error } = await stagingBackend.from('room_messages')
+  let query = stagingBackend.from('room_messages')
     .select('id,sender_id,body,created_at')
-    .eq('room_id', roomId)
+    .eq('room_id', roomId);
+  if (since) query = query.gte('created_at', since);
+  const { data, error } = await query
     .order('created_at', { ascending: false })
     .limit(100);
   if (error) throw error;
