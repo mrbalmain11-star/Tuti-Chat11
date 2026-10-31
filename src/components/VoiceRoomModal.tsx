@@ -1,4 +1,5 @@
 import { stagingBackend } from '../services/stagingBackend';
+import { App as CapacitorApp } from '@capacitor/app';
 import { playRoomMusic, pauseRoomMusic, resumeRoomMusic, stopRoomMusic } from '../services/roomVoice';
 import React, { useState, useRef, useEffect } from 'react';
 import {
@@ -473,6 +474,29 @@ export const VoiceRoomModal: React.FC = () => {
     const timer = window.setTimeout(() => setVipEntrance(false), 3400);
     return () => window.clearTimeout(timer);
   }, [activeRoom?.id, isRoomMinimized, currentUser.vipLevel]);
+
+  // Android system back must never leave an active voice session abruptly.
+  useEffect(() => {
+    if (!activeRoom) return;
+    let disposed = false;
+    let listener: { remove: () => Promise<void> } | undefined;
+    void CapacitorApp.addListener('backButton', () => {
+      if (isRoomMinimized) {
+        setIsRoomMinimized(false);
+      } else if (showExitOptions) {
+        setShowExitOptions(false);
+      } else if (showChatInput) {
+        setShowChatInput(false);
+      } else if (selectedMicUser) {
+        setSelectedMicUser(null);
+      } else if (selectedEmptySeat !== null) {
+        setSelectedEmptySeat(null);
+      } else {
+        setShowExitOptions(true);
+      }
+    }).then(handle => { if (disposed) void handle.remove(); else listener = handle; });
+    return () => { disposed = true; if (listener) void listener.remove(); };
+  }, [activeRoom?.id, isRoomMinimized, showExitOptions, showChatInput, selectedMicUser, selectedEmptySeat, setIsRoomMinimized]);
 
   // Get current messages
   const currentMessages = activeRoom ? roomMessages[activeRoom.id] || [] : [];
