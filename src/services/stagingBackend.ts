@@ -299,7 +299,6 @@ export async function uploadMyAvatar(file: Blob): Promise<string> {
 }
 
 export async function getMyAvatarUrl(path: string): Promise<string> {
-  const client = requireBackend();
   return imageUrl(path,'profile-avatars');
 }
 
