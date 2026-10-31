@@ -25,7 +25,7 @@ function getEpicStyle(name: string): EpicStyle | null {
   return null;
 }
 
-const SwordArt: React.FC = () => (
+export const SwordArt: React.FC = () => (
   <svg className="toti-sword" viewBox="0 0 220 440" role="img" aria-label="سيف ذو الفقار" style={{ width: 'min(45vw,220px)', height: 'min(56vh,440px)', filter: 'drop-shadow(0 0 25px #29d780)' }}>
     <defs>
       <linearGradient id="totiBlade" x1="0" x2="1">
