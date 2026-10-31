@@ -799,11 +799,13 @@ export const VoiceRoomModal: React.FC = () => {
                         {Number(seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel || 0) >= 1 && (
                           <Crown className="absolute -top-1 left-1/2 -translate-x-1/2 z-20 w-5 h-5 text-amber-200 fill-amber-500 drop-shadow-[0_0_5px_#facc15] pointer-events-none" />
                         )}
-                        <img
+                        {seat.user.avatar ? <img
                           src={seat.user.avatar}
                           alt={seat.user.name}
-                          className="w-full h-full rounded-full object-cover"
-                        />
+                          className="block w-full h-full rounded-full object-cover object-center bg-emerald-900"
+                          loading="eager"
+                          onError={e => { e.currentTarget.style.visibility = 'hidden'; }}
+                        /> : <div className="w-full h-full rounded-full bg-gradient-to-br from-emerald-700 to-teal-950 flex items-center justify-center text-white text-lg font-black">{(seat.user.name || '؟').slice(0,1)}</div>}
                         {seat.isMuted && (
                           <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
                             <MicOff className="w-4 h-4 text-rose-400" />
@@ -874,11 +876,13 @@ export const VoiceRoomModal: React.FC = () => {
                         {Number(seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel || 0) >= 1 && (
                           <Crown className="absolute -top-1 left-1/2 -translate-x-1/2 z-20 w-5 h-5 text-amber-200 fill-amber-500 drop-shadow-[0_0_5px_#facc15] pointer-events-none" />
                         )}
-                        <img
+                        {seat.user.avatar ? <img
                           src={seat.user.avatar}
                           alt={seat.user.name}
-                          className="w-full h-full rounded-full object-cover"
-                        />
+                          className="block w-full h-full rounded-full object-cover object-center bg-emerald-900"
+                          loading="eager"
+                          onError={e => { e.currentTarget.style.visibility = 'hidden'; }}
+                        /> : <div className="w-full h-full rounded-full bg-gradient-to-br from-emerald-700 to-teal-950 flex items-center justify-center text-white text-lg font-black">{(seat.user.name || '؟').slice(0,1)}</div>}
                         {seat.isMuted && (
                           <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
                             <MicOff className="w-4 h-4 text-rose-400" />
@@ -945,11 +949,13 @@ export const VoiceRoomModal: React.FC = () => {
                         {Number(seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel || 0) >= 1 && (
                           <Crown className="absolute -top-1 left-1/2 -translate-x-1/2 z-20 w-5 h-5 text-amber-200 fill-amber-500 drop-shadow-[0_0_5px_#facc15] pointer-events-none" />
                         )}
-                        <img
+                        {seat.user.avatar ? <img
                           src={seat.user.avatar}
                           alt={seat.user.name}
-                          className="w-full h-full rounded-full object-cover"
-                        />
+                          className="block w-full h-full rounded-full object-cover object-center bg-emerald-900"
+                          loading="eager"
+                          onError={e => { e.currentTarget.style.visibility = 'hidden'; }}
+                        /> : <div className="w-full h-full rounded-full bg-gradient-to-br from-emerald-700 to-teal-950 flex items-center justify-center text-white text-lg font-black">{(seat.user.name || '؟').slice(0,1)}</div>}
                         {seat.isMuted && (
                           <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
                             <MicOff className="w-4 h-4 text-rose-400" />
