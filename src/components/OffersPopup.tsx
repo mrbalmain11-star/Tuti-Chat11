@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ChevronLeft, ChevronRight, Gift, Coins, Gem, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Gift, Coins, X } from 'lucide-react';
 import { stagingBackend } from '../services/stagingBackend';
 
 
@@ -51,8 +51,8 @@ export const OffersPopup: React.FC = () => {
             <div className="grid grid-cols-3 gap-2">
               {amounts.slice(0,6).map((amount,i)=><div key={i} className={`relative rounded-xl border-2 p-2 text-center min-h-[98px] flex flex-col items-center justify-between ${daily?.day===i+1?'bg-gradient-to-b from-[#fff5a3] to-[#f5bd42] border-[#d6a230]':'bg-gradient-to-b from-white to-[#9ee8d0] border-[#71cbb0]'}`}>
                 <strong className="text-[#0b735a] text-sm">اليوم {i+1}</strong>
-                {i===2?<Gem className="text-sky-500" size={26}/>:<Coins className="text-[#e8a51d]" size={26}/>}
-                <span className="text-[#075b45] font-black text-sm">{amount} {i===2?'💎':'🪙'}</span>
+                <Coins className="text-[#e8a51d]" size={26}/>
+                <span className="text-[#075b45] font-black text-sm">{amount} 🪙</span>
               </div>)}
             </div>
             <div className={`mt-2 rounded-xl border-2 border-[#71cbb0] bg-gradient-to-b from-[#e8fff5] to-[#73d8b4] p-3 text-center ${daily?.day===7?'ring-2 ring-amber-400':''}`}>
@@ -60,7 +60,6 @@ export const OffersPopup: React.FC = () => {
               <div className="text-5xl my-1">🎁</div>
               <span className="text-[#075b45] font-black">3,000 🪙</span>
             </div>
-            {daily?.day===3&&<p className="text-xs text-amber-800 text-center mt-2">مكافأة اليوم الثالث: 5 ألماسات</p>}
             <button disabled={!daily||daily.claimed||claiming} onClick={()=>void claim()} className="w-full mt-3 rounded-2xl bg-gradient-to-b from-[#ffe57a] to-[#f6b500] text-[#6b4200] font-black text-lg py-3 border-2 border-[#f0b22a] disabled:opacity-60">{daily?.claimed?'تم الاستلام اليوم':claiming?'جاري الاستلام...':'استلام المكافأة'}</button>
           </>:<>
             {items.length===0?<p className="text-center text-emerald-900 py-8">لا توجد عروض شحن خاصة حالياً</p>:selected&&<div className="rounded-xl bg-white border border-emerald-200 overflow-hidden">
