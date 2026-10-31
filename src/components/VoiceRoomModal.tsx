@@ -1,4 +1,5 @@
 import { stagingBackend } from '../services/stagingBackend';
+import { playRoomMusic, pauseRoomMusic, resumeRoomMusic, stopRoomMusic } from '../services/roomVoice';
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Mic,
@@ -222,6 +223,7 @@ export const VoiceRoomModal: React.FC = () => {
 
   // Tools Drawer Sub-Modals
   const [showMusicPlayerModal, setShowMusicPlayerModal] = useState(false);
+  const [musicStatus, setMusicStatus] = useState<'stopped'|'playing'|'paused'>('stopped');
   const [showTasksModal, setShowTasksModal] = useState(false);
   const [tasksClaimed, setTasksClaimed] = useState<Record<string, boolean>>({});
 
@@ -1807,7 +1809,33 @@ export const VoiceRoomModal: React.FC = () => {
                 </button>
               </div>
 
-              <p role="status" className="text-xs text-slate-300">تشغيل موسيقى الغرفة غير متاح حالياً حتى اكتمال ربط الخدمة.</p>
+              {(isOwner || isModerator) ? (
+                <div className="space-y-3">
+                  <p className="text-xs text-slate-300">اختر ملف موسيقى من جهازك ليُبث داخل الغرفة.</p>
+                  <input type="file" accept="audio/*" className="w-full text-xs" onChange={async event => {
+                    const file = event.target.files?.[0];
+                    if (!file) return;
+                    try {
+                      await playRoomMusic(file);
+                      setMusicStatus('playing');
+                    } catch (error) {
+                      console.error('Room music failed', error);
+                      showToast('تعذر بث الموسيقى: ' + (error instanceof Error ? error.message : 'خطأ'));
+                    }
+                    event.target.value = '';
+                  }} />
+                  <div className="flex gap-2">
+                    <button className="rounded-xl bg-purple-700 px-3 py-2 text-xs" onClick={async () => {
+                      try { if (musicStatus === 'paused') { await resumeRoomMusic(); setMusicStatus('playing'); }
+                        else { pauseRoomMusic(); setMusicStatus('paused'); } }
+                      catch (error) { showToast('تعذر تغيير تشغيل الموسيقى'); console.error(error); }
+                    }}>{musicStatus === 'paused' ? 'استئناف' : 'إيقاف مؤقت'}</button>
+                    <button className="rounded-xl bg-rose-700 px-3 py-2 text-xs" onClick={() => {
+                      void stopRoomMusic().then(() => setMusicStatus('stopped'));
+                    }}>إيقاف نهائي</button>
+                  </div>
+                </div>
+              ) : <p className="text-xs text-slate-300">تشغيل الموسيقى متاح لإدارة الغرفة فقط.</p>}
             </div>
           </div>
         )}
