@@ -1,5 +1,17 @@
 import { Room, RoomEvent } from 'livekit-client';
 import { stagingBackend } from './stagingBackend';
+import { RoomMusicPublisher } from './roomMusic';
+
+const music = new RoomMusicPublisher();
+let musicRoom: Room | null = null;
+export async function playRoomMusic(file: File): Promise<void> {
+  if (!musicRoom) throw new Error('اتصال صوت الغرفة غير جاهز');
+  await music.play(musicRoom, file);
+}
+export function pauseRoomMusic(): void { music.pause(); }
+export async function resumeRoomMusic(): Promise<void> { await music.resume(); }
+export async function stopRoomMusic(): Promise<void> { await music.stop(); }
+
 
 /** Connects to the existing staging LiveKit authority. Never ships API secrets to Android. */
 export async function connectRoomVoice(roomId: string, shouldPublish: () => boolean, onError: (message: string) => void): Promise<{ sync: () => Promise<void>; close: () => Promise<void> }> {
@@ -123,7 +135,9 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
     clearAudio();
     throw error;
   }
+  musicRoom = room;
   return { sync, close: async () => {
+    if (musicRoom === room) { musicRoom = null; await music.stop(); }
     closing = true;
     document.removeEventListener('pointerdown', unlockAudio);
     await micQueue.catch(() => {});
