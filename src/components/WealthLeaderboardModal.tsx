@@ -727,7 +727,7 @@ export const WealthLeaderboardModal: React.FC = () => {
   useEffect(()=>{
     if(!openWealthLeaderboardModal||!stagingBackend)return;
     let alive=true;
-    const refresh=async()=>{const {data,error}=await stagingBackend.rpc('live_rankings',{p_period:period,p_kind:leaderboardTab});if(alive){if(error){console.error('Rankings load failed',error);setRanking([]);}else setRanking((data??[]) as RankingRow[]);}};
+    const refresh=async()=>{const {data,error}=await stagingBackend!.rpc('live_rankings',{p_period:period,p_kind:leaderboardTab});if(alive){if(error){console.error('Rankings load failed',error);setRanking([]);}else setRanking((data??[]) as RankingRow[]);}};
     void refresh();
     const interval=setInterval(()=>void refresh(),30000);
     return()=>{alive=false;clearInterval(interval);};
