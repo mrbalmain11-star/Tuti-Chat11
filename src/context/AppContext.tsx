@@ -432,29 +432,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!isLoggedIn || !voiceRoomId) return;
     let cancelled = false;
     let connection: Awaited<ReturnType<typeof connectRoomVoice>> | null = null;
-    void voiceCloseRef.current.catch(() => {}).then(() => {
-      if (cancelled) return null;
-      return connectRoomVoice(voiceRoomId, () => voicePublishRef.current, message => {
-      if (!cancelled) console.error('Room voice:', message);
-      });
-    }).then(async connected => {
-      if (!connected) return;
-      if (cancelled) { voiceCloseRef.current = connected.close(); await voiceCloseRef.current; return; }
-      connection = connected;
-      voiceConnectionRef.current = connected;
-      // Membership/seat state can change while LiveKit is connecting.
-      // Apply the latest desired microphone state after connection completes.
-      await connected.sync().catch(error => console.error('Initial microphone sync:', error));
-    }).catch(error => {
-      if (!cancelled) {
-        console.error('Voice connection failed:', error);
-        alert('تعذر تشغيل صوت الغرفة: ' + (error instanceof Error ? error.message : 'خطأ اتصال'));
+    // Chain both connection setup and teardown: a pending connect must finish
+    // and release its audio track before a replacement can acquire the mic.
+    const previous = voiceCloseRef.current;
+    const lifecycle = previous.catch(() => {}).then(async () => {
+      if (cancelled) return;
+      try {
+        const connected = await connectRoomVoice(voiceRoomId, () => voicePublishRef.current, message => {
+          if (!cancelled) console.error('Room voice:', message);
+        });
+        connection = connected;
+        if (cancelled) return;
+        voiceConnectionRef.current = connected;
+        await connected.sync();
+      } catch (error) {
+        if (!cancelled) {
+          console.error('Voice connection failed:', error);
+          alert('تعذر تشغيل صوت الغرفة: ' + (error instanceof Error ? error.message : 'خطأ اتصال'));
+        }
       }
+    });
+    voiceCloseRef.current = lifecycle.then(async () => {
+      if (connection && cancelled) await connection.close();
     });
     return () => {
       cancelled = true;
       if (voiceConnectionRef.current === connection) voiceConnectionRef.current = null;
-      if (connection) voiceCloseRef.current = connection.close();
     };
   }, [isLoggedIn, voiceRoomId, voiceSeat && !myMicMuted]);
   useEffect(() => {
