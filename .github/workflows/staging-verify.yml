@@ -100,6 +100,7 @@ jobs:
 
               @Override public void onCreate(Bundle state) {
                   super.onCreate(state);
+                  getBridge().getWebView().getSettings().setMediaPlaybackRequiresUserGesture(false);
                   getBridge().getWebView().setWebChromeClient(new BridgeWebChromeClient(getBridge()) {
                       @Override public void onPermissionRequest(PermissionRequest request) {
                           boolean audioRequested = false;
