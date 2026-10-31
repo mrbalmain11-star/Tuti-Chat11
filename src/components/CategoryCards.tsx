@@ -1,6 +1,7 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
+import { Crown, Heart, DoorOpen } from 'lucide-react';
 
 export const CategoryCards: React.FC = () => {
   const { setOpenWealthLeaderboardModal, setLeaderboardTab, t, isRtl } = useApp();
@@ -24,7 +25,7 @@ export const CategoryCards: React.FC = () => {
         </div>
 
         {/* 3 Podium Avatars */}
-        <div className="flex items-center justify-center mt-2 mb-1 text-amber-200/80" aria-label="التصنيف بدون بيانات ترتيب مفبركة"><span className="text-2xl">✦</span></div>
+        <div className="flex items-center justify-center mt-2 mb-1 text-amber-200/80" aria-label="التصنيف بدون بيانات ترتيب مفبركة"><Crown size={38} /></div>
       </div>
 
       {/* 2. الجاذبية (Charm Card - Center in RTL, Royal Gold & Sapphire) */}
@@ -44,7 +45,7 @@ export const CategoryCards: React.FC = () => {
         </div>
 
         {/* 3 Podium Avatars */}
-        <div className="flex items-center justify-center mt-2 mb-1 text-amber-200/80" aria-label="التصنيف بدون بيانات ترتيب مفبركة"><span className="text-2xl">✦</span></div>
+        <div className="flex items-center justify-center mt-2 mb-1 text-amber-200/80" aria-label="التصنيف بدون بيانات ترتيب مفبركة"><Heart size={38} /></div>
       </div>
 
       {/* 3. Room Card */}
@@ -64,7 +65,7 @@ export const CategoryCards: React.FC = () => {
         </div>
 
         {/* 3 Podium Avatars */}
-        <div className="flex items-center justify-center mt-2 mb-1 text-amber-200/80" aria-label="التصنيف بدون بيانات ترتيب مفبركة"><span className="text-2xl">✦</span></div>
+        <div className="flex items-center justify-center mt-2 mb-1 text-amber-200/80" aria-label="التصنيف بدون بيانات ترتيب مفبركة"><DoorOpen size={38} /></div>
       </div>
     </div>
   );
