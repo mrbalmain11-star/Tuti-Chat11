@@ -2,7 +2,7 @@ import React,{useEffect,useState} from 'react';
 import { Heart,Search,X } from 'lucide-react';
 import { stagingBackend } from '../services/stagingBackend';
 type Candidate={id:string;public_id:number;display_name:string;avatar_url:string|null};
-const kinds=[['love','حب'],['friendship','صداقة'],['sibling','أخوة'],['partner','شراكة'],['twin','توأم'],['best_friend','أفضل صديق']];
+const kinds=[['love','رفيق الروح']];
 export const CpSearchModal:React.FC<{onClose:()=>void}>=({onClose})=>{
  const [query,setQuery]=useState('');const [results,setResults]=useState<Candidate[]>([]);
  const [chosen,setChosen]=useState<Candidate|null>(null);const [kind,setKind]=useState('love');
