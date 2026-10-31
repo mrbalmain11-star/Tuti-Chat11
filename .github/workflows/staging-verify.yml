@@ -77,9 +77,13 @@ jobs:
           from pathlib import Path
           manifest = Path("android/app/src/main/AndroidManifest.xml")
           source = manifest.read_text()
-          permission = '<uses-permission android:name="android.permission.RECORD_AUDIO" />'
-          if permission not in source:
-              source = source.replace('<application', permission + '\n    <application', 1)
+          permissions = [
+              '<uses-permission android:name="android.permission.RECORD_AUDIO" />',
+              '<uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />',
+          ]
+          for permission in permissions:
+              if permission not in source:
+                  source = source.replace('<application', permission + '\n    <application', 1)
           manifest.write_text(source)
           main = Path("android/app/src/main/java/com/numyar/totichat/staging/MainActivity.java")
           main.parent.mkdir(parents=True, exist_ok=True)
