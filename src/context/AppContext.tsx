@@ -952,6 +952,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, [isLoggedIn, activeRoom?.id]);
 
+  const resolveRoomAvatars = async <T extends {avatar_url?:string|null}>(members:T[]):Promise<(T & {resolvedAvatar:string})[]> => {
+    if (!stagingBackend) return members.map(m=>({...m,resolvedAvatar:m.avatar_url||''}));
+    return Promise.all(members.map(async member=>{
+      const path=member.avatar_url||'';
+      if (!path) return {...member,resolvedAvatar:''};
+      if (/^https?:\\/\\//i.test(path) || path.startsWith('data:')) return {...member,resolvedAvatar:path};
+      const {data,error}=await stagingBackend!.storage.from('profile-avatars').createSignedUrl(path,3600);
+      return {...member,resolvedAvatar:error?'':data?.signedUrl||''};
+    }));
+  };
   useEffect(() => {
     if (!isLoggedIn || !activeRoom || !stagingBackend) return;
     const roomId = activeRoom.id;
@@ -964,7 +974,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       try {
         do {
           pending = false;
-          const members = await fetchRoomVisualMembers(roomId);
+          const members = await resolveRoomAvatars(await fetchRoomVisualMembers(roomId));
           if (!alive) return;
           const mine = members.find(m => m.user_id === currentUser.id);
           if (mine) setMyMicMuted(mine.is_muted);
@@ -983,7 +993,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                     id: member.user_id,
                     name: member.display_name,
                     nickname: member.display_name,
-                    avatar: member.avatar_url || (member.user_id === currentUser.id ? currentUser.avatar : '') || '',
+                    avatar: member.resolvedAvatar || (member.user_id === currentUser.id ? currentUser.avatar : '') || '',
                   } : null,
                   isMuted: member?.is_muted ?? true,
                   isSpeaking: false,
@@ -1065,7 +1075,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setActiveRoom(room);
       setIsRoomMinimized(false);
       setMyMicMuted(true);
-      const members = await fetchRoomVisualMembers(roomId);
+      const members = await resolveRoomAvatars(await fetchRoomVisualMembers(roomId));
       const mine = members.find(m => m.user_id === currentUser.id);
       if (mine) setMyMicMuted(mine.is_muted);
       setActiveRoom(prev => {
@@ -1083,7 +1093,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 id: member.user_id,
                 name: member.display_name,
                 nickname: member.display_name,
-                avatar: member.avatar_url || (member.user_id === currentUser.id ? currentUser.avatar : '') || '',
+                avatar: member.resolvedAvatar || (member.user_id === currentUser.id ? currentUser.avatar : '') || '',
                 coins: 0,
                 diamonds: 0,
                 isSuperAdmin: false,
