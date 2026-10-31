@@ -8,6 +8,7 @@ import { AdminAgencyRegistrationRequestsPanel } from './AdminAgencyRegistrationR
 import { AdminReportsPanel } from './AdminReportsPanel';
 import { AdminRechargePanel } from './AdminRechargePanel';
 import { AdminStaffPanel } from './AdminStaffPanel';
+import { AdminTesterBadgesPanel } from './AdminTesterBadgesPanel';
 import { ArrowRight, RefreshCw, ShieldCheck, Users, Building2, Radio } from 'lucide-react';
 import { fetchMyAdminAccess, fetchOwnerDashboardCounts, fetchOwnerDashboardRecent, type OwnerDashboardRecent, type AdminAccess, type OwnerDashboardCounts } from '../services/stagingBackend';
 
@@ -57,6 +58,7 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
               {id:'recharge',label:'الشحن',Icon:Building2},
               {id:'staff',label:'الصلاحيات',Icon:ShieldCheck},
               {id:'banners',label:'البنرات',Icon:Radio},
+              ...(access.role === 'owner' ? [{id:'testerBadges',label:'شارات المختبرين',Icon:ShieldCheck}] : []),
             ];
             return <div className="space-y-5">
               {!adminPage ? <div className="grid grid-cols-3 gap-3">
@@ -79,6 +81,7 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
                 {adminPage === 'recharge' && <AdminRechargePanel />}
                 {adminPage === 'staff' && <AdminStaffPanel />}
                 {adminPage === 'banners' && <AdminBannersPanel />}
+                {adminPage === 'testerBadges' && access.role === 'owner' && <AdminTesterBadgesPanel />}
               </>}
             </div>;
           })()}
