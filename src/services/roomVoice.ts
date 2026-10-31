@@ -45,7 +45,16 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
     });
     return micQueue;
   };
-  await sync();
+  try {
+    await sync();
+  } catch (error) {
+    // A failed Android capture must not leave a LiveKit connection alive.
+    await room.localParticipant.setMicrophoneEnabled(false).catch(() => {});
+    room.disconnect();
+    audio.forEach(el => el.remove());
+    audio.clear();
+    throw error;
+  }
   return { sync, close: async () => {
     closing = true;
     await micQueue.catch(() => {});
