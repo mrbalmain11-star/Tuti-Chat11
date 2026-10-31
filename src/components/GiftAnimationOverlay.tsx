@@ -47,14 +47,14 @@ export const GiftAnimationOverlay: React.FC = () => {
   useEffect(() => {
     if (!activeGiftAnimation) return;
     const name = activeGiftAnimation.gift.name;
-    const isEpic = getEpicStyle(name) !== null && activeGiftAnimation.gift.price > 10000;
+    const isEpic = getEpicStyle(name) !== null && activeGiftAnimation.gift.price >= 10000;
     const timer = window.setTimeout(clearGiftAnimation, isEpic ? 7000 : 3500);
     return () => window.clearTimeout(timer);
   }, [activeGiftAnimation, clearGiftAnimation]);
 
   if (!activeGiftAnimation) return null;
   const { gift, sender, receiver, count } = activeGiftAnimation;
-  const epic = gift.price > 10000 ? getEpicStyle(gift.name) : null;
+  const epic = gift.price >= 10000 ? getEpicStyle(gift.name) : null;
   const style = epic ? epicStyles[epic] : null;
 
   if (!epic || !style) {
@@ -83,6 +83,7 @@ export const GiftAnimationOverlay: React.FC = () => {
         @keyframes totiTree { 0% {transform:scale(.1) rotate(-10deg);opacity:0} 38%,75% {transform:scale(1.2) rotate(0);opacity:1} 100% {transform:scale(1.7);opacity:0} }
         @keyframes totiCosmos { 0% {transform:scale(.2) rotate(-120deg);opacity:0} 40%,78% {transform:scale(1.15) rotate(0);opacity:1} 100% {transform:scale(1.6) rotate(45deg);opacity:0} }
         @keyframes totiShip { 0% {transform:translateX(-95vw) rotate(-12deg) scale(.5);opacity:0} 38%,75% {transform:translateX(0) rotate(0) scale(1.2);opacity:1} 100% {transform:translateX(95vw) scale(.7);opacity:0} }
+        @keyframes totiSparks { 0% {transform:translate3d(0,15vh,0) scale(.3);opacity:0} 30% {opacity:1} 100% {transform:translate3d(var(--dx),-55vh,0) scale(0);opacity:0} }
         @keyframes totiShine { 0%,100% {opacity:.4;transform:scale(.85)} 50% {opacity:1;transform:scale(1.2)} }
         @keyframes totiTicker { 0% {transform:translateX(120vw);opacity:0} 10%,80% {transform:translateX(0);opacity:1} 100% {transform:translateX(-120vw);opacity:0} }
         .toti-epic-stage {animation:totiVeil 7s ease both;background:radial-gradient(ellipse at 50% 45%,color-mix(in srgb,var(--epic-glow) 23%,#090d1b),#030711 80%)}
@@ -93,6 +94,9 @@ export const GiftAnimationOverlay: React.FC = () => {
         .toti-epic-ticker {animation:totiTicker 7s ease-in-out both}
         @media(prefers-reduced-motion:reduce){.toti-epic-art,.toti-epic-ticker,.toti-epic-stage{animation:none}.toti-epic-halo{animation:none}}
       `}</style>
+      <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+        {Array.from({length:24},(_,i)=><span key={i} className="absolute rounded-full bg-amber-200" style={{left:`${(i*43+17)%100}%`,top:`${(i*29+31)%100}%`,width:i%3===0?6:3,height:i%3===0?6:3,boxShadow:'0 0 14px var(--epic-glow)',animation:`totiSparks ${2+(i%4)}s ease-out ${(i%7)*.28}s infinite`,['--dx' as string]:`${((i*17)%90)-45}vw`}} />)}
+      </div>
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="toti-epic-halo absolute w-32 h-32 rounded-full" />
         <div className={`toti-epic-art relative flex flex-col items-center justify-center ${epic !== 'zulfiqar' ? 'toti-epic-' + epic : ''}`}>
@@ -105,7 +109,7 @@ export const GiftAnimationOverlay: React.FC = () => {
       <div className="toti-epic-ticker absolute top-[max(12%,env(safe-area-inset-top))] inset-x-4 flex justify-center">
         <div className="w-full max-w-sm rounded-2xl border border-amber-300 bg-[#131225]/95 px-4 py-3 text-center shadow-[0_0_28px_var(--epic-glow)]" dir="rtl">
           <div className="text-amber-100 text-xs font-black truncate">{sender} أهدى إلى {receiver}</div>
-          <div className="text-amber-300 text-sm font-black mt-1">{gift.name} ×{count} · {gift.price.toLocaleString('en-US')} 🪙</div>
+          <div className="text-amber-300 text-sm font-black mt-1">{gift.name} ×{count} · {(gift.price * count).toLocaleString('en-US')} 🪙</div>
         </div>
       </div>
       <button type="button" onClick={clearGiftAnimation} aria-label="إغلاق تأثير الهدية" className="pointer-events-auto absolute top-[max(5%,env(safe-area-inset-top))] right-4 flex h-9 w-9 items-center justify-center rounded-full border border-white/30 bg-black/60 text-white"><X size={18}/></button>
