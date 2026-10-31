@@ -283,8 +283,8 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
           Phone Number Login Modal (انبثاق تسجيل رقم الهاتف)
           ========================================================================= */}
       {showPhoneModal && (
-        <div className="fixed inset-0 z-[1050] bg-black/85 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="w-full max-w-sm bg-[#100724] border border-amber-500/40 rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl animate-in slide-in-from-bottom duration-300">
+        <div className="fixed inset-0 z-[1050] bg-black/85 backdrop-blur-md flex items-center justify-center px-4 py-6 overflow-y-auto">
+          <div className="w-full max-w-md bg-[#100724] border border-amber-500/40 rounded-3xl p-5 sm:p-6 shadow-2xl my-auto max-h-[calc(100dvh-3rem)] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-purple-900/50">
               <div className="flex items-center gap-2">
                 <Smartphone className="w-5 h-5 text-amber-400" />
@@ -307,11 +307,11 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                   أدخل رقم هاتفك لتسجيل الدخول فوراً واستلام رمز التحقق:
                 </p>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row gap-3">
                   <select
                     value={countryCode}
                     onChange={(e) => setCountryCode(e.target.value)}
-                    className="p-3 rounded-xl bg-purple-950/80 border border-purple-700/60 text-amber-300 text-xs font-bold focus:outline-none focus:border-amber-400"
+                    className="w-full sm:w-auto min-h-12 p-3 rounded-xl bg-purple-950/80 border border-purple-700/60 text-amber-300 text-sm font-bold focus:outline-none focus:border-amber-400"
                   >
                     <option value="+964">العراق (+964) 🇮🇶</option>
                     <option value="+966">السعودية (+966) 🇸🇦</option>
@@ -326,7 +326,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
                     required
-                    className="flex-1 p-3 rounded-xl bg-purple-950/80 border border-purple-700/60 text-white text-sm font-sans text-left focus:outline-none focus:border-amber-400"
+                    className="w-full sm:flex-1 min-w-0 min-h-12 p-3 rounded-xl bg-purple-950/80 border border-purple-700/60 text-white text-base font-sans text-left focus:outline-none focus:border-amber-400"
                     dir="ltr"
                   />
                 </div>
