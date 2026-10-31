@@ -14,7 +14,7 @@ export async function fetchRoomVisualMembers(roomId: string): Promise<RoomVisual
   const { data: auth, error: authError } = await stagingBackend.auth.getUser();
   if (authError) throw authError;
   if (!auth.user) throw new Error('Not authenticated');
-  const { data, error } = await stagingBackend.rpc('phase2_room_members_visual', {
+  const { data, error } = await stagingBackend.rpc('phase2_room_members_visual_v2', {
     p_room_id: roomId,
   });
   if (error) throw error;
