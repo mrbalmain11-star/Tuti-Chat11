@@ -361,3 +361,10 @@ html.android-webview .royal-glass { filter: none !important; -webkit-backdrop-fi
 .toti-premium-icon-button:active .toti-premium-icon { transform: scale(.88); }
 @media (hover:hover) and (pointer:fine) { .toti-premium-icon-button:hover .toti-premium-icon { transform: translateY(-2px) scale(1.07); filter: drop-shadow(0 2px 3px rgba(183,139,55,.3)); } }
 @media (prefers-reduced-motion: reduce) { .toti-premium-icon, .toti-premium-icon-active { animation: none !important; transition: none !important; will-change: auto; } }
+
+/* Small VIP room entrance: left-to-right pass, then fade away. */
+@keyframes toti-vip-entry-pass { 0% { transform: translateX(-110%); opacity: 0; } 12% { opacity: 1; } 72% { opacity: 1; } 100% { transform: translateX(calc(100vw + 110%)); opacity: 0; } }
+.toti-vip-entry-banner { animation: toti-vip-entry-pass 3.4s ease-in-out both; }
+@keyframes toti-chat-bubble-in { from { opacity: 0; transform: translateY(5px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.toti-chat-bubble { animation: toti-chat-bubble-in 200ms ease-out both; }
+@media (prefers-reduced-motion: reduce) { .toti-vip-entry-banner { animation: none; margin-inline: auto; } .toti-chat-bubble { animation: none; } }
