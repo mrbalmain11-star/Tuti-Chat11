@@ -86,6 +86,7 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
   }
   return { sync, close: async () => {
     closing = true;
+    document.removeEventListener('pointerdown', unlockAudio);
     await micQueue.catch(() => {});
     await room.localParticipant.setMicrophoneEnabled(false).catch(() => {});
     room.disconnect();
