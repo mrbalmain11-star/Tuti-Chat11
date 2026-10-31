@@ -2120,8 +2120,8 @@ export const VoiceRoomModal: React.FC = () => {
                       <span>مغادرة المايكرفون</span>
                     </button>
 
-                    {/* قفل المايكرفون */}
-                    <button
+                    {/* قفل المايكرفون: owner/moderator only */}
+                    {(isOwner || isModerator) && <button
                       onClick={() => {
                         toggleLockSeat(selectedEmptySeat);
                         setSelectedEmptySeat(null);
@@ -2132,7 +2132,7 @@ export const VoiceRoomModal: React.FC = () => {
                       <span>
                         {getSeat(selectedEmptySeat).isLocked ? 'فتح المايكرفون' : 'قفل المايكرفون'}
                       </span>
-                    </button>
+                    </button>}
                   </>
                 ) : (
                   /* User is not on a mic */
@@ -2150,8 +2150,8 @@ export const VoiceRoomModal: React.FC = () => {
                       <span>اصعد بنفسي</span>
                     </button>
 
-                    {/* قفل المايكرفون */}
-                    <button
+                    {/* قفل المايكرفون: owner/moderator only */}
+                    {(isOwner || isModerator) && <button
                       onClick={() => {
                         toggleLockSeat(selectedEmptySeat);
                         setSelectedEmptySeat(null);
@@ -2162,7 +2162,7 @@ export const VoiceRoomModal: React.FC = () => {
                       <span>
                         {getSeat(selectedEmptySeat).isLocked ? 'فتح المايكرفون' : 'قفل المايكرفون'}
                       </span>
-                    </button>
+                    </button>}
                   </>
                 )}
 
