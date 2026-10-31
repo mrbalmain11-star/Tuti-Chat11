@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { stagingBackend } from '../services/stagingBackend';
 import {
   ChevronRight,
   ChevronLeft,
@@ -721,94 +722,28 @@ export const WealthLeaderboardModal: React.FC = () => {
 
   const [period, setPeriod] = useState<TimePeriod>('daily');
   const [showResetRulesModal, setShowResetRulesModal] = useState(false);
+  type RankingRow={entity_id:string;public_id:number;display_name:string;avatar_url:string|null;score:number};
+  const [ranking,setRanking]=useState<RankingRow[]>([]);
+  useEffect(()=>{
+    if(!openWealthLeaderboardModal||!stagingBackend)return;
+    let alive=true;
+    const refresh=async()=>{const {data,error}=await stagingBackend.rpc('live_rankings',{p_period:period,p_kind:leaderboardTab});if(alive){if(error){console.error('Rankings load failed',error);setRanking([]);}else setRanking((data??[]) as RankingRow[]);}};
+    void refresh();
+    const interval=setInterval(()=>void refresh(),30000);
+    return()=>{alive=false;clearInterval(interval);};
+  },[openWealthLeaderboardModal,period,leaderboardTab]);
+  const profileFor=(r:RankingRow):UserProfile=>({...currentUser,id:String(r.public_id),name:r.display_name,nickname:r.display_name,avatar:r.avatar_url||'',wealthExp:0,charmExp:0,coins:0,diamonds:0});
+
 
   if (!openWealthLeaderboardModal) return null;
 
-  // Multiplier depending on selected time period (اليوم | أسبوعي | شهري)
-  const periodMultiplier = period === 'daily' ? 0.15 : period === 'weekly' ? 0.45 : 1.0;
 
-  // 1. Wealth supporters sorted list
-  const supporters: WealthSupporter[] = initialWealthSupportersList.map((s) => ({
-    ...s,
-    supportAmount: Math.round(s.supportAmount * periodMultiplier),
-  }));
-
-  const userSupport = Math.round((currentUser.wealthExp || 0) * periodMultiplier);
-  if (userSupport > 0) {
-    const existingIdx = supporters.findIndex((s) => s.user.id === currentUser.id);
-    if (existingIdx >= 0) {
-      supporters[existingIdx].supportAmount = userSupport;
-      supporters[existingIdx].user = currentUser;
-    } else {
-      supporters.push({
-        rank: 999,
-        supportAmount: userSupport,
-        user: currentUser,
-      });
-    }
-  }
-
-  supporters.sort((a, b) => b.supportAmount - a.supportAmount);
-  const rankedSupporters = supporters.map((s, idx) => ({
-    ...s,
-    rank: idx + 1,
-  }));
-
-  const topWealth1 = rankedSupporters[0];
-  const topWealth2 = rankedSupporters[1];
-  const topWealth3 = rankedSupporters[2];
-  const restWealth7 = rankedSupporters.slice(3, 10);
-
-  // 2. Charm accounts sorted list (قيمة المرمي للحساب يعني مرسل له)
-  const charmList: CharmLeaderboardItem[] = initialCharmAccountsList.map((c) => ({
-    ...c,
-    charmReceived: Math.round(c.charmReceived * periodMultiplier),
-  }));
-
-  const userCharmReceived = Math.round((currentUser.charmExp || 0) * periodMultiplier);
-  if (userCharmReceived > 0) {
-    const existingIdx = charmList.findIndex((c) => c.user.id === currentUser.id);
-    if (existingIdx >= 0) {
-      charmList[existingIdx].charmReceived = userCharmReceived;
-      charmList[existingIdx].user = currentUser;
-    } else {
-      charmList.push({
-        rank: 999,
-        charmReceived: userCharmReceived,
-        user: currentUser,
-      });
-    }
-  }
-
-  charmList.sort((a, b) => b.charmReceived - a.charmReceived);
-  const rankedCharmList = charmList.map((c, idx) => ({
-    ...c,
-    rank: idx + 1,
-  }));
-
-  const topCharm1 = rankedCharmList[0];
-  const topCharm2 = rankedCharmList[1];
-  const topCharm3 = rankedCharmList[2];
-  const restCharm7 = rankedCharmList.slice(3, 10);
-
-  // 3. Room leaderboard sorted list (دعم الرومات وقيمة المرمي للروم)
-  const roomList: RoomLeaderboardItem[] = initialRoomsLeaderboardList.map((r) => ({
-    ...r,
-    roomCups: Math.max(10, Math.round(r.roomCups * periodMultiplier)),
-    roomGiftsAmount: Math.round(r.roomGiftsAmount * periodMultiplier),
-  }));
-
-  // Sort strictly by gifts amount thrown to room (قيمة المرمي للروم)
-  roomList.sort((a, b) => b.roomGiftsAmount - a.roomGiftsAmount);
-  const rankedRoomList = roomList.map((r, idx) => ({
-    ...r,
-    rank: idx + 1,
-  }));
-
-  const topRoom1 = rankedRoomList[0];
-  const topRoom2 = rankedRoomList[1];
-  const topRoom3 = rankedRoomList[2];
-  const restRoom7 = rankedRoomList.slice(3, 10);
+  const rankedSupporters:WealthSupporter[]=leaderboardTab==='wealth'?ranking.map((r,i)=>({rank:i+1,supportAmount:Number(r.score),user:profileFor(r)})):[];
+  const topWealth1=rankedSupporters[0],topWealth2=rankedSupporters[1],topWealth3=rankedSupporters[2],restWealth7=rankedSupporters.slice(3,10);
+  const rankedCharmList:CharmLeaderboardItem[]=leaderboardTab==='charm'?ranking.map((r,i)=>({rank:i+1,charmReceived:Number(r.score),user:profileFor(r)})):[];
+  const topCharm1=rankedCharmList[0],topCharm2=rankedCharmList[1],topCharm3=rankedCharmList[2],restCharm7=rankedCharmList.slice(3,10);
+  const rankedRoomList:RoomLeaderboardItem[]=leaderboardTab==='room'?ranking.map((r,i)=>({id:r.entity_id,rank:i+1,title:r.display_name,coverImage:'',hostName:'',hostAvatar:'',roomCups:0,roomGiftsAmount:Number(r.score),activeListeners:0})):[];
+  const topRoom1=rankedRoomList[0],topRoom2=rankedRoomList[1],topRoom3=rankedRoomList[2],restRoom7=rankedRoomList.slice(3,10);
 
   const handleOpenUser = (u: UserProfile) => {
     sounds.playClick();
