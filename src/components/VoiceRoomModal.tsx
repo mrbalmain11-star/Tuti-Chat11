@@ -2052,11 +2052,9 @@ export const VoiceRoomModal: React.FC = () => {
                     if (selectedMicUser.user.id === currentUser.id) {
                       toggleMyMic();
                     } else {
-                      if (activeRoom?.seats.find(seat => seat.seatNumber === selectedMicUser.seatNumber)?.isMuted) {
-                        void handleAllowMic(selectedMicUser.user.id);
-                      } else {
-                        void handleVoiceModeration(selectedMicUser.user.id, 'mute');
-                      }
+                      // A participant can self-mute without being moderator-muted.
+                      // Do not infer moderation state from the microphone state.
+                      void handleVoiceModeration(selectedMicUser.user.id, 'mute');
                     }
                     setSelectedMicUser(null);
                   }}
@@ -2065,8 +2063,24 @@ export const VoiceRoomModal: React.FC = () => {
                   <div className="w-10 h-10 rounded-full bg-slate-800/90 flex items-center justify-center border border-slate-700 shadow-sm">
                     <MicOff className="w-5 h-5 text-rose-400" />
                   </div>
-                  <span className="text-xs font-bold">{selectedMicUser.user.id === currentUser.id ? (myMicMuted ? 'فتح المايك' : 'كتم المايك') : (activeRoom?.seats.find(seat => seat.seatNumber === selectedMicUser.seatNumber)?.isMuted ? 'فك حظر المايك' : 'حظر مايك')}</span>
+                  <span className="text-xs font-bold">{selectedMicUser.user.id === currentUser.id ? (myMicMuted ? 'فتح المايك' : 'كتم المايك') : 'حظر مايك'}</span>
                 </button>
+                {selectedMicUser.user.id !== currentUser.id && (isOwner || isModerator) && (
+                  <button
+                    onClick={() => {
+                      sounds.playClick();
+                      void handleAllowMic(selectedMicUser.user.id);
+                      setSelectedMicUser(null);
+                    }}
+                    className="flex flex-col items-center gap-1 text-emerald-300 active:scale-95 transition"
+                    title="إزالة حظر المايك الإداري، دون تشغيل مايك العضو تلقائياً"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-emerald-950/70 border border-emerald-600/60 flex items-center justify-center">
+                      <Mic className="w-5 h-5" />
+                    </div>
+                    <span className="text-xs font-bold">فك حظر المايك</span>
+                  </button>
+                )}
               </div>}
             </div>
           </div>
