@@ -368,3 +368,13 @@ html.android-webview .royal-glass { filter: none !important; -webkit-backdrop-fi
 @keyframes toti-chat-bubble-in { from { opacity: 0; transform: translateY(5px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
 .toti-chat-bubble { animation: toti-chat-bubble-in 200ms ease-out both; }
 @media (prefers-reduced-motion: reduce) { .toti-vip-entry-banner { animation: none; margin-inline: auto; } .toti-chat-bubble { animation: none; } }
+
+/* Shared premium motion tuning: GPU-friendly transforms, restrained loops. */
+:root { --toti-motion-fast: 170ms; --toti-motion-normal: 260ms; --toti-motion-slow: 420ms; --toti-motion-ease: cubic-bezier(.22,1,.36,1); }
+@keyframes toti-mic-halo { 0%,100% { transform: scale(.96); opacity: .68; } 50% { transform: scale(1.045); opacity: 1; } }
+.animate-mic-active { animation: toti-mic-halo 2.2s ease-in-out infinite; }
+@keyframes toti-falcon-aura { 0%,100% { transform: scale(1); opacity: .95; } 50% { transform: scale(1.018); opacity: 1; } }
+.animate-falcon-glow { animation: toti-falcon-aura 4.8s ease-in-out infinite; }
+.toti-premium-icon { transition-duration: var(--toti-motion-fast); transition-timing-function: var(--toti-motion-ease); }
+.toti-chat-bubble { animation-duration: var(--toti-motion-normal); }
+@media (prefers-reduced-motion: reduce) { .animate-mic-active, .animate-falcon-glow, .toti-vip-entry-banner, .toti-chat-bubble { animation: none !important; } }
