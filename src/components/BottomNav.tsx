@@ -17,10 +17,10 @@ export const BottomNav: React.FC = () => {
           const selected = activeTab === id;
           return (
             <button key={id} type="button" onClick={() => { sounds.playClick(); setActiveTab(id); }}
-              className="flex flex-col items-center justify-center min-w-0 flex-1 gap-1 active:scale-95 transition-transform"
+              className="toti-premium-icon-button flex flex-col items-center justify-center min-w-0 flex-1 gap-1 active:scale-95 transition-transform"
               title={label} aria-current={selected ? 'page' : undefined}>
               <span className={`w-11 h-10 flex items-center justify-center rounded-2xl border transition-colors ${selected ? 'bg-gradient-to-br from-amber-100 via-yellow-50 to-emerald-50 border-amber-300 text-emerald-700 shadow-[0_2px_8px_rgba(183,139,55,0.16)]' : 'bg-transparent border-transparent text-slate-500'}`}>
-                <Icon size={23} strokeWidth={selected ? 2.2 : 1.9} aria-hidden="true" />
+                <Icon className={selected ? "toti-premium-icon toti-premium-icon-active" : "toti-premium-icon"} size={23} strokeWidth={selected ? 2.2 : 1.9} aria-hidden="true" />
               </span>
               <span className={`text-[11px] font-bold leading-4 ${selected ? 'text-emerald-800' : 'text-slate-500'}`}>{label}</span>
             </button>
