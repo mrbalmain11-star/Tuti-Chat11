@@ -1040,6 +1040,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         event: '*', schema: 'public', table: 'room_members',
         filter: 'room_id=eq.' + roomId,
       }, () => { void refreshRoster(); })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' },
+        () => { void refreshRoster(); })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'vip_entitlements' },
+        () => { void refreshRoster(); })
       .subscribe(status => {
         if (status === 'SUBSCRIBED') void refreshRoster();
         if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT')
@@ -1067,6 +1071,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // Applying a signed URL to the profile row breaks the image on reload.
     if (updates.avatar !== undefined) {
       setCurrentUser(prev => ({ ...prev, ...updates }));
+      window.dispatchEvent(new Event('totichat:profile-changed'));
       return;
     }
     const fields: { display_name?: string; bio?: string; avatar_url?: string | null } = {};
@@ -1090,6 +1095,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           avatar,
         };
       });
+      window.dispatchEvent(new Event('totichat:profile-changed'));
     }).catch(error => {
       console.error('Profile update rejected:', error);
       alert('تعذر حفظ الملف الشخصي. تحقق من البيانات والاتصال.');
