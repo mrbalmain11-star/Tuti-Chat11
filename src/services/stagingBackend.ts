@@ -7,6 +7,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Capacitor } from '@capacitor/core';
 import { App } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
+import { imageUrl } from './imageUrl';
 
 const STAGING_URL = 'https://rziaedugbdwefbefcxjt.supabase.co';
 const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
@@ -65,16 +66,10 @@ export async function fetchRealRooms(): Promise<BackendRoom[]> {
     unique.set(room.id, room);
   }
   const rooms = [...unique.values()];
-  await Promise.all(rooms.map(async room => {
-    if (room.cover_path) {
-      const { data: cover, error: coverError } = await client.storage.from('totichat-room-images').createSignedUrl(room.cover_path, 3600);
-      if (!coverError && cover?.signedUrl) room.cover_url = cover.signedUrl;
-    }
-    if (!room.background_path) return;
-    const { data, error } = await client.storage.from('totichat-room-images')
-      .createSignedUrl(room.background_path, 3600);
-    if (!error && data?.signedUrl) room.background_url = data.signedUrl;
-  }));
+  for (const room of rooms) {
+    room.cover_url = imageUrl(room.cover_path,'totichat-room-images');
+    room.background_url = imageUrl(room.background_path,'totichat-room-images');
+  }
   return rooms;
 }
 
@@ -305,9 +300,7 @@ export async function uploadMyAvatar(file: Blob): Promise<string> {
 
 export async function getMyAvatarUrl(path: string): Promise<string> {
   const client = requireBackend();
-  const { data, error } = await client.storage.from('profile-avatars').createSignedUrl(path, 3600);
-  if (error) throw new Error(`تعذر قراءة الصورة المحفوظة: ${error.message}`);
-  return data.signedUrl;
+  return imageUrl(path,'profile-avatars');
 }
 
 /** Save a separate profile cover using the existing owner-scoped image storage policy. */
