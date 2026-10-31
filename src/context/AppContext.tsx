@@ -776,50 +776,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (item.category === 'mounts' && equippedMount === item.id) setEquippedMount('');
   };
 
-  const buyStoreItem = (item: StorageItem): boolean => {
-    if (currentUser.coins < item.price) {
-      sounds.playClick();
-      return false;
-    }
-    // Deduct coins
-    setCurrentUser((prev) => ({
-      ...prev,
-      coins: prev.coins - item.price,
-    }));
-    // Add transaction
-    setTransactions((prev) => [
-      {
-        id: `tx-${Date.now()}`,
-        type: 'gift_send',
-        title: `شراء ${item.name} (${item.duration})`,
-        amount: -item.price,
-        timestamp: new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' }),
-        status: 'نجاح',
-      },
-      ...prev,
-    ]);
-    // Add to bag
-    const newBagItem: BagItem = {
-      id: item.id,
-      name: item.name,
-      category: item.category,
-      iconType: item.iconType,
-      colorScheme: item.colorScheme,
-      expiry: `باقي ${item.duration}`,
-      isEquipped: true,
-    };
-    setBagItems((prev) => {
-      const existing = prev.filter((i) => i.id !== item.id);
-      return [newBagItem, ...existing];
-    });
-    // Auto equip
-    if (item.category === 'frames') setEquippedFrame(item.id);
-    if (item.category === 'bubbles') setEquippedBubble(item.id);
-    if (item.category === 'entrances') setEquippedEntrance(item.id);
-    if (item.category === 'mounts') setEquippedMount(item.id);
-
-    sounds.playSuccess();
-    return true;
+  // Store purchases must be settled by the server ledger and ownership table.
+  // The legacy client-only deduction/inventory path is deliberately disabled:
+  // it falsely reported success and lost items on reinstall or another device.
+  const buyStoreItem = (_item: StorageItem): boolean => {
+    alert('هذا العنصر غير مربوط بعد بكتالوج الشراء على الخادم. لم تُخصم أي عملات.');
+    return false;
   };
   const [openHonorModal, setOpenHonorModal] = useState(false);
   const [openSettingsModal, setOpenSettingsModal] = useState(false);
