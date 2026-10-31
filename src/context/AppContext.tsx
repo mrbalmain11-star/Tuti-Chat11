@@ -437,7 +437,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (cancelled) { await connected.close(); return; }
       connection = connected;
       voiceConnectionRef.current = connected;
-      await connected.sync();
     }).catch(error => {
       if (!cancelled) {
         console.error('Voice connection failed:', error);
