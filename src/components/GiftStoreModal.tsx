@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { X, Plus, ChevronDown, Check } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { GiftItem } from '../types';
+import { EpicGiftArtwork } from './EpicGiftArtwork';
 import { sounds } from '../utils/audio';
 
 const giftCounts = [1, 7, 17, 77, 777];
@@ -205,7 +206,8 @@ export const GiftStoreModal: React.FC = () => {
           )}
           {filteredGifts.map((gift) => {
             const isSelected = selectedGift?.id === gift.id;
-            const cinematic = gift.price > 10000;
+            const cinematic = gift.price >= 10000 && gift.id.startsWith('epic-');
+            const epicKind = gift.id === 'epic-imperial-falcon' ? 'falcon' : gift.id === 'epic-royal-throne' ? 'throne' : gift.id === 'epic-legendary-dragon' ? 'dragon' : gift.id === 'epic-royal-jet' ? 'jet' : gift.id === 'epic-royal-lovers-heart' ? 'heart' : null;
             const palette = cinematic ? 'from-[#352047] via-[#141a36] to-[#090d1a]' : 'from-[#24203d] via-[#171b34] to-[#101827]';
 
             return (
@@ -232,7 +234,7 @@ export const GiftStoreModal: React.FC = () => {
                 {/* Gift Large Animated Icon */}
                 <div className="relative w-14 h-14 flex-none flex items-center justify-center text-[33px] my-1 rounded-full border border-amber-400/25 shadow-[inset_0_0_15px_rgba(251,191,36,0.12),0_0_16px_rgba(168,85,247,0.18)]">
                   <span className="absolute inset-0 rounded-full bg-amber-300/10 blur-md" aria-hidden="true" />
-                  <span className="relative z-10 drop-shadow-[0_0_12px_rgba(255,206,116,0.7)]">{gift.icon}</span>
+                  {epicKind ? <div className="relative z-10 w-full h-full flex items-center justify-center [&_svg]:!w-[55px] [&_svg]:!h-[55px]"><EpicGiftArtwork kind={epicKind} /></div> : <span className="relative z-10 drop-shadow-[0_0_12px_rgba(255,206,116,0.7)]">{gift.icon}</span>}
                 </div>
 
                 {/* Name */}
