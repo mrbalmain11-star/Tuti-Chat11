@@ -262,7 +262,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           if (!active || !profile) return;
           // New Google accounts may not yet have an uploaded profile avatar.
           // Display the verified OAuth provider photo until the user chooses an in-app avatar.
-          const { data: { user: authUser } } = await stagingBackend.auth.getUser();
+          const { data: { user: authUser } } = await stagingBackend!.auth.getUser();
           const metadata = authUser?.id === profile.id ? authUser.user_metadata : null;
           const googlePhoto = typeof metadata?.avatar_url === 'string' ? metadata.avatar_url
             : typeof metadata?.picture === 'string' ? metadata.picture : '';
