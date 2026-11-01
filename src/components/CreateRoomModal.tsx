@@ -34,7 +34,7 @@ export const CreateRoomModal: React.FC = () => {
     e.preventDefault();
     if (!roomName.trim()) return;
     sounds.playLevelUp();
-    createVoiceRoom(roomName, welcomeMessage || 'اهلا وسهلا');
+    createVoiceRoom(roomName.trim(), welcomeMessage.trim() || 'اهلا وسهلا');
     setOpenCreateRoomModal(false);
   };
 
