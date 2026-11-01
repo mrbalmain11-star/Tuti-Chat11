@@ -70,7 +70,7 @@ interface AppContextType {
   convertDiamondsToCoins: (diamondsAmount: number) => boolean;
   followedRoomHosts: Set<string>;
   toggleFollowHost: (hostId: string) => void;
-  createVoiceRoom: (title: string, tag: string) => void;
+  createVoiceRoom: (title: string, tag: string, coverDataUrl?: string) => Promise<void>;
   updateRoom: (roomId: string, updates: Partial<VoiceRoom>) => Promise<void>;
   changeRoomBackground: (roomId: string, backgroundUrl: string) => Promise<boolean>;
   // Modals state
@@ -1469,30 +1469,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
-  const createVoiceRoom = (title: string, _tag: string): void => {
+  const createVoiceRoom = async (title: string, _tag: string, coverDataUrl?: string): Promise<void> => {
     const trimmed = title.trim();
-    if (trimmed.length < 2 || trimmed.length > 60) {
-      alert('اسم الغرفة يجب أن يكون بين حرفين و60 حرفاً.');
-      return;
+    if (trimmed.length < 2 || trimmed.length > 60) throw new Error('اسم الغرفة يجب أن يكون بين حرفين و60 حرفاً.');
+    if (!stagingBackend || !currentUser.id) throw new Error('يجب تسجيل الدخول قبل إنشاء غرفة.');
+    if (rooms.some(room => room.hostId === currentUser.id)) throw new Error('لديك غرفة بالفعل.');
+    const { data, error } = await stagingBackend.rpc('staging_create_my_room', { p_title: trimmed });
+    if (error || typeof data !== 'string') throw error ?? new Error('Room creation not confirmed');
+    const roomId = data;
+    if (coverDataUrl?.startsWith('data:image/')) {
+      const response = await fetch(coverDataUrl);
+      const blob = await response.blob();
+      if (!blob.type.startsWith('image/') || blob.size > 5 * 1024 * 1024) throw new Error('صورة الغرفة غير مدعومة.');
+      const extension = blob.type === 'image/png' ? 'png' : blob.type === 'image/webp' ? 'webp' : 'jpg';
+      const path = roomId + '/cover-' + Date.now() + '.' + extension;
+      const { error: uploadError } = await stagingBackend.storage.from('totichat-room-images')
+        .upload(path, blob, { contentType: blob.type, upsert: false });
+      if (uploadError) throw new Error('تم إنشاء الغرفة لكن تعذر رفع صورتها: ' + uploadError.message);
+      const { data: saved, error: saveError } = await stagingBackend.rpc('phase2_room_customize', {
+        p_room_id: roomId, p_cover_path: path,
+      });
+      if (saveError || saved !== true) throw new Error('تم إنشاء الغرفة لكن تعذر حفظ صورتها بالخادم.');
     }
-    if (!stagingBackend || !currentUser.id) {
-      alert('يجب تسجيل الدخول قبل إنشاء غرفة.');
-      return;
-    }
-    // Client-side UX guard; the server must enforce a unique owner constraint
-    // to prevent duplicate rooms from simultaneous devices or requests.
-    if (rooms.some(room => room.hostId === currentUser.id)) {
-      alert('لديك غرفة بالفعل. لا يمكن إنشاء غرفتين بنفس الحساب.');
-      return;
-    }
-    void Promise.resolve(stagingBackend.rpc('staging_create_my_room', { p_title: trimmed })).then(async ({ data, error }) => {
-      if (error || typeof data !== 'string') throw error ?? new Error('Room creation not confirmed');
-      const rows = await fetchRealRooms();
-      setRooms(rows.map(mapRoomToUi));
-    }).catch(error => {
-      console.error('Failed to create staging room:', error);
-      alert('تعذر إنشاء الغرفة أو تحميلها من الخادم.');
-    });
+    const rows = await fetchRealRooms();
+    setRooms(rows.map(mapRoomToUi));
   };
 
   const updateRoom = (roomId: string, updates: Partial<VoiceRoom>): Promise<void> => {
