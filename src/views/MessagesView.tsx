@@ -8,6 +8,7 @@ export const MessagesView: React.FC = () => {
   const { conversations, setOpenChatThread, t, isRtl } = useApp();
 
   const [systemFeed, setSystemFeed] = useState<DirectConversation | null>(null);
+  const [systemOpened, setSystemOpened] = useState(false);
   useEffect(() => {
     let active = true;
     const load = async () => {
@@ -52,7 +53,11 @@ export const MessagesView: React.FC = () => {
         <div
           onClick={() => {
             sounds.playClick();
-            if (systemConv) setOpenChatThread(systemConv);
+            if (systemConv) {
+              setSystemOpened(true);
+              setSystemFeed(prev => prev ? { ...prev, unreadCount: 0 } : prev);
+              setOpenChatThread({ ...systemConv, unreadCount: 0 });
+            }
           }}
           className="flex items-center justify-between py-2 px-1 hover:bg-black/[0.02] active:bg-black/[0.04] transition rounded-2xl cursor-pointer"
         >
@@ -83,7 +88,7 @@ export const MessagesView: React.FC = () => {
           <div className="flex flex-col items-center gap-1.5 shrink-0 pl-1">
             <span className="text-[11px] text-[#8aa192] font-semibold">{systemConv?.lastTime ? new Date(systemConv.lastTime).toLocaleDateString('ar-IQ') : ''}</span>
             <span className="w-5 h-5 rounded-full bg-[#f43f5e] text-white text-[10px] font-black flex items-center justify-center shadow-sm">
-              {systemConv?.unreadCount ?? 0}
+              {systemOpened ? 0 : (systemConv?.unreadCount ?? 0)}
             </span>
           </div>
         </div>
