@@ -99,6 +99,11 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
   document.addEventListener('pointerdown', unlockAudio);
   try {
     await room.connect(data.url, data.token, { autoSubscribe: true });
+    // Some Android WebViews unlock remote playback on connection without
+    // requiring another touch; preserve the touch fallback if this fails.
+    void room.startAudio().then(() => {
+      document.removeEventListener('pointerdown', unlockAudio);
+    }).catch(() => {});
   } catch (error) {
     document.removeEventListener('pointerdown', unlockAudio);
     room.disconnect();
