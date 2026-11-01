@@ -100,7 +100,7 @@ export const AgencyModal: React.FC = () => {
   const [expandedHostIndex, setExpandedHostIndex] = useState<number | null>(0);
 
   // Date Filter in Agent Data Details
-  const [selectedDateFilter, setSelectedDateFilter] = useState<'2026/1' | 'هذا الشهر' | 'اليوم'>('2026/1');
+  const [selectedDateFilter, setSelectedDateFilter] = useState<'هذا الشهر' | 'اليوم'>('هذا الشهر');
   const [showDateDropdown, setShowDateDropdown] = useState(false);
 
   // Agency Members List for Agent
@@ -417,7 +417,7 @@ export const AgencyModal: React.FC = () => {
 
                 {showDateDropdown && (
                   <div className="absolute top-12 left-3 z-40 bg-white rounded-xl shadow-xl border border-slate-200 p-1 flex flex-col w-32 animate-in fade-in zoom-in-95">
-                    {(['2026/1', 'هذا الشهر', 'اليوم'] as const).map((d) => (
+                    {(['هذا الشهر', 'اليوم'] as const).map((d) => (
                       <button
                         key={d}
                         onClick={() => {
