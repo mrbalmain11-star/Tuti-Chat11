@@ -2000,7 +2000,7 @@ export const VoiceRoomModal: React.FC = () => {
               </div>
 
               {/* Only the seat owner or authorized moderators may see mic controls. */}
-              {(selectedMicUser.user.id === currentUser.id || isOwner || isModerator) && <div className="border-t border-slate-800/90 pt-3 flex items-center justify-around">
+              {(selectedMicUser.user.id === currentUser.id || ((isOwner || isModerator) && selectedMicUser.user.id !== activeRoom.hostId)) && <div className="border-t border-slate-800/90 pt-3 flex items-center justify-around">
                 {/* Action 1: نزل من المايك */}
                 <button
                   onClick={() => {
@@ -2040,7 +2040,7 @@ export const VoiceRoomModal: React.FC = () => {
                   </div>
                   <span className="text-xs font-bold">{selectedMicUser.user.id === currentUser.id ? (myMicMuted ? 'فتح المايك' : 'كتم المايك') : 'حظر مايك'}</span>
                 </button>
-                {selectedMicUser.user.id !== currentUser.id && (isOwner || isModerator) && (
+                {selectedMicUser.user.id !== currentUser.id && selectedMicUser.user.id !== activeRoom.hostId && (isOwner || isModerator) && (
                   <button
                     onClick={() => {
                       sounds.playClick();
