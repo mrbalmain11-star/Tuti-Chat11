@@ -44,8 +44,10 @@ export const MessagesView: React.FC = () => {
   // Find system and official or default
   const systemConv = systemFeed ?? conversations.find((c) => c.isSystem || c.id === 'system-1');
   const latestSystemId = systemConv?.messages.at(-1)?.id || '';
+  const readIndex = lastReadId ? systemConv?.messages.findIndex(message => message.id === lastReadId) ?? -1 : -1;
+  const newerMessages = readIndex >= 0 ? (systemConv?.messages.length ?? 0) - readIndex - 1 : null;
   const systemUnread = systemOpened || (latestSystemId && latestSystemId === lastReadId)
-    ? 0 : Math.max(0, systemConv?.unreadCount ?? 0);
+    ? 0 : Math.max(0, newerMessages ?? (systemConv?.unreadCount ?? 0));
   const officialConv = conversations.find((c) => c.isOfficial || c.id === 'official-1');
   const otherConvs = conversations.filter((c) => !c.isSystem && !c.isOfficial && c.id !== 'system-1' && c.id !== 'official-1');
 
