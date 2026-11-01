@@ -103,6 +103,8 @@ export const VoiceRoomModal: React.FC = () => {
     myMicMuted,
     toggleMyMic,
     currentUser,
+    followedRoomHosts,
+    toggleFollowHost,
     setOpenGiftStore,
     setSelectedGiftReceiver,
     roomMessages,
@@ -1965,6 +1967,19 @@ export const VoiceRoomModal: React.FC = () => {
                   ID
                 </span>
               </div>
+
+              {selectedMicUser.user.id !== currentUser.id && (
+                <div className="flex justify-center mt-3">
+                  <button type="button"
+                    onClick={() => toggleFollowHost(selectedMicUser.user.id)}
+                    className="min-h-10 px-5 rounded-full bg-emerald-600/20 border border-emerald-400/60 text-emerald-100 text-sm font-bold flex items-center gap-2"
+                    aria-label={followedRoomHosts.has(selectedMicUser.user.id) ? 'إلغاء المتابعة' : 'متابعة المستخدم'}
+                  >
+                    {followedRoomHosts.has(selectedMicUser.user.id) ? <UserCheck className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
+                    {followedRoomHosts.has(selectedMicUser.user.id) ? 'إلغاء المتابعة' : 'متابعة'}
+                  </button>
+                </div>
+              )}
 
               {/* Central Large Gift Button (ارسل الهدايا 🎁) */}
               <div className="flex flex-col items-center justify-center my-4">
