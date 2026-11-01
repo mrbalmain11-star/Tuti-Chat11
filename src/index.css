@@ -345,8 +345,7 @@ img, svg { max-width: 100%; }
 /* Consistent Android layout sizing across screen densities and font scales. */
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 html, body, #root { width: 100%; overflow-x: hidden; }
-html, body { overscroll-behavior-x: none; }
-body { overscroll-behavior-y: contain; }
+/* Do not intercept global Android touch gestures: rooms and lists need native scrolling. */
 #root { min-height: 100dvh; }
 /* Preserve native vertical scrolling while preventing horizontal elastic drag. */
 .toti-messages-scroll { touch-action: pan-y; overscroll-behavior-x: none; overscroll-behavior-y: contain; }
