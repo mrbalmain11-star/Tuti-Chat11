@@ -2179,7 +2179,6 @@ export const VoiceRoomModal: React.FC = () => {
                       onClick={() => {
                         takeSeat(selectedEmptySeat);
                         setSelectedEmptySeat(null);
-                        showToast(`انتقلت إلى المايك رقم ${selectedEmptySeat} 🎙️`);
                       }}
                       className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-cyan-600 via-blue-600 to-cyan-500 hover:from-cyan-500 hover:to-blue-500 text-white font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-cyan-900/30 active:scale-98 transition cursor-pointer"
                     >
@@ -2192,7 +2191,6 @@ export const VoiceRoomModal: React.FC = () => {
                       onClick={() => {
                         if (myCurrentSeat) leaveSeat(myCurrentSeat.seatNumber);
                         setSelectedEmptySeat(null);
-                        showToast('غادرت المايكرفون بنجاح 💺');
                       }}
                       className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-rose-600 via-red-600 to-rose-500 hover:from-rose-500 hover:to-red-500 text-white font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-rose-900/30 active:scale-98 transition cursor-pointer"
                     >
@@ -2222,7 +2220,6 @@ export const VoiceRoomModal: React.FC = () => {
                       onClick={() => {
                         takeSeat(selectedEmptySeat);
                         setSelectedEmptySeat(null);
-                        showToast(`صعدت إلى المايك رقم ${selectedEmptySeat} 🎙️`);
                       }}
                       className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/30 active:scale-98 transition cursor-pointer"
                     >
