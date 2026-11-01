@@ -687,7 +687,7 @@ export const VoiceRoomModal: React.FC = () => {
       )}
 
       {/* Main Room Viewport Container (Matching Mobile Aspect Ratio) */}
-      <div className="relative w-full max-w-md h-full flex flex-col justify-between overflow-x-hidden overflow-y-auto overscroll-y-contain shadow-2xl bg-[#0d0426] box-border" style={{ paddingTop: "env(safe-area-inset-top, 24px)", paddingBottom: "env(safe-area-inset-bottom, 24px)" }}>
+      <div className="relative w-full max-w-md h-full flex flex-col justify-between overflow-x-hidden overflow-y-auto overscroll-y-contain shadow-2xl bg-[#0d0426] box-border" style={{ paddingTop: "max(10px, env(safe-area-inset-top, 0px))", paddingBottom: "max(10px, env(safe-area-inset-bottom, 0px))" }}>
         {/* =========================================================================
             1. ROOM BACKGROUND: Deep cosmic galaxy with starry dust & nebula
             ========================================================================= */}
@@ -926,7 +926,7 @@ export const VoiceRoomModal: React.FC = () => {
                     <div className="mt-1 flex items-center justify-center gap-0.5 max-w-[76px] px-0.5">
                       <VipName
                         name={seat.user.nickname || seat.user.name}
-                        vipLevel={seat.user.vipLevel}
+                        vipLevel={seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel}
                         className="text-xs sm:text-sm font-black truncate text-center block"
                         fallbackColor="text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]"
                       />
@@ -1000,7 +1000,7 @@ export const VoiceRoomModal: React.FC = () => {
                     <div className="mt-1 flex items-center justify-center gap-0.5 max-w-[76px] px-0.5">
                       <VipName
                         name={seat.user.nickname || seat.user.name}
-                        vipLevel={seat.user.vipLevel}
+                        vipLevel={seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel}
                         className="text-xs sm:text-sm font-black truncate text-center block"
                         fallbackColor="text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]"
                       />
@@ -1074,7 +1074,7 @@ export const VoiceRoomModal: React.FC = () => {
                     <div className="mt-1 flex items-center justify-center gap-0.5 max-w-[76px] px-0.5">
                       <VipName
                         name={seat.user.nickname || seat.user.name}
-                        vipLevel={seat.user.vipLevel}
+                        vipLevel={seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel}
                         className="text-xs sm:text-sm font-black truncate text-center block"
                         fallbackColor="text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]"
                       />
