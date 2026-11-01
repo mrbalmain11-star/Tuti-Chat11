@@ -287,17 +287,22 @@ export const VoiceRoomModal: React.FC = () => {
     const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
     if (!validTypes.includes(file.type)) {
       setBgUploadError('صيغة غير مدعومة. يرجى اختيار صورة JPG أو PNG أو WEBP.');
+      e.target.value = '';
       return;
     }
 
     // Validate size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       setBgUploadError('حجم الصورة كبير جداً. الحد الأقصى المسموح به هو 5 ميجابايت.');
+      e.target.value = '';
       return;
     }
 
     setBgUploadError(null);
     const reader = new FileReader();
+    reader.onerror = () => {
+      setBgUploadError('تعذر قراءة الصورة. يرجى اختيار صورة أخرى.');
+    };
     reader.onload = (event) => {
       const dataUrl = event.target?.result as string;
       if (dataUrl) {
