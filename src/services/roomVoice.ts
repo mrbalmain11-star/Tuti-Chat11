@@ -57,8 +57,9 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
     element.style.display = 'none';
     document.body.appendChild(element);
     audio.set(key, element);
-    void element.play().catch(() => {
+    void element.play().catch(error => {
       if (closing || !element.isConnected) return;
+      console.warn('[RoomVoice] remote audio autoplay blocked', { roomId, reason: String(error) });
       pendingPlayback.add(element);
       document.addEventListener('pointerdown', retryPlayback);
       onError('اضغط على الشاشة للسماح بتشغيل الصوت');
