@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
 
@@ -160,6 +160,9 @@ export const VipBadge: React.FC<VipBadgeProps> = ({
 
   const validLevel = Math.max(1, Math.min(12, Math.floor(vipLevel)));
   const meta = VIP_BEAST_METADATA[validLevel] || VIP_BEAST_METADATA[1];
+
+  // Retry the correct badge when the account's VIP level changes.
+  useEffect(() => { setImgError(false); }, [validLevel]);
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
