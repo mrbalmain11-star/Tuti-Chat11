@@ -204,13 +204,15 @@ jobs:
           assert apk.is_file() and apk.stat().st_size>1000000, 'Missing or unexpectedly small APK'
           name='TotiChat-Staging-'+__import__('os').environ['GITHUB_SHA'][:8]
           target=Path(name+'.zip')
-          with ZipFile(target,'w',compression=ZIP_STORED,allowZip64=True) as archive:
-              archive.write(apk,arcname=name+'.apk')
+          # Keep the archive as simple as possible for Android file managers:
+          # one short ASCII entry, no Zip64, no compression, no extra metadata.
+          with ZipFile(target,'w',compression=ZIP_STORED,allowZip64=False) as archive:
+              archive.write(apk,arcname='TotiChat.apk',compress_type=ZIP_STORED)
           assert is_zipfile(target)
           with ZipFile(target) as archive:
-              assert archive.namelist()==[name+'.apk']
+              assert archive.namelist()==['TotiChat.apk']
               assert archive.testzip() is None
-              assert hashlib.sha256(archive.read(name+'.apk')).digest()==hashlib.sha256(apk.read_bytes()).digest()
+              assert hashlib.sha256(archive.read('TotiChat.apk')).digest()==hashlib.sha256(apk.read_bytes()).digest()
           print('Verified Android-compatible ZIP:',target,'size:',target.stat().st_size)
           PY
       # Actions artifacts are ZIP archives automatically. Publish the phone-compatible
@@ -242,13 +244,13 @@ jobs:
           archive_path,apk_path=map(Path,sys.argv[1:])
           with ZipFile(archive_path) as archive:
               names=archive.namelist()
-              assert names==[apk_path.name], f'Unexpected ZIP members: {names}'
+              assert names==['TotiChat.apk'], f'Unexpected ZIP members: {names}'
               assert archive.testzip() is None, 'Corrupt ZIP entry'
               assert hashlib.sha256(archive.read(names[0])).digest()==hashlib.sha256(apk_path.read_bytes()).digest(), 'ZIP APK does not match release APK'
           print('Release ZIP and APK payloads match')
           PY
           test "$(unzip -Z1 "$NAME.zip" | wc -l)" -eq 1
-          test "$(unzip -Z1 "$NAME.zip")" = "$NAME.apk"
+          test "$(unzip -Z1 "$NAME.zip")" = "TotiChat.apk"
           TAG="staging-apk-${GITHUB_SHA:0:8}"
           gh release create "$TAG" "$NAME.apk" "$NAME.zip" \
             --repo "$GITHUB_REPOSITORY" \
