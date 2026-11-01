@@ -345,6 +345,9 @@ img, svg { max-width: 100%; }
 /* Consistent Android layout sizing across screen densities and font scales. */
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 html, body, #root { width: 100%; overflow-x: hidden; }
+html, body { overscroll-behavior-x: none; }
+body { overscroll-behavior-y: contain; }
+#root { min-height: 100dvh; }
 *, *::before, *::after { box-sizing: border-box; }
 
 /* Disable expensive filter compositing on Android's embedded WebView. */
