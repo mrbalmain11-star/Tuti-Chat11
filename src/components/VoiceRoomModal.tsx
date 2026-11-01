@@ -687,7 +687,7 @@ export const VoiceRoomModal: React.FC = () => {
       )}
 
       {/* Main Room Viewport Container (Matching Mobile Aspect Ratio) */}
-      <div className="relative w-full max-w-md h-full flex flex-col justify-between overflow-hidden shadow-2xl bg-[#0d0426] box-border" style={{ paddingTop: "env(safe-area-inset-top, 24px)", paddingBottom: "env(safe-area-inset-bottom, 24px)" }}>
+      <div className="relative w-full max-w-md h-full flex flex-col justify-between overflow-x-hidden overflow-y-auto overscroll-y-contain shadow-2xl bg-[#0d0426] box-border" style={{ paddingTop: "env(safe-area-inset-top, 24px)", paddingBottom: "env(safe-area-inset-bottom, 24px)" }}>
         {/* =========================================================================
             1. ROOM BACKGROUND: Deep cosmic galaxy with starry dust & nebula
             ========================================================================= */}
