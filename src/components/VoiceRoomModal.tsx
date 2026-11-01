@@ -119,6 +119,7 @@ export const VoiceRoomModal: React.FC = () => {
     openProfileForUser,
     changeRoomBackground,
     updateRoom,
+    changeRoomCover,
     isRtl,
     setOpenVipModal,
     setLevelsModalTab,
@@ -197,6 +198,9 @@ export const VoiceRoomModal: React.FC = () => {
   const [editTitleInput, setEditTitleInput] = useState('');
   const [editAnnouncementInput, setEditAnnouncementInput] = useState('');
   const [editTagInput, setEditTagInput] = useState('');
+  const [editCoverPreview, setEditCoverPreview] = useState('');
+  const [editCoverDataUrl, setEditCoverDataUrl] = useState('');
+  const [savingRoomInfo, setSavingRoomInfo] = useState(false);
 
   // Tabs: الكل | الدردشة | أخرى
   const [activeChatTab, setActiveChatTab] = useState<'all' | 'chat' | 'other'>('all');
@@ -224,6 +228,8 @@ export const VoiceRoomModal: React.FC = () => {
       setEditTitleInput(activeRoom.title || '');
       setEditAnnouncementInput(activeRoom.announcement || '');
       setEditTagInput(activeRoom.tag || '');
+      setEditCoverPreview(activeRoom.coverImage || '');
+      setEditCoverDataUrl('');
     }
   }, [activeRoom?.id, activeRoom?.backgroundUrl]);
 
@@ -359,30 +365,29 @@ export const VoiceRoomModal: React.FC = () => {
     }
   };
 
-  const handleSaveRoomInfo = (e: React.FormEvent) => {
+  const handleSaveRoomInfo = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!activeRoom) return;
-    if (!isOwner && !currentUser.isSuperAdmin) {
-      sounds.playError();
-      showToast('🔒 لا يمكنك تعديل معلومات الغرفة، الصلاحية لمالك الغرفة فقط');
+    if (!activeRoom || savingRoomInfo) return;
+    if (!isOwner) {
+      showToast('تعديل معلومات الغرفة متاح لمالكها فقط');
       return;
     }
+    setSavingRoomInfo(true);
     try {
-      const result = updateRoom(activeRoom.id, {
+      await updateRoom(activeRoom.id, {
         title: editTitleInput.trim() || activeRoom.title,
-        announcement: editAnnouncementInput.trim() || activeRoom.announcement,
-        tag: editTagInput.trim() || activeRoom.tag,
+        announcement: editAnnouncementInput.trim(),
+        tag: editTagInput.trim(),
       });
-      void Promise.resolve(result).then(() => {
-        showToast('تم حفظ معلومات الغرفة على الخادم.');
-        setShowRoomInfoModal(false);
-      }).catch((error) => {
-        console.error('Room info save failed:', error);
-        showToast('تعذر حفظ معلومات الغرفة. حاول مجدداً.');
-      });
+      if (editCoverDataUrl) await changeRoomCover(activeRoom.id, editCoverDataUrl);
+      showToast('تم حفظ معلومات الغرفة وصورتها على الخادم.');
+      setEditCoverDataUrl('');
+      setShowRoomInfoModal(false);
     } catch (error) {
       console.error('Room info save failed:', error);
-      showToast('تعذر حفظ معلومات الغرفة. حاول مجدداً.');
+      showToast(error instanceof Error ? error.message : 'تعذر حفظ معلومات الغرفة.');
+    } finally {
+      setSavingRoomInfo(false);
     }
   };
 
@@ -2450,6 +2455,36 @@ export const VoiceRoomModal: React.FC = () => {
 
               <form onSubmit={handleSaveRoomInfo} className="space-y-3.5">
                 <div>
+                  <label className="text-[11px] font-bold text-slate-300 block mb-2">صورة غلاف الغرفة:</label>
+                  <div className="flex items-center gap-3">
+                    <div className="w-24 h-24 shrink-0 rounded-2xl overflow-hidden border border-purple-400/40 bg-gradient-to-br from-emerald-900 to-slate-950 flex items-center justify-center">
+                      {editCoverPreview ? <img src={editCoverPreview} alt="معاينة صورة الغرفة" className="w-full h-full object-cover" /> : <span className="text-white/60 text-xs text-center">لا توجد صورة محفوظة</span>}
+                    </div>
+                    <label className="px-3 py-2 rounded-xl bg-amber-400/15 border border-amber-400/40 text-amber-200 text-xs font-bold cursor-pointer">
+                      تغيير صورة الغرفة
+                      <input type="file" accept="image/*" className="hidden" disabled={!isOwner || savingRoomInfo}
+                        onChange={(event) => {
+                          const file = event.target.files?.[0];
+                          if (!file) return;
+                          if (!file.type.startsWith('image/') || file.size > 5 * 1024 * 1024) {
+                            showToast('اختر صورة بحجم لا يتجاوز 5 ميغابايت');
+                            event.target.value = '';
+                            return;
+                          }
+                          const reader = new FileReader();
+                          reader.onload = () => {
+                            if (typeof reader.result === 'string') {
+                              setEditCoverDataUrl(reader.result);
+                              setEditCoverPreview(reader.result);
+                            }
+                          };
+                          reader.readAsDataURL(file);
+                        }}
+                      />
+                    </label>
+                  </div>
+                </div>
+                <div>
                   <label className="text-[11px] font-bold text-slate-300 block mb-1">اسم الغرفة:</label>
                   <input
                     type="text"
@@ -2505,6 +2540,7 @@ export const VoiceRoomModal: React.FC = () => {
                   <div className="flex items-center gap-2 pt-2">
                     <button
                       type="submit"
+                      disabled={savingRoomInfo}
                       className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 font-black text-xs shadow-lg active:scale-95 transition cursor-pointer"
                     >
                       حفظ التعديلات 👑
