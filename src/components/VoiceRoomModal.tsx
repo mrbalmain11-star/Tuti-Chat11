@@ -492,6 +492,22 @@ export const VoiceRoomModal: React.FC = () => {
         setShowEmojiPicker(false);
       } else if (showEmojiPicker) {
         setShowEmojiPicker(false);
+      } else if (showMusicPlayerModal) {
+        setShowMusicPlayerModal(false);
+      } else if (showTasksModal) {
+        setShowTasksModal(false);
+      } else if (showChangeBgModal) {
+        setShowChangeBgModal(false);
+      } else if (showDecorationsModal !== null) {
+        setShowDecorationsModal(null);
+      } else if (showRoomStatsModal) {
+        setShowRoomStatsModal(false);
+      } else if (showHostCenterModal) {
+        setShowHostCenterModal(false);
+      } else if (showAgencyInfoModal) {
+        setShowAgencyInfoModal(false);
+      } else if (showMembersModal) {
+        setShowMembersModal(false);
       } else if (showMessagesSheet) {
         setShowMessagesSheet(false);
       } else if (showToolsDrawer) {
@@ -509,7 +525,7 @@ export const VoiceRoomModal: React.FC = () => {
       }
     }).then(handle => { if (disposed) void handle.remove(); else listener = handle; });
     return () => { disposed = true; if (listener) void listener.remove(); };
-  }, [activeRoom?.id, isRoomMinimized, showExitOptions, showChatInput, showEmojiPicker, showMessagesSheet, showToolsDrawer, showRoomModeModal, showRoomInfoModal, selectedMicUser, selectedEmptySeat, setIsRoomMinimized]);
+  }, [activeRoom?.id, isRoomMinimized, showExitOptions, showChatInput, showEmojiPicker, showMusicPlayerModal, showTasksModal, showChangeBgModal, showDecorationsModal, showRoomStatsModal, showHostCenterModal, showAgencyInfoModal, showMembersModal, showMessagesSheet, showToolsDrawer, showRoomModeModal, showRoomInfoModal, selectedMicUser, selectedEmptySeat, setIsRoomMinimized]);
 
   // Get current messages
   const currentMessages = activeRoom ? roomMessages[activeRoom.id] || [] : [];
