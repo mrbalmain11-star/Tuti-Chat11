@@ -108,7 +108,12 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
   const sync = (): Promise<void> => {
     micQueue = micQueue.catch(() => {}).then(async () => {
       if (closing) return;
-      const publish = Boolean(data.canPublish && shouldPublish());
+      const wantsToPublish = shouldPublish();
+      if (wantsToPublish && !data.canPublish) {
+        onError('الخادم لم يمنح صلاحية التحدث لهذا الاتصال. أعد دخول الغرفة بعد حجز المقعد.');
+        return;
+      }
+      const publish = Boolean(data.canPublish && wantsToPublish);
       if (room.localParticipant.isMicrophoneEnabled === publish) return;
       try {
         await room.localParticipant.setMicrophoneEnabled(publish);
