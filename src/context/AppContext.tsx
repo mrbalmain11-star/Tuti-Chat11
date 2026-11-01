@@ -875,7 +875,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: user.id || '9500',
       name: user.name || 'مستخدم توتي',
       nickname: (user as UserProfile).nickname || user.name || 'مستخدم توتي',
-      avatar: user.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
+      avatar: user.avatar || '',
       country: (user as UserProfile).country || 'العراق',
       countryCode: (user as UserProfile).countryCode || 'IQ',
       countryFlag: (user as UserProfile).countryFlag || '🇮🇶',
@@ -897,7 +897,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       birthdate: (user as UserProfile).birthdate || '1998-05-15',
       bio: (user as UserProfile).bio || 'مرحباً بكم في حسابي الشخصي 🕊️',
       album: (user as UserProfile).album || [
-        user.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
+        ...(user.avatar ? [user.avatar] : []),
       ],
       agencyName: (user as UserProfile).agencyName || '',
       agencyRole: (user as UserProfile).agencyRole || '',
