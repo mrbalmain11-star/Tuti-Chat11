@@ -260,7 +260,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           pending = false;
           const profile = await fetchMyProfile();
           if (!active || !profile) return;
-          const avatar = profile.avatar_url ? await getMyAvatarUrl(profile.avatar_url) : '';
+          // New Google accounts may not yet have an uploaded profile avatar.
+          // Display the verified OAuth provider photo until the user chooses an in-app avatar.
+          const { data: { user: authUser } } = await stagingBackend.auth.getUser();
+          const metadata = authUser?.id === profile.id ? authUser.user_metadata : null;
+          const googlePhoto = typeof metadata?.avatar_url === 'string' ? metadata.avatar_url
+            : typeof metadata?.picture === 'string' ? metadata.picture : '';
+          const avatar = profile.avatar_url ? await getMyAvatarUrl(profile.avatar_url) : googlePhoto;
           if (!active) return;
           setCurrentUser(prev => ({
             ...prev, id: profile.id, name: profile.display_name,
