@@ -37,6 +37,7 @@ export const AgencyModal: React.FC = () => {
   // 'host'  -> مضيف منضم: تظهر له بطاقة "مركز البيانات" وبيانات المضيف فقط
   // 'agent' -> وكيل مفعّل: تظهر له بطاقات الوكيل الثلاث (اعضاء الوكالة، مركز البيانات، المكافأة)
   const [hasApprovedAgency, setHasApprovedAgency] = useState(false);
+  const [agencyRoleLoading, setAgencyRoleLoading] = useState(false);
   const [role, setRole] = useState<'user' | 'host' | 'agent'>('user');
 
   // Resolve the approved agency from the authenticated backend, not a stale local role.
@@ -45,6 +46,7 @@ export const AgencyModal: React.FC = () => {
     let active = true;
     setHasApprovedAgency(false);
     setRole('user');
+    setAgencyRoleLoading(true);
     void (async () => {
       const { stagingBackend } = await import('../services/stagingBackend');
       if (!stagingBackend) return;
@@ -60,7 +62,9 @@ export const AgencyModal: React.FC = () => {
       if (verifiedRole.includes('مالك') || verifiedRole.includes('وكيل')) setRole('agent');
       else if (verifiedRole.includes('مضيف')) setRole('host');
       else setRole('user');
-    })().catch(error => console.error('Agency role lookup failed:', error));
+    })().catch(error => console.error('Agency role lookup failed:', error)).finally(() => {
+      if (active) setAgencyRoleLoading(false);
+    });
     return () => { active = false; };
   }, [openAgencyModal, currentUser.id]);
 
@@ -205,7 +209,7 @@ export const AgencyModal: React.FC = () => {
           </div>
         </div>
       )}
-      {!hasApprovedAgency && <button onClick={() => { setApplicationStatus(''); setApplicationOpen(true); }} className="absolute z-[85] bottom-5 left-5 rounded-full bg-amber-500 text-black px-4 py-3 text-xs font-black shadow-xl border-2 border-amber-200">+ طلب فتح وكالة</button>}
+      {!agencyRoleLoading && !hasApprovedAgency && <button onClick={() => { setApplicationStatus(''); setApplicationOpen(true); }} className="absolute z-[85] bottom-5 left-5 rounded-full bg-amber-500 text-black px-4 py-3 text-xs font-black shadow-xl border-2 border-amber-200">+ طلب فتح وكالة</button>}
       {/* Toast Notification */}
       {toastMessage && (
         <div className="absolute top-6 z-50 px-5 py-2.5 rounded-full bg-slate-900/95 border border-amber-400 text-amber-200 text-xs font-bold shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-4 max-w-[90%] text-center">
