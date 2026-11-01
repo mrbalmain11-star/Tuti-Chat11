@@ -471,7 +471,7 @@ export const VoiceRoomModal: React.FC = () => {
     lastEnteredRoom.current = activeRoom.id;
     if (currentUser.vipLevel < 1) return;
     setVipEntrance(true);
-    const timer = window.setTimeout(() => setVipEntrance(false), 3400);
+    const timer = window.setTimeout(() => setVipEntrance(false), 9000);
     return () => window.clearTimeout(timer);
   }, [activeRoom?.id, isRoomMinimized, currentUser.vipLevel]);
 
@@ -1331,45 +1331,6 @@ export const VoiceRoomModal: React.FC = () => {
             <MessageCircle className="w-5 h-5 text-white stroke-[2.2]" />
           </button>
         </footer>
-
-        {/* =========================================================================
-            7. ANDROID SYSTEM NAVIGATION BAR (Bottom Bar in Image)
-            - Triangle (Back) [◀]
-            - Circle (Home) [⚪]
-            - Square (Recents) [▢]
-            ========================================================================= */}
-        <div className="relative z-20 w-full py-1.5 bg-black/95 flex items-center justify-around text-white/70 select-none">
-          <button
-            onClick={() => {
-              sounds.playClick();
-              setIsRoomMinimized(true);
-            }}
-            className="w-12 h-6 flex items-center justify-center text-sm hover:text-white transition active:scale-90 cursor-pointer"
-            title="رجوع / تصغير"
-          >
-            ◀
-          </button>
-          <button
-            onClick={() => {
-              sounds.playClick();
-              setIsRoomMinimized(true);
-            }}
-            className="w-12 h-6 flex items-center justify-center text-sm hover:text-white transition active:scale-90 cursor-pointer"
-            title="الرئيسية"
-          >
-            ⚪
-          </button>
-          <button
-            onClick={() => {
-              sounds.playClick();
-              showToast('Toti Chat Royal Voice Rooms');
-            }}
-            className="w-12 h-6 flex items-center justify-center text-sm hover:text-white transition active:scale-90 cursor-pointer"
-            title="التطبيقات الحديثة"
-          >
-            ▢
-          </button>
-        </div>
 
         {/* =========================================================================
             8. BOTTOM SHEET DRAWER (EXACT REPLICA OF SCREENSHOT 2)
