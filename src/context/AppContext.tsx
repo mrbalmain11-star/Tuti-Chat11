@@ -462,6 +462,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const voicePublishRef = useRef(false);
   const voiceLifecycleRef = useRef<Promise<void>>(Promise.resolve());
   const voiceSyncRef = useRef<(() => Promise<void>) | null>(null);
+  const voiceSyncGenerationRef = useRef(0);
   voicePublishRef.current = voiceSeat && !myMicMuted;
   useEffect(() => {
     if (!isLoggedIn || !voiceRoomId) return;
@@ -477,6 +478,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (!cancelled) {
           voiceSyncRef.current = connected.sync;
           await connected.sync();
+          // Seat state can change while the initial voice connection is opening.
+          // Reconcile again with the latest publish state once connected.
+          if (!cancelled) await connected.sync();
         }
       } catch (error) {
         if (!cancelled) {
