@@ -338,6 +338,8 @@ export const VoiceRoomModal: React.FC = () => {
       showToast('يرجى اختيار خلفية صالحة.');
       return;
     }
+    if (bgSavePending.current) return;
+    bgSavePending.current = true;
     try {
       await changeRoomBackground(activeRoom.id, selectedBgPreview);
       sounds.playLevelUp();
