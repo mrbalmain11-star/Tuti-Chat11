@@ -193,7 +193,7 @@ export const MessagesView: React.FC = () => {
 
             <div className="flex flex-col items-center gap-1.5 shrink-0 pl-1">
               <span className="text-[11px] text-[#8aa192] font-semibold">{conv.lastTime}</span>
-              {conv.unreadCount > 0 && (
+              {Number.isFinite(conv.unreadCount) && conv.unreadCount > 0 && (
                 <span className="w-5 h-5 rounded-full bg-[#f43f5e] text-white text-[10px] font-black flex items-center justify-center shadow-sm">
                   {conv.unreadCount > 99 ? '99+' : conv.unreadCount}
                 </span>
