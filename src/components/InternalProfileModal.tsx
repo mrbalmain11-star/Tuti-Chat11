@@ -130,14 +130,14 @@ export const InternalProfileModal: React.FC = () => {
       const status = special as { assigned?: boolean; publicId?: string } | null;
       if (!active) return;
       setVisitorPublicId(status?.assigned && status.publicId ? String(status.publicId) : String(profile?.public_id || ''));
-      if (profile?.cover_path) {
-        const { data } = client.storage.from('profile-avatars').getPublicUrl(profile.cover_path);
-        setVisitorCover(data.publicUrl);
-      }
-      if (profile?.avatar_url) {
-        const { data } = client.storage.from('profile-avatars').getPublicUrl(profile.avatar_url);
-        setVisitorAvatar(data.publicUrl);
-      }
+      // Stored images can be full URLs or storage object paths. Avoid wrapping
+      // an already-public URL in another storage URL (which breaks the image).
+      const resolveProfileImage = (value: string) =>
+        /^(https?:\/\/|data:image\/)/i.test(value)
+          ? value
+          : client.storage.from('profile-avatars').getPublicUrl(value).data.publicUrl;
+      if (profile?.cover_path && active) setVisitorCover(resolveProfileImage(profile.cover_path));
+      if (profile?.avatar_url && active) setVisitorAvatar(resolveProfileImage(profile.avatar_url));
     })().catch(error => console.error('Visitor profile load failed:', error));
     return () => { active = false; };
   }, [openInternalProfileModal, isSelf, user.id]);
