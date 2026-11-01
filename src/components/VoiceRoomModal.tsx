@@ -282,6 +282,9 @@ export const VoiceRoomModal: React.FC = () => {
   const handleCustomBgUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    // Prevent an earlier valid preview from being saved after a failed new selection.
+    setSelectedBgPreview('');
+    setBgUploadError(null);
 
     // Validate type
     const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
@@ -305,8 +308,10 @@ export const VoiceRoomModal: React.FC = () => {
     };
     reader.onload = (event) => {
       const dataUrl = event.target?.result as string;
-      if (dataUrl) {
+      if (typeof dataUrl === 'string' && dataUrl.startsWith('data:image/')) {
         setSelectedBgPreview(dataUrl);
+      } else {
+        setBgUploadError('تعذر تحميل معاينة الصورة. اختر صورة أخرى.');
       }
     };
     reader.readAsDataURL(file);
