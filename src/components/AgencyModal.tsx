@@ -37,11 +37,7 @@ export const AgencyModal: React.FC = () => {
   // 'host'  -> مضيف منضم: تظهر له بطاقة "مركز البيانات" وبيانات المضيف فقط
   // 'agent' -> وكيل مفعّل: تظهر له بطاقات الوكيل الثلاث (اعضاء الوكالة، مركز البيانات، المكافأة)
   const [hasApprovedAgency, setHasApprovedAgency] = useState(false);
-  const [role, setRole] = useState<'user' | 'host' | 'agent'>(() => {
-    if (currentUser.agencyRole === 'وكيل') return 'agent';
-    if (currentUser.agencyRole === 'مضيف' || currentUser.isHost) return 'host';
-    return 'user';
-  });
+  const [role, setRole] = useState<'user' | 'host' | 'agent'>('user');
 
   // Resolve the approved agency from the authenticated backend, not a stale local role.
   useEffect(() => {
