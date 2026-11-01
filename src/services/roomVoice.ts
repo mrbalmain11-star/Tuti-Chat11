@@ -175,6 +175,7 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
   return { sync, close: async () => {
     if (musicRoom === room) { musicRoom = null; await music.stop(); }
     closing = true;
+    document.removeEventListener('visibilitychange', resumeRemoteAudio);
     document.removeEventListener('pointerdown', unlockAudio);
     await micQueue.catch(() => {});
     await room.disconnect();
