@@ -361,12 +361,20 @@ export const VoiceRoomModal: React.FC = () => {
       showToast('🔒 لا يمكنك تعديل معلومات الغرفة، الصلاحية لمالك الغرفة فقط');
       return;
     }
-    updateRoom(activeRoom.id, {
-      title: editTitleInput.trim() || activeRoom.title,
-      announcement: editAnnouncementInput.trim() || activeRoom.announcement,
-      tag: editTagInput.trim() || activeRoom.tag,
-    });
-    setShowRoomInfoModal(false);
+    try {
+      const result = updateRoom(activeRoom.id, {
+        title: editTitleInput.trim() || activeRoom.title,
+        announcement: editAnnouncementInput.trim() || activeRoom.announcement,
+        tag: editTagInput.trim() || activeRoom.tag,
+      });
+      void Promise.resolve(result).then(() => setShowRoomInfoModal(false)).catch((error) => {
+        console.error('Room info save failed:', error);
+        showToast('تعذر حفظ معلومات الغرفة. حاول مجدداً.');
+      });
+    } catch (error) {
+      console.error('Room info save failed:', error);
+      showToast('تعذر حفظ معلومات الغرفة. حاول مجدداً.');
+    }
   };
 
   const handleToggleModerator = async (userId: string, userName: string) => {
