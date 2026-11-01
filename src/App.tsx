@@ -95,7 +95,7 @@ const AppContent: React.FC = () => {
         {activeTab === 'home' && <Header />}
 
         {/* Dynamic Main View */}
-        <main className="flex-1">
+        <main className="flex-1 min-h-0" style={{ paddingBottom: "calc(4.5rem + env(safe-area-inset-bottom, 0px))" }}>
           <div style={{ display: activeTab === 'home' ? 'block' : 'none' }}><HomeView /></div>
           <div style={{ display: activeTab === 'messages' ? 'block' : 'none' }}><MessagesView /></div>
           <div style={{ display: activeTab === 'profile' ? 'block' : 'none' }}><ProfileView /></div>
