@@ -1470,6 +1470,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
+  const prepareRoomCoverWebp = async (imageSource: string): Promise<Blob> => {
+    const response = await fetch(imageSource);
+    if (!response.ok) throw new Error('تعذر قراءة صورة الغرفة.');
+    const original = await response.blob();
+    if (!original.type.startsWith('image/')) throw new Error('الملف المحدد ليس صورة.');
+    const bitmap = await createImageBitmap(original);
+    try {
+      const canvas = document.createElement('canvas');
+      const ratio = Math.min(1, 1024 / Math.max(bitmap.width, bitmap.height));
+      canvas.width = Math.max(1, Math.round(bitmap.width * ratio));
+      canvas.height = Math.max(1, Math.round(bitmap.height * ratio));
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('تعذر تجهيز صورة الغرفة.');
+      ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      for (const quality of [0.85, 0.7, 0.5, 0.35]) {
+        const webp = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/webp', quality));
+        if (webp?.type === 'image/webp' && webp.size <= 2 * 1024 * 1024) return webp;
+      }
+      throw new Error('تعذر ضغط صورة الغرفة إلى حجم مدعوم.');
+    } finally {
+      bitmap.close();
+    }
+  };
+
   const createVoiceRoom = async (title: string, _tag: string, coverDataUrl?: string): Promise<void> => {
     const trimmed = title.trim();
     if (trimmed.length < 2 || trimmed.length > 60) throw new Error('اسم الغرفة يجب أن يكون بين حرفين و60 حرفاً.');
@@ -1480,15 +1504,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const roomId = data;
     let coverPath: string | null = null;
     if (coverDataUrl) {
-      // Store the selected room cover independently of the owner's profile avatar.
-      const response = await fetch(coverDataUrl);
-      if (!response.ok) throw new Error('تم إنشاء الغرفة لكن تعذر قراءة صورة الغلاف.');
-      const blob = await response.blob();
-      if (!blob.type.startsWith('image/') || blob.size > 5 * 1024 * 1024) throw new Error('صورة الغرفة غير مدعومة.');
-      const extension = blob.type === 'image/png' ? 'png' : blob.type === 'image/webp' ? 'webp' : 'jpg';
-      const path = roomId + '/cover-' + Date.now() + '.' + extension;
+      const blob = await prepareRoomCoverWebp(coverDataUrl);
+      const path = roomId + '/cover-' + Date.now() + '.webp';
       const { error: uploadError } = await stagingBackend.storage.from('totichat-room-images')
-        .upload(path, blob, { contentType: blob.type, upsert: false });
+        .upload(path, blob, { contentType: 'image/webp', upsert: false });
       if (uploadError) throw new Error('تم إنشاء الغرفة لكن تعذر رفع صورتها: ' + uploadError.message);
       coverPath = path;
     }
@@ -1535,16 +1554,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!stagingBackend || !activeRoom || activeRoom.id !== roomId || activeRoom.hostId !== currentUser.id) {
       throw new Error('تغيير صورة الغرفة متاح لمالكها فقط.');
     }
-    const response = await fetch(imageDataUrl);
-    if (!response.ok) throw new Error('تعذر قراءة صورة الغرفة.');
-    const blob = await response.blob();
-    if (!blob.type.startsWith('image/') || blob.size > 5 * 1024 * 1024) {
-      throw new Error('اختر صورة بحجم لا يتجاوز 5 ميغابايت.');
-    }
-    const extension = blob.type === 'image/png' ? 'png' : blob.type === 'image/webp' ? 'webp' : 'jpg';
-    const path = roomId + '/cover-' + Date.now() + '.' + extension;
+    const blob = await prepareRoomCoverWebp(imageDataUrl);
+    const path = roomId + '/cover-' + Date.now() + '.webp';
     const { error: uploadError } = await stagingBackend.storage.from('totichat-room-images')
-      .upload(path, blob, { contentType: blob.type, upsert: false });
+      .upload(path, blob, { contentType: 'image/webp', upsert: false });
     if (uploadError) throw new Error('فشل رفع صورة الغرفة: ' + uploadError.message);
     const { data, error } = await stagingBackend.rpc('phase2_room_customize', {
       p_room_id: roomId, p_cover_path: path,
