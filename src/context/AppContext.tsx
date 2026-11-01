@@ -1567,9 +1567,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const saved = rows.find(room => room.id === roomId);
     if (!saved?.cover_path || saved.cover_path !== path) throw new Error('لم يؤكد الخادم حفظ صورة الغرفة.');
     const mapped = rows.map(mapRoomToUi);
-    setRooms(mapped);
     const refreshed = mapped.find(room => room.id === roomId);
-    if (refreshed) setActiveRoom(prev => prev?.id === roomId ? { ...prev, coverImage: refreshed.coverImage } : prev);
+    if (!refreshed?.coverImage) throw new Error('تم حفظ الصورة لكن تعذر تحميل رابط عرضها.');
+    // Update the already-mounted home cards and active room without requiring an app restart.
+    // A versioned URL also avoids Android WebView's previously cached image response.
+    const freshCover = refreshed.coverImage + (refreshed.coverImage.includes('?') ? '&' : '?') + 'v=' + Date.now();
+    setRooms(previous => {
+      const byId = new Map(mapped.map(room => [room.id, room]));
+      return previous.map(room => room.id === roomId
+        ? { ...room, ...refreshed, coverImage: freshCover }
+        : (byId.get(room.id) ?? room));
+    });
+    setActiveRoom(prev => prev?.id === roomId ? { ...prev, coverImage: freshCover } : prev);
   };
 
   const changeRoomBackground = async (roomId: string, backgroundUrl: string): Promise<boolean> => {
