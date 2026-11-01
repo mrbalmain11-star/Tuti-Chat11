@@ -314,6 +314,7 @@ export const VoiceRoomModal: React.FC = () => {
     const reader = new FileReader();
     reader.onerror = () => {
       if (readGeneration !== bgReadGeneration.current) return;
+      setSelectedBgPreview('');
       setBgUploadError('تعذر قراءة الصورة. يرجى اختيار صورة أخرى.');
     };
     reader.onload = (event) => {
