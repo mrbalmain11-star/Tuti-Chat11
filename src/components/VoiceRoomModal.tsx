@@ -1208,7 +1208,7 @@ export const VoiceRoomModal: React.FC = () => {
                   <div className="bg-[#180f33]/85 backdrop-blur-md rounded-2xl p-3 border border-purple-500/20 text-xs text-slate-200 leading-relaxed shadow-lg">
                     أهلاً بك في TotiChat. يرجى احترام الآخرين والالتزام بقواعد الغرفة.
                   </div>
-                  {activeRoom.announcement?.trim() && (
+                  {activeRoom.hostId && (
                     <div className="flex items-start gap-2 justify-end">
                       <div className="flex flex-col items-end min-w-0">
                         <button type="button" className="flex items-center gap-1 text-xs font-black text-white mb-1 hover:text-amber-300" onClick={() => openProfileForUser({ id: activeRoom.hostId, name: activeRoom.hostName || (isOwner ? currentUser.name : 'صاحب الغرفة'), avatar: activeRoom.hostAvatar || (isOwner ? currentUser.avatar : '') })}>
@@ -1216,7 +1216,7 @@ export const VoiceRoomModal: React.FC = () => {
                           <Crown size={12} className="text-amber-300" />
                         </button>
                         <div className="bg-[#160d33]/90 backdrop-blur-md rounded-2xl p-2.5 border border-purple-500/30 text-xs text-slate-100 shadow-md text-right leading-relaxed">
-                          {activeRoom.announcement}
+                          {activeRoom.announcement?.trim() || 'أهلاً وسهلاً بكم في الغرفة'}
                         </div>
                       </div>
                       <button type="button" aria-label="زيارة الملف الشخصي لصاحب الغرفة" title="زيارة الملف الشخصي لصاحب الغرفة" onClick={() => openProfileForUser({ id: activeRoom.hostId, name: activeRoom.hostName || (isOwner ? currentUser.name : 'صاحب الغرفة'), avatar: activeRoom.hostAvatar || (isOwner ? currentUser.avatar : '') })} className="w-10 h-10 rounded-full overflow-hidden border border-amber-300/80 bg-[#1b1038] shrink-0 flex items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-300">
