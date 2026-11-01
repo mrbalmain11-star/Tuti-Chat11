@@ -2555,9 +2555,9 @@ export const VoiceRoomModal: React.FC = () => {
                           </div>
                         </div>
 
-                        {isOwner && (
+                        {(isOwner || isModerator) && user.id !== currentUser.id && user.id !== activeRoom.hostId && (
                           <div className="flex items-center gap-1.5">
-                            <button
+                            {isOwner && <button
                               onClick={() => handleToggleModerator(user.id, user.name)}
                               className={`p-1.5 rounded-lg text-[10px] font-bold transition active:scale-95 ${
                                 isMod
@@ -2567,7 +2567,7 @@ export const VoiceRoomModal: React.FC = () => {
                               title={isMod ? 'إلغاء الإشراف' : 'ترقية إلى مشرف'}
                             >
                               {isMod ? <UserMinus className="w-3.5 h-3.5" /> : <UserPlus className="w-3.5 h-3.5" />}
-                            </button>
+                            </button>}
                             <button
                               onClick={() => handleKickMember(user.id, user.name)}
                               className="p-1.5 rounded-lg bg-rose-900/30 hover:bg-rose-900/50 text-rose-400 text-[10px] font-bold transition active:scale-95"
