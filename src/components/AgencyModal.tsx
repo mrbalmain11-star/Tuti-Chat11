@@ -66,7 +66,10 @@ export const AgencyModal: React.FC = () => {
       if (authError || !auth.user) return;
       const { data, error } = await stagingBackend.rpc('staging_profile_agency', { p_user_id: auth.user.id });
       if (error || !active || !data) return;
-      setHasApprovedAgency(Number(data.public_id) > 0);
+      setHasApprovedAgency(
+        (String(data.role ?? '').includes('مالك') || String(data.role ?? '').includes('وكيل')) &&
+        Number(data.public_id) > 0
+      );
       const verifiedRole = String(data.role ?? '');
       if (verifiedRole.includes('مالك') || verifiedRole.includes('وكيل')) setRole('agent');
       else if (verifiedRole.includes('مضيف')) setRole('host');
