@@ -462,7 +462,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const voicePublishRef = useRef(false);
   const voiceLifecycleRef = useRef<Promise<void>>(Promise.resolve());
   const voiceSyncRef = useRef<(() => Promise<void>) | null>(null);
-  const voiceSyncGenerationRef = useRef(0);
   voicePublishRef.current = voiceSeat && !myMicMuted;
   useEffect(() => {
     if (!isLoggedIn || !voiceRoomId) return;
