@@ -283,6 +283,10 @@ export const VoiceRoomModal: React.FC = () => {
     }, 2500);
   };
 
+  useEffect(() => {
+    if (!showChangeBgModal) bgReadGeneration.current += 1;
+  }, [showChangeBgModal]);
+
   const handleCustomBgUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
