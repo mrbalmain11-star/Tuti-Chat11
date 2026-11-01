@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { VoiceRoom } from '../types';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
@@ -9,6 +9,8 @@ interface RoomCardProps {
 
 export const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
   const { enterRoom } = useApp();
+  const [coverFailed, setCoverFailed] = useState(false);
+  const [hostAvatarFailed, setHostAvatarFailed] = useState(false);
 
   return (
     <div
@@ -21,11 +23,20 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
     >
       {/* Cover Image Container */}
       <div className="relative aspect-[1/1] w-full rounded-2xl overflow-hidden bg-slate-200 border border-slate-200/80 shadow-md group-hover:shadow-lg transition">
-        <img
-          src={room.coverImage}
-          alt={room.title}
-          className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-500"
-        />
+        {room.coverImage && !coverFailed ? (
+          <img
+            key={room.coverImage}
+            src={room.coverImage}
+            alt={room.title}
+            onError={() => setCoverFailed(true)}
+            onLoad={() => setCoverFailed(false)}
+            className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-500"
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-900 via-teal-800 to-slate-950 flex items-center justify-center">
+            <span className="text-5xl font-black text-white/75">{room.title.trim().slice(0, 1) || '♪'}</span>
+          </div>
+        )}
 
         {/* Subtle dark gradient overlay at top and bottom for readability */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/65 pointer-events-none" />
@@ -129,16 +140,20 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
           {/* Soundwave + Listeners Count */}
           <div className="flex items-center gap-1 text-white text-xs font-black drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
             <span className="text-white text-sm tracking-tighter">ılı</span>
-            <span className="font-sans font-bold">{room.listenersCount ?? 50}</span>
+            <span className="font-sans font-bold">{room.listenersCount ?? 0}</span>
           </div>
 
           {/* Single Host Avatar in Circle with White Border matching Screenshot */}
           <div className="w-5 h-5 rounded-full overflow-hidden border border-white/90 shrink-0 shadow-md">
-            <img
-              src={room.hostAvatar || room.coverImage}
-              alt="Host"
-              className="w-full h-full object-cover"
-            />
+            {(room.hostAvatar || room.coverImage) && !hostAvatarFailed ? (
+              <img
+                key={room.hostAvatar || room.coverImage}
+                src={room.hostAvatar || room.coverImage}
+                alt="Host"
+                onError={() => setHostAvatarFailed(true)}
+                className="w-full h-full object-cover"
+              />
+            ) : <span className="block w-full h-full bg-emerald-800 text-white text-center text-xs leading-5">♪</span>}
           </div>
         </div>
       </div>
