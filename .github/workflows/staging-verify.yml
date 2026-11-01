@@ -215,16 +215,10 @@ jobs:
               assert hashlib.sha256(archive.read('TotiChat.apk')).digest()==hashlib.sha256(apk.read_bytes()).digest()
           print('Verified Android-compatible ZIP:',target,'size:',target.stat().st_size)
           PY
-      # Actions artifacts are ZIP archives automatically. Publish the phone-compatible
-      # ZIP as a release asset, and retain the APK artifact for CI diagnostics.
-      - uses: actions/upload-artifact@v4
-        id: stage_upload
-        with:
-          name: TotiChat-Staging-Debug-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
-          compression-level: 0
-          if-no-files-found: error
-
+      # Do not publish a GitHub Actions artifact: the Actions download is
+      # automatically wrapped in another ZIP, which Android file managers
+      # can mistake for the installable archive. Publish only the verified
+      # single-APK release ZIP below.
       - name: Publish directly downloadable staging APK
         id: stage13
         env:
@@ -258,6 +252,15 @@ jobs:
             --title "TotiChat Staging APK ${GITHUB_SHA:0:8}" \
             --notes "ZIP contains one installable APK; ZIP archive integrity verified before release." \
             --prerelease
+          {
+            echo "## Android phone download"
+            echo ""
+            echo "Use the **release ZIP**, not a GitHub Actions artifact:"
+            echo ""
+            echo "https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/$NAME.zip"
+            echo ""
+            echo "Inside the ZIP: TotiChat.apk (one file, no nested archive)."
+          } >> "$GITHUB_STEP_SUMMARY"
 
 
       - name: Report precise failing stage in Actions summary
