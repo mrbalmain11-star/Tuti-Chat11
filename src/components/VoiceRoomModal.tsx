@@ -372,7 +372,10 @@ export const VoiceRoomModal: React.FC = () => {
         announcement: editAnnouncementInput.trim() || activeRoom.announcement,
         tag: editTagInput.trim() || activeRoom.tag,
       });
-      void Promise.resolve(result).then(() => setShowRoomInfoModal(false)).catch((error) => {
+      void Promise.resolve(result).then(() => {
+        showToast('تم حفظ معلومات الغرفة على الخادم.');
+        setShowRoomInfoModal(false);
+      }).catch((error) => {
         console.error('Room info save failed:', error);
         showToast('تعذر حفظ معلومات الغرفة. حاول مجدداً.');
       });
