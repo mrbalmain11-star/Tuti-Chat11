@@ -231,11 +231,18 @@ jobs:
       # Keep the download inside the same GitHub Actions run, as requested.
       # GitHub automatically wraps Actions artifacts in ZIP; this artifact
       # contains only the verified APK, with no extra nested ZIP.
+      - name: Prepare clean phone installer for Actions download
+        run: |
+          set -euo pipefail
+          mkdir -p phone-installer
+          cp android/app/build/outputs/apk/debug/app-debug.apk phone-installer/TotiChat.apk
+          cmp android/app/build/outputs/apk/debug/app-debug.apk phone-installer/TotiChat.apk
+          test -s phone-installer/TotiChat.apk
       - name: Upload installable APK to Actions Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: TotiChat-APK-Install
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: phone-installer/TotiChat.apk
           compression-level: 0
           if-no-files-found: error
 
@@ -258,8 +265,10 @@ jobs:
           test "$(unzip -Z1 /tmp/totichat-actions-download.zip | wc -l)" -eq 1
           mkdir -p /tmp/totichat-artifact-extracted
           unzip -o /tmp/totichat-actions-download.zip -d /tmp/totichat-artifact-extracted
-          test -s /tmp/totichat-artifact-extracted/app-debug.apk
-          cmp android/app/build/outputs/apk/debug/app-debug.apk /tmp/totichat-artifact-extracted/app-debug.apk
+          test -s /tmp/totichat-artifact-extracted/TotiChat.apk
+          cmp android/app/build/outputs/apk/debug/app-debug.apk /tmp/totichat-artifact-extracted/TotiChat.apk
+          AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -n 1)"
+          "$AAPT" dump badging /tmp/totichat-artifact-extracted/TotiChat.apk | head -n 2
           echo "Published GitHub Actions ZIP extracts correctly and APK bytes match."
 
       - name: Publish directly downloadable staging APK
