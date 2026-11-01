@@ -48,6 +48,20 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
     pendingPlayback.clear();
     document.removeEventListener('pointerdown', retryPlayback);
   };
+  // Android may suspend media playback while the app is in the background.
+  // Retry existing remote tracks when it becomes visible, without reconnecting LiveKit.
+  const resumeRemoteAudio = () => {
+    if (closing || document.visibilityState !== 'visible') return;
+    for (const element of audio.values()) {
+      if (!element.isConnected || !element.paused) continue;
+      void element.play().catch(() => {
+        if (closing || !element.isConnected) return;
+        pendingPlayback.add(element);
+        document.addEventListener('pointerdown', retryPlayback);
+      });
+    }
+  };
+  document.addEventListener('visibilitychange', resumeRemoteAudio);
   room.on(RoomEvent.TrackSubscribed, (track, _publication, participant) => {
     if (closing || track.kind !== 'audio') return;
     const key = participant.identity + ':' + track.sid;
@@ -151,6 +165,7 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
   } catch (error) {
     // A failed Android capture must not leave a LiveKit connection alive.
     closing = true;
+    document.removeEventListener('visibilitychange', resumeRemoteAudio);
     document.removeEventListener('pointerdown', unlockAudio);
     await room.disconnect();
     clearAudio();
