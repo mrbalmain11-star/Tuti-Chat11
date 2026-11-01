@@ -15,6 +15,11 @@ export const CreateRoomModal: React.FC = () => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      if (!file.type.startsWith('image/') || file.size > 5 * 1024 * 1024) {
+        window.alert('يرجى اختيار صورة بحجم لا يتجاوز 5 ميغابايت');
+        e.target.value = '';
+        return;
+      }
       const reader = new FileReader();
       reader.onload = (event) => {
         if (event.target?.result) {
