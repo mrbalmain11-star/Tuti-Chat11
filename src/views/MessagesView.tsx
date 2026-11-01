@@ -195,7 +195,7 @@ export const MessagesView: React.FC = () => {
               <span className="text-[11px] text-[#8aa192] font-semibold">{conv.lastTime}</span>
               {conv.unreadCount > 0 && (
                 <span className="w-5 h-5 rounded-full bg-[#f43f5e] text-white text-[10px] font-black flex items-center justify-center shadow-sm">
-                  {conv.unreadCount}
+                  {conv.unreadCount > 99 ? '99+' : conv.unreadCount}
                 </span>
               )}
             </div>
