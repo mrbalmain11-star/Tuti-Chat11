@@ -32,8 +32,18 @@ export const MessagesView: React.FC = () => {
         lastTime: messages.at(-1)?.timestamp || '', unreadCount: Number(data?.unreadCount || 0), messages,
       });
     };
-    void load().catch(error => { console.error('Notification feed failed:', error); if (active) setFeedError(true); });
-    return () => { active = false; };
+    const refresh = () => {
+      void load().catch(error => { console.error('Notification feed failed:', error); if (active) setFeedError(true); });
+    };
+    const onVisibilityChange = () => { if (document.visibilityState === 'visible') refresh(); };
+    refresh();
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      active = false;
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
   }, [currentUser.id]);
 
   useEffect(() => {
