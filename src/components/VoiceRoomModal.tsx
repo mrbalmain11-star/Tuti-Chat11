@@ -213,9 +213,10 @@ export const VoiceRoomModal: React.FC = () => {
 
   useEffect(() => {
     if (activeRoom) {
-      if (activeRoom.backgroundUrl) {
-        setSelectedBgPreview(activeRoom.backgroundUrl);
-      }
+      // Reset room-specific draft state even when the next room has no background.
+      setSelectedBgPreview(activeRoom.backgroundUrl || '/galaxy-room-bg.jpg');
+      setBgUploadError(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
       setEditTitleInput(activeRoom.title || '');
       setEditAnnouncementInput(activeRoom.announcement || '');
       setEditTagInput(activeRoom.tag || '');
