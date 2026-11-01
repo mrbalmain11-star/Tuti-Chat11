@@ -761,14 +761,7 @@ export const AgencyModal: React.FC = () => {
                         <div className="flex-1 h-[1.5px] bg-gradient-to-r from-[#E5B842] via-[#E5B842]/80 to-transparent" />
                       </div>
 
-                      {/* Simulation Trigger button to test receiving an invite */}
-                      <button
-                        onClick={handleSimulateNewInvite}
-                        className="mt-8 px-4 py-2 rounded-full bg-white/10 hover:bg-white/15 border border-amber-400/40 text-amber-300 text-xs font-bold transition active:scale-95 flex items-center gap-1.5 cursor-pointer backdrop-blur-md shadow-lg"
-                      >
-                        <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
-                        <span>محاكاة استلام طلب انضمام من وكيل 📩</span>
-                      </button>
+
                     </div>
                   )}
                 </div>
