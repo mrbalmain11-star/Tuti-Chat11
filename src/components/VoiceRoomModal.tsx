@@ -1198,46 +1198,25 @@ export const VoiceRoomModal: React.FC = () => {
 
                 {/* Chat Messages Column */}
                 <div className="flex-1 space-y-1.5 overflow-y-auto max-h-48 no-scrollbar pr-1">
-                  {/* 1. Official System Notice */}
+                  {/* Room rules and real host welcome, never demo accounts or stock avatars. */}
                   <div className="bg-[#180f33]/85 backdrop-blur-md rounded-2xl p-3 border border-purple-500/20 text-xs text-slate-200 leading-relaxed shadow-lg">
-                    مرحباً بك في Huwaa. يرجى احترام الآخرين في المحادثات. سيتم حظر الحسابات التي تنشر محتوى مبتذلاً أو احتيالياً أو غير قانوني.
+                    أهلاً بك في TotiChat. يرجى احترام الآخرين والالتزام بقواعد الغرفة.
                   </div>
-
-                  {/* 2. Room Host Welcome Message (LEO 🇨🇳) */}
-                  <div className="flex items-start gap-2 justify-end">
-                    <div className="flex flex-col items-end">
-                      {/* Name and Level Badges Header */}
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-emerald-600 text-white font-mono">2</span>
-                        <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-pink-600 text-white font-mono">2</span>
-                        <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-blue-600 text-white font-mono">2</span>
-                        <span className="text-xs font-black text-white">LEO 🇨🇳</span>
+                  {activeRoom.announcement?.trim() && (
+                    <div className="flex items-start gap-2 justify-end">
+                      <div className="flex flex-col items-end min-w-0">
+                        <div className="text-xs font-black text-white mb-1">{activeRoom.hostName || (activeRoom.hostId === currentUser.id ? currentUser.name : 'صاحب الغرفة')}</div>
+                        <div className="bg-[#160d33]/90 backdrop-blur-md rounded-2xl p-2.5 border border-purple-500/30 text-xs text-slate-100 shadow-md text-right leading-relaxed">
+                          {activeRoom.announcement}
+                        </div>
                       </div>
-
-                      {/* Message Bubble */}
-                      <div className="bg-[#160d33]/90 backdrop-blur-md rounded-2xl p-2.5 border border-purple-500/30 text-xs text-slate-100 shadow-md text-right leading-relaxed">
-                        <span className="text-[#26d0b2] font-bold ml-1" dir="ltr">@Mr. Balmain</span>
-                        <span>مرحباً يا صديقي، أهلاً بك في غرفتي. أتمنى لك وقتاً ممتعاً هنا!</span>
+                      <div className="w-10 h-10 rounded-full overflow-hidden border border-amber-300/80 bg-[#1b1038] shrink-0 flex items-center justify-center">
+                        {(activeRoom.hostAvatar || (activeRoom.hostId === currentUser.id ? currentUser.avatar : '')) ? (
+                          <img src={activeRoom.hostAvatar || currentUser.avatar} alt="صاحب الغرفة" className="w-full h-full object-cover" />
+                        ) : <span className="text-white font-bold">{(activeRoom.hostName || currentUser.name || 'غ').charAt(0)}</span>}
                       </div>
                     </div>
-
-                    {/* Host Avatar on Right */}
-                    <div
-                      onClick={() => {
-                        sounds.playClick();
-                        showToast('المضيف: LEO 🇨🇳');
-                      }}
-                      className="w-10 h-10 rounded-full overflow-hidden border border-amber-300/80 bg-[#e2a87a] shrink-0 shadow-md cursor-pointer"
-                      title="مضيف الغرفة"
-                    >
-                      <img
-                        src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&fit=crop&q=80"
-                        alt="LEO"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  </div>
-
+                  )}
                   {/* 3. Real-time User Sent Messages */}
                   {currentMessages.map((msg) => (
                     <div key={msg.id} className="flex justify-end">
