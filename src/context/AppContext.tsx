@@ -1477,8 +1477,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const { data, error } = await stagingBackend.rpc('staging_create_my_room', { p_title: trimmed });
     if (error || typeof data !== 'string') throw error ?? new Error('Room creation not confirmed');
     const roomId = data;
-    if (coverDataUrl?.startsWith('data:image/')) {
+    let coverPath: string | null = null;
+    if (coverDataUrl) {
+      // Store the selected room cover independently of the owner's profile avatar.
       const response = await fetch(coverDataUrl);
+      if (!response.ok) throw new Error('تم إنشاء الغرفة لكن تعذر قراءة صورة الغلاف.');
       const blob = await response.blob();
       if (!blob.type.startsWith('image/') || blob.size > 5 * 1024 * 1024) throw new Error('صورة الغرفة غير مدعومة.');
       const extension = blob.type === 'image/png' ? 'png' : blob.type === 'image/webp' ? 'webp' : 'jpg';
@@ -1486,11 +1489,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const { error: uploadError } = await stagingBackend.storage.from('totichat-room-images')
         .upload(path, blob, { contentType: blob.type, upsert: false });
       if (uploadError) throw new Error('تم إنشاء الغرفة لكن تعذر رفع صورتها: ' + uploadError.message);
-      const { data: saved, error: saveError } = await stagingBackend.rpc('phase2_room_customize', {
-        p_room_id: roomId, p_cover_path: path,
-      });
-      if (saveError || saved !== true) throw new Error('تم إنشاء الغرفة لكن تعذر حفظ صورتها بالخادم.');
+      coverPath = path;
     }
+    const { data: saved, error: saveError } = await stagingBackend.rpc('phase2_room_customize', {
+      p_room_id: roomId, p_welcome_message: _tag.trim() || 'اهلا وسهلا',
+      ...(coverPath ? { p_cover_path: coverPath } : {}),
+    });
+    if (saveError || saved !== true) throw new Error('تم إنشاء الغرفة لكن تعذر حفظ غلافها أو رسالة الترحيب بالخادم.');
     const rows = await fetchRealRooms();
     setRooms(rows.map(mapRoomToUi));
   };
