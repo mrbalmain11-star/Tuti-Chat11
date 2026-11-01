@@ -19,6 +19,7 @@ export const MessagesView: React.FC = () => {
       const sequence = ++requestSequence;
       if (!stagingBackend) return;
       const { data, error } = await stagingBackend.rpc('phase5_notification_feed', { p_limit: 50 });
+      if (!active || sequence !== requestSequence) return;
       if (error) throw error;
       if (active) setFeedError(false);
       const entries = Array.isArray(data?.items) ? data.items : [];
