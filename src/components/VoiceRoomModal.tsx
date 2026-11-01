@@ -380,7 +380,7 @@ export const VoiceRoomModal: React.FC = () => {
         tag: editTagInput.trim(),
       });
       if (editCoverDataUrl) await changeRoomCover(activeRoom.id, editCoverDataUrl);
-      showToast('تم حفظ معلومات الغرفة وصورتها على الخادم.');
+      showToast(editCoverDataUrl ? '✅ تم رفع صورة الغرفة وحفظها بنجاح' : '✅ تم حفظ معلومات الغرفة بنجاح');
       setEditCoverDataUrl('');
       setShowRoomInfoModal(false);
     } catch (error) {
@@ -687,7 +687,7 @@ export const VoiceRoomModal: React.FC = () => {
 
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="absolute top-14 z-50 px-4 py-2 rounded-full bg-black/90 border border-purple-500/60 text-white text-xs font-bold shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-4 max-w-[90%] text-center">
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[100] px-4 py-2 rounded-full bg-black/90 border border-purple-500/60 text-white text-xs font-bold shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-4 max-w-[90%] text-center">
           {toastMessage}
         </div>
       )}
@@ -2543,7 +2543,7 @@ export const VoiceRoomModal: React.FC = () => {
                       disabled={savingRoomInfo}
                       className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 font-black text-xs shadow-lg active:scale-95 transition cursor-pointer"
                     >
-                      حفظ التعديلات 👑
+                      {savingRoomInfo ? 'جاري حفظ التعديلات...' : 'حفظ التعديلات 👑'}
                     </button>
                     <button
                       type="button"
