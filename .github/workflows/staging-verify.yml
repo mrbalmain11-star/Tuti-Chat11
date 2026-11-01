@@ -213,16 +213,15 @@ jobs:
               assert hashlib.sha256(archive.read(name+'.apk')).digest()==hashlib.sha256(apk.read_bytes()).digest()
           print('Verified Android-compatible ZIP:',target,'size:',target.stat().st_size)
           PY
-      - uses: actions/upload-artifact@v4
-        with:
-          name: TotiChat-Staging-ZIP
-          path: TotiChat-Staging-*.zip
-          if-no-files-found: error
+      # GitHub wraps each Actions artifact in one ZIP automatically.
+      # Upload the APK itself, not a ZIP inside another ZIP; store bytes without compression
+      # for compatibility with Android file managers.
       - uses: actions/upload-artifact@v4
         id: stage_upload
         with:
           name: TotiChat-Staging-Debug-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
+          compression-level: 0
           if-no-files-found: error
 
       - name: Publish directly downloadable staging APK
