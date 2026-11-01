@@ -1165,8 +1165,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Seat reservations and moderation require authenticated server operations.
+  const seatReservationPendingRef = useRef(false);
   const takeSeat = (seatNumber: number): void => {
-    if (!activeRoom) return;
+    if (!activeRoom || seatReservationPendingRef.current) return;
+    seatReservationPendingRef.current = true;
     const roomId = activeRoom.id;
     void reserveSeat(roomId, seatNumber).catch(async error => {
       // Membership can expire while a room remains open; rejoin once and retry.
@@ -1205,6 +1207,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         reason.includes('occupied') ? 'هذا المقعد مشغول، اختر مقعداً آخر.' :
         reason.includes('join room first') ? 'عضويتك بالغرفة غير متزامنة. اخرج وادخل الغرفة مجدداً.' :
         'تعذر حجز المقعد من الخادم. ' + (error instanceof Error ? error.message : ''));
+    }).finally(() => {
+      seatReservationPendingRef.current = false;
     });
   };
 
