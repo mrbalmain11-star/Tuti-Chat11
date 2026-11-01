@@ -46,6 +46,7 @@ export const AgencyModal: React.FC = () => {
     let active = true;
     setHasApprovedAgency(false);
     setRole('user');
+    setActiveSubView(null);
     setAgencyRoleLoading(true);
     void (async () => {
       const { stagingBackend } = await import('../services/stagingBackend');
