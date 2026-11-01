@@ -1187,6 +1187,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           })),
         };
       });
+      // Joining a seat must also reconcile the server mute flag. Otherwise
+      // LiveKit stays unpublished even though the seat is visibly occupied.
+      return setMyRoomMute(roomId, false).then(confirmed => {
+        if (confirmed !== false) throw new Error('Microphone unmute not confirmed');
+        setMyMicMuted(false);
+        setActiveRoom(prev => prev?.id !== roomId ? prev : ({
+          ...prev,
+          seats: prev.seats.map(seat => seat.seatNumber === seatNumber
+            ? { ...seat, isMuted: false } : seat),
+        }));
+      });
     }).catch(error => {
       console.error('Seat reservation failed:', error);
       const reason = error instanceof Error ? error.message.toLowerCase() : '';
