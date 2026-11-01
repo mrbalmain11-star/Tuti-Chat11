@@ -43,17 +43,6 @@ export const AgencyModal: React.FC = () => {
     return 'user';
   });
 
-  // Keep role in sync with currentUser when modal opens or profile changes
-  useEffect(() => {
-    if (currentUser.agencyRole === 'وكيل') {
-      setRole('agent');
-    } else if (currentUser.agencyRole === 'مضيف' || currentUser.isHost) {
-      setRole('host');
-    } else {
-      setRole('user');
-    }
-  }, [currentUser.agencyRole, currentUser.isHost]);
-
   // Resolve the approved agency from the authenticated backend, not a stale local role.
   useEffect(() => {
     if (!openAgencyModal) return;
