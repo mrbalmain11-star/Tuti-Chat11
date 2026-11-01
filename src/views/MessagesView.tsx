@@ -14,7 +14,9 @@ export const MessagesView: React.FC = () => {
   const [lastReadId, setLastReadId] = useState<string>(() => localStorage.getItem(`totichat:system-read:${currentUser.id}`) || '');
   useEffect(() => {
     let active = true;
+    let requestSequence = 0;
     const load = async () => {
+      const sequence = ++requestSequence;
       if (!stagingBackend) return;
       const { data, error } = await stagingBackend.rpc('phase5_notification_feed', { p_limit: 50 });
       if (error) throw error;
