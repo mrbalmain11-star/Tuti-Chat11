@@ -348,6 +348,8 @@ export const VoiceRoomModal: React.FC = () => {
     } catch (error) {
       console.error('Room background save failed:', error);
       showToast(error instanceof Error ? error.message : 'فشل حفظ الخلفية على الخادم.');
+    } finally {
+      bgSavePending.current = false;
     }
   };
 
