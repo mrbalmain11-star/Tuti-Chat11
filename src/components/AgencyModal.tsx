@@ -14,7 +14,6 @@ import {
   HelpCircle,
   Crown,
   BellRing,
-  RotateCcw,
   Send,
   MessageCircle,
   Sparkles,
