@@ -51,7 +51,7 @@ export const MessagesView: React.FC = () => {
 
   return (
     <div
-      className="min-h-screen pb-28 pt-4 px-4 font-['Cairo',sans-serif] bg-gradient-to-b from-[#FDFBF7] via-[#FAF6ED] to-[#F5EFE0] text-slate-800 select-none"
+      className="toti-messages-scroll min-h-screen pb-28 pt-4 px-4 font-['Cairo',sans-serif] bg-gradient-to-b from-[#FDFBF7] via-[#FAF6ED] to-[#F5EFE0] text-slate-800 select-none"
       dir={isRtl ? 'rtl' : 'ltr'}
     >
       {/* Top Header */}
