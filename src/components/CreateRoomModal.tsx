@@ -6,6 +6,7 @@ import { sounds } from '../utils/audio';
 export const CreateRoomModal: React.FC = () => {
   const { openCreateRoomModal, setOpenCreateRoomModal, createVoiceRoom } = useApp();
   const [roomName, setRoomName] = useState('');
+  const [saving, setSaving] = useState(false);
   const [welcomeMessage, setWelcomeMessage] = useState('اهلا وسهلا');
   const [coverImage, setCoverImage] = useState<string>('/src/assets/images/iraq_flag_cover_1790177322445.jpg');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -30,12 +31,21 @@ export const CreateRoomModal: React.FC = () => {
     }
   };
 
-  const handleCreate = (e: React.FormEvent) => {
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!roomName.trim()) return;
-    sounds.playLevelUp();
-    createVoiceRoom(roomName.trim(), welcomeMessage.trim() || 'اهلا وسهلا');
-    setOpenCreateRoomModal(false);
+    if (saving) return;
+    setSaving(true);
+    try {
+      await createVoiceRoom(roomName.trim(), welcomeMessage.trim() || 'اهلا وسهلا', coverImage.startsWith('data:image/') ? coverImage : undefined);
+      sounds.playLevelUp();
+      setOpenCreateRoomModal(false);
+    } catch (error) {
+      console.error('Room creation or cover upload failed:', error);
+      window.alert(error instanceof Error ? error.message : 'تعذر إنشاء الغرفة.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
