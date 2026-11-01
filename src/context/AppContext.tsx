@@ -71,7 +71,7 @@ interface AppContextType {
   followedRoomHosts: Set<string>;
   toggleFollowHost: (hostId: string) => void;
   createVoiceRoom: (title: string, tag: string) => void;
-  updateRoom: (roomId: string, updates: Partial<VoiceRoom>) => void;
+  updateRoom: (roomId: string, updates: Partial<VoiceRoom>) => Promise<void>;
   changeRoomBackground: (roomId: string, backgroundUrl: string) => Promise<boolean>;
   // Modals state
   openGiftStore: boolean;
@@ -1468,23 +1468,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
-  const updateRoom = (roomId: string, updates: Partial<VoiceRoom>): void => {
+  const updateRoom = (roomId: string, updates: Partial<VoiceRoom>): Promise<void> => {
     if (!stagingBackend) {
-      alert('الاتصال بالخادم غير مهيأ.');
-      return;
+      throw new Error('الاتصال بالخادم غير مهيأ.');
     }
     const existing = rooms.find(room => room.id === roomId) ?? (activeRoom?.id === roomId ? activeRoom : null);
     if (!existing || existing.hostId !== currentUser.id) {
-      alert('لا تملك صلاحية تعديل هذه الغرفة.');
-      return;
+      throw new Error('لا تملك صلاحية تعديل هذه الغرفة.');
     }
     const title = (updates.title ?? existing.title).trim();
     const welcome = updates.announcement ?? existing.announcement ?? '';
     if (title.length < 2 || title.length > 60 || welcome.length > 500) {
-      alert('اسم الغرفة يجب أن يكون من حرفين إلى 60 حرفاً، والإعلان بحد أقصى 500 حرف.');
-      return;
+      throw new Error('اسم الغرفة يجب أن يكون من حرفين إلى 60 حرفاً، والإعلان بحد أقصى 500 حرف.');
     }
-    void (async () => {
+    return (async () => {
       const { data, error } = await stagingBackend.rpc('staging_update_my_room', {
         p_room_id: roomId, p_title: title, p_welcome_message: welcome,
       });
@@ -1497,11 +1494,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setActiveRoom(prev => prev?.id === roomId ? {
         ...prev, title: saved.title, announcement: saved.welcome_message ?? '',
       } : prev);
-      alert('تم حفظ اسم الغرفة بنجاح على الخادم.');
-    })().catch(error => {
-      console.error('Room update failed:', error);
-      alert('تعذر حفظ اسم الغرفة. لم يتم تأكيد التغيير على الخادم.');
-    });
+
+    })();
   };
 
   const changeRoomBackground = async (roomId: string, backgroundUrl: string): Promise<boolean> => {
