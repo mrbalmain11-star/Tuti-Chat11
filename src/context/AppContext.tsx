@@ -461,7 +461,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const voiceSeat = activeRoom?.seats.some(seat => seat.user?.id === currentUser.id) ?? false;
   const voicePublishRef = useRef(false);
   const voiceLifecycleRef = useRef<Promise<void>>(Promise.resolve());
-  const voiceSyncRef = useRef<(() => Promise<void>) | null>(null);
   voicePublishRef.current = voiceSeat && !myMicMuted;
   useEffect(() => {
     if (!isLoggedIn || !voiceRoomId) return;
@@ -474,13 +473,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           if (!cancelled) console.error('Room voice:', message);
         });
         connection = connected;
-        if (!cancelled) {
-          voiceSyncRef.current = connected.sync;
-          await connected.sync();
-          // Seat state can change while the initial voice connection is opening.
-          // Reconcile again with the latest publish state once connected.
-          if (!cancelled) await connected.sync();
-        }
+        if (!cancelled) await connected.sync();
       } catch (error) {
         if (!cancelled) {
           console.error('Voice connection failed:', error);
@@ -491,21 +484,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     voiceLifecycleRef.current = setup;
     return () => {
       cancelled = true;
-      voiceSyncRef.current = null;
       // Cleanup is queued after setup, including microphone acquisition.
       // Next connection must wait for this queued close to finish.
       voiceLifecycleRef.current = setup.then(async () => {
         if (connection) await connection.close();
       });
     };
-  }, [isLoggedIn, voiceRoomId]);
-
-  useEffect(() => {
-    if (!isLoggedIn || !voiceRoomId || !voiceSyncRef.current) return;
-    void voiceSyncRef.current().catch(error => {
-      console.error('Voice microphone sync failed:', error);
-    });
-  }, [isLoggedIn, voiceRoomId, voiceSeat, myMicMuted]);
+  }, [isLoggedIn, voiceRoomId, voiceSeat && !myMicMuted]);
 
   useEffect(() => {
     if (isLoggedIn) return;
