@@ -489,6 +489,17 @@ export const VoiceRoomModal: React.FC = () => {
         setShowExitOptions(false);
       } else if (showChatInput) {
         setShowChatInput(false);
+        setShowEmojiPicker(false);
+      } else if (showEmojiPicker) {
+        setShowEmojiPicker(false);
+      } else if (showMessagesSheet) {
+        setShowMessagesSheet(false);
+      } else if (showToolsDrawer) {
+        setShowToolsDrawer(false);
+      } else if (showRoomModeModal) {
+        setShowRoomModeModal(false);
+      } else if (showRoomInfoModal) {
+        setShowRoomInfoModal(false);
       } else if (selectedMicUser) {
         setSelectedMicUser(null);
       } else if (selectedEmptySeat !== null) {
@@ -498,7 +509,7 @@ export const VoiceRoomModal: React.FC = () => {
       }
     }).then(handle => { if (disposed) void handle.remove(); else listener = handle; });
     return () => { disposed = true; if (listener) void listener.remove(); };
-  }, [activeRoom?.id, isRoomMinimized, showExitOptions, showChatInput, selectedMicUser, selectedEmptySeat, setIsRoomMinimized]);
+  }, [activeRoom?.id, isRoomMinimized, showExitOptions, showChatInput, showEmojiPicker, showMessagesSheet, showToolsDrawer, showRoomModeModal, showRoomInfoModal, selectedMicUser, selectedEmptySeat, setIsRoomMinimized]);
 
   // Get current messages
   const currentMessages = activeRoom ? roomMessages[activeRoom.id] || [] : [];
