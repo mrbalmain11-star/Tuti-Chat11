@@ -318,6 +318,14 @@ export const VoiceRoomModal: React.FC = () => {
       showToast('تغيير خلفية الغرفة متاح للمالك فقط.');
       return;
     }
+    if (bgUploadError) {
+      showToast('يرجى معالجة خطأ الصورة قبل حفظ الخلفية.');
+      return;
+    }
+    if (!selectedBgPreview) {
+      showToast('يرجى اختيار خلفية صالحة.');
+      return;
+    }
     try {
       await changeRoomBackground(activeRoom.id, selectedBgPreview);
       sounds.playLevelUp();
