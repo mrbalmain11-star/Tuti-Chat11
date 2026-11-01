@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { VoiceRoom } from '../types';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
@@ -11,6 +11,8 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
   const { enterRoom } = useApp();
   const [coverFailed, setCoverFailed] = useState(false);
   const [hostAvatarFailed, setHostAvatarFailed] = useState(false);
+  useEffect(() => { setCoverFailed(false); }, [room.coverImage]);
+  useEffect(() => { setHostAvatarFailed(false); }, [room.hostAvatar, room.coverImage]);
 
   return (
     <div
