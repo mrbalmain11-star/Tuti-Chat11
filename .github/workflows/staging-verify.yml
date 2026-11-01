@@ -143,6 +143,40 @@ jobs:
           }
           """)
           PY
+      - name: Install TotiChat branded Android launcher icon
+        run: |
+          set -euo pipefail
+          # cap add regenerates Android each build, so icons must be installed AFTER generation.
+          python3 -m pip install --quiet --break-system-packages cairosvg pillow
+          python3 - <<'PY'
+          from pathlib import Path
+          import io
+          import cairosvg
+          from PIL import Image
+          source = Path('public/icon.svg')
+          assert source.is_file(), 'Missing TotiChat branded icon'
+          root = Path('android/app/src/main/res')
+          original = Image.open(io.BytesIO(cairosvg.svg2png(url=str(source), output_width=512, output_height=512))).convert('RGBA')
+          for density, size in [('mdpi',48),('hdpi',72),('xhdpi',96),('xxhdpi',144),('xxxhdpi',192)]:
+              target = root / ('mipmap-' + density)
+              target.mkdir(parents=True, exist_ok=True)
+              resized = original.resize((size,size), Image.Resampling.LANCZOS)
+              resized.save(target / 'ic_launcher.png')
+              resized.save(target / 'ic_launcher_round.png')
+          foreground = root / 'drawable'
+          foreground.mkdir(parents=True, exist_ok=True)
+          original.resize((432,432), Image.Resampling.LANCZOS).save(foreground / 'totichat_launcher_foreground.png')
+          adaptive = root / 'mipmap-anydpi-v26'
+          adaptive.mkdir(parents=True, exist_ok=True)
+          for name in ('ic_launcher.xml','ic_launcher_round.xml'):
+              (adaptive / name).write_text('''<?xml version="1.0" encoding="utf-8"?>
+          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+            <background android:drawable="@android:color/black" />
+            <foreground android:drawable="@drawable/totichat_launcher_foreground" />
+          </adaptive-icon>
+          ''')
+          print('TotiChat icon installed for legacy and adaptive Android launchers')
+          PY
       - name: Sync Capacitor assets
         id: stage8
         run: npx cap sync android
