@@ -12,7 +12,7 @@ export const BottomNav: React.FC = () => {
   ];
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 w-full max-w-md mx-auto bg-white/95 border-t border-amber-200/70 select-none shadow-[0_-5px_22px_rgba(120,83,28,0.09)]" dir={isRtl ? 'rtl' : 'ltr'}>
-      <div className="pt-2 pb-2 px-3 sm:px-8 flex items-center justify-between gap-2">
+      <div className="pt-2 px-3 sm:px-8 flex items-center justify-between gap-2" style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom, 0px))" }}>
         {tabs.map(({ id, label, Icon }) => {
           const selected = activeTab === id;
           return (
