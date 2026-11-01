@@ -5,16 +5,20 @@ import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
 
 export const MessagesView: React.FC = () => {
-  const { conversations, setOpenChatThread, t, isRtl } = useApp();
+  const { conversations, setOpenChatThread, currentUser, t, isRtl } = useApp();
 
   const [systemFeed, setSystemFeed] = useState<DirectConversation | null>(null);
   const [systemOpened, setSystemOpened] = useState(false);
+  const [feedError, setFeedError] = useState(false);
+  const readKey = `totichat:system-read:${currentUser.id}`;
+  const [lastReadId, setLastReadId] = useState<string>(() => localStorage.getItem(`totichat:system-read:${currentUser.id}`) || '');
   useEffect(() => {
     let active = true;
     const load = async () => {
       if (!stagingBackend) return;
       const { data, error } = await stagingBackend.rpc('phase5_notification_feed', { p_limit: 50 });
       if (error) throw error;
+      if (active) setFeedError(false);
       const entries = Array.isArray(data?.items) ? data.items : [];
       const messages = entries.map((item: any) => ({
         id: String(item.id), sender: 'them' as const, timestamp: String(item.created_at),
@@ -28,12 +32,20 @@ export const MessagesView: React.FC = () => {
         lastTime: messages.at(-1)?.timestamp || '', unreadCount: Number(data?.unreadCount || 0), messages,
       });
     };
-    void load().catch(error => console.error('Notification feed failed:', error));
+    void load().catch(error => { console.error('Notification feed failed:', error); if (active) setFeedError(true); });
     return () => { active = false; };
-  }, []);
+  }, [currentUser.id]);
+
+  useEffect(() => {
+    setLastReadId(localStorage.getItem(readKey) || '');
+    setSystemOpened(false);
+  }, [readKey]);
 
   // Find system and official or default
   const systemConv = systemFeed ?? conversations.find((c) => c.isSystem || c.id === 'system-1');
+  const latestSystemId = systemConv?.messages.at(-1)?.id || '';
+  const systemUnread = systemOpened || (latestSystemId && latestSystemId === lastReadId)
+    ? 0 : Math.max(0, systemConv?.unreadCount ?? 0);
   const officialConv = conversations.find((c) => c.isOfficial || c.id === 'official-1');
   const otherConvs = conversations.filter((c) => !c.isSystem && !c.isOfficial && c.id !== 'system-1' && c.id !== 'official-1');
 
@@ -47,6 +59,7 @@ export const MessagesView: React.FC = () => {
         <h1 className="text-2xl font-black text-slate-900 tracking-tight">{t.navMessages}</h1>
       </div>
 
+      {feedError && <p role="status" className="mb-3 text-xs text-rose-700">تعذر تحديث إشعارات النظام. تحقق من الاتصال.</p>}
       {/* Main Messages List matching screenshot 1:1 */}
       <div className="space-y-4">
         {/* 1. رسائل النظام (System Messages) */}
@@ -55,6 +68,10 @@ export const MessagesView: React.FC = () => {
             sounds.playClick();
             if (systemConv) {
               setSystemOpened(true);
+              if (latestSystemId) {
+                localStorage.setItem(readKey, latestSystemId);
+                setLastReadId(latestSystemId);
+              }
               setSystemFeed(prev => prev ? { ...prev, unreadCount: 0 } : prev);
               setOpenChatThread({ ...systemConv, unreadCount: 0 });
             }
@@ -87,9 +104,9 @@ export const MessagesView: React.FC = () => {
           {/* Left side: Date & Unread Badge */}
           <div className="flex flex-col items-center gap-1.5 shrink-0 pl-1">
             <span className="text-[11px] text-[#8aa192] font-semibold">{systemConv?.lastTime ? new Date(systemConv.lastTime).toLocaleDateString('ar-IQ') : ''}</span>
-            <span className="w-5 h-5 rounded-full bg-[#f43f5e] text-white text-[10px] font-black flex items-center justify-center shadow-sm">
-              {systemOpened ? 0 : (systemConv?.unreadCount ?? 0)}
-            </span>
+            {systemUnread > 0 && <span className="min-w-5 h-5 px-1 rounded-full bg-[#f43f5e] text-white text-[10px] font-black flex items-center justify-center shadow-sm" aria-label={`${systemUnread} إشعارات غير مقروءة`}>
+              {systemUnread > 99 ? '99+' : systemUnread}
+            </span>}
           </div>
         </div>
 
