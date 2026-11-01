@@ -1165,7 +1165,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const takeSeat = (seatNumber: number): void => {
     if (!activeRoom) return;
     const roomId = activeRoom.id;
-    void reserveSeat(roomId, seatNumber).then(() => {
+    void reserveSeat(roomId, seatNumber).catch(async error => {
+      // Membership can expire while a room remains open; rejoin once and retry.
+      const reason = error instanceof Error ? error.message.toLowerCase() : '';
+      if (!reason.includes('join room first') && !reason.includes('not a room member')) throw error;
+      await joinRoomMembership(roomId);
+      return reserveSeat(roomId, seatNumber);
+    }).then(() => {
       setActiveRoom(prev => {
         if (prev?.id !== roomId) return prev;
         return {
