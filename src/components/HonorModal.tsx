@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Trophy, Award, Crown, Sparkles } from 'lucide-react';
+import { X, Trophy } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export const HonorModal: React.FC = () => {
@@ -7,12 +7,7 @@ export const HonorModal: React.FC = () => {
 
   if (!openHonorModal) return null;
 
-  const medals = [
-    { title: 'وسام المؤسس الملكي', desc: 'الانضمام في أول موسم لتوتي شات', icon: '🎖️', unlocked: true },
-    { title: 'سيف الفارس الذهبي', desc: 'إهداء هدايا بقيمة تفوق 100,000 كوينز', icon: '⚔️', unlocked: true },
-    { title: 'عرش الحفلات', desc: 'البقاء على المايك لأكثر من 10 ساعات', icon: '👑', unlocked: true },
-    { title: 'صقر الوكالات', desc: 'قيادة وكالة ضمن أفضل 3 مراكز', icon: '🦅', unlocked: false },
-  ];
+
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs font-['Cairo',sans-serif] p-4 animate-in fade-in">
@@ -31,27 +26,11 @@ export const HonorModal: React.FC = () => {
         </div>
 
         <div className="py-4 space-y-2.5 overflow-y-auto no-scrollbar">
-          {medals.map((m, idx) => (
-            <div
-              key={idx}
-              className={`p-3 rounded-2xl border flex items-center justify-between ${
-                m.unlocked
-                  ? 'bg-slate-900 border-amber-500/30'
-                  : 'bg-slate-950/40 border-slate-800 opacity-60'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div className="text-3xl">{m.icon}</div>
-                <div className="text-right">
-                  <h4 className="text-xs font-black text-white">{m.title}</h4>
-                  <p className="text-[10px] text-slate-400 mt-0.5">{m.desc}</p>
-                </div>
-              </div>
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${m.unlocked ? 'bg-amber-400 text-slate-950' : 'bg-slate-800 text-slate-500'}`}>
-                {m.unlocked ? 'مكتسب' : 'قيد الفتح'}
-              </span>
-            </div>
-          ))}
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 px-4 py-8 text-center" role="status">
+            <Trophy className="mx-auto mb-3 h-9 w-9 text-amber-400/70" />
+            <p className="text-sm font-bold text-white">لا توجد أوسمة مؤكدة للعرض حالياً</p>
+            <p className="mt-2 text-xs leading-relaxed text-slate-400">ستظهر الأوسمة المكتسبة بعد ربطها بسجلات الإنجازات الحقيقية. لن نعرض أوسمة وهمية على حسابك.</p>
+          </div>
         </div>
       </div>
     </div>
