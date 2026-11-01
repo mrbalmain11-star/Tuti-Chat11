@@ -165,13 +165,6 @@ export const AgencyModal: React.FC = () => {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  // Switch role and apply it directly to currentUser profile in AppContext
-  const handleSwitchAndApplyRole = (newRole: 'user' | 'host' | 'agent') => {
-    sounds.playClick();
-    setActiveSubView(null);
-    setRole(newRole); // UI preview only; never changes backend permissions.
-  };
-
   // The server must approve membership; never grant host status locally.
   const handleUserAcceptInvite = async () => {
     if (!pendingAgencyInvite) return;
@@ -618,47 +611,9 @@ export const AgencyModal: React.FC = () => {
             <div className="relative z-30 flex items-center justify-between px-3 pt-3 pb-1">
               {/* Role Switcher Pill Bar (فرق ونسق كذالك اجعل قابل للنقر والتطبيق) */}
               <div className="flex items-center gap-1 bg-black/70 backdrop-blur-md p-1 rounded-full border border-amber-400/30 shadow-lg">
-                {/* 1. دور المستخدم */}
-                <button
-                  onClick={() => handleSwitchAndApplyRole('user')}
-                  className={`px-2.5 py-1 rounded-full text-[11px] font-bold transition flex items-center gap-1 cursor-pointer active:scale-95 ${
-                    role === 'user'
-                      ? 'bg-amber-400 text-slate-950 font-black shadow-md'
-                      : 'text-slate-300 hover:text-white'
-                  }`}
-                  title="تطبيق دور: مستخدم عادي (لا توجد بيانات فقط)"
-                >
-                  <span>👤</span>
-                  <span>مستخدم</span>
-                </button>
-
-                {/* 2. دور المضيف */}
-                <button
-                  onClick={() => handleSwitchAndApplyRole('host')}
-                  className={`px-2.5 py-1 rounded-full text-[11px] font-bold transition flex items-center gap-1 cursor-pointer active:scale-95 ${
-                    role === 'host'
-                      ? 'bg-cyan-400 text-slate-950 font-black shadow-md'
-                      : 'text-slate-300 hover:text-white'
-                  }`}
-                  title="تطبيق دور: مضيف معتمد (مركز البيانات فقط)"
-                >
-                  <span>🎙️</span>
-                  <span>مضيف</span>
-                </button>
-
-                {/* 3. دور الوكيل */}
-                <button
-                  onClick={() => handleSwitchAndApplyRole('agent')}
-                  className={`px-2.5 py-1 rounded-full text-[11px] font-bold transition flex items-center gap-1 cursor-pointer active:scale-95 ${
-                    role === 'agent'
-                      ? 'bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 font-black shadow-md'
-                      : 'text-slate-300 hover:text-white'
-                  }`}
-                  title="تطبيق دور: وكيل مفعّل (أعضاء الوكالة، البيانات، المكافأة)"
-                >
-                  <span>👑</span>
-                  <span>وكيل</span>
-                </button>
+                <span className="px-3 py-1 text-xs font-bold text-amber-200" aria-label="الدور المعتمد">
+                  {role === 'agent' ? '👑 وكيل' : role === 'host' ? '🎙️ مضيف' : '👤 مستخدم'}
+                </span>
               </div>
 
               {/* Close Button */}
