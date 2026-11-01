@@ -51,7 +51,7 @@ export const DirectChatModal: React.FC = () => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 font-['Cairo',sans-serif] sm:p-2">
-      <div className="w-full max-w-md h-[100dvh] sm:h-[90dvh] bg-[#efeae2] sm:rounded-2xl overflow-hidden shadow-2xl flex flex-col" dir="rtl">
+      <div className="w-full max-w-md h-[100dvh] sm:h-[90dvh] bg-[#efeae2] sm:rounded-2xl overflow-hidden shadow-2xl flex flex-col" style={{ paddingTop: "env(safe-area-inset-top, 0px)", paddingBottom: "env(safe-area-inset-bottom, 0px)" }} dir="rtl">
         <header className="px-3 py-3 bg-[#087f68] text-white flex items-center justify-between shrink-0">
           <button type="button" onClick={openPeerProfile} disabled={openChatThread.isSystem || openChatThread.isOfficial} className="flex items-center gap-3 min-w-0 text-right disabled:cursor-default" aria-label="زيارة الملف الشخصي">
             <div className="relative w-11 h-11 rounded-full overflow-hidden bg-white/20 flex items-center justify-center shrink-0">
