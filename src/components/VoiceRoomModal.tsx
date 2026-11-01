@@ -210,9 +210,11 @@ export const VoiceRoomModal: React.FC = () => {
   const [selectedBgPreview, setSelectedBgPreview] = useState<string>(activeRoom?.backgroundUrl || '/galaxy-room-bg.jpg');
   const [bgUploadError, setBgUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const bgReadGeneration = useRef(0);
 
   useEffect(() => {
     if (activeRoom) {
+      bgReadGeneration.current += 1;
       // Reset room-specific draft state even when the next room has no background.
       setSelectedBgPreview(activeRoom.backgroundUrl || '/galaxy-room-bg.jpg');
       setBgUploadError(null);
@@ -283,6 +285,7 @@ export const VoiceRoomModal: React.FC = () => {
   const handleCustomBgUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const readGeneration = ++bgReadGeneration.current;
     // Prevent an earlier valid preview from being saved after a failed new selection.
     setSelectedBgPreview('');
     setBgUploadError(null);
@@ -305,9 +308,11 @@ export const VoiceRoomModal: React.FC = () => {
     setBgUploadError(null);
     const reader = new FileReader();
     reader.onerror = () => {
+      if (readGeneration !== bgReadGeneration.current) return;
       setBgUploadError('تعذر قراءة الصورة. يرجى اختيار صورة أخرى.');
     };
     reader.onload = (event) => {
+      if (readGeneration !== bgReadGeneration.current) return;
       const dataUrl = event.target?.result as string;
       if (typeof dataUrl === 'string' && dataUrl.startsWith('data:image/')) {
         setSelectedBgPreview(dataUrl);
