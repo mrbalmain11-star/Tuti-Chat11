@@ -819,14 +819,19 @@ export const VoiceRoomModal: React.FC = () => {
                 }`}
                 title={isOwner ? 'إدارة معلومات وإعدادات غرفتي 👑' : 'معلومات الغرفة ورقم الغرفة (انقر للنسخ)'}
               >
-                {/* Heart outline in teal circle badge (or crown if owner) */}
-                <div
-                  className={`w-6 h-6 rounded-full flex items-center justify-center text-white shrink-0 shadow-xs ${
-                    isOwner ? 'bg-gradient-to-tr from-amber-500 to-yellow-400 text-slate-950 font-bold text-xs' : 'bg-[#1da594]'
-                  }`}
-                >
-                  {isOwner ? '👑' : <Heart className="w-3.5 h-3.5 text-white fill-none stroke-[2.4]" />}
-                </div>
+                {/* The heart follows the room owner's one room; the ID text remains separately copyable. */}
+                {isOwner ? (
+                  <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center shrink-0">👑</div>
+                ) : (
+                  <button type="button" onClick={(event) => {
+                    event.stopPropagation();
+                    toggleFollowHost(activeRoom.hostId);
+                  }} className="w-8 h-8 rounded-full bg-[#1da594] flex items-center justify-center shrink-0"
+                    title={followedRoomHosts.has(activeRoom.hostId) ? 'إلغاء متابعة الغرفة' : 'متابعة الغرفة'}
+                    aria-label={followedRoomHosts.has(activeRoom.hostId) ? 'إلغاء متابعة الغرفة' : 'متابعة الغرفة'}>
+                    <Heart className={`w-4 h-4 text-white ${followedRoomHosts.has(activeRoom.hostId) ? 'fill-white' : 'fill-none'}`} />
+                  </button>
+                )}
 
                 {/* Room Info: Name & Host Account ID */}
                 <div className="flex flex-col text-right leading-tight">
