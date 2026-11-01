@@ -348,6 +348,8 @@ html, body, #root { width: 100%; overflow-x: hidden; }
 html, body { overscroll-behavior-x: none; }
 body { overscroll-behavior-y: contain; }
 #root { min-height: 100dvh; }
+/* Preserve native vertical scrolling while preventing horizontal elastic drag. */
+.toti-messages-scroll { touch-action: pan-y; overscroll-behavior-x: none; overscroll-behavior-y: contain; }
 *, *::before, *::after { box-sizing: border-box; }
 
 /* Disable expensive filter compositing on Android's embedded WebView. */
