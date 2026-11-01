@@ -1098,8 +1098,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
-  const enterRoom = (roomId: string): void => {
-    const room = rooms.find(r => r.id === roomId);
+  const enterRoom = (roomId: string, newlyCreatedRoom?: VoiceRoom): void => {
+    const room = newlyCreatedRoom ?? rooms.find(r => r.id === roomId);
     if (!room) return;
     void joinRoomMembership(roomId).then(async () => {
       setActiveRoom(room);
@@ -1517,7 +1517,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
     if (saveError || saved !== true) throw new Error('تم إنشاء الغرفة لكن تعذر حفظ غلافها أو رسالة الترحيب بالخادم.');
     const rows = await fetchRealRooms();
-    setRooms(rows.map(mapRoomToUi));
+    const created = rows.map(mapRoomToUi);
+    const newRoom = created.find(room => room.id === roomId);
+    if (!newRoom) throw new Error('تم إنشاء الغرفة لكن لم تظهر في بيانات الخادم.');
+    setRooms(created);
+    // Enter through the existing membership flow; do not touch the voice engine.
+    enterRoom(roomId, newRoom);
   };
 
   const updateRoom = (roomId: string, updates: Partial<VoiceRoom>): Promise<void> => {
