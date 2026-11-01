@@ -24,7 +24,6 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
   const pendingPlayback = new Set<HTMLAudioElement>();
   let closing = false;
   const retryPlayback = () => {
-    if (closing) return;
     for (const element of [...pendingPlayback]) {
       if (!element.isConnected) {
         pendingPlayback.delete(element);
@@ -48,20 +47,6 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
     pendingPlayback.clear();
     document.removeEventListener('pointerdown', retryPlayback);
   };
-  // Android may suspend media playback while the app is in the background.
-  // Retry existing remote tracks when it becomes visible, without reconnecting LiveKit.
-  const resumeRemoteAudio = () => {
-    if (closing || document.visibilityState !== 'visible') return;
-    for (const element of audio.values()) {
-      if (!element.isConnected || !element.paused) continue;
-      void element.play().catch(() => {
-        if (closing || !element.isConnected) return;
-        pendingPlayback.add(element);
-        document.addEventListener('pointerdown', retryPlayback);
-      });
-    }
-  };
-  document.addEventListener('visibilitychange', resumeRemoteAudio);
   room.on(RoomEvent.TrackSubscribed, (track, _publication, participant) => {
     if (closing || track.kind !== 'audio') return;
     const key = participant.identity + ':' + track.sid;
@@ -71,11 +56,8 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
     element.style.display = 'none';
     document.body.appendChild(element);
     audio.set(key, element);
-    element.muted = false;
-    element.volume = 1;
-    void element.play().catch(error => {
+    void element.play().catch(() => {
       if (closing || !element.isConnected) return;
-      console.warn('[RoomVoice] remote audio autoplay blocked', { roomId, reason: String(error) });
       pendingPlayback.add(element);
       document.addEventListener('pointerdown', retryPlayback);
       onError('اضغط على الشاشة للسماح بتشغيل الصوت');
@@ -85,10 +67,7 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
     track.detach().forEach(el => el.remove());
     removeAudio(participant.identity + ':' + track.sid);
   });
-  room.on(RoomEvent.Disconnected, () => {
-    clearAudio();
-    if (!closing) onError('انقطع اتصال الصوت بالغرفة');
-  });
+  room.on(RoomEvent.Disconnected, () => { if (!closing) onError('انقطع اتصال الصوت بالغرفة'); });
   // Distinguish network degradation from microphone or playback failures.
   // These events do not restart the microphone or interrupt a working stream.
   room.on(RoomEvent.ConnectionQualityChanged, (quality, participant) => {
@@ -109,10 +88,6 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
   // Android WebView can require a real user gesture before remote audio playback.
   // Avoid repeatedly calling startAudio from its own status-change event.
   const unlockAudio = () => {
-    if (closing) {
-      document.removeEventListener('pointerdown', unlockAudio);
-      return;
-    }
     if (room.canPlaybackAudio) {
       document.removeEventListener('pointerdown', unlockAudio);
       return;
@@ -124,11 +99,6 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
   document.addEventListener('pointerdown', unlockAudio);
   try {
     await room.connect(data.url, data.token, { autoSubscribe: true });
-    // Some Android WebViews unlock remote playback on connection without
-    // requiring another touch; preserve the touch fallback if this fails.
-    void room.startAudio().then(() => {
-      document.removeEventListener('pointerdown', unlockAudio);
-    }).catch(() => {});
   } catch (error) {
     document.removeEventListener('pointerdown', unlockAudio);
     room.disconnect();
@@ -138,12 +108,7 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
   const sync = (): Promise<void> => {
     micQueue = micQueue.catch(() => {}).then(async () => {
       if (closing) return;
-      const wantsToPublish = shouldPublish();
-      if (wantsToPublish && !data.canPublish) {
-        onError('الخادم لم يمنح صلاحية التحدث لهذا الاتصال. أعد دخول الغرفة بعد حجز المقعد.');
-        return;
-      }
-      const publish = Boolean(data.canPublish && wantsToPublish);
+      const publish = Boolean(data.canPublish && shouldPublish());
       if (room.localParticipant.isMicrophoneEnabled === publish) return;
       try {
         await room.localParticipant.setMicrophoneEnabled(publish);
@@ -165,7 +130,6 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
   } catch (error) {
     // A failed Android capture must not leave a LiveKit connection alive.
     closing = true;
-    document.removeEventListener('visibilitychange', resumeRemoteAudio);
     document.removeEventListener('pointerdown', unlockAudio);
     await room.disconnect();
     clearAudio();
@@ -175,7 +139,6 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
   return { sync, close: async () => {
     if (musicRoom === room) { musicRoom = null; await music.stop(); }
     closing = true;
-    document.removeEventListener('visibilitychange', resumeRemoteAudio);
     document.removeEventListener('pointerdown', unlockAudio);
     await micQueue.catch(() => {});
     await room.disconnect();
