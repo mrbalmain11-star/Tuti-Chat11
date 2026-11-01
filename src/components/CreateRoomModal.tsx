@@ -37,7 +37,7 @@ export const CreateRoomModal: React.FC = () => {
     if (saving) return;
     setSaving(true);
     try {
-      await createVoiceRoom(roomName.trim(), welcomeMessage.trim() || 'اهلا وسهلا', coverImage.startsWith('data:image/') ? coverImage : undefined);
+      await createVoiceRoom(roomName.trim(), welcomeMessage.trim() || 'اهلا وسهلا', coverImage || undefined);
       sounds.playLevelUp();
       setOpenCreateRoomModal(false);
     } catch (error) {
