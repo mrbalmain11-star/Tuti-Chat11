@@ -40,7 +40,7 @@ export const MessagesView: React.FC = () => {
       });
     };
     const refresh = () => {
-      void load().catch(error => { console.error('Notification feed failed:', error); if (active) setFeedError(true); });
+      void load().catch(error => { console.error('Notification feed failed:', error); if (active && document.visibilityState === 'visible') setFeedError(true); });
     };
     const onVisibilityChange = () => { if (document.visibilityState === 'visible') refresh(); };
     refresh();
