@@ -174,51 +174,8 @@ jobs:
           jarsigner -verify "$APK"
           sha256sum "$APK" | tee android/app/build/outputs/apk/debug/app-debug.apk.sha256
           ls -lh "$APK"
-      - name: Verify APK is extractable from Android ZIP
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-          from zipfile import ZipFile
-          import hashlib, tempfile
-          source=Path('android/app/build/outputs/apk/debug/app-debug.apk')
-          with tempfile.TemporaryDirectory() as folder:
-              target=Path(folder)/'TotiChat-verify.zip'
-              with ZipFile(target,'w') as archive:
-                  archive.write(source,arcname='TotiChat.apk')
-              with ZipFile(target) as archive:
-                  extracted=Path(folder)/archive.namelist()[0]
-                  archive.extractall(folder)
-              assert extracted.is_file()
-              assert extracted.read_bytes()[:4]==b'PK\x03\x04'
-              assert hashlib.sha256(extracted.read_bytes()).digest()==hashlib.sha256(source.read_bytes()).digest()
-          print('Android APK archive extraction verified')
-          PY
-      - name: Package and verify single-APK ZIP for Android phones
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          from zipfile import ZipFile, ZIP_STORED, is_zipfile
-          import hashlib
-          apk=Path('android/app/build/outputs/apk/debug/app-debug.apk')
-          assert apk.is_file() and apk.stat().st_size>1000000, 'Missing or unexpectedly small APK'
-          name='TotiChat-Staging-'+__import__('os').environ['GITHUB_SHA'][:8]
-          target=Path(name+'.zip')
-          # Keep the archive as simple as possible for Android file managers:
-          # one short ASCII entry, no Zip64, no compression, no extra metadata.
-          with ZipFile(target,'w',compression=ZIP_STORED,allowZip64=False) as archive:
-              archive.write(apk,arcname='TotiChat.apk',compress_type=ZIP_STORED)
-          assert is_zipfile(target)
-          with ZipFile(target) as archive:
-              assert archive.namelist()==['TotiChat.apk']
-              assert archive.testzip() is None
-              assert hashlib.sha256(archive.read('TotiChat.apk')).digest()==hashlib.sha256(apk.read_bytes()).digest()
-          print('Verified Android-compatible ZIP:',target,'size:',target.stat().st_size)
-          PY
-      # Android users must download the APK directly from Releases below.
-      # Do not upload an Actions artifact: GitHub wraps it in another ZIP,
-      # which can cause phone extraction errors and confusion.
-
+      # Publish only a raw APK. ZIP packaging is intentionally disabled:
+      # Android file managers must never need to extract the installer.
       - name: Publish directly downloadable staging APK
         id: stage13
         env:
@@ -229,37 +186,21 @@ jobs:
           test -s "$APK"
           NAME="TotiChat-Staging-${GITHUB_SHA:0:8}"
           cp "$APK" "$NAME.apk"
-          test -s "$NAME.zip"
-          unzip -t "$NAME.zip" | tee /tmp/totichat-zip-check.txt
-          python3 - "$NAME.zip" "$NAME.apk" <<'PY'
-          import hashlib,sys
-          from pathlib import Path
-          from zipfile import ZipFile
-          archive_path,apk_path=map(Path,sys.argv[1:])
-          with ZipFile(archive_path) as archive:
-              names=archive.namelist()
-              assert names==['TotiChat.apk'], f'Unexpected ZIP members: {names}'
-              assert archive.testzip() is None, 'Corrupt ZIP entry'
-              assert hashlib.sha256(archive.read(names[0])).digest()==hashlib.sha256(apk_path.read_bytes()).digest(), 'ZIP APK does not match release APK'
-          print('Release ZIP and APK payloads match')
-          PY
-          test "$(unzip -Z1 "$NAME.zip" | wc -l)" -eq 1
-          test "$(unzip -Z1 "$NAME.zip")" = "TotiChat.apk"
           TAG="staging-apk-${GITHUB_SHA:0:8}"
           gh release create "$TAG" "$NAME.apk" "$NAME.zip" \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
             --title "TotiChat Staging APK ${GITHUB_SHA:0:8}" \
-            --notes "ZIP contains one installable APK; ZIP archive integrity verified before release." \
+            --notes "Download the APK directly. No ZIP extraction required. APK integrity and signature verified in CI." \
             --prerelease
           {
             echo "## Android phone download"
             echo ""
-            echo "Use the **release ZIP**, not a GitHub Actions artifact:"
+            echo "Download the **APK directly**. No ZIP extraction:"
             echo ""
-            echo "https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/$NAME.zip"
+            echo "https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/$NAME.apk"
             echo ""
-            echo "Inside the ZIP: TotiChat.apk (one file, no nested archive)."
+            echo "Open the downloaded .apk with Android package installer."
           } >> "$GITHUB_STEP_SUMMARY"
 
 
