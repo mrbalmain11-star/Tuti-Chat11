@@ -33,6 +33,8 @@ export type BackendRoom = {
   background_path: string | null;
   background_url?: string;
   cover_url?: string;
+  owner_name?: string;
+  owner_avatar?: string;
 };
 
 export type BackendProfile = {
@@ -66,6 +68,18 @@ export async function fetchRealRooms(): Promise<BackendRoom[]> {
     unique.set(room.id, room);
   }
   const rooms = [...unique.values()];
+  const ownerIds = [...new Set(rooms.map(room => room.owner_id))];
+  if (ownerIds.length) {
+    const { data: owners, error: ownersError } = await client.from('profiles')
+      .select('id,display_name,avatar_url').in('id', ownerIds);
+    if (ownersError) console.warn('Room owner profiles unavailable:', ownersError.message);
+    const ownerById = new Map((owners ?? []).map(owner => [owner.id, owner]));
+    for (const room of rooms) {
+      const owner = ownerById.get(room.owner_id);
+      room.owner_name = owner?.display_name ?? '';
+      room.owner_avatar = imageUrl(owner?.avatar_url, 'profile-avatars');
+    }
+  }
   for (const room of rooms) {
     room.cover_url = imageUrl(room.cover_path,'totichat-room-images');
     room.background_url = imageUrl(room.background_path,'totichat-room-images');
