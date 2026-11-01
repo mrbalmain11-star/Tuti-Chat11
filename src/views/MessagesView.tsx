@@ -26,6 +26,10 @@ export const MessagesView: React.FC = () => {
           ? `تم شحن حسابك بمبلغ ${Number(item.context?.amount || 0).toLocaleString('ar-IQ')} عملة بنجاح.`
           : `إشعار نظام: ${String(item.event_type || 'تحديث الحساب')}`,
       })).reverse();
+      if (active && messages.length > 0) {
+        const newestId = messages[messages.length - 1].id;
+        if (newestId !== localStorage.getItem(readKey)) setSystemOpened(false);
+      }
       if (active) setSystemFeed({
         id: 'system-1', userId: 'system-1', userName: 'رسائل النظام', userAvatar: '', isOnline: false,
         isSystem: true, lastMessage: messages.at(-1)?.text || 'لا توجد رسائل نظام حتى الآن',
@@ -44,7 +48,7 @@ export const MessagesView: React.FC = () => {
       window.removeEventListener('focus', refresh);
       document.removeEventListener('visibilitychange', onVisibilityChange);
     };
-  }, [currentUser.id]);
+  }, [readKey]);
 
   useEffect(() => {
     setLastReadId(localStorage.getItem(readKey) || '');
