@@ -211,6 +211,7 @@ export const VoiceRoomModal: React.FC = () => {
   const [bgUploadError, setBgUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const bgReadGeneration = useRef(0);
+  const bgSavePending = useRef(false);
 
   useEffect(() => {
     if (activeRoom) {
