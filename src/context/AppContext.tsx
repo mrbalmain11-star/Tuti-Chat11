@@ -72,6 +72,7 @@ interface AppContextType {
   toggleFollowHost: (hostId: string) => void;
   createVoiceRoom: (title: string, tag: string, coverDataUrl?: string) => Promise<void>;
   updateRoom: (roomId: string, updates: Partial<VoiceRoom>) => Promise<void>;
+  changeRoomCover: (roomId: string, imageDataUrl: string) => Promise<void>;
   changeRoomBackground: (roomId: string, backgroundUrl: string) => Promise<boolean>;
   // Modals state
   openGiftStore: boolean;
@@ -1530,6 +1531,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     })();
   };
 
+  const changeRoomCover = async (roomId: string, imageDataUrl: string): Promise<void> => {
+    if (!stagingBackend || !activeRoom || activeRoom.id !== roomId || activeRoom.hostId !== currentUser.id) {
+      throw new Error('تغيير صورة الغرفة متاح لمالكها فقط.');
+    }
+    const response = await fetch(imageDataUrl);
+    if (!response.ok) throw new Error('تعذر قراءة صورة الغرفة.');
+    const blob = await response.blob();
+    if (!blob.type.startsWith('image/') || blob.size > 5 * 1024 * 1024) {
+      throw new Error('اختر صورة بحجم لا يتجاوز 5 ميغابايت.');
+    }
+    const extension = blob.type === 'image/png' ? 'png' : blob.type === 'image/webp' ? 'webp' : 'jpg';
+    const path = roomId + '/cover-' + Date.now() + '.' + extension;
+    const { error: uploadError } = await stagingBackend.storage.from('totichat-room-images')
+      .upload(path, blob, { contentType: blob.type, upsert: false });
+    if (uploadError) throw new Error('فشل رفع صورة الغرفة: ' + uploadError.message);
+    const { data, error } = await stagingBackend.rpc('phase2_room_customize', {
+      p_room_id: roomId, p_cover_path: path,
+    });
+    if (error || data !== true) throw new Error('فشل حفظ صورة الغرفة على الخادم.');
+    const rows = await fetchRealRooms();
+    const saved = rows.find(room => room.id === roomId);
+    if (!saved?.cover_path || saved.cover_path !== path) throw new Error('لم يؤكد الخادم حفظ صورة الغرفة.');
+    const mapped = rows.map(mapRoomToUi);
+    setRooms(mapped);
+    const refreshed = mapped.find(room => room.id === roomId);
+    if (refreshed) setActiveRoom(prev => prev?.id === roomId ? { ...prev, coverImage: refreshed.coverImage } : prev);
+  };
+
   const changeRoomBackground = async (roomId: string, backgroundUrl: string): Promise<boolean> => {
     if (!stagingBackend || !activeRoom || activeRoom.id !== roomId || activeRoom.hostId !== currentUser.id) {
       throw new Error('يجب أن تكون مالك الغرفة ومسجلاً للدخول لتغيير الخلفية.');
@@ -1623,6 +1652,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         toggleFollowHost,
         createVoiceRoom,
         updateRoom,
+        changeRoomCover,
         changeRoomBackground,
         // Modals
         openGiftStore,
