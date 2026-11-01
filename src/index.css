@@ -382,3 +382,9 @@ html.android-webview .royal-glass { filter: none !important; -webkit-backdrop-fi
 .toti-premium-icon { transition-duration: var(--toti-motion-fast); transition-timing-function: var(--toti-motion-ease); }
 .toti-chat-bubble { animation-duration: var(--toti-motion-normal); }
 @media (prefers-reduced-motion: reduce) { .animate-mic-active, .animate-falcon-glow, .toti-vip-entry-banner, .toti-chat-bubble { animation: none !important; } }
+
+/* Respect Android system bars without changing native back navigation or room scrolling. */
+:root { --toti-safe-top: env(safe-area-inset-top, 0px); --toti-safe-bottom: env(safe-area-inset-bottom, 0px); }
+.toti-safe-screen { padding-top: max(8px, var(--toti-safe-top)); padding-bottom: max(8px, var(--toti-safe-bottom)); }
+.toti-safe-bottom { padding-bottom: max(8px, var(--toti-safe-bottom)); }
+.toti-safe-top { padding-top: max(8px, var(--toti-safe-top)); }
