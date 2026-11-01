@@ -316,7 +316,8 @@ export const InternalProfileModal: React.FC = () => {
   const handleToggleFollow = () => {
     sounds.playCoin();
     toggleFollowHost(user.id);
-    showToast(!isUserFollowed ? 'تمت المتابعة بنجاح! 💖' : 'تم إلغاء المتابعة');
+    // Follow status is confirmed asynchronously by the server; do not claim
+    // success before the RPC has accepted and persisted the change.
   };
 
   const handleSendGift = () => {
