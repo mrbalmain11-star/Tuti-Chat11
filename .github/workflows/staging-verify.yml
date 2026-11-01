@@ -10,6 +10,7 @@ concurrency:
 permissions:
   contents: write
   issues: write
+  actions: read
 jobs:
   build-apk:
     runs-on: ubuntu-latest
@@ -237,6 +238,29 @@ jobs:
           path: android/app/build/outputs/apk/debug/app-debug.apk
           compression-level: 0
           if-no-files-found: error
+
+      - name: Download and extract actual published Actions artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # Verify the exact ZIP GitHub serves to users, not only a locally made ZIP.
+          artifact_id=""
+          for attempt in $(seq 1 15); do
+            artifact_id=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts" --jq '.artifacts[] | select(.name=="TotiChat-APK-Install" and .expired==false) | .id' | head -n 1)
+            if [ -n "$artifact_id" ]; then break; fi
+            sleep 3
+          done
+          test -n "$artifact_id"
+          gh api -H "Accept: application/vnd.github+json" "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" > /tmp/totichat-actions-download.zip
+          test -s /tmp/totichat-actions-download.zip
+          unzip -t /tmp/totichat-actions-download.zip
+          test "$(unzip -Z1 /tmp/totichat-actions-download.zip | wc -l)" -eq 1
+          mkdir -p /tmp/totichat-artifact-extracted
+          unzip -o /tmp/totichat-actions-download.zip -d /tmp/totichat-artifact-extracted
+          test -s /tmp/totichat-artifact-extracted/app-debug.apk
+          cmp android/app/build/outputs/apk/debug/app-debug.apk /tmp/totichat-artifact-extracted/app-debug.apk
+          echo "Published GitHub Actions ZIP extracts correctly and APK bytes match."
 
       - name: Publish directly downloadable staging APK
         id: stage13
