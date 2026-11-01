@@ -613,7 +613,7 @@ export const VoiceRoomModal: React.FC = () => {
       )}
 
       {/* Main Room Viewport Container (Matching Mobile Aspect Ratio) */}
-      <div className="relative w-full max-w-md h-full flex flex-col justify-between overflow-hidden shadow-2xl bg-[#0d0426]">
+      <div className="relative w-full max-w-md h-full flex flex-col justify-between overflow-hidden shadow-2xl bg-[#0d0426] box-border" style={{ paddingTop: "env(safe-area-inset-top, 24px)", paddingBottom: "env(safe-area-inset-bottom, 24px)" }}>
         {/* =========================================================================
             1. ROOM BACKGROUND: Deep cosmic galaxy with starry dust & nebula
             ========================================================================= */}
@@ -1943,7 +1943,6 @@ export const VoiceRoomModal: React.FC = () => {
               {/* User Name in large, bold, clear white text */}
               <h3 className="text-xl sm:text-2xl font-black text-white text-center mt-2.5 tracking-wide flex items-center justify-center gap-1">
                 <span>{selectedMicUser.user.nickname || selectedMicUser.user.name}</span>
-                <span className="text-rose-500 font-black">❗</span>
               </h3>
 
               {/* ID Row with Copy */}
