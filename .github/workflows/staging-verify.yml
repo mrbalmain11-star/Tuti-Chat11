@@ -190,7 +190,7 @@ jobs:
                   extracted=Path(folder)/archive.namelist()[0]
                   archive.extractall(folder)
               assert extracted.is_file()
-              assert extracted.read_bytes()[:4]==b'PK\\x03\\x04'
+              assert extracted.read_bytes()[:4]==b'PK\x03\x04'
               assert hashlib.sha256(extracted.read_bytes()).digest()==hashlib.sha256(source.read_bytes()).digest()
           print('Android APK archive extraction verified')
           PY
