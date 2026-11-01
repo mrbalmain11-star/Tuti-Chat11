@@ -198,11 +198,6 @@ export const AgencyModal: React.FC = () => {
     setPendingAgencyInvite(null);
   };
 
-  // Simulate new incoming invite for testing
-  const handleSimulateNewInvite = () => {
-    showToast('لا توجد دعوات حقيقية حالياً');
-  };
-
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-0 sm:p-4 select-none font-['Cairo',sans-serif]"
