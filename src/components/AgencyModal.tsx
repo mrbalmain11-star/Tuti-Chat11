@@ -73,6 +73,7 @@ export const AgencyModal: React.FC = () => {
       const verifiedRole = String(data.role ?? '');
       if (verifiedRole.includes('مالك') || verifiedRole.includes('وكيل')) setRole('agent');
       else if (verifiedRole.includes('مضيف')) setRole('host');
+      else setRole('user');
     })().catch(error => console.error('Agency role lookup failed:', error));
     return () => { active = false; };
   }, [openAgencyModal, currentUser.id]);
