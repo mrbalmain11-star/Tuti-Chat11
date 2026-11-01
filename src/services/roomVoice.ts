@@ -24,6 +24,7 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
   const pendingPlayback = new Set<HTMLAudioElement>();
   let closing = false;
   const retryPlayback = () => {
+    if (closing) return;
     for (const element of [...pendingPlayback]) {
       if (!element.isConnected) {
         pendingPlayback.delete(element);
