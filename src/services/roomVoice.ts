@@ -2,6 +2,13 @@ import { Room, RoomEvent } from 'livekit-client';
 import { stagingBackend } from './stagingBackend';
 import { RoomMusicPublisher } from './roomMusic';
 
+// Local playback control only: never changes the microphone or remote participants.
+let localPlaybackMuted = false;
+const remoteAudioElements = new Set<HTMLAudioElement>();
+export function setRoomPlaybackMuted(muted: boolean): void {
+  localPlaybackMuted = muted;
+  for (const element of remoteAudioElements) element.muted = muted;
+}
 const music = new RoomMusicPublisher();
 let musicRoom: Room | null = null;
 export async function playRoomMusic(file: File): Promise<void> {
@@ -38,6 +45,7 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
     if (!element) return;
     pendingPlayback.delete(element);
     element.pause();
+    remoteAudioElements.delete(element);
     element.remove();
     audio.delete(key);
     if (pendingPlayback.size === 0) document.removeEventListener('pointerdown', retryPlayback);
@@ -53,6 +61,8 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
     removeAudio(key);
     const element = track.attach() as HTMLAudioElement;
     element.autoplay = true;
+    element.muted = localPlaybackMuted;
+    remoteAudioElements.add(element);
     element.style.display = 'none';
     document.body.appendChild(element);
     audio.set(key, element);
@@ -143,5 +153,6 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
     await micQueue.catch(() => {});
     await room.disconnect();
     clearAudio();
+    setRoomPlaybackMuted(false);
   } };
 }
