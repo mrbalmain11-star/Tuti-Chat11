@@ -1,6 +1,6 @@
 import { stagingBackend } from '../services/stagingBackend';
 import { App as CapacitorApp } from '@capacitor/app';
-import { playRoomMusic, pauseRoomMusic, resumeRoomMusic, stopRoomMusic } from '../services/roomVoice';
+import { playRoomMusic, pauseRoomMusic, resumeRoomMusic, stopRoomMusic, setRoomPlaybackMuted } from '../services/roomVoice';
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Mic,
@@ -242,7 +242,8 @@ export const VoiceRoomModal: React.FC = () => {
   const [tasksClaimed, setTasksClaimed] = useState<Record<string, boolean>>({});
 
   // Audio / Sound states
-  const roomSoundMuted = false;
+  const [roomSoundMuted, setRoomSoundMuted] = useState(false);
+  const toggleRoomSound = () => { setRoomSoundMuted(previous => { setRoomPlaybackMuted(!previous); return !previous; }); };
   const [audioModeHQ, setAudioModeHQ] = useState(true);
 
   // Floating animated emojis
@@ -1370,13 +1371,13 @@ export const VoiceRoomModal: React.FC = () => {
 
             {/* 5. Speaker Button (🔊): Toggle room volume */}
             <button
-              disabled
+              onClick={toggleRoomSound}
               className={`w-10 h-10 rounded-full border transition active:scale-95 shadow-md cursor-pointer flex items-center justify-center ${
                 !roomSoundMuted
                   ? 'bg-[#241747]/90 hover:bg-[#342263] border-purple-400/25 text-white'
                   : 'bg-rose-950/70 border-rose-500/40 text-rose-300'
               }`}
-              title="التحكم بصوت الغرفة غير متاح حالياً"
+              title={roomSoundMuted ? "تشغيل صوت الغرفة" : "كتم صوت الغرفة"}
             >
               {roomSoundMuted ? (
                 <VolumeX className="w-5 h-5 text-rose-300 stroke-[2]" />
@@ -1555,9 +1556,9 @@ export const VoiceRoomModal: React.FC = () => {
 
                   {/* الصوت */}
                   <div
-                    aria-disabled="true"
-                    title="التحكم بصوت الغرفة غير متاح حالياً"
-                    className="flex flex-col items-center gap-1.5 opacity-60"
+                    onClick={toggleRoomSound}
+                    title={roomSoundMuted ? "تشغيل صوت الغرفة" : "كتم صوت الغرفة"}
+                    className="flex flex-col items-center gap-1.5 cursor-pointer"
                   >
                     <div className="w-13 h-13 rounded-2xl bg-[#281a4b] border border-white/10 flex items-center justify-center shadow-md group-hover:border-purple-400/50">
                       {roomSoundMuted ? (
