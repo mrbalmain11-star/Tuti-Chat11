@@ -795,15 +795,15 @@ export const VoiceRoomModal: React.FC = () => {
               <div
                 onClick={() => {
                   sounds.playClick();
-                  showToast('المرتبة الأولى في الروم 👑');
+                  setShowMembersModal(true);
                 }}
                 className="flex items-center gap-1.5 cursor-pointer hover:opacity-90 transition pt-1"
-                title="المرتبة 1 في الروم"
+                title="المستخدمون الموجودون في الغرفة"
               >
                 <div className="relative w-8 h-8 rounded-full border-2 border-amber-300/80 bg-purple-950/60 flex items-center justify-center shadow-md">
                   <span className="text-[13px]">👑</span>
                 </div>
-                <span className="text-xs font-mono font-bold text-white/90">1</span>
+                <span className="text-xs font-mono font-bold text-white/90">{activeRoom.listenersCount}</span>
               </div>
             </div>
 
