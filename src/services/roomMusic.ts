@@ -81,5 +81,6 @@ export class RoomMusicPublisher {
     track?.stop();
     if (context && context.state !== 'closed') await context.close();
     if (url) URL.revokeObjectURL(url);
+    window.dispatchEvent(new Event('totichat:music-stopped'));
   }
 }
