@@ -13,6 +13,7 @@ export class RoomMusicPublisher {
 
   async play(room: Room, file: File): Promise<void> {
     await this.stop();
+    if (room.state !== 'connected') throw new Error('اتصال الغرفة غير جاهز لتشغيل الموسيقى');
     const audioExtension = /\.(mp3|m4a|aac|wav|ogg|opus|flac|webm)$/i.test(file.name);
     if (!file.type.startsWith('audio/') && !(file.type === '' && audioExtension)) throw new Error('اختر ملفاً صوتياً');
     const url = URL.createObjectURL(file);
