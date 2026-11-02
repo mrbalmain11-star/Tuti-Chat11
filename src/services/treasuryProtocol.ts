@@ -19,6 +19,7 @@ export function integerInput(value: string, maximum = Number.MAX_SAFE_INTEGER): 
 }
 export function documentedReason(value: string): string {
   const reason = value.trim();
+  if (/[\u0000-\u001F\u007F]/.test(reason)) throw new Error('السبب يحتوي رموزاً غير مسموحة');
   if (reason.length < 10 || reason.length > 500) throw new Error('السبب يجب أن يكون بين 10 و500 حرف');
   return reason;
 }
