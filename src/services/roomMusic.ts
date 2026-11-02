@@ -50,7 +50,12 @@ export class RoomMusicPublisher {
   }
 
   pause(): void { this.audio?.pause(); }
-  async resume(): Promise<void> { await this.audio?.play(); }
+  async resume(): Promise<void> {
+    if (!this.audio || !this.ownerRoom || this.ownerRoom.state !== 'connected') {
+      throw new Error('اتصال موسيقى الغرفة غير جاهز');
+    }
+    await this.audio.play();
+  }
   get isPlaying(): boolean { return Boolean(this.audio && !this.audio.paused); }
 
   async stop(): Promise<void> {
