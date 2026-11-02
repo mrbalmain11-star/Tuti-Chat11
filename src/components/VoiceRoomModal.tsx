@@ -808,11 +808,7 @@ export const VoiceRoomModal: React.FC = () => {
               <div
                 onClick={() => {
                   sounds.playClick();
-                  if (isOwner) {
-                    setShowRoomInfoModal(true);
-                  } else {
-                    if (hostAccountId !== '—') handleCopyId(hostAccountId);
-                  }
+                  setShowRoomInfoModal(true);
                 }}
                 className={`flex items-center gap-2 bg-[#211540]/85 backdrop-blur-md border rounded-full py-1 px-3 shadow-lg cursor-pointer transition active:scale-98 ${
                   isOwner ? 'border-amber-400/40 hover:border-amber-300' : 'border-purple-400/25 hover:border-purple-300/40'
@@ -837,7 +833,7 @@ export const VoiceRoomModal: React.FC = () => {
                 <div className="flex flex-col text-right leading-tight">
                   <div className="flex items-center gap-1">
                     <span className="text-xs font-black text-white tracking-wide max-w-[120px] truncate">
-                      {activeRoom.title || 'العراق الع...'}
+                      {activeRoom.title || 'غرفة صوتية'}
                     </span>
                     {isOwner && <span className="text-[9px] text-amber-300 font-bold">مالك</span>}
                   </div>
