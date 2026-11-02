@@ -238,6 +238,11 @@ export const VoiceRoomModal: React.FC = () => {
   // Tools Drawer Sub-Modals
   const [showMusicPlayerModal, setShowMusicPlayerModal] = useState(false);
   const [musicStatus, setMusicStatus] = useState<'stopped'|'playing'|'paused'>('stopped');
+  useEffect(() => {
+    const onMusicEnded = () => setMusicStatus('stopped');
+    window.addEventListener('totichat:music-ended', onMusicEnded);
+    return () => window.removeEventListener('totichat:music-ended', onMusicEnded);
+  }, []);
   const [showTasksModal, setShowTasksModal] = useState(false);
   const [tasksClaimed, setTasksClaimed] = useState<Record<string, boolean>>({});
 
