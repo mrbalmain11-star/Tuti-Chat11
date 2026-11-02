@@ -1867,6 +1867,7 @@ export const VoiceRoomModal: React.FC = () => {
                       await playRoomMusic(file);
                       setMusicStatus('playing');
                     } catch (error) {
+                      setMusicStatus('stopped');
                       console.error('Room music failed', error);
                       showToast('تعذر بث الموسيقى: ' + (error instanceof Error ? error.message : 'خطأ'));
                     }
