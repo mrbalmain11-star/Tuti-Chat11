@@ -95,7 +95,10 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
     });
   });
   room.on(RoomEvent.Reconnecting, () => {
-    if (!closing) console.warn('[RoomVoice] transport reconnecting', { roomId });
+    if (!closing) {
+      console.warn('[RoomVoice] transport reconnecting', { roomId });
+      onError('جاري إعادة الاتصال بالصوت');
+    }
   });
   room.on(RoomEvent.Reconnected, () => {
     if (!closing) console.info('[RoomVoice] transport reconnected', { roomId });
