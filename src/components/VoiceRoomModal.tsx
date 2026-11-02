@@ -1879,7 +1879,10 @@ export const VoiceRoomModal: React.FC = () => {
                       catch (error) { showToast('تعذر تغيير تشغيل الموسيقى'); console.error(error); }
                     }}>{musicStatus === 'paused' ? 'استئناف' : 'إيقاف مؤقت'}</button>
                     <button className="rounded-xl bg-rose-700 px-3 py-2 text-xs" onClick={() => {
-                      void stopRoomMusic().then(() => setMusicStatus('stopped'));
+                      void stopRoomMusic().then(() => setMusicStatus('stopped')).catch(error => {
+                        console.error('Room music stop failed', error);
+                        showToast('تعذر إيقاف الموسيقى');
+                      });
                     }}>إيقاف نهائي</button>
                   </div>
                 </div>
