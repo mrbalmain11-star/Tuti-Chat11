@@ -1,8 +1,5 @@
 name: TotiChat Clean Staging APK Build
 on:
-  push:
-    branches:
-      - integration/legacy-backend-staging
   workflow_dispatch:
 concurrency:
   group: totichat-staging-clean-apk
