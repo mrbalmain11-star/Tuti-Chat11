@@ -117,6 +117,10 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
   // Android WebView can require a real user gesture before remote audio playback.
   // Avoid repeatedly calling startAudio from its own status-change event.
   const unlockAudio = () => {
+    if (closing || room.state === 'disconnected') {
+      document.removeEventListener('pointerdown', unlockAudio);
+      return;
+    }
     if (room.canPlaybackAudio) {
       document.removeEventListener('pointerdown', unlockAudio);
       return;
