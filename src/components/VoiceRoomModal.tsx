@@ -1873,7 +1873,7 @@ export const VoiceRoomModal: React.FC = () => {
                     event.target.value = '';
                   }} />
                   <div className="flex gap-2">
-                    <button className="rounded-xl bg-purple-700 px-3 py-2 text-xs" onClick={async () => {
+                    <button disabled={musicStatus === 'stopped'} className="disabled:opacity-40 disabled:cursor-not-allowed rounded-xl bg-purple-700 px-3 py-2 text-xs" onClick={async () => {
                       try { if (musicStatus === 'paused') { await resumeRoomMusic(); setMusicStatus('playing'); }
                         else { pauseRoomMusic(); setMusicStatus('paused'); } }
                       catch (error) { showToast('تعذر تغيير تشغيل الموسيقى'); console.error(error); }
