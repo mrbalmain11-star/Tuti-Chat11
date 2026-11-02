@@ -119,6 +119,7 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
     micQueue = micQueue.catch(() => {}).then(async () => {
       if (closing) return;
       const publish = Boolean(data.canPublish && shouldPublish());
+      if (!publish && musicRoom === room) await music.stop();
       if (room.localParticipant.isMicrophoneEnabled === publish) return;
       try {
         await room.localParticipant.setMicrophoneEnabled(publish);
