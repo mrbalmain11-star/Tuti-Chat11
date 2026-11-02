@@ -163,6 +163,7 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
       console.warn('[RoomVoice] cleanup after microphone failure', disconnectError);
     } finally {
       clearAudio();
+      setRoomPlaybackMuted(false);
     }
     throw error;
   }
