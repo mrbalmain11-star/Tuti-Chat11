@@ -101,7 +101,10 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
     }
   });
   room.on(RoomEvent.Reconnected, () => {
-    if (!closing) console.info('[RoomVoice] transport reconnected', { roomId });
+    if (!closing) {
+      console.info('[RoomVoice] transport reconnected', { roomId });
+      onError('تمت استعادة الاتصال الصوتي');
+    }
   });
 
   // Android WebView can require a real user gesture before remote audio playback.
