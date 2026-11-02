@@ -241,7 +241,11 @@ export const VoiceRoomModal: React.FC = () => {
   useEffect(() => {
     const onMusicEnded = () => setMusicStatus('stopped');
     window.addEventListener('totichat:music-ended', onMusicEnded);
-    return () => window.removeEventListener('totichat:music-ended', onMusicEnded);
+    window.addEventListener('totichat:music-stopped', onMusicEnded);
+    return () => {
+      window.removeEventListener('totichat:music-ended', onMusicEnded);
+      window.removeEventListener('totichat:music-stopped', onMusicEnded);
+    };
   }, []);
   const [showTasksModal, setShowTasksModal] = useState(false);
   const [tasksClaimed, setTasksClaimed] = useState<Record<string, boolean>>({});
