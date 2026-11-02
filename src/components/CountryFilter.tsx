@@ -1,15 +1,14 @@
 import React from 'react';
-import { ChevronDown } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
 
 export const CountryFilter: React.FC = () => {
-  const { selectedCountry, setSelectedCountry, isRtl } = useApp();
+  const { selectedCountry, setSelectedCountry, isRtl, rooms } = useApp();
 
+  const countryNames = Array.from(new Set(rooms.map(r => r.country).filter((country): country is string => Boolean(country))));
   const filterChips = [
     { id: 'شائع 🔥', label: isRtl ? 'شائع' : 'Popular', icon: '🔥' },
-    { id: 'العراق', label: isRtl ? 'العراق' : 'Iraq', flag: '🇮🇶' },
-    { id: 'المملكة العربية السعودية', label: isRtl ? 'المملكة العربية السعودية' : 'Saudi Arabia', flag: '🇸🇦' },
+    ...countryNames.map(country => ({ id: country, label: country, flag: rooms.find(r => r.country === country)?.countryFlag || '' })),
   ];
 
   return (
@@ -40,17 +39,7 @@ export const CountryFilter: React.FC = () => {
         })}
       </div>
 
-      {/* Dropdown Chevron on Left (▼) */}
-      <button
-        onClick={() => {
-          sounds.playClick();
-          setSelectedCountry('العراق');
-        }}
-        className="w-8 h-8 shrink-0 rounded-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 flex items-center justify-center transition active:scale-90 cursor-pointer shadow-xs"
-        title="تصفية الدول"
-      >
-        <ChevronDown className="w-4 h-4 text-slate-600" />
-      </button>
+
     </div>
   );
 };
