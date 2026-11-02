@@ -83,6 +83,7 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
       void music.stop().catch(error => console.warn('[RoomMusic] disconnect cleanup failed', error));
     }
     clearAudio();
+    document.removeEventListener('pointerdown', unlockAudio);
     if (!closing) onError('انقطع اتصال الصوت بالغرفة');
   });
   // Distinguish network degradation from microphone or playback failures.
