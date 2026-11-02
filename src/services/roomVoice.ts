@@ -162,8 +162,8 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
   }
   musicRoom = room;
   return { sync, close: async () => {
-    if (musicRoom === room) { musicRoom = null; await music.stop(); }
     closing = true;
+    if (musicRoom === room) { musicRoom = null; await music.stop().catch(error => console.warn('[RoomMusic] close cleanup failed', error)); }
     document.removeEventListener('pointerdown', unlockAudio);
     await micQueue.catch(() => {});
     await room.disconnect();
