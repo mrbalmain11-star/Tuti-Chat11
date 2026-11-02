@@ -44,6 +44,7 @@ export async function leaveRoomMembership(roomId: string): Promise<void> {
 export async function sendRealRoomMessage(roomId: string, body: string): Promise<number> {
   if (!stagingBackend) throw new Error('Staging not configured');
   const text = body.trim();
+  if (/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/.test(text)) throw new Error('Message contains invalid control characters');
   if (!text || text.length > 1000) throw new Error('Invalid message length');
   const { data: auth, error: authError } = await stagingBackend.auth.getUser();
   if (authError) throw authError;
