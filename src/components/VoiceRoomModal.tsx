@@ -759,10 +759,14 @@ export const VoiceRoomModal: React.FC = () => {
                 <button
                   onClick={() => {
                     sounds.playClick();
-                    if (navigator.clipboard) {
-                      navigator.clipboard.writeText(window.location.href);
-                    }
-                    showToast('تم نسخ رابط الغرفة للمشاركة بنجاح 🔗');
+                    const shareUrl = window.location.origin + window.location.pathname + '?room=' + encodeURIComponent(String(activeRoom.publicId ?? activeRoom.id));
+                    void (async () => {
+                      try {
+                        if (navigator.share) await navigator.share({ title: activeRoom.title, url: shareUrl });
+                        else if (navigator.clipboard) { await navigator.clipboard.writeText(shareUrl); showToast('تم نسخ رابط الغرفة 🔗'); }
+                        else showToast('المشاركة غير متاحة على هذا الجهاز');
+                      } catch (error) { if ((error as Error)?.name !== 'AbortError') showToast('تعذرت مشاركة الغرفة'); }
+                    })();
                   }}
                   className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 text-white/90 flex items-center justify-center transition active:scale-95 cursor-pointer"
                   title="مشاركة الغرفة"
