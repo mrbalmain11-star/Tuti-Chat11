@@ -157,8 +157,13 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
     // A failed Android capture must not leave a LiveKit connection alive.
     closing = true;
     document.removeEventListener('pointerdown', unlockAudio);
-    await room.disconnect();
-    clearAudio();
+    try {
+      await room.disconnect();
+    } catch (disconnectError) {
+      console.warn('[RoomVoice] cleanup after microphone failure', disconnectError);
+    } finally {
+      clearAudio();
+    }
     throw error;
   }
   musicRoom = room;
