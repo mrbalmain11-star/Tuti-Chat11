@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { X, Search, Radio, ImageIcon, Building2 } from 'lucide-react';
+import { X, Search, Radio, ImageIcon } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
 
 export const SearchModal: React.FC = () => {
-  const { openSearchModal, setOpenSearchModal, rooms, enterRoom, agencies, setOpenAgencyModal } = useApp();
+  const { openSearchModal, setOpenSearchModal, rooms, enterRoom } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
   const normalized = searchTerm.trim().toLocaleLowerCase();
 
@@ -17,9 +17,6 @@ export const SearchModal: React.FC = () => {
       (r.hostName || '').toLowerCase().includes(normalized)
   );
 
-  const matchedAgencies = agencies.filter((a) =>
-    a.name.toLowerCase().includes(normalized)
-  );
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 backdrop-blur-xs font-['Cairo',sans-serif] p-4 pt-10 animate-in fade-in">
@@ -33,7 +30,7 @@ export const SearchModal: React.FC = () => {
               autoFocus
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="ابحث عن غرفة أو وكالة أو ID..."
+              placeholder="ابحث عن غرفة أو ID..."
               className="w-full bg-transparent text-xs text-slate-900 focus:outline-none text-right"
             />
           </div>
@@ -49,7 +46,7 @@ export const SearchModal: React.FC = () => {
         <div className="py-3 flex-1 overflow-y-auto space-y-4 no-scrollbar">
           {searchTerm.trim() === '' ? (
             <div className="text-center py-8 text-slate-400 text-xs">
-              اكتب اسم غرفة، اسم وكالة، أو رقم ID للبحث الفوري
+              اكتب اسم غرفة أو رقم ID للبحث
             </div>
           ) : (
             <>
@@ -87,39 +84,6 @@ export const SearchModal: React.FC = () => {
                 )}
               </div>
 
-              {/* Agencies Section */}
-              <div>
-                <h4 className="text-xs font-bold text-slate-500 mb-2 flex items-center gap-1">
-                  <Building2 className="w-3.5 h-3.5 text-blue-600" />
-                  <span>الوكالات الرسمية ({matchedAgencies.length})</span>
-                </h4>
-                {matchedAgencies.length === 0 ? (
-                  <p className="text-[11px] text-slate-400 py-1">لا توجد وكالات مطابقة</p>
-                ) : (
-                  <div className="space-y-1.5">
-                    {matchedAgencies.map((a) => (
-                      <div
-                        key={a.id}
-                        onClick={() => {
-                          sounds.playClick();
-                          setOpenSearchModal(false);
-                          setOpenAgencyModal(true);
-                        }}
-                        className="p-2.5 rounded-xl bg-slate-50 hover:bg-blue-50 border border-slate-200/60 flex items-center justify-between cursor-pointer transition"
-                      >
-                        <div className="flex items-center gap-2">
-                          {a.logo ? <img src={a.logo} alt={a.name} className="w-9 h-9 rounded-lg object-cover" /> : <div className="w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center"><Building2 size={18}/></div>}
-                          <div className="text-right">
-                            <p className="text-xs font-bold text-slate-900">{a.name}</p>
-                            <span className="text-[10px] text-slate-500">{a.countryFlag} • {a.memberCount} عضو</span>
-                          </div>
-                        </div>
-                        <span className="text-xs text-blue-600 font-bold">عرض 👑</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
             </>
           )}
         </div>
