@@ -125,7 +125,8 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
     await room.connect(data.url, data.token, { autoSubscribe: true });
   } catch (error) {
     document.removeEventListener('pointerdown', unlockAudio);
-    room.disconnect();
+    await room.disconnect().catch(() => {});
+    clearAudio();
     throw error;
   }
   let micQueue: Promise<void> = Promise.resolve();
