@@ -12,7 +12,7 @@ export function setRoomPlaybackMuted(muted: boolean): void {
 const music = new RoomMusicPublisher();
 let musicRoom: Room | null = null;
 export async function playRoomMusic(file: File): Promise<void> {
-  if (!musicRoom) throw new Error('اتصال صوت الغرفة غير جاهز');
+  if (!musicRoom || musicRoom.state !== 'connected') throw new Error('اتصال صوت الغرفة غير جاهز');
   await music.play(musicRoom, file);
 }
 export function pauseRoomMusic(): void { music.pause(); }
