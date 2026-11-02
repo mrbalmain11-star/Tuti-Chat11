@@ -77,7 +77,13 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
     track.detach().forEach(el => el.remove());
     removeAudio(participant.identity + ':' + track.sid);
   });
-  room.on(RoomEvent.Disconnected, () => { if (!closing) onError('انقطع اتصال الصوت بالغرفة'); });
+  room.on(RoomEvent.Disconnected, () => {
+    if (musicRoom === room) {
+      musicRoom = null;
+      void music.stop().catch(error => console.warn('[RoomMusic] disconnect cleanup failed', error));
+    }
+    if (!closing) onError('انقطع اتصال الصوت بالغرفة');
+  });
   // Distinguish network degradation from microphone or playback failures.
   // These events do not restart the microphone or interrupt a working stream.
   room.on(RoomEvent.ConnectionQualityChanged, (quality, participant) => {
