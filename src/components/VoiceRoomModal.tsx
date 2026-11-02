@@ -853,12 +853,12 @@ export const VoiceRoomModal: React.FC = () => {
               <div
                 onClick={() => {
                   sounds.playClick();
-                  showToast(`كأس ونقاط الروم: 254K 🏆 (المرتبة الأولى في الترتيب اليومي)`);
+                  setShowRoomInfoModal(true);
                 }}
                 className="flex items-center gap-1.5 bg-[#1a0e33]/80 border border-purple-400/20 rounded-full px-2.5 py-0.5 shadow-md cursor-pointer hover:bg-[#251449] transition active:scale-95"
-                title="كأس ونقاط دعم الغرفة"
+                title="عرض معلومات الغرفة؛ نقاط الكأس قيد الربط بالخادم"
               >
-                <span className="text-xs font-mono font-bold text-white/90">254K</span>
+                <span className="text-xs font-mono font-bold text-white/90">—</span>
                 <span className="text-xs">🏆</span>
               </div>
             </div>
@@ -2989,12 +2989,12 @@ export const VoiceRoomModal: React.FC = () => {
               <div className="grid grid-cols-2 gap-2.5">
                 <div className="p-3 bg-purple-950/40 rounded-2xl border border-purple-400/30 text-center">
                   <span className="text-[10px] text-slate-400 block mb-1">كأس الغرفة والترتيب:</span>
-                  <span className="text-base font-black text-amber-300 font-mono">254K 🏆</span>
-                  <span className="text-[9px] text-amber-200 block">المرتبة الأولى</span>
+                  <span className="text-base font-black text-amber-300 font-mono">— 🏆</span>
+                  <span className="text-[9px] text-amber-200 block">بانتظار بيانات الترتيب</span>
                 </div>
                 <div className="p-3 bg-purple-950/40 rounded-2xl border border-purple-400/30 text-center">
                   <span className="text-[10px] text-slate-400 block mb-1">المساهمات اليومية:</span>
-                  <span className="text-base font-black text-cyan-300 font-mono">254,000 🪙</span>
+                  <span className="text-base font-black text-cyan-300 font-mono">— 🪙</span>
                   <span className="text-[9px] text-cyan-200 block">اليوم</span>
                 </div>
                 <div className="p-3 bg-white/5 rounded-2xl border border-white/10 text-center">
