@@ -7,8 +7,8 @@ export const CountryFilter: React.FC = () => {
 
   const countryNames = Array.from(new Set(rooms.map(r => r.country).filter((country): country is string => Boolean(country))));
   const filterChips = [
-    { id: 'شائع 🔥', label: isRtl ? 'شائع' : 'Popular', icon: '🔥' },
-    ...countryNames.map(country => ({ id: country, label: country, flag: rooms.find(r => r.country === country)?.countryFlag || '' })),
+    { id: 'شائع 🔥', label: isRtl ? 'شائع' : 'Popular', icon: '🔥', flag: '' },
+    ...countryNames.map(country => ({ id: country, label: country, icon: '', flag: rooms.find(r => r.country === country)?.countryFlag || '' })),
   ];
 
   return (
