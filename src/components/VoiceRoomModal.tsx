@@ -1860,7 +1860,7 @@ export const VoiceRoomModal: React.FC = () => {
               {(isOwner || isModerator) ? (
                 <div className="space-y-3">
                   <p className="text-xs text-slate-300">اختر ملف موسيقى من جهازك ليُبث داخل الغرفة.</p>
-                  <input type="file" accept="audio/*" className="w-full text-xs" onChange={async event => {
+                  <input type="file" accept="audio/*,.mp3,.m4a,.aac,.wav,.ogg,.opus,.flac,.webm" className="w-full text-xs" onChange={async event => {
                     const file = event.target.files?.[0];
                     if (!file) return;
                     try {
