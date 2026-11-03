@@ -27,9 +27,39 @@ export const GiftLottieAnimation: React.FC<{
       try {
         const response = await fetch(url, { signal: controller.signal, mode: 'cors' });
         if (!response.ok) throw new Error('Gift animation download failed');
-        const data = await response.json();
+        const declaredSize = Number(response.headers.get('content-length') || 0);
+        const maxBytes = 5 * 1024 * 1024;
+        if (declaredSize > maxBytes) throw new Error('Gift animation exceeds size limit');
+        const reader = response.body?.getReader();
+        let data: unknown;
+        if (reader) {
+          const chunks: Uint8Array[] = [];
+          let total = 0;
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              total += value.byteLength;
+              if (total > maxBytes) throw new Error('Gift animation exceeds size limit');
+              chunks.push(value);
+            }
+          } finally {
+            reader.releaseLock();
+          }
+          const bytes = new Uint8Array(total);
+          let offset = 0;
+          for (const chunk of chunks) {
+            bytes.set(chunk, offset);
+            offset += chunk.byteLength;
+          }
+          data = JSON.parse(new TextDecoder().decode(bytes));
+        } else {
+          const body = await response.text();
+          if (body.length > maxBytes) throw new Error('Gift animation exceeds size limit');
+          data = JSON.parse(body);
+        }
         if (disposed) return;
-        if (!data || typeof data !== 'object' || !Array.isArray(data.layers)) {
+        if (!data || typeof data !== 'object' || !('layers' in data) || !Array.isArray(data.layers)) {
           throw new Error('Invalid Lottie JSON');
         }
         animation = lottie.loadAnimation({
