@@ -35,3 +35,7 @@ async function stopCurrentMusic(): Promise<void> {
 export function pauseRoomMusic(): void { publisher.pause(); }
 export async function resumeRoomMusic(): Promise<void> { await publisher.resume(); }
 export async function stopRoomMusic(): Promise<void> { ++generation; await stopCurrentMusic(); }
+
+export function getRoomMusicProgress(): { position: number; duration: number } { return { position: publisher.position, duration: publisher.duration }; }
+export function seekRoomMusic(seconds: number): void { publisher.seek(seconds); }
+export function setRoomMusicVolume(volume: number): void { publisher.setVolume(volume); }
