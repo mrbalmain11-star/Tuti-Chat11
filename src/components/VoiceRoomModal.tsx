@@ -1788,6 +1788,12 @@ export const VoiceRoomModal: React.FC = () => {
                     <span className="text-xs font-bold text-slate-200">أعضاء الغرفة</span>
                   </div>
 
+                  {/* الحظر داخل أدوات الغرفة، دون زر عائم يحجب المحادثة */}
+                  <button type="button" onClick={() => { setShowBansModal(true); setShowToolsDrawer(false); }} className="flex flex-col items-center gap-1.5 active:scale-95">
+                    <span className="flex h-13 w-13 items-center justify-center rounded-2xl border border-white/10 bg-[#281a4b]"><Shield className="h-6 w-6 text-rose-300" /></span>
+                    <span className="text-xs font-bold text-slate-200">المحظورون</span>
+                  </button>
+
                   {/* مشاركة الغرفة */}
                   <div
                     onClick={() => {
@@ -3147,7 +3153,7 @@ export const VoiceRoomModal: React.FC = () => {
           </div>
         )}
 
-        <button type="button" onClick={() => { setShowBansModal(true); setShowToolsDrawer(false); }} className="fixed bottom-24 left-3 z-30 rounded-full border border-white/20 bg-[#241638] px-3 py-2 text-[11px] font-bold text-white shadow-lg">المحظورون</button>
+        
 
         {/* =========================================================================
             ROOM STATS MODAL (إحصائيات ونشاط الغرفة 📊)
