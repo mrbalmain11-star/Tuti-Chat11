@@ -196,6 +196,7 @@ export const VoiceRoomModal: React.FC = () => {
   useEffect(() => {
     if (!showRoomStatsModal || !activeRoom?.id || !stagingBackend) return;
     let active = true;
+    const statsRoomId = activeRoom.id;
     setRoomGiftStats(null);
     setRoomGiftStatsError('');
     const now = new Date();
@@ -206,7 +207,7 @@ export const VoiceRoomModal: React.FC = () => {
     const oldest = new Date(Math.min(startOfWeek.getTime(), startOfMonth.getTime()));
     void (async () => {
       const { data, error } = await stagingBackend.from('gift_events')
-        .select('amount,created_at').eq('room_id', activeRoom.id)
+        .select('amount,created_at').eq('room_id', statsRoomId)
         .gte('created_at', oldest.toISOString()).order('created_at', { ascending: false }).limit(1000);
       if (error) throw error;
       if (!active) return;
