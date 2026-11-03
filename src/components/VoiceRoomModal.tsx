@@ -187,6 +187,9 @@ export const VoiceRoomModal: React.FC = () => {
 
   // Owner & Management Modals
   const [showRoomInfoModal, setShowRoomInfoModal] = useState(false);
+  const [showSeatLayouts, setShowSeatLayouts] = useState(false);
+  const [seatLayout, setSeatLayout] = useState<'grid'|'classic'|'circle'|'stage'>('grid');
+  const [layoutSaving, setLayoutSaving] = useState(false);
   const [showExitOptions, setShowExitOptions] = useState(false);
   const [showMembersModal, setShowMembersModal] = useState(false);
   const [showBansModal, setShowBansModal] = useState(false);
@@ -802,6 +805,14 @@ export const VoiceRoomModal: React.FC = () => {
     );
   };
 
+  const getSeatPosition = (n:number):React.CSSProperties => {
+    if(seatLayout==='circle'){const angle=(n-1)*2*Math.PI/15;return {position:'absolute',left:'calc(50% + '+(Math.sin(angle)*40)+'% - 28px)',top:'calc(50% - '+(Math.cos(angle)*39)+'% - 28px)'};}
+    if(seatLayout==='classic')return {gridColumn:n<=3?n+1:((n-4)%4)+1,gridRow:n<=3?1:Math.floor((n-4)/4)+2};
+    if(seatLayout==='stage')return {gridColumn:n<=3?n+1:((n-4)%5)+1,gridRow:n<=3?1:Math.floor((n-4)/5)+2};
+    return {};
+  };
+  useEffect(()=>{if(!activeRoom||!stagingBackend)return;let alive=true;const load=async()=>{const {data,error}=await stagingBackend.rpc('totichat_room_seat_layout',{p_room_id:activeRoom.id});if(alive&&!error&&['grid','classic','circle','stage'].includes(data))setSeatLayout(data);};void load();const timer=window.setInterval(()=>void load(),15000);return()=>{alive=false;window.clearInterval(timer);};},[activeRoom?.id]);
+  const saveSeatLayout=async(layout:'grid'|'classic'|'circle'|'stage')=>{if(!activeRoom||!stagingBackend||layoutSaving||(!isOwner&&!currentUser.isSuperAdmin))return;setLayoutSaving(true);try{const {data,error}=await stagingBackend.rpc('totichat_room_seat_layout',{p_room_id:activeRoom.id,p_layout:layout});if(error||data!==layout)throw error||new Error('لم يؤكد الخادم الحفظ');setSeatLayout(layout);setShowSeatLayouts(false);showToast('تم حفظ ترتيب المقاعد لجميع الأعضاء');}catch(e){showToast(e instanceof Error?e.message:'تعذر حفظ ترتيب المقاعد');}finally{setLayoutSaving(false);}};
   // 15 Seats Layout: 3 Rows of 5 Seats
   // Row 1: NO 01, NO 02, NO 03, NO 04, NO 05
   const row1Numbers = [1, 2, 3, 4, 5];
@@ -1053,19 +1064,10 @@ export const VoiceRoomModal: React.FC = () => {
           </div>
         </div>
 
-        {/* =========================================================================
-            3. VOICE SEATS SECTION: EXACT 15 SEATS (3 Rows of 5 Seats)
-            Row 1: NO 01, NO 02, NO 03, NO 04, NO 05
-            Row 2: NO 06, NO 07, NO 08, NO 09, NO 10
-            Row 3: NO 11, NO 12, NO 13, NO 14, NO 15
-            - Under circular avatar: User Profile Name + VIP Color (e.g. حمدان 👑)
-            - Under empty mic: NO xx
-            - Heart counter: 0 💚
-            ========================================================================= */}
-        <div className="relative z-10 px-3 pt-2 pb-1 flex flex-col gap-3">
-          {/* Row 1: Seats 1 to 5 */}
-          <div className="grid grid-cols-5 gap-2 items-center justify-items-center">
-            {row1Numbers.map((seatNum) => {
+        {/* Seat positions only; seat visuals and seat numbers remain unchanged. */}
+        <div className={seatLayout === "circle" ? "relative z-10 mx-auto h-[365px] w-full max-w-[370px]" : "relative z-10 px-2 pt-2 pb-1"}>
+          <div className={seatLayout === "circle" ? "relative h-full w-full" : "grid grid-cols-5 gap-x-1 gap-y-3 items-center justify-items-center"}>
+{Array.from({length:15},(_,i)=>i+1).map((seatNum) => {
               const seat = getSeat(seatNum);
               const isOccupied = !!seat.user;
 
@@ -1074,6 +1076,7 @@ export const VoiceRoomModal: React.FC = () => {
                   key={seatNum}
                   onClick={() => handleSeatClick(seatNum)}
                   className="flex flex-col items-center cursor-pointer group active:scale-95 transition"
+                  style={getSeatPosition(seatNum)}
                 >
                   {/* Seat Translucent Circle: Medium size w-14 h-14 sm:w-16 sm:h-16 */}
                   <div
@@ -1122,154 +1125,6 @@ export const VoiceRoomModal: React.FC = () => {
                   </div>
 
                   {/* Under Avatar: User name large & clear / Under empty mic: clean number */}
-                  {isOccupied && seat.user ? (
-                    <div className="mt-1 flex items-center justify-center gap-0.5 max-w-[76px] px-0.5">
-                      <VipName
-                        name={seat.user.nickname || seat.user.name}
-                        vipLevel={seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel}
-                        className="text-xs sm:text-sm font-black truncate text-center block"
-                        fallbackColor="text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]"
-                      />
-                      <span className="text-[10px] text-cyan-300 shrink-0">👤</span>
-                    </div>
-                  ) : (
-                    <span className="text-xs sm:text-sm font-bold text-slate-300 font-mono mt-1 tracking-wider drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
-                      {seatNum}
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Row 2: Seats 6 to 10 */}
-          <div className="grid grid-cols-5 gap-2 items-center justify-items-center">
-            {row2Numbers.map((seatNum) => {
-              const seat = getSeat(seatNum);
-              const isOccupied = !!seat.user;
-
-              return (
-                <div
-                  key={seatNum}
-                  onClick={() => handleSeatClick(seatNum)}
-                  className="flex flex-col items-center cursor-pointer group active:scale-95 transition"
-                >
-                  <div
-                    className={`relative w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center transition-all ${
-                      isOccupied && seat.user
-                        ? 'p-0.5'
-                        : 'bg-[#15202e]/60 hover:bg-[#1f2e42]/75 border border-slate-500/40 shadow-[0_2px_8px_rgba(0,0,0,0.5)] backdrop-blur-xs'
-                    }`}
-                  >
-                    {isOccupied && seat.user ? (
-                      <div
-                        className={`relative w-full h-full rounded-full overflow-visible border-2 shadow-md ${
-                          Number(seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel || 0) > 0
-                            ? 'border-amber-300 ring-[3px] ring-fuchsia-500/80 shadow-[0_0_16px_4px_rgba(236,72,153,0.65)]'
-                            : 'border-white/80'
-                        }`}
-                      >
-                        {Number(seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel || 0) >= 1 && (
-                          <Crown className="absolute -top-1 left-1/2 -translate-x-1/2 z-20 w-5 h-5 text-amber-200 fill-amber-500 drop-shadow-[0_0_5px_#facc15] pointer-events-none" />
-                        )}
-                        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-emerald-700 to-teal-950 flex items-center justify-center text-white text-lg font-black">{(seat.user.name || '؟').slice(0,1)}</div>
-                        {seat.user.avatar ? <img
-                          src={seat.user.avatar}
-                          alt={seat.user.name}
-                          className="absolute inset-0 z-10 block w-full h-full rounded-full object-cover object-center"
-                          loading="eager"
-                          onError={e => { e.currentTarget.style.display = 'none'; }}
-                        /> : null}
-                        {seat.isMuted && (
-                          <div className="absolute bottom-1 right-1 z-20 w-5 h-5 rounded-full bg-rose-700/90 border border-white/60 flex items-center justify-center shadow-md pointer-events-none">
-                            <MicOff className="w-3 h-3 text-white" />
-                          </div>
-                        )}
-                        <div className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 z-10 px-1.5 py-0 rounded-full bg-emerald-600/95 border border-emerald-300/40 text-white text-[9px] font-bold font-mono leading-none shadow-xs">
-                          {seat.user.hearts ?? 0}
-                        </div>
-                      </div>
-                    ) : seat.isLocked ? (
-                      <Lock className="w-5 h-5 text-amber-400/90 stroke-[2.2]" />
-                    ) : (
-                      <Plus className="w-6 h-6 sm:w-7 sm:h-7 text-white/90 stroke-[2.5]" />
-                    )}
-                  </div>
-
-                  {isOccupied && seat.user ? (
-                    <div className="mt-1 flex items-center justify-center gap-0.5 max-w-[76px] px-0.5">
-                      <VipName
-                        name={seat.user.nickname || seat.user.name}
-                        vipLevel={seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel}
-                        className="text-xs sm:text-sm font-black truncate text-center block"
-                        fallbackColor="text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]"
-                      />
-                      <span className="text-[10px] text-cyan-300 shrink-0">👤</span>
-                    </div>
-                  ) : (
-                    <span className="text-xs sm:text-sm font-bold text-slate-300 font-mono mt-1 tracking-wider drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
-                      {seatNum}
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Row 3: Seats 11 to 15 */}
-          <div className="grid grid-cols-5 gap-2 items-center justify-items-center">
-            {row3Numbers.map((seatNum) => {
-              const seat = getSeat(seatNum);
-              const isOccupied = !!seat.user;
-
-              return (
-                <div
-                  key={seatNum}
-                  onClick={() => handleSeatClick(seatNum)}
-                  className="flex flex-col items-center cursor-pointer group active:scale-95 transition"
-                >
-                  <div
-                    className={`relative w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center transition-all ${
-                      isOccupied && seat.user
-                        ? 'p-0.5'
-                        : 'bg-[#15202e]/60 hover:bg-[#1f2e42]/75 border border-slate-500/40 shadow-[0_2px_8px_rgba(0,0,0,0.5)] backdrop-blur-xs'
-                    }`}
-                  >
-                    {isOccupied && seat.user ? (
-                      <div
-                        className={`relative w-full h-full rounded-full overflow-visible border-2 shadow-md ${
-                          Number(seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel || 0) > 0
-                            ? 'border-amber-300 ring-[3px] ring-fuchsia-500/80 shadow-[0_0_16px_4px_rgba(236,72,153,0.65)]'
-                            : 'border-white/80'
-                        }`}
-                      >
-                        {Number(seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel || 0) >= 1 && (
-                          <Crown className="absolute -top-1 left-1/2 -translate-x-1/2 z-20 w-5 h-5 text-amber-200 fill-amber-500 drop-shadow-[0_0_5px_#facc15] pointer-events-none" />
-                        )}
-                        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-emerald-700 to-teal-950 flex items-center justify-center text-white text-lg font-black">{(seat.user.name || '؟').slice(0,1)}</div>
-                        {seat.user.avatar ? <img
-                          src={seat.user.avatar}
-                          alt={seat.user.name}
-                          className="absolute inset-0 z-10 block w-full h-full rounded-full object-cover object-center"
-                          loading="eager"
-                          onError={e => { e.currentTarget.style.display = 'none'; }}
-                        /> : null}
-                        {seat.isMuted && (
-                          <div className="absolute bottom-1 right-1 z-20 w-5 h-5 rounded-full bg-rose-700/90 border border-white/60 flex items-center justify-center shadow-md pointer-events-none">
-                            <MicOff className="w-3 h-3 text-white" />
-                          </div>
-                        )}
-                        <div className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 z-10 px-1.5 py-0 rounded-full bg-emerald-600/95 border border-emerald-300/40 text-white text-[9px] font-bold font-mono leading-none shadow-xs">
-                          {seat.user.hearts ?? 0}
-                        </div>
-                      </div>
-                    ) : seat.isLocked ? (
-                      <Lock className="w-5 h-5 text-amber-400/90 stroke-[2.2]" />
-                    ) : (
-                      <Plus className="w-6 h-6 sm:w-7 sm:h-7 text-white/90 stroke-[2.5]" />
-                    )}
-                  </div>
-
                   {isOccupied && seat.user ? (
                     <div className="mt-1 flex items-center justify-center gap-0.5 max-w-[76px] px-0.5">
                       <VipName
@@ -2658,6 +2513,13 @@ export const VoiceRoomModal: React.FC = () => {
         {/* =========================================================================
             ROOM INFO & MANAGEMENT MODAL (معلومات الغرفة وإدارتها 👑)
             ========================================================================= */}
+        {showSeatLayouts && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4" dir="rtl" onClick={()=>setShowSeatLayouts(false)}>
+          <div className="w-full max-w-sm rounded-3xl border-2 border-amber-400 bg-emerald-950 p-5 text-white" onClick={e=>e.stopPropagation()}>
+            <div className="flex items-center justify-between"><h3 className="font-black text-lg text-amber-300">🛋️ أشكال ترتيب المقاعد</h3><button onClick={()=>setShowSeatLayouts(false)} aria-label="إغلاق"><X/></button></div>
+            <p className="mt-2 text-xs text-emerald-100">نغيّر أماكن المقاعد فقط، بدون تغيير شكل المايك أو نقل المستخدمين</p>
+            <div className="mt-4 grid grid-cols-2 gap-3">{([['classic','الكلاسيكي'],['circle','الدائري'],['stage','المسرحي (المنصة)'],['grid','الشبكي المتوازن']] as const).map(([id,label])=><button key={id} type="button" disabled={layoutSaving||(!isOwner&&!currentUser.isSuperAdmin)} onClick={()=>void saveSeatLayout(id)} className={seatLayout===id?'rounded-2xl border border-emerald-400 bg-emerald-900 p-4 text-sm font-bold':'rounded-2xl border border-amber-400/60 bg-emerald-950 p-4 text-sm font-bold'}>{seatLayout===id?'✓ ':''}{label}<span className="mt-2 block text-xs text-amber-200">15 مقعداً</span></button>)}</div>
+          </div>
+        </div>}
         {showRoomInfoModal && (
           <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/75 p-3 backdrop-blur-sm" onClick={() => setShowRoomInfoModal(false)} dir="rtl">
             <div onClick={e => e.stopPropagation()} className="w-full max-w-md max-h-[94dvh] overflow-y-auto rounded-[30px] border-2 border-amber-400/75 bg-[#fffefa] p-4 text-slate-900 shadow-[0_20px_70px_rgba(0,0,0,.55)] font-['Cairo',sans-serif]">
@@ -2691,7 +2553,7 @@ export const VoiceRoomModal: React.FC = () => {
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   {[
-                    {title:'ترتيب المقاعد',value:`${activeRoom.seats.length} مقعداً`,action:()=>{setShowRoomInfoModal(false);setShowRoomModeModal(true);}},
+                    {title:'ترتيب المقاعد',value:`${activeRoom.seats.length} مقعداً`,action:()=>{setShowRoomInfoModal(false);setShowSeatLayouts(true);}},
                     {title:'المحظورون',value:'عرض القائمة',action:()=>{setShowRoomInfoModal(false);setShowBansModal(true);}},
                     {title:'المشرفون',value:`${activeRoom.moderatorIds?.length ?? 0} مشرف`,action:()=>{setShowRoomInfoModal(false);setShowMembersModal(true);}},
                     {title:'أعضاء الغرفة',value:`${activeRoom.listenersCount} عضو`,action:()=>{setShowRoomInfoModal(false);setShowMembersModal(true);}},
