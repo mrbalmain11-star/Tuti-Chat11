@@ -19,7 +19,10 @@ export class RoomMusicPublisher {
     const url = URL.createObjectURL(file);
     const audio = new Audio(url);
     audio.preload = 'auto';
-    const context = new AudioContext();
+    const context = (() => {
+      try { return new AudioContext(); }
+      catch (error) { URL.revokeObjectURL(url); throw error; }
+    })();
     const source = context.createMediaElementSource(audio);
     const destination = context.createMediaStreamDestination();
     // Route to LiveKit only: avoid playing a second local copy and causing echo.
