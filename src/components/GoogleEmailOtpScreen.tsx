@@ -49,16 +49,18 @@ export const GoogleEmailOtpScreen: React.FC<Props> = ({ email, onVerified, onBac
       } else if (result.status === 'rate_limited') {
         setRemaining(result.retryAfterSeconds ?? 60);
         setMessage('يرجى الانتظار قبل إعادة إرسال الرمز');
+      } else if (result.status === 'not_configured') {
+        setMessage('خدمة إرسال البريد غير مهيأة على الخادم. يرجى التواصل مع الإدارة');
       } else if (result.status === 'delivery_failed') {
         setRemaining(60);
         setMessage('تعذر إرسال البريد، حاول مجدداً بعد دقيقة');
       } else if (result.status === 'unauthorized') {
         setMessage('انتهت جلسة Google، سجّل الدخول مرة أخرى');
       } else {
-        setMessage('خدمة التحقق غير متاحة حالياً، حاول لاحقاً');
+        setMessage('خدمة التحقق غير متاحة على الخادم حالياً، حاول لاحقاً');
       }
     } catch {
-      setMessage('تعذر إرسال الرمز، تأكد من اتصال الإنترنت وحاول مجدداً');
+      setMessage('تعذر الاتصال بخدمة التحقق. يرجى المحاولة لاحقاً');
     } finally {
       setBusy(false);
     }
