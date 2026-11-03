@@ -187,6 +187,7 @@ export const VoiceRoomModal: React.FC = () => {
 
   // Owner & Management Modals
   const [showRoomInfoModal, setShowRoomInfoModal] = useState(false);
+  const [roomInfoSection, setRoomInfoSection] = useState<'main'|'rules'>('main');
   const [showExitOptions, setShowExitOptions] = useState(false);
   const [showMembersModal, setShowMembersModal] = useState(false);
   const [showBansModal, setShowBansModal] = useState(false);
@@ -2692,11 +2693,11 @@ export const VoiceRoomModal: React.FC = () => {
                 <div className="grid grid-cols-3 gap-2">
                   {[
                     {title:'ترتيب المقاعد',value:`${activeRoom.seats.length} مقعداً`,action:()=>{setShowRoomInfoModal(false);setShowRoomModeModal(true);}},
-                    {title:'المحظورون',value:`${roomBans.length} مستخدم`,action:()=>{setShowRoomInfoModal(false);setShowBansModal(true);}},
+                    {title:'المحظورون',value:'عرض القائمة',action:()=>{setShowRoomInfoModal(false);setShowBansModal(true);}},
                     {title:'المشرفون',value:`${activeRoom.moderatorIds?.length ?? 0} مشرف`,action:()=>{setShowRoomInfoModal(false);setShowMembersModal(true);}},
                     {title:'أعضاء الغرفة',value:`${activeRoom.listenersCount} عضو`,action:()=>{setShowRoomInfoModal(false);setShowMembersModal(true);}},
-                    {title:'قواعد الغرفة',value:'رسالة الترحيب',action:()=>document.getElementById('room-info-rules')?.scrollIntoView({behavior:'smooth',block:'center'})},
-                    {title:'إعدادات متقدمة',value:'إدارة المقاعد',action:()=>{setShowRoomInfoModal(false);setShowRoomModeModal(true);}},
+                    {title:'قواعد الغرفة',value:'قراءة القواعد',action:()=>document.getElementById('room-info-rules')?.scrollIntoView({behavior:'smooth',block:'center'})},
+                    {title:'إعدادات متقدمة',value:'صلاحيات الإدارة',action:()=>{setShowRoomInfoModal(false);setShowMembersModal(true);}},
                   ].map(item=><button key={item.title} type="button" onClick={item.action} className="min-h-20 rounded-xl border border-amber-200 bg-white p-2 text-center shadow-sm"><p className="text-[12px] font-black">{item.title}</p><p className="mt-1 text-[10px] text-emerald-800">{item.value}</p><span className="text-amber-600">‹</span></button>)}
                 </div>
                 <div id="room-info-rules" className="rounded-xl border border-amber-200 bg-amber-50 p-3"><p className="text-xs font-black">قواعد الغرفة ورسالة الترحيب</p><p className="mt-1 whitespace-pre-wrap text-xs text-slate-700">{activeRoom.announcement || 'لم يضف مالك الغرفة رسالة بعد'}</p></div>
