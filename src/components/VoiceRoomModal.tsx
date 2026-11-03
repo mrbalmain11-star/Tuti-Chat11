@@ -187,7 +187,6 @@ export const VoiceRoomModal: React.FC = () => {
 
   // Owner & Management Modals
   const [showRoomInfoModal, setShowRoomInfoModal] = useState(false);
-  const [roomInfoSection, setRoomInfoSection] = useState<'main'|'rules'>('main');
   const [showExitOptions, setShowExitOptions] = useState(false);
   const [showMembersModal, setShowMembersModal] = useState(false);
   const [showBansModal, setShowBansModal] = useState(false);
