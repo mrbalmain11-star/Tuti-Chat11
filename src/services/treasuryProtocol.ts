@@ -25,6 +25,9 @@ export function documentedReason(value: string): string {
 }
 export function rpcForIntent(intent: TreasuryIntent) {
   documentedReason(intent.note);
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(intent.requestId)) {
+    throw new Error('معرّف طلب الشحن غير صالح');
+  }
   if (!Number.isSafeInteger(intent.coins) || intent.coins < 1) throw new Error('مبلغ الشحن غير صالح');
   if (intent.action === 'topup' && (intent.coins > 1_000_000_000 || !Number.isSafeInteger(intent.recipient) || Number(intent.recipient) < 1)) {
     throw new Error('تحقق من رقم المستلم ومبلغ الشحن');
