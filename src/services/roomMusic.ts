@@ -10,6 +10,7 @@ export class RoomMusicPublisher {
   private track: LocalAudioTrack | null = null;
   private objectUrl: string | null = null;
   private ownerRoom: Room | null = null;
+  private gain: GainNode | null = null;
 
   async play(room: Room, file: File): Promise<void> {
     await this.stop();
@@ -21,7 +22,11 @@ export class RoomMusicPublisher {
     const source = context.createMediaElementSource(audio);
     const destination = context.createMediaStreamDestination();
     // Route to LiveKit only: avoid playing a second local copy and causing echo.
-    source.connect(destination);
+    const gain = context.createGain();
+    gain.gain.value = 0.75;
+    source.connect(gain);
+    gain.connect(destination);
+    this.gain = gain;
     const mediaTrack = destination.stream.getAudioTracks()[0];
     if (!mediaTrack) {
       await context.close();
@@ -49,6 +54,10 @@ export class RoomMusicPublisher {
   }
 
   pause(): void { this.audio?.pause(); }
+  get position(): number { return this.audio?.currentTime || 0; }
+  get duration(): number { return Number.isFinite(this.audio?.duration) ? this.audio!.duration : 0; }
+  seek(seconds: number): void { if (this.audio && this.duration) this.audio.currentTime = Math.max(0, Math.min(seconds, this.duration)); }
+  setVolume(value: number): void { if (this.gain) this.gain.gain.value = Math.max(0, Math.min(1, value)); }
   async resume(): Promise<void> { await this.audio?.play(); }
   get isPlaying(): boolean { return Boolean(this.audio && !this.audio.paused); }
 
@@ -59,6 +68,7 @@ export class RoomMusicPublisher {
     const context = this.context;
     const url = this.objectUrl;
     this.ownerRoom = null;
+    this.gain = null;
     this.track = null;
     this.audio = null;
     this.context = null;
