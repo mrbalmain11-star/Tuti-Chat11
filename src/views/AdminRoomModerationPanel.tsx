@@ -42,7 +42,7 @@ export const AdminRoomModerationPanel: React.FC = () => {
   return <section className="bg-white border border-amber-200 rounded-2xl p-4 mb-5">
     <h2 className="font-black text-lg mb-2">إشراف الغرف</h2>
     <p className="text-xs text-slate-500 mb-3">الحظر ورفع الحظر داخل الغرفة فقط. يتطلب صلاحية الإدارة وسبباً مسجلاً.</p>
-    <div className="flex gap-2 mb-3"><input dir="ltr" className="border rounded-xl p-2 flex-1 min-w-0" value={roomId} onChange={e => { setRoomId(e.target.value); setState(null); }} placeholder="Room UUID" /><button disabled={busy || !roomId.trim()} onClick={() => void load()} className="border border-amber-400 rounded-xl px-3">عرض الغرفة</button></div>
+    <div className="flex gap-2 mb-3"><input dir="ltr" disabled={busy} className="border rounded-xl p-2 flex-1 min-w-0" value={roomId} onChange={e => { setRoomId(e.target.value); setState(null); }} placeholder="Room UUID" /><button disabled={busy || !roomId.trim()} onClick={() => void load()} className="border border-amber-400 rounded-xl px-3">عرض الغرفة</button></div>
     {state && <>
       <textarea rows={2} maxLength={300} className="w-full border rounded-xl p-3 mb-3" placeholder="سبب الإجراء (10 أحرف على الأقل)" value={reason} onChange={e => setReason(e.target.value)} />
       <h3 className="font-bold mb-2">الأعضاء ({state.members.length})</h3>
