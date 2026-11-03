@@ -29,6 +29,7 @@ import { WealthLeaderboardModal } from './components/WealthLeaderboardModal';
 import { InviteModal } from './components/InviteModal';
 import { AuthScreen } from './components/AuthScreen';
 import { GoogleEmailOtpScreen } from './components/GoogleEmailOtpScreen';
+import { CompleteAccountScreen } from './components/CompleteAccountScreen';
 import { stagingBackend } from './services/stagingBackend';
 
 // Staging APK OTP UI test: enabled by default; VITE_GOOGLE_EMAIL_OTP_ENFORCED=false disables it.
@@ -85,6 +86,28 @@ const AppContent: React.FC = () => {
   const { activeTab, isLoggedIn, isRtl } = useApp();
   const [otpState, setOtpState] = React.useState<'checking' | 'pending' | 'verified'>('checking');
   const [otpEmail, setOtpEmail] = React.useState('');
+  const [onboardingState, setOnboardingState] = React.useState<'checking' | 'required' | 'complete'>('checking');
+  React.useEffect(() => {
+    if (!isLoggedIn || (GOOGLE_EMAIL_OTP_ENFORCED && otpState !== 'verified') || !stagingBackend) {
+      setOnboardingState('checking');
+      return;
+    }
+    let active = true;
+    const checkProfile = async () => {
+      try {
+        const { data: { user }, error: userError } = await stagingBackend!.auth.getUser();
+        if (userError || !user) throw userError ?? new Error('No session');
+        const { data, error } = await stagingBackend!.from('profiles').select('onboarding_completed').eq('id',user.id).maybeSingle();
+        if (error) throw error;
+        if (active) setOnboardingState(data?.onboarding_completed === true ? 'complete' : 'required');
+      } catch (error) {
+        console.error('Account completion check failed:', error);
+        if (active) setOnboardingState('checking');
+      }
+    };
+    void checkProfile();
+    return () => { active = false; };
+  }, [isLoggedIn, otpState]);
   React.useEffect(() => {
     if (!GOOGLE_EMAIL_OTP_ENFORCED || !stagingBackend) return;
     let mounted = true;
@@ -135,6 +158,9 @@ const AppContent: React.FC = () => {
       }); }}
       onBack={() => { void stagingBackend?.auth.signOut(); }} />;
   }
+
+  if (onboardingState === 'checking') return <div dir="rtl" className="flex min-h-screen items-center justify-center bg-[#001d18] text-amber-300">جارٍ تحميل معلومات الحساب...</div>;
+  if (onboardingState === 'required') return <CompleteAccountScreen onComplete={() => setOnboardingState('complete')} />;
 
   return (
     <div className="min-h-screen bg-[#F0ECE1] flex justify-center text-slate-900 font-['Cairo',sans-serif] selection:bg-amber-500 selection:text-white" dir={isRtl ? 'rtl' : 'ltr'}>
