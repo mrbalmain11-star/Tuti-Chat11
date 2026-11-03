@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Headphones, Smartphone, ChevronLeft, ShieldCheck, X, FileText, Check, Loader2, ArrowRight } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
-import { signInWithRealGoogle, NATIVE_AUTH_ERROR_EVENT } from '../services/stagingBackend';
+import { signInWithRealGoogle, stagingBackend, NATIVE_AUTH_ERROR_EVENT } from '../services/stagingBackend';
 
 interface AuthScreenProps {
   onLoginSuccess?: () => void;
@@ -63,9 +63,38 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
     showToast('تسجيل الهاتف غير متاح حتى يتم تفعيل خدمة OTP الحقيقية.');
   };
 
-  const handleVerifyOtp = (e: React.FormEvent) => {
+  const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    showToast('تسجيل الهاتف غير متاح حتى يتم تفعيل التحقق الحقيقي.');
+    if (isLoading) return;
+    const digits = (value: string) => value.replace(/[٠-٩۰-۹]/g, character => {
+      const arabic = '٠١٢٣٤٥٦٧٨٩'.indexOf(character);
+      return String(arabic >= 0 ? arabic : '۰۱۲۳۴۵۶۷۸۹'.indexOf(character));
+    }).replace(/[^0-9]/g, '');
+    const token = digits(otpCode);
+    const phone = countryCode + digits(phoneNumber).replace(/^0+/, '');
+    if (!token || token.length < 4 || token.length > 8) {
+      showToast('أدخل رمز التحقق كاملاً');
+      return;
+    }
+    if (!stagingBackend) {
+      showToast('تعذر الاتصال بخدمة التحقق');
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const { data, error } = await stagingBackend.auth.verifyOtp({ phone, token, type: 'sms' });
+      if (error) throw error;
+      if (!data.session?.user) throw new Error('لم يتم إنشاء جلسة دخول صالحة');
+      setShowPhoneModal(false);
+      setOtpCode('');
+      showToast('تم التحقق بنجاح');
+      // AppContext observes the authenticated session; no manual login bypass.
+    } catch (error) {
+      console.error('OTP verify button failed', error);
+      showToast(error instanceof Error ? error.message : 'تعذر التحقق من الرمز');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
