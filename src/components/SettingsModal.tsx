@@ -66,16 +66,15 @@ export const SettingsModal: React.FC = () => {
   } = useApp();
 
   const [showPersonalBlocks, setShowPersonalBlocks] = useState(false);
-  const [blockedAccounts, setBlockedAccounts] = useState<Array<{ blocked_id: string }>>([]);
+  const [blockedAccounts, setBlockedAccounts] = useState<Array<{ userId: string; name?: string; publicId?: number; avatar?: string }>>([]);
   const [blockListError, setBlockListError] = useState('');
   const [blockBusy, setBlockBusy] = useState(false);
   const loadBlockedAccounts = async () => {
     if (!stagingBackend) throw new Error('الخادم غير متصل');
     setBlockListError('');
-    const { data, error } = await stagingBackend.from('dm_blocks')
-      .select('blocked_id').eq('blocker_id', currentUser.id).order('created_at', { ascending: false }).limit(100);
+    const { data, error } = await stagingBackend.rpc('totichat_blocked_profiles', { p_room_id: null });
     if (error) throw error;
-    setBlockedAccounts(data ?? []);
+    setBlockedAccounts(data?.personal ?? []);
   };
   useEffect(() => {
     if (!showPersonalBlocks) return;
@@ -1071,9 +1070,9 @@ export const SettingsModal: React.FC = () => {
             <div className="mb-4 flex items-center justify-between"><h3 className="font-bold">قائمة الحظر الشخصي</h3><button type="button" onClick={() => setShowPersonalBlocks(false)}><X className="h-5 w-5" /></button></div>
             {blockListError && <p className="mb-3 text-xs text-red-600">{blockListError}</p>}
             {blockedAccounts.length === 0 && <p className="text-sm text-slate-500">لا يوجد أشخاص محظورون</p>}
-            {blockedAccounts.map(item => <div key={item.blocked_id} className="mb-2 flex items-center justify-between gap-2 rounded-xl bg-slate-100 p-3 text-xs">
-              <span className="min-w-0 break-all">{item.blocked_id}</span>
-              <button disabled={blockBusy} type="button" onClick={() => void unblockAccount(item.blocked_id)} className="shrink-0 rounded-lg bg-emerald-600 px-3 py-2 font-bold text-white disabled:opacity-50">فك الحظر</button>
+            {blockedAccounts.map(item => <div key={item.userId} className="mb-2 flex items-center justify-between gap-2 rounded-xl bg-slate-100 p-3 text-xs">
+              <div className="flex min-w-0 items-center gap-2">{item.avatar ? <img src={item.avatar} alt="" className="h-9 w-9 rounded-full object-cover" /> : <CircleUserRound className="h-9 w-9 text-slate-400" />}<div className="min-w-0"><p className="truncate font-bold">{item.name || 'مستخدم'}</p><p className="text-slate-500">ID: {item.publicId ?? '—'}</p></div></div>
+              <button disabled={blockBusy} type="button" onClick={() => void unblockAccount(item.userId)} className="shrink-0 rounded-lg bg-emerald-600 px-3 py-2 font-bold text-white disabled:opacity-50">فك الحظر</button>
             </div>)}
           </div>
         </div>
