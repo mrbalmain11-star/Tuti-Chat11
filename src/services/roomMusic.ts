@@ -23,8 +23,16 @@ export class RoomMusicPublisher {
       try { return new AudioContext(); }
       catch (error) { URL.revokeObjectURL(url); throw error; }
     })();
-    const source = context.createMediaElementSource(audio);
-    const destination = context.createMediaStreamDestination();
+    let source: MediaElementAudioSourceNode;
+    let destination: MediaStreamAudioDestinationNode;
+    try {
+      source = context.createMediaElementSource(audio);
+      destination = context.createMediaStreamDestination();
+    } catch (error) {
+      await context.close().catch(() => {});
+      URL.revokeObjectURL(url);
+      throw error;
+    }
     // Route to LiveKit only: avoid playing a second local copy and causing echo.
     source.connect(destination);
     const mediaTrack = destination.stream.getAudioTracks()[0];
