@@ -2515,7 +2515,7 @@ export const VoiceRoomModal: React.FC = () => {
         {/* =========================================================================
             ROOM INFO & MANAGEMENT MODAL (معلومات الغرفة وإدارتها 👑)
             ========================================================================= */}
-        {roomManagementSection && <RoomManagementPanel roomId={activeRoom.id} section={roomManagementSection} canManage={isOwner||currentUser.isSuperAdmin} onClose={()=>setRoomManagementSection(null)}/>}
+        {roomManagementSection && <RoomManagementPanel roomId={activeRoom.id} section={roomManagementSection} canManage={Boolean(isOwner||currentUser.isSuperAdmin)} onClose={()=>setRoomManagementSection(null)}/>}
         {showSeatLayouts && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4" dir="rtl" onClick={()=>setShowSeatLayouts(false)}>
           <div className="w-full max-w-sm rounded-3xl border-2 border-amber-400 bg-emerald-950 p-5 text-white" onClick={e=>e.stopPropagation()}>
             <div className="flex items-center justify-between"><h3 className="font-black text-lg text-amber-300">🛋️ أشكال ترتيب المقاعد</h3><button onClick={()=>setShowSeatLayouts(false)} aria-label="إغلاق"><X/></button></div>
