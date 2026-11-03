@@ -231,6 +231,19 @@ export const VoiceRoomModal: React.FC = () => {
   // Tools Drawer Sub-Modals
   const [showMusicPlayerModal, setShowMusicPlayerModal] = useState(false);
   const [musicStatus, setMusicStatus] = useState<'stopped'|'playing'|'paused'>('stopped');
+  const [musicFileName, setMusicFileName] = useState('');
+  const [musicBusy, setMusicBusy] = useState(false);
+  const musicRoomRef = useRef<string | null>(null);
+  const musicMutedRef = useRef(myMicMuted);
+  useEffect(() => {
+    if (musicRoomRef.current && (musicRoomRef.current !== activeRoom?.id || (!musicMutedRef.current && myMicMuted))) {
+      void stopRoomMusic();
+      setMusicStatus('stopped');
+      setMusicFileName('');
+      musicRoomRef.current = null;
+    }
+    musicMutedRef.current = myMicMuted;
+  }, [activeRoom?.id, myMicMuted]);
   const [showTasksModal, setShowTasksModal] = useState(false);
   const [tasksClaimed, setTasksClaimed] = useState<Record<string, boolean>>({});
 
@@ -1827,12 +1840,12 @@ export const VoiceRoomModal: React.FC = () => {
           >
             <div
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-xs bg-[#191136] border border-purple-400/40 rounded-3xl p-5 shadow-2xl text-white space-y-4"
+              className="w-full max-w-sm bg-gradient-to-b from-[#241a09] via-[#15120c] to-[#090909] border border-amber-400/60 rounded-3xl p-5 shadow-2xl shadow-amber-500/20 text-white space-y-4"
             >
               <div className="flex items-center justify-between border-b border-white/10 pb-2">
                 <div className="flex items-center gap-2">
-                  <Music className="w-5 h-5 text-purple-400" />
-                  <h3 className="font-bold text-sm">مشغل موسيقى الغرفة</h3>
+                  <Music className="w-5 h-5 text-amber-400" />
+                  <h3 className="font-bold text-sm text-amber-100">مشغل موسيقى الغرفة</h3>
                 </div>
                 <button
                   onClick={() => setShowMusicPlayerModal(false)}
@@ -1844,28 +1857,34 @@ export const VoiceRoomModal: React.FC = () => {
 
               {(isOwner || isModerator) ? (
                 <div className="space-y-3">
-                  <p className="text-xs text-slate-300">اختر ملف موسيقى من جهازك ليُبث داخل الغرفة.</p>
+                  <div className="rounded-2xl border border-amber-500/20 bg-black/30 p-4 text-center space-y-2"><Music className="w-9 h-9 mx-auto text-amber-400"/><p className="text-sm font-bold text-amber-100">{musicFileName || 'ماكو أغنية محددة'}</p><p className="text-xs text-amber-200/70">{musicStatus === 'playing' ? '● الموسيقى شغالة' : musicStatus === 'paused' ? 'Ⅱ متوقفة مؤقتاً' : 'اختر أغنية من جهازك'}</p></div>
                   <input type="file" accept="audio/*" className="w-full text-xs" onChange={async event => {
                     const file = event.target.files?.[0];
                     if (!file) return;
+                    if (!activeRoom || musicBusy) return;
+                    setMusicBusy(true);
                     try {
                       await playRoomMusic(activeRoom.id, file);
+                      musicRoomRef.current = activeRoom.id;
+                      setMusicFileName(file.name);
                       setMusicStatus('playing');
                     } catch (error) {
                       setMusicStatus('stopped');
+                      setMusicFileName('');
                       console.error('Room music failed', error);
                       showToast('تعذر بث الموسيقى: ' + (error instanceof Error ? error.message : 'خطأ'));
                     }
+                    setMusicBusy(false);
                     event.target.value = '';
                   }} />
                   <div className="flex gap-2">
-                    <button disabled={musicStatus === 'stopped'} className="rounded-xl bg-gradient-to-r from-amber-500 to-yellow-600 text-black font-bold px-3 py-2 text-xs disabled:opacity-40 disabled:cursor-not-allowed" onClick={async () => {
+                    <button disabled={musicStatus === 'stopped' || musicBusy} className="rounded-xl bg-gradient-to-r from-amber-500 to-yellow-600 text-black font-bold px-3 py-2 text-xs disabled:opacity-40 disabled:cursor-not-allowed" onClick={async () => {
                       try { if (musicStatus === 'paused') { await resumeRoomMusic(); setMusicStatus('playing'); }
                         else { pauseRoomMusic(); setMusicStatus('paused'); } }
                       catch (error) { showToast('تعذر تغيير تشغيل الموسيقى'); console.error(error); }
                     }}>{musicStatus === 'paused' ? 'استئناف' : 'إيقاف مؤقت'}</button>
                     <button className="rounded-xl bg-[#321515] border border-amber-500/40 px-3 py-2 text-xs" onClick={() => {
-                      void stopRoomMusic().then(() => setMusicStatus('stopped')).catch(error => {
+                      void stopRoomMusic().then(() => { setMusicStatus('stopped'); setMusicFileName(''); musicRoomRef.current = null; }).catch(error => {
                         console.error('Room music stop failed', error);
                         showToast('تعذر إيقاف الموسيقى');
                       });
