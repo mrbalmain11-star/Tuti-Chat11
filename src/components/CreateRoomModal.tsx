@@ -4,7 +4,7 @@ import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
 
 export const CreateRoomModal: React.FC = () => {
-  const { openCreateRoomModal, setOpenCreateRoomModal, createVoiceRoom } = useApp();
+  const { openCreateRoomModal, setOpenCreateRoomModal, createVoiceRoom, enterRoom } = useApp();
   const [roomName, setRoomName] = useState('');
   const [saving, setSaving] = useState(false);
   const [welcomeMessage, setWelcomeMessage] = useState('اهلا وسهلا');
@@ -37,9 +37,10 @@ export const CreateRoomModal: React.FC = () => {
     if (saving) return;
     setSaving(true);
     try {
-      await createVoiceRoom(roomName.trim(), welcomeMessage.trim() || 'اهلا وسهلا', coverImage.startsWith('data:image/') ? coverImage : undefined);
+      const createdRoomId = await createVoiceRoom(roomName.trim(), welcomeMessage.trim() || 'اهلا وسهلا', coverImage.startsWith('data:image/') ? coverImage : undefined);
       sounds.playLevelUp();
       setOpenCreateRoomModal(false);
+      enterRoom(createdRoomId);
     } catch (error) {
       console.error('Room creation or cover upload failed:', error);
       window.alert(error instanceof Error ? error.message : 'تعذر إنشاء الغرفة.');
