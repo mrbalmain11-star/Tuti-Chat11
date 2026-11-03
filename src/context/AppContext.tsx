@@ -1223,10 +1223,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const toggleLockSeat = (seatNumber: number): void => {
     if (!activeRoom || !stagingBackend || !Number.isInteger(seatNumber) || !activeRoom.seats.some(seat => seat.seatNumber === seatNumber)) return;
-    if (activeRoom.hostId !== currentUser.id && !(activeRoom.moderatorIds || []).includes(currentUser.id) && !currentUser.isSuperAdmin) {
-      alert('قفل المقاعد متاح لمالك الغرفة والمشرف فقط.');
-      return;
-    }
+    // Authoritative owner/moderator permission is checked by the staging RPC.
+    // Do not reject legitimate moderators based on an incomplete UI roster.
     const roomId = activeRoom.id;
     void Promise.resolve(stagingBackend.rpc('phase2_room_toggle_seat_lock', {
       p_room_id: roomId, p_seat: seatNumber,
@@ -1245,10 +1243,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const toggleMuteSeat = (seatNumber: number): void => {
     if (!activeRoom || !stagingBackend || !Number.isInteger(seatNumber)) return;
-    if (activeRoom.hostId !== currentUser.id && !(activeRoom.moderatorIds || []).includes(currentUser.id) && !currentUser.isSuperAdmin) {
-      alert('إدارة مايك الأعضاء متاحة لمالك الغرفة والمشرف فقط.');
-      return;
-    }
+    // Authoritative owner/moderator permission is checked by the staging RPC.
+    // Do not reject legitimate moderators based on an incomplete UI roster.
     const roomId = activeRoom.id;
     const seat = activeRoom.seats.find(item => item.seatNumber === seatNumber);
     const target = seat?.user?.id;
