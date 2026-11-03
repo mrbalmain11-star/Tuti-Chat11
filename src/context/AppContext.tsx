@@ -538,7 +538,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const request = ++sequence;
       try {
         const { data, error } = await client.from('gift_catalog')
-          .select('id,name,price,icon,category_id,animation_type,rarity')
+          .select('id,name,price,icon,category_id,animation_type,rarity,preview_url')
           .eq('is_active', true).order('price', { ascending: true });
         if (error) throw error;
         const allowedAnimation = new Set<GiftItem['animationType']>([
@@ -547,6 +547,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const gifts = (data ?? []).map(g => ({
           id: String(g.id), name: String(g.name), price: Number(g.price),
           icon: String(g.icon),
+          // Keep animation assets optional: existing gifts continue using their current renderer.
+          assetUrl: typeof g.preview_url === 'string' && /^https:\/\//i.test(g.preview_url) ? g.preview_url : undefined,
+          assetFormat: typeof g.preview_url === 'string' && /\.svga(?:[?#]|$)/i.test(g.preview_url) ? 'svga' as const
+            : typeof g.preview_url === 'string' && /\.lottie(?:[?#]|$)/i.test(g.preview_url) ? 'lottie' as const
+            : typeof g.preview_url === 'string' && /\.json(?:[?#]|$)/i.test(g.preview_url) ? 'json' as const : undefined,
           category: (g.category_id === 'luck' ? 'حظ' : g.category_id === 'cp' ? 'CP' : 'هدية') as GiftItem['category'],
           animationType: (allowedAnimation.has(g.animation_type as GiftItem['animationType'])
             ? g.animation_type : 'rose') as GiftItem['animationType'],
