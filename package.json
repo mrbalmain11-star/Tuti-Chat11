@@ -27,7 +27,8 @@
     "@capacitor/android": "^7.4.0",
     "@capacitor/app": "^7.1.0",
     "@capacitor/browser": "^7.0.0",
-    "livekit-client": "^2.15.14"
+    "livekit-client": "^2.15.14",
+    "lottie-web": "^5.13.0"
   },
   "devDependencies": {
     "@types/canvas-confetti": "^1.9.0",
