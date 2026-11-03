@@ -916,6 +916,11 @@ export const VoiceRoomModal: React.FC = () => {
                   <span className="text-[13px]">👑</span>
                 </div>
                 <span className="text-xs font-mono font-bold text-white/90">{activeRoom.listenersCount}</span>
+                <div className="flex items-center -space-x-2 space-x-reverse" aria-label="صور أعضاء الغرفة">
+                  {activeRoom.memberAvatars.slice(0, 3).map((avatar, index) => (
+                    <img key={`${avatar}-${index}`} src={avatar} alt="عضو في الغرفة" className="h-6 w-6 rounded-full border-2 border-[#1b0d3a] object-cover bg-slate-800" />
+                  ))}
+                </div>
               </div>
             </div>
 
