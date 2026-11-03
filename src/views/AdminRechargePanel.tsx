@@ -122,10 +122,10 @@ export const AdminRechargePanel: React.FC = () => {
       const saved = localStorage.getItem(storageKey(actor));
       if (saved && (!retry || saved !== JSON.stringify(intent))) throw new Error('يوجد طلب محفوظ؛ تحقق من حالته أولاً');
       if (retry && !saved) throw new Error('الطلب المحفوظ غير متاح؛ أعد تحميل البيانات');
-      // Persist BEFORE sending. Storage errors prevent dispatch. Uncertain outcomes retain the exact intent.
+      const rpc = rpcForIntent(intent);
+      // Validate before persisting; keep only valid requests available for retry.
       localStorage.setItem(storageKey(actor), JSON.stringify(intent));
       setPending(intent); setConfirmation(null);
-      const rpc = rpcForIntent(intent);
       dispatched = true;
       const response = await stagingBackend.rpc(rpc.name, rpc.args);
       if (response.error) {
