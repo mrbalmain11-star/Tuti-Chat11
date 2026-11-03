@@ -24,6 +24,7 @@ export const AdminRoomModerationPanel: React.FC = () => {
   };
   const act = async (person: Person, action: 'ban' | 'unban') => {
     if (!stagingBackend || busy || !state || state.roomId !== roomId.trim()) return;
+    if (!person.user_id || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(person.user_id)) { setError('معرّف العضو غير صالح'); return; }
     const why = reason.trim();
     if (why.length < 10 || why.length > 300) { setError('اكتب سبباً من 10 إلى 300 حرف'); return; }
     if (!window.confirm(action === 'ban' ? 'تأكيد حظر هذا المستخدم من الغرفة فقط؟' : 'تأكيد رفع حظر هذا المستخدم من الغرفة؟')) return;
