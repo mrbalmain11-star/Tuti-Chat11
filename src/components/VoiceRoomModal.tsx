@@ -199,28 +199,14 @@ export const VoiceRoomModal: React.FC = () => {
     const statsRoomId = activeRoom.id;
     setRoomGiftStats(null);
     setRoomGiftStatsError('');
-    const now = new Date();
-    const startOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-    const startOfWeek = new Date(startOfDay);
-    startOfWeek.setUTCDate(startOfWeek.getUTCDate() - ((startOfWeek.getUTCDay() + 6) % 7));
-    const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-    const oldest = new Date(Math.min(startOfWeek.getTime(), startOfMonth.getTime()));
     void (async () => {
-      const { data, error } = await stagingBackend.from('gift_events')
-        .select('amount,created_at').eq('room_id', statsRoomId)
-        .gte('created_at', oldest.toISOString()).order('created_at', { ascending: false }).limit(1000);
+      const { data, error } = await stagingBackend.rpc('totichat_room_gift_totals', { p_room_id: statsRoomId });
       if (error) throw error;
       if (!active) return;
-      const totals = { today: 0, week: 0, month: 0 };
-      for (const gift of data ?? []) {
-        const time = new Date(gift.created_at).getTime();
-        const amount = Number(gift.amount);
-        if (!Number.isFinite(amount) || amount < 0) continue;
-        if (time >= startOfDay.getTime()) totals.today += amount;
-        if (time >= startOfWeek.getTime()) totals.week += amount;
-        if (time >= startOfMonth.getTime()) totals.month += amount;
+      const totals = { today: Number(data?.today), week: Number(data?.week), month: Number(data?.month) };
+      if (Object.values(totals).some(value => !Number.isFinite(value) || value < 0)) {
+        throw new Error('استجابة إحصائيات الغرفة غير صالحة');
       }
-      if ((data ?? []).length >= 1000) throw new Error('عدد العمليات كبير؛ يلزم تجميع الإحصائيات على الخادم');
       setRoomGiftStats(totals);
     })().catch(error => {
       if (active) setRoomGiftStatsError(error instanceof Error ? error.message : 'تعذر جلب إحصائيات الهدايا');
