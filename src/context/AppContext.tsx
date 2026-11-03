@@ -271,6 +271,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           setCurrentUser(prev => ({
             ...prev, id: profile.id, name: profile.display_name,
             nickname: profile.display_name, bio: profile.bio ?? '', avatar,
+            country: profile.country ?? prev.country,
+            gender: (profile.gender === 'ذكر' || profile.gender === 'أنثى') ? profile.gender : prev.gender,
+            birthdate: profile.age ? String(profile.age) : prev.birthdate,
           }));
         } while (active && pending);
       } catch (error) {
