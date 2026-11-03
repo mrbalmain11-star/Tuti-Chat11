@@ -16,6 +16,12 @@ export const GiftLottieAnimation: React.FC<{
     let disposed = false;
     const controller = new AbortController();
     let animation: ReturnType<typeof lottie.loadAnimation> | undefined;
+    const timeout = window.setTimeout(() => {
+      if (!disposed) {
+        controller.abort();
+        onFailure();
+      }
+    }, 8000);
     setReady(false);
     (async () => {
       try {
@@ -34,7 +40,10 @@ export const GiftLottieAnimation: React.FC<{
           animationData: data,
           rendererSettings: { progressiveLoad: true },
         });
-        animation.addEventListener('DOMLoaded', () => { if (!disposed) setReady(true); });
+        animation.addEventListener('DOMLoaded', () => {
+          window.clearTimeout(timeout);
+          if (!disposed) setReady(true);
+        });
         animation.addEventListener('data_failed', () => { if (!disposed) onFailure(); });
       } catch (error) {
         if (!disposed && !controller.signal.aborted) {
@@ -45,6 +54,7 @@ export const GiftLottieAnimation: React.FC<{
     })();
     return () => {
       disposed = true;
+      window.clearTimeout(timeout);
       controller.abort();
       animation?.destroy();
     };
