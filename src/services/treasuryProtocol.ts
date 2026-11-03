@@ -28,6 +28,9 @@ export function rpcForIntent(intent: TreasuryIntent) {
   if (intent.action === 'topup' && (intent.coins > 1_000_000_000 || !Number.isSafeInteger(intent.recipient) || Number(intent.recipient) < 1)) {
     throw new Error('تحقق من رقم المستلم ومبلغ الشحن');
   }
+  if (intent.action === 'allocate' && (!intent.agencyId || !intent.agencyId.trim())) {
+    throw new Error('اختر وكالة الشحن قبل التحويل');
+  }
   if (intent.action === 'topup') return {
     name: 'phase4_owner_topup_by_id',
     args: { p_public_id: intent.recipient, p_coins: intent.coins, p_note: intent.note, p_request_id: intent.requestId },
