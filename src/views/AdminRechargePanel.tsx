@@ -163,6 +163,7 @@ export const AdminRechargePanel: React.FC = () => {
         if (result.coins !== pending.coins) throw new Error('مبلغ السجل لا يطابق الطلب');
         setStatus(`اكتملت العملية المحفوظة. المرجع: ${result.id}`);
         clearPending(actor);
+        window.dispatchEvent(new Event('totichat:wallet-changed'));
         await refresh();
       } else if (response.data.status === 'failed') {
         clearPending(actor); setStatus('أكد السجل فشل العملية'); await refresh();
