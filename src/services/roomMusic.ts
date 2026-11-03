@@ -26,8 +26,8 @@ export class RoomMusicPublisher {
     source.connect(destination);
     const mediaTrack = destination.stream.getAudioTracks()[0];
     if (!mediaTrack) {
-      await context.close();
-      URL.revokeObjectURL(url);
+      try { await context.close(); }
+      finally { URL.revokeObjectURL(url); }
       throw new Error('تعذر تجهيز مسار الموسيقى');
     }
     const track = new LocalAudioTrack(mediaTrack);
