@@ -65,6 +65,34 @@ export const SettingsModal: React.FC = () => {
     language,
   } = useApp();
 
+  const [showPersonalBlocks, setShowPersonalBlocks] = useState(false);
+  const [blockedAccounts, setBlockedAccounts] = useState<Array<{ blocked_id: string }>>([]);
+  const [blockListError, setBlockListError] = useState('');
+  const [blockBusy, setBlockBusy] = useState(false);
+  const loadBlockedAccounts = async () => {
+    if (!stagingBackend) throw new Error('الخادم غير متصل');
+    setBlockListError('');
+    const { data, error } = await stagingBackend.from('dm_blocks')
+      .select('blocked_id').eq('blocker_id', currentUser.id).order('created_at', { ascending: false }).limit(100);
+    if (error) throw error;
+    setBlockedAccounts(data ?? []);
+  };
+  useEffect(() => {
+    if (!showPersonalBlocks) return;
+    void loadBlockedAccounts().catch(error => setBlockListError(error instanceof Error ? error.message : 'تعذر تحميل المحظورين'));
+  }, [showPersonalBlocks, currentUser.id]);
+  const unblockAccount = async (id: string) => {
+    if (!stagingBackend || blockBusy) return;
+    setBlockBusy(true);
+    try {
+      const { data, error } = await stagingBackend.rpc('phase2_dm_block', { p_other_user: id, p_block: false });
+      if (error || data !== true) throw error ?? new Error('لم يؤكد الخادم فك الحظر');
+      await loadBlockedAccounts();
+    } catch (error) {
+      setBlockListError(error instanceof Error ? error.message : 'تعذر فك الحظر');
+    } finally { setBlockBusy(false); }
+  };
+
   // Toggles matching the screenshot:
   // 1. ممنوع الذهاب إلى الغرفة: يتفعل حصرياً مع VIP 6 فما فوق
   const [blockGoToRoom, setBlockGoToRoom] = useState<boolean>(() => {
@@ -1036,6 +1064,22 @@ export const SettingsModal: React.FC = () => {
           </div>
         </div>
       )}
+
+      {showPersonalBlocks && (
+        <div className="fixed inset-0 z-[210] flex items-center justify-center bg-black/60 p-4" dir="rtl" onClick={() => setShowPersonalBlocks(false)}>
+          <div onClick={event => event.stopPropagation()} className="max-h-[75vh] w-full max-w-sm overflow-y-auto rounded-3xl bg-white p-5 text-slate-900">
+            <div className="mb-4 flex items-center justify-between"><h3 className="font-bold">قائمة الحظر الشخصي</h3><button type="button" onClick={() => setShowPersonalBlocks(false)}><X className="h-5 w-5" /></button></div>
+            {blockListError && <p className="mb-3 text-xs text-red-600">{blockListError}</p>}
+            {blockedAccounts.length === 0 && <p className="text-sm text-slate-500">لا يوجد أشخاص محظورون</p>}
+            {blockedAccounts.map(item => <div key={item.blocked_id} className="mb-2 flex items-center justify-between gap-2 rounded-xl bg-slate-100 p-3 text-xs">
+              <span className="min-w-0 break-all">{item.blocked_id}</span>
+              <button disabled={blockBusy} type="button" onClick={() => void unblockAccount(item.blocked_id)} className="shrink-0 rounded-lg bg-emerald-600 px-3 py-2 font-bold text-white disabled:opacity-50">فك الحظر</button>
+            </div>)}
+          </div>
+        </div>
+      )}
+
+      {!showPersonalBlocks && <button type="button" onClick={() => setShowPersonalBlocks(true)} className="fixed bottom-5 left-4 z-[110] rounded-full bg-slate-800 px-4 py-2 text-xs font-bold text-white shadow-lg">المحظورون شخصياً</button>}
 
       {/* Logout confirmation: cancellation must preserve the active session. */}
       {activeDialog === 'logout' && (
