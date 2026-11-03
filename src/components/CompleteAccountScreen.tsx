@@ -1,7 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Camera, CheckCircle2, Crown, ShieldCheck, UserRound } from 'lucide-react';
 import { stagingBackend, uploadMyAvatar } from '../services/stagingBackend';
-import { processImageFile } from '../utils/imageUpload';
 
 const countries = ['العراق','الأردن','السعودية','الكويت','الإمارات','قطر','البحرين','عُمان','سوريا','لبنان','فلسطين','مصر','اليمن','المغرب','الجزائر','تونس','ليبيا','السودان','تركيا','ألمانيا','الولايات المتحدة','أخرى'];
 const disallowed = /(totichat|tutichat|توتيشات|توتيجات|tiktok|instagram|facebook|snapchat|telegram|whatsapp|youtube|discord|تيكتوك|انستغرام|فيسبوك|سناب|تلغرام|واتساب|يوتيوب|ديسكورد|porn|xxx|sex|سكس|اباح|إباح)/i;
@@ -13,22 +12,61 @@ export const CompleteAccountScreen: React.FC<{ onComplete: () => void }> = ({ on
   const [gender, setGender] = useState('');
   const [country, setCountry] = useState('');
   const [bio, setBio] = useState('');
-  const [photo, setPhoto] = useState<File | null>(null);
+  const [photo, setPhoto] = useState<Blob | null>(null);
   const [preview, setPreview] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const picker = useRef<HTMLInputElement>(null);
 
-  const choosePhoto = (event: React.ChangeEvent<HTMLInputElement>) => {
+  // Read and convert immediately while Android's gallery file grant is active.
+  // The profile storage service accepts only WebP, not JPEG data URLs.
+  const choosePhoto = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith('image/') || file.size > 10 * 1024 * 1024) {
-      setError('اختر صورة بحجم أقل من 10MB');
-      return;
-    }
-    setPhoto(file);
-    setPreview(old => { if (old) URL.revokeObjectURL(old); return URL.createObjectURL(file); });
     setError('');
+    setPhoto(null);
+    setBusy(true);
+    try {
+      if (!file.type.startsWith('image/') || file.size > 10 * 1024 * 1024) {
+        throw new Error('اختر صورة بحجم أقل من 10MB');
+      }
+      const bytes = await file.arrayBuffer();
+      if (!bytes.byteLength) throw new Error('ملف الصورة فارغ، اختر صورة أخرى');
+      const original = new Blob([bytes], { type: file.type });
+      const objectUrl = URL.createObjectURL(original);
+      try {
+        const image = new Image();
+        await new Promise<void>((resolve, reject) => {
+          image.onload = () => resolve();
+          image.onerror = () => reject(new Error('تعذر فتح الصورة، اختر JPG أو PNG'));
+          image.src = objectUrl;
+        });
+        const maxSide = 500;
+        const scale = Math.min(1, maxSide / Math.max(image.naturalWidth, image.naturalHeight));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+        canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+        const context = canvas.getContext('2d');
+        if (!context) throw new Error('تعذر تجهيز الصورة على الهاتف');
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        const webp = await new Promise<Blob>((resolve, reject) =>
+          canvas.toBlob(blob => blob && blob.type === 'image/webp'
+            ? resolve(blob) : reject(new Error('تعذر تحويل الصورة إلى WebP')), 'image/webp', 0.82));
+        if (webp.size > 2 * 1024 * 1024) throw new Error('حجم الصورة بعد المعالجة كبير جداً');
+        setPhoto(webp);
+        setPreview(previous => {
+          if (previous) URL.revokeObjectURL(previous);
+          return URL.createObjectURL(webp);
+        });
+      } finally {
+        URL.revokeObjectURL(objectUrl);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'تعذر قراءة ملف الصورة');
+    } finally {
+      setBusy(false);
+      event.target.value = '';
+    }
   };
 
   const save = async (event: React.FormEvent) => {
@@ -48,9 +86,7 @@ export const CompleteAccountScreen: React.FC<{ onComplete: () => void }> = ({ on
       if (authError || !user) throw authError ?? new Error('يرجى تسجيل الدخول مجدداً');
       // Persist the optional avatar through the existing authenticated storage path.
       if (photo) {
-        const dataUrl = await processImageFile(photo);
-        const imageBlob = await (await fetch(dataUrl)).blob();
-        await uploadMyAvatar(imageBlob);
+        await uploadMyAvatar(photo);
       }
       const { data, error: saveError } = await stagingBackend.from('profiles')
         .update({ display_name: nickname, age: selectedAge, gender, country, bio: bio.trim(), onboarding_completed: true })
