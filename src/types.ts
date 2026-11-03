@@ -25,6 +25,7 @@ export interface UserProfile {
   visitorsCount: number;
   gender: 'ذكر' | 'أنثى';
   birthdate: string;
+  age?: number | null;
   bio: string;
   album: string[];
   agencyName?: string;
