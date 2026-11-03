@@ -101,7 +101,11 @@ export const AgencyModal: React.FC = () => {
   const [agencyJoinRequests, setAgencyJoinRequests] = useState<Array<{ id: string; agency_id: string; user_id: string; status: string }>>([]);
   const [ownedAgencyIds, setOwnedAgencyIds] = useState<string[]>([]);
   const [agencyActionBusy, setAgencyActionBusy] = useState(false);
+  const [agencyMembersError, setAgencyMembersError] = useState('');
+  const [agencyMembersLoading, setAgencyMembersLoading] = useState(false);
   const refreshAgencyMembers = async () => {
+    setAgencyMembersLoading(true);
+    setAgencyMembersError('');
     const { stagingBackend } = await import('../services/stagingBackend');
     if (!stagingBackend) throw new Error('خادم الوكالات غير متصل');
     const { data, error } = await stagingBackend.rpc('phase4_agency_state');
@@ -111,12 +115,13 @@ export const AgencyModal: React.FC = () => {
     setOwnedAgencyIds(ids);
     setAgencyJoinRequests((data?.requests ?? []).filter((request: { agency_id: string; status: string }) => ids.includes(request.agency_id) && request.status === 'pending_new'));
     setMembersList((data?.members ?? []).filter((member: { agency_id: string }) => ids.includes(member.agency_id)).map((member: { user_id: string }) => ({
-      id: member.user_id, name: 'مضيف مسجل', role: 'مضيف', score: '—', avatar: '',
+      id: member.user_id, name: `ID: ${member.user_id.slice(0, 8)}`, role: 'مضيف', score: '—', avatar: '',
     })));
+    setAgencyMembersLoading(false);
   };
   useEffect(() => {
     if (openAgencyModal && activeSubView === 'agent_members' && role === 'agent') {
-      void refreshAgencyMembers().catch(error => console.error('Agency member load failed:', error));
+      void refreshAgencyMembers().catch(error => { setAgencyMembersLoading(false); setAgencyMembersError(error instanceof Error ? error.message : 'تعذر تحميل بيانات الوكالة'); console.error('Agency member load failed:', error); });
     }
   }, [openAgencyModal, activeSubView, role, currentUser.id]);
   const decideAgencyRequest = async (id: string, action: 'accept_join' | 'reject_join') => {
@@ -1044,13 +1049,16 @@ export const AgencyModal: React.FC = () => {
                   </div>
                   <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-400/20">
                     <span className="text-[10px] text-slate-400 block">المضيفين النشطين اليوم</span>
-                    <span className="text-sm font-black text-emerald-400">1 مضيف 🟢</span>
+                    <span className="text-sm font-black text-emerald-400">غير متوفر حالياً</span>
                   </div>
                 </div>
 
                 {ownedAgencyIds.length > 0 && (
                   <div className="space-y-2 rounded-xl border border-amber-400/30 bg-amber-400/5 p-3">
                     <h5 className="text-xs font-bold text-amber-200">طلبات الانضمام بانتظار موافقتك ({agencyJoinRequests.length})</h5>
+                    {agencyMembersLoading && <p className="text-xs text-slate-300">جارٍ جلب الطلبات من الخادم...</p>}
+                    {agencyMembersError && <p className="text-xs text-rose-300">{agencyMembersError}</p>}
+                    <button type="button" onClick={() => void refreshAgencyMembers().catch(error => { setAgencyMembersLoading(false); setAgencyMembersError(error instanceof Error ? error.message : 'تعذر التحديث'); })} className="text-[11px] text-cyan-300 underline">تحديث الطلبات والأعضاء</button>
                     {agencyJoinRequests.map(request => (
                       <div key={request.id} className="rounded-xl bg-white/5 p-2 text-xs text-white">
                         <p className="mb-2 font-mono text-[10px] break-all">معرّف المستخدم: {request.user_id}</p>
