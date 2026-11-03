@@ -32,8 +32,8 @@ export function rpcForIntent(intent: TreasuryIntent) {
   if (intent.action === 'topup' && (intent.coins > 1_000_000_000 || !Number.isSafeInteger(intent.recipient) || Number(intent.recipient) < 1)) {
     throw new Error('تحقق من رقم المستلم ومبلغ الشحن');
   }
-  if (intent.action === 'allocate' && (!intent.agencyId || !intent.agencyId.trim())) {
-    throw new Error('اختر وكالة الشحن قبل التحويل');
+  if (intent.action === 'allocate' && (!intent.agencyId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(intent.agencyId))) {
+    throw new Error('اختر وكالة شحن صالحة قبل التحويل');
   }
   if (intent.action === 'topup') return {
     name: 'phase4_owner_topup_by_id',
