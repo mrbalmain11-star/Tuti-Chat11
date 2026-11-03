@@ -24,6 +24,7 @@ export function documentedReason(value: string): string {
   return reason;
 }
 export function rpcForIntent(intent: TreasuryIntent) {
+  documentedReason(intent.note);
   if (!Number.isSafeInteger(intent.coins) || intent.coins < 1) throw new Error('مبلغ الشحن غير صالح');
   if (intent.action === 'topup' && (intent.coins > 1_000_000_000 || !Number.isSafeInteger(intent.recipient) || Number(intent.recipient) < 1)) {
     throw new Error('تحقق من رقم المستلم ومبلغ الشحن');
