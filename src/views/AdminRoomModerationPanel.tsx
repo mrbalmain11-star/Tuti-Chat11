@@ -17,6 +17,7 @@ export const AdminRoomModerationPanel: React.FC = () => {
       if (!stagingBackend) throw new Error('الخادم غير متصل');
       const { data, error: rpcError } = await stagingBackend.rpc('phase6_admin_room_state', { p_room_id: roomId.trim() });
       if (rpcError) throw rpcError;
+      if (!data || !Array.isArray((data as State).members) || !Array.isArray((data as State).banned)) throw new Error('بيانات الغرفة غير صالحة');
       setState(data as State);
     } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
     finally { setBusy(false); }
