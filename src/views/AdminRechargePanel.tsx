@@ -163,6 +163,7 @@ export const AdminRechargePanel: React.FC = () => {
         return;
       }
       if (response.data.status === 'completed') {
+        if (!response.data.result || typeof response.data.result !== 'object') throw new Error('سجل العملية المكتملة لا يحتوي نتيجة صالحة');
         const result = completedResult({ ...response.data.result, id: response.data.id });
         if (result.coins !== pending.coins) throw new Error('مبلغ السجل لا يطابق الطلب');
         setStatus(`اكتملت العملية المحفوظة. المرجع: ${result.id}`);
