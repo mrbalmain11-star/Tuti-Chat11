@@ -17,7 +17,14 @@ export async function requestGoogleEmailOtp(): Promise<StartResponse> {
     method: 'POST',
     body: {},
   });
-  if (error || !data) throw error ?? new Error('OTP service unavailable');
+  if (data?.status) return data;
+  if (error && 'context' in error && error.context instanceof Response) {
+    try {
+      const response = await error.context.clone().json() as Partial<StartResponse>;
+      if (response?.status) return response as StartResponse;
+    } catch { /* The server returned a non-JSON error. */ }
+  }
+  throw error ?? new Error('OTP service unavailable');
   return data;
 }
 
