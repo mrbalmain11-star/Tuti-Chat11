@@ -37,6 +37,7 @@ export class RoomMusicPublisher {
     this.objectUrl = url;
     this.ownerRoom = room;
     audio.onended = () => {
+      if (this.audio !== audio) return;
       void this.stop().then(() => window.dispatchEvent(new Event('totichat:music-ended'))).catch(console.error);
     };
     try {
