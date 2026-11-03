@@ -1015,6 +1015,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     let alive = true;
     let loading = false;
     let pending = false;
+    let confirmedMember = false;
     const refreshRoster = async () => {
       if (loading) { pending = true; return; }
       loading = true;
@@ -1024,7 +1025,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const members = await resolveRoomAvatars(await fetchRoomVisualMembers(roomId));
           if (!alive) return;
           const mine = members.find(m => m.user_id === currentUser.id);
-          if (mine) setMyMicMuted(mine.is_muted);
+          if (!mine && confirmedMember) {
+            // Server has removed this participant (kick/ban). Close the local
+            // room and voice session; never leave a stale room visible.
+            setActiveRoom(prev => prev?.id === roomId ? null : prev);
+            setIsRoomMinimized(false);
+            setMyMicMuted(false);
+            break;
+          }
+          if (mine) {
+            confirmedMember = true;
+            setMyMicMuted(mine.is_muted);
+          }
           setActiveRoom(prev => {
             if (!prev || prev.id !== roomId) return prev;
             return {
