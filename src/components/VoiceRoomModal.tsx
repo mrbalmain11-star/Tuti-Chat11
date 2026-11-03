@@ -2236,6 +2236,8 @@ export const VoiceRoomModal: React.FC = () => {
                 <CircleUserRound className="h-4 w-4" /> عرض الملف الشخصي والرسائل
               </button>
 
+              {selectedMicUser.user.id !== currentUser.id && <button type="button" onClick={() => void setPersonalBlock(selectedMicUser.user.id, !personalBlocks.some(item => item.blocked_id === selectedMicUser.user.id))} className="mx-auto mt-2 block rounded-xl bg-slate-700 px-4 py-2 text-xs text-white">{personalBlocks.some(item => item.blocked_id === selectedMicUser.user.id) ? 'فك الحظر الشخصي' : 'حظر شخصي'}</button>}
+              {isOwner && selectedMicUser.user.id !== currentUser.id && <button type="button" onClick={() => void handleVoiceModeration(selectedMicUser.user.id, 'ban')} className="mx-auto mt-2 block rounded-xl bg-red-900/60 px-4 py-2 text-xs text-white">حظر وطرد من الغرفة</button>}
               {/* ID Row with Copy */}
               <div
                 onClick={() => {
@@ -3150,9 +3152,40 @@ export const VoiceRoomModal: React.FC = () => {
           </div>
         )}
 
+        <button type="button" onClick={() => { setShowBansModal(true); setShowToolsDrawer(false); }} className="fixed bottom-24 left-3 z-30 rounded-full border border-white/20 bg-[#241638] px-3 py-2 text-[11px] font-bold text-white shadow-lg">المحظورون</button>
+
         {/* =========================================================================
             ROOM STATS MODAL (إحصائيات ونشاط الغرفة 📊)
             ========================================================================= */}
+        {showBansModal && (
+          <div className="fixed inset-0 z-[75] flex items-center justify-center bg-black/80 p-4" dir="rtl" onClick={() => setShowBansModal(false)}>
+            <div onClick={event => event.stopPropagation()} className="max-h-[80vh] w-full max-w-sm overflow-y-auto rounded-3xl border border-white/20 bg-[#141126] p-5 text-white">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="font-bold">قوائم المحظورين</h3>
+                <button type="button" onClick={() => setShowBansModal(false)} aria-label="إغلاق"><X className="h-5 w-5" /></button>
+              </div>
+              {banListError && <p className="mb-3 text-xs text-rose-300">{banListError}</p>}
+              <button type="button" onClick={() => void refreshBanLists().catch(error => setBanListError(String(error)))} className="mb-4 rounded-lg bg-white/10 px-3 py-2 text-xs">تحديث القوائم</button>
+              {isOwner && <section className="mb-5">
+                <h4 className="mb-2 text-sm font-bold text-amber-300">المحظورون من الغرفة ({roomBans.length})</h4>
+                {roomBans.length === 0 && <p className="text-xs text-slate-400">لا يوجد محظورون من الغرفة</p>}
+                {roomBans.map(item => <div key={item.userId} className="mb-2 rounded-xl bg-white/5 p-3 text-xs">
+                  <p className="break-all">الحساب: {item.userId}</p>
+                  {item.reason && <p className="mt-1 text-slate-400">السبب: {item.reason}</p>}
+                  <button disabled={banActionBusy} onClick={() => void unbanRoomUser(item.userId)} className="mt-2 rounded-lg bg-emerald-700 px-3 py-2 disabled:opacity-50">فك حظر الغرفة</button>
+                </div>)}
+              </section>}
+              <section>
+                <h4 className="mb-2 text-sm font-bold text-cyan-300">الحظر الشخصي ({personalBlocks.length})</h4>
+                {personalBlocks.length === 0 && <p className="text-xs text-slate-400">لا يوجد أشخاص محظورون</p>}
+                {personalBlocks.map(item => <div key={item.blocked_id} className="mb-2 flex items-center justify-between gap-2 rounded-xl bg-white/5 p-3 text-xs">
+                  <span className="min-w-0 break-all">{item.blocked_id}</span>
+                  <button disabled={banActionBusy} onClick={() => void setPersonalBlock(item.blocked_id, false)} className="shrink-0 rounded-lg bg-emerald-700 px-3 py-2 disabled:opacity-50">فك الحظر</button>
+                </div>)}
+              </section>
+            </div>
+          </div>
+        )}
         {showRoomStatsModal && (
           <div
             onClick={() => setShowRoomStatsModal(false)}
