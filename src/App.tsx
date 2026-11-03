@@ -86,7 +86,8 @@ const AppContent: React.FC = () => {
   const { activeTab, isLoggedIn, isRtl } = useApp();
   const [otpState, setOtpState] = React.useState<'checking' | 'pending' | 'verified'>('checking');
   const [otpEmail, setOtpEmail] = React.useState('');
-  const [onboardingState, setOnboardingState] = React.useState<'checking' | 'required' | 'complete'>('checking');
+  const [onboardingState, setOnboardingState] = React.useState<'checking' | 'required' | 'complete' | 'error'>('checking');
+  const [onboardingRetry, setOnboardingRetry] = React.useState(0);
   React.useEffect(() => {
     if (!isLoggedIn || (GOOGLE_EMAIL_OTP_ENFORCED && otpState !== 'verified') || !stagingBackend) {
       setOnboardingState('checking');
@@ -102,12 +103,12 @@ const AppContent: React.FC = () => {
         if (active) setOnboardingState(data?.onboarding_completed === true ? 'complete' : 'required');
       } catch (error) {
         console.error('Account completion check failed:', error);
-        if (active) setOnboardingState('checking');
+        if (active) setOnboardingState('error');
       }
     };
     void checkProfile();
     return () => { active = false; };
-  }, [isLoggedIn, otpState]);
+  }, [isLoggedIn, otpState, onboardingRetry]);
   React.useEffect(() => {
     if (!GOOGLE_EMAIL_OTP_ENFORCED || !stagingBackend) return;
     let mounted = true;
@@ -159,6 +160,13 @@ const AppContent: React.FC = () => {
       onBack={() => { void stagingBackend?.auth.signOut(); }} />;
   }
 
+  if (onboardingState === 'error') return (
+    <div dir="rtl" className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#001d18] px-6 text-center text-white">
+      <p className="text-lg font-bold">تعذر التحقق من معلومات الحساب</p>
+      <p className="text-sm text-slate-300">تحقق من الاتصال ثم حاول مجدداً. لن يتم تجاوز التحقق الأمني أو إنشاء ملف جديد تلقائياً.</p>
+      <button type="button" onClick={() => { setOnboardingState('checking'); setOnboardingRetry(value => value + 1); }} className="rounded-xl bg-emerald-600 px-6 py-3 font-bold">إعادة المحاولة</button>
+    </div>
+  );
   if (onboardingState === 'checking') return <div dir="rtl" className="flex min-h-screen items-center justify-center bg-[#001d18] text-amber-300">جارٍ تحميل معلومات الحساب...</div>;
   if (onboardingState === 'required') return <CompleteAccountScreen onComplete={() => setOnboardingState('complete')} />;
 
