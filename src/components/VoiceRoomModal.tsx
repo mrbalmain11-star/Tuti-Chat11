@@ -1,6 +1,6 @@
 import { stagingBackend } from '../services/stagingBackend';
 import { App as CapacitorApp } from '@capacitor/app';
-import { playRoomMusic, pauseRoomMusic, resumeRoomMusic, stopRoomMusic } from '../services/roomVoice';
+import { playRoomMusic, pauseRoomMusic, resumeRoomMusic, stopRoomMusic } from '../services/isolatedRoomMusic';
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Mic,
@@ -1849,7 +1849,7 @@ export const VoiceRoomModal: React.FC = () => {
                     const file = event.target.files?.[0];
                     if (!file) return;
                     try {
-                      await playRoomMusic(file);
+                      await playRoomMusic(activeRoom.id, file);
                       setMusicStatus('playing');
                     } catch (error) {
                       setMusicStatus('stopped');
@@ -1859,12 +1859,12 @@ export const VoiceRoomModal: React.FC = () => {
                     event.target.value = '';
                   }} />
                   <div className="flex gap-2">
-                    <button disabled={musicStatus === 'stopped'} className="rounded-xl bg-purple-700 px-3 py-2 text-xs disabled:opacity-40 disabled:cursor-not-allowed" onClick={async () => {
+                    <button disabled={musicStatus === 'stopped'} className="rounded-xl bg-gradient-to-r from-amber-500 to-yellow-600 text-black font-bold px-3 py-2 text-xs disabled:opacity-40 disabled:cursor-not-allowed" onClick={async () => {
                       try { if (musicStatus === 'paused') { await resumeRoomMusic(); setMusicStatus('playing'); }
                         else { pauseRoomMusic(); setMusicStatus('paused'); } }
                       catch (error) { showToast('تعذر تغيير تشغيل الموسيقى'); console.error(error); }
                     }}>{musicStatus === 'paused' ? 'استئناف' : 'إيقاف مؤقت'}</button>
-                    <button className="rounded-xl bg-rose-700 px-3 py-2 text-xs" onClick={() => {
+                    <button className="rounded-xl bg-[#321515] border border-amber-500/40 px-3 py-2 text-xs" onClick={() => {
                       void stopRoomMusic().then(() => setMusicStatus('stopped')).catch(error => {
                         console.error('Room music stop failed', error);
                         showToast('تعذر إيقاف الموسيقى');
@@ -1887,7 +1887,7 @@ export const VoiceRoomModal: React.FC = () => {
           >
             <div
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-sm bg-[#160e33] border border-purple-400/40 rounded-3xl p-5 shadow-2xl text-white space-y-4 max-h-[80vh] flex flex-col"
+              className="w-full max-w-sm bg-gradient-to-b from-[#241a09] to-[#090909] border border-amber-400/60 rounded-3xl p-5 shadow-2xl shadow-amber-500/10 text-white space-y-4 max-h-[80vh] flex flex-col"
             >
               <div className="flex items-center justify-between border-b border-white/10 pb-2">
                 <div className="flex items-center gap-2">
