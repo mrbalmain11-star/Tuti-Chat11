@@ -22,7 +22,7 @@ export async function requestGoogleEmailOtp(): Promise<StartResponse> {
 }
 
 export async function verifyGoogleEmailOtp(code: string): Promise<VerifyResponse> {
-  if (!/^\\d{6}$/.test(code)) throw new Error('OTP must have exactly six digits');
+  if (!/^\d{6}$/.test(code)) throw new Error('OTP must have exactly six digits');
   if (!stagingBackend) throw new Error('Staging backend unavailable');
   const { data, error } = await stagingBackend.functions.invoke<VerifyResponse>('google-email-otp-verify', {
     method: 'POST',
