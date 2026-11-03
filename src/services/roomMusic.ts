@@ -34,7 +34,12 @@ export class RoomMusicPublisher {
       throw error;
     }
     // Route to LiveKit only: avoid playing a second local copy and causing echo.
-    source.connect(destination);
+    try { source.connect(destination); }
+    catch (error) {
+      await context.close().catch(() => {});
+      URL.revokeObjectURL(url);
+      throw error;
+    }
     const mediaTrack = destination.stream.getAudioTracks()[0];
     if (!mediaTrack) {
       try { await context.close(); }
