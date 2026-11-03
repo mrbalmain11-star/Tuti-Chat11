@@ -32,6 +32,9 @@ export function rpcForIntent(intent: TreasuryIntent) {
     throw new Error('معرّف طلب الشحن غير صالح');
   }
   if (!Number.isSafeInteger(intent.coins) || intent.coins < 1) throw new Error('مبلغ الشحن غير صالح');
+  if (!intent.actorId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(intent.actorId)) {
+    throw new Error('هوية منفذ العملية غير صالحة');
+  }
   if (intent.action === 'issue' && intent.coins !== STAGING_ISSUANCE) {
     throw new Error('قيمة إصدار الخزينة التجريبية غير مطابقة للقيمة المعتمدة');
   }
