@@ -137,6 +137,7 @@ export const ProfileView: React.FC = () => {
   const [showEditNameModal, setShowEditNameModal] = useState(false);
   const [editNameInput, setEditNameInput] = useState('');
 
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showEditBioModal, setShowEditBioModal] = useState(false);
   const [editBioInput, setEditBioInput] = useState('');
 
@@ -932,7 +933,7 @@ export const ProfileView: React.FC = () => {
           <div
             onClick={() => {
               sounds.playClick();
-              setIsLoggedIn(false);
+              setShowLogoutConfirm(true);
             }}
             className="p-4 flex items-center justify-between hover:bg-red-50/50 active:bg-red-100/50 transition cursor-pointer group"
           >
@@ -1067,6 +1068,20 @@ export const ProfileView: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-[200] bg-black/60 flex items-center justify-center p-4" role="presentation">
+          <div role="dialog" aria-modal="true" aria-labelledby="logout-confirm-title" className="w-full max-w-sm rounded-3xl bg-white p-6 text-center shadow-2xl">
+            <LogOut className="mx-auto h-9 w-9 text-red-600" />
+            <h3 id="logout-confirm-title" className="mt-3 text-lg font-bold text-slate-900">تأكيد تسجيل الخروج</h3>
+            <p className="mt-2 text-sm text-slate-600">هل تريد تسجيل الخروج من حسابك في TotiChat؟</p>
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <button type="button" onClick={() => setShowLogoutConfirm(false)} className="rounded-xl bg-slate-100 py-3 font-bold text-slate-800">إلغاء</button>
+              <button type="button" onClick={() => { setShowLogoutConfirm(false); setIsLoggedIn(false); }} className="rounded-xl bg-red-600 py-3 font-bold text-white">تسجيل الخروج</button>
+            </div>
           </div>
         </div>
       )}
