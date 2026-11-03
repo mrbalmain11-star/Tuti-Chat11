@@ -95,8 +95,12 @@ export const GoogleEmailOtpScreen: React.FC<Props> = ({ email, onVerified, onBac
         return;
       }
       if (typeof result.remainingAttempts === 'number') setAttempts(result.remainingAttempts);
+      if (result.status === 'expired') setExpiresIn(0);
+      if (result.status === 'locked') setAttempts(0);
       setMessage(result.status === 'locked' ? 'تم استنفاد المحاولات، اطلب رمزاً جديداً' :
-        result.status === 'expired' ? 'انتهت صلاحية الرمز، اطلب رمزاً جديداً' : 'الرمز غير صحيح، حاول مرة أخرى');
+        result.status === 'expired' ? 'انتهت صلاحية الرمز، اطلب رمزاً جديداً' :
+        result.status === 'unauthorized' ? 'انتهت جلسة Google، سجّل الدخول مرة أخرى' :
+        result.status === 'server_unavailable' ? 'خدمة التحقق غير متاحة حالياً' : 'الرمز غير صحيح، حاول مرة أخرى');
       setDigits(['', '', '', '', '', '']);
       inputs.current[0]?.focus();
     } catch {
