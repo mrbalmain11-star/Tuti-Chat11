@@ -2659,110 +2659,51 @@ export const VoiceRoomModal: React.FC = () => {
             ROOM INFO & MANAGEMENT MODAL (معلومات الغرفة وإدارتها 👑)
             ========================================================================= */}
         {showRoomInfoModal && (
-          <div
-            onClick={() => setShowRoomInfoModal(false)}
-            className="fixed inset-0 z-60 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in"
-          >
-            <div
-              onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-sm bg-gradient-to-b from-[#1a0e3a] to-[#0c051f] border border-purple-400/40 rounded-3xl p-5 shadow-2xl text-white space-y-4 max-h-[90vh] overflow-y-auto"
-            >
-              <div className="flex items-center justify-between pb-3 border-b border-white/10">
+          <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/75 p-3 backdrop-blur-sm" onClick={() => setShowRoomInfoModal(false)} dir="rtl">
+            <div onClick={e => e.stopPropagation()} className="w-full max-w-md max-h-[94dvh] overflow-y-auto rounded-[30px] border-2 border-amber-400/75 bg-[#fffefa] p-4 text-slate-900 shadow-[0_20px_70px_rgba(0,0,0,.55)] font-['Cairo',sans-serif]">
+              <header className="mb-4 flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-amber-400/20 text-amber-300 flex items-center justify-center">
-                    <Settings className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="font-black text-sm text-white">معلومات الغرفة وإدارتها 👑</h3>
-                    <p className="text-[10px] text-purple-200">
-                      {isOwner ? 'تحكم ببيانات الغرفة والإعلان الرسمي' : 'تفاصيل الغرفة الحالية'}
-                    </p>
-                  </div>
+                  <span className="rounded-full bg-emerald-900 p-2 text-xl text-amber-300">⚙</span>
+                  <div><h3 className="text-base font-black">👑 معلومات الغرفة وإدارتها</h3><p className="text-[11px] text-slate-600">بيانات الغرفة الحقيقية والإدارة والصلاحيات</p></div>
                 </div>
-                <button
-                  onClick={() => setShowRoomInfoModal(false)}
-                  className="w-7 h-7 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                <button type="button" onClick={()=>setShowRoomInfoModal(false)} className="rounded-full border border-slate-200 bg-white p-2 text-xl leading-none shadow-sm" aria-label="إغلاق">×</button>
+              </header>
+              <div className="mx-auto mb-4 aspect-square w-[min(65%,240px)] overflow-hidden rounded-3xl border-2 border-amber-400 bg-emerald-950 shadow-lg">
+                {activeRoom.coverImage ? <img src={activeRoom.coverImage} alt="صورة الغرفة" className="h-full w-full object-cover"/> : <div className="flex h-full items-center justify-center text-5xl text-amber-300">👑</div>}
               </div>
-
-              <form onSubmit={handleSaveRoomInfo} className="space-y-3.5">
-                <div>
-                  <label className="text-[11px] font-bold text-slate-300 block mb-1">اسم الغرفة:</label>
-                  <input
-                    type="text"
-                    value={editTitleInput}
-                    onChange={(e) => setEditTitleInput(e.target.value)}
-                    className="w-full p-2.5 rounded-xl bg-white/10 border border-white/20 text-white text-xs focus:outline-none focus:border-amber-400"
-                    placeholder="أدخل اسم الغرفة..."
-                    disabled={!isOwner && !currentUser.isSuperAdmin}
-                  />
+              <form onSubmit={handleSaveRoomInfo} className="space-y-3">
+                <label className="block text-xs font-black">اسم الغرفة:
+                  <input value={editTitleInput} onChange={e=>setEditTitleInput(e.target.value)} disabled={!isOwner&&!currentUser.isSuperAdmin} maxLength={80} className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm font-bold shadow-sm disabled:opacity-70"/>
+                </label>
+                <label className="block text-xs font-black text-emerald-900">رسالة الترحيب عند الدخول:
+                  <textarea value={editAnnouncementInput} onChange={e=>setEditAnnouncementInput(e.target.value)} disabled={!isOwner&&!currentUser.isSuperAdmin} maxLength={500} rows={3} className="mt-1 w-full resize-none rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-sm disabled:opacity-70"/>
+                </label>
+                <label className="block text-xs font-black">وسم وتصنيف الغرفة:
+                  <input value={editTagInput} onChange={e=>setEditTagInput(e.target.value)} disabled={!isOwner&&!currentUser.isSuperAdmin} maxLength={80} className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm font-bold shadow-sm disabled:opacity-70"/>
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-xl border border-amber-200 bg-white p-3"><p className="text-[11px] font-bold">نوع الغرفة</p><p className="mt-1 text-sm font-black text-emerald-800">{activeRoom.micsLocked ? 'المقاعد مقفلة 🔒' : 'عامة 🔓'}</p></div>
+                  <div className="rounded-xl border border-amber-200 bg-white p-3"><p className="text-[11px] font-bold">التصنيف الحالي</p><p className="mt-1 truncate text-sm font-black text-emerald-800">{activeRoom.tag || 'غير محدد'}</p></div>
                 </div>
-
-                <div>
-                  <label className="text-[11px] font-bold text-slate-300 block mb-1">إعلان الغرفة (رسالة الترحيب):</label>
-                  <textarea
-                    rows={3}
-                    value={editAnnouncementInput}
-                    onChange={(e) => setEditAnnouncementInput(e.target.value)}
-                    className="w-full p-2.5 rounded-xl bg-white/10 border border-white/20 text-white text-xs focus:outline-none focus:border-amber-400 resize-none"
-                    placeholder="أدخل إعلان الغرفة..."
-                    disabled={!isOwner && !currentUser.isSuperAdmin}
-                  />
+                <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3">
+                  <div><p className="text-[11px] text-slate-600">معرّف الغرفة (Room ID)</p><strong className="text-lg text-emerald-900">{activeRoom.publicId ?? 'غير متوفر'}</strong></div>
+                  <button type="button" disabled={!activeRoom.publicId} onClick={()=>handleCopyId(String(activeRoom.publicId))} className="rounded-xl bg-emerald-50 px-3 py-2 text-sm font-black text-emerald-900 disabled:opacity-40">📋 نسخ</button>
                 </div>
-
-                <div>
-                  <label className="text-[11px] font-bold text-slate-300 block mb-1">وسم وتصنيف الغرفة:</label>
-                  <input
-                    type="text"
-                    value={editTagInput}
-                    onChange={(e) => setEditTagInput(e.target.value)}
-                    className="w-full p-2.5 rounded-xl bg-white/10 border border-white/20 text-white text-xs focus:outline-none focus:border-amber-400"
-                    placeholder="مثال: حفلة، مميز، ترحيبي"
-                    disabled={!isOwner && !currentUser.isSuperAdmin}
-                  />
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    {title:'ترتيب المقاعد',value:`${activeRoom.seats.length} مقعداً`,action:()=>{setShowRoomInfoModal(false);setShowRoomModeModal(true);}},
+                    {title:'المحظورون',value:`${roomBans.length} مستخدم`,action:()=>{setShowRoomInfoModal(false);setShowBansModal(true);}},
+                    {title:'المشرفون',value:`${activeRoom.moderatorIds?.length ?? 0} مشرف`,action:()=>{setShowRoomInfoModal(false);setShowMembersModal(true);}},
+                    {title:'أعضاء الغرفة',value:`${activeRoom.listenersCount} عضو`,action:()=>{setShowRoomInfoModal(false);setShowMembersModal(true);}},
+                    {title:'قواعد الغرفة',value:'رسالة الترحيب',action:()=>document.getElementById('room-info-rules')?.scrollIntoView({behavior:'smooth',block:'center'})},
+                    {title:'إعدادات متقدمة',value:'إدارة المقاعد',action:()=>{setShowRoomInfoModal(false);setShowRoomModeModal(true);}},
+                  ].map(item=><button key={item.title} type="button" onClick={item.action} className="min-h-20 rounded-xl border border-amber-200 bg-white p-2 text-center shadow-sm"><p className="text-[12px] font-black">{item.title}</p><p className="mt-1 text-[10px] text-emerald-800">{item.value}</p><span className="text-amber-600">‹</span></button>)}
                 </div>
-
-                {/* Room ID and Host Card */}
-                <div className="p-3 bg-white/5 rounded-2xl border border-white/10 flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] text-slate-400 block">معرّف الغرفة (Room ID):</span>
-                    <span className="text-xs font-mono font-bold text-amber-300">{activeRoom.publicId ?? '—'}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => activeRoom.publicId && handleCopyId(String(activeRoom.publicId))}
-                    className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs flex items-center gap-1 active:scale-95 transition"
-                  >
-                    <Copy className="w-3.5 h-3.5" />
-                    <span>نسخ</span>
-                  </button>
+                <div id="room-info-rules" className="rounded-xl border border-amber-200 bg-amber-50 p-3"><p className="text-xs font-black">قواعد الغرفة ورسالة الترحيب</p><p className="mt-1 whitespace-pre-wrap text-xs text-slate-700">{activeRoom.announcement || 'لم يضف مالك الغرفة رسالة بعد'}</p></div>
+                <div className="flex gap-2 pt-1">
+                  {(isOwner||currentUser.isSuperAdmin)&&<button type="submit" className="flex-1 rounded-xl bg-emerald-900 p-3 text-sm font-black text-white shadow-md">👑 حفظ التعديلات</button>}
+                  <button type="button" onClick={()=>setShowRoomInfoModal(false)} className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-black">إلغاء</button>
                 </div>
-
-                {isOwner || currentUser.isSuperAdmin ? (
-                  <div className="flex items-center gap-2 pt-2">
-                    <button
-                      type="submit"
-                      className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 font-black text-xs shadow-lg active:scale-95 transition cursor-pointer"
-                    >
-                      حفظ التعديلات 👑
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowRoomInfoModal(false)}
-                      className="py-2.5 px-4 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs"
-                    >
-                      إلغاء
-                    </button>
-                  </div>
-                ) : (
-                  <div className="p-2.5 bg-amber-500/10 border border-amber-400/30 rounded-xl text-center">
-                    <p className="text-[11px] text-amber-300 font-bold">
-                      🔒 أنت تتصفح الغرفة كزائر، تعديل بيانات الغرفة متاح لمالكها فقط
-                    </p>
-                  </div>
-                )}
               </form>
             </div>
           </div>
