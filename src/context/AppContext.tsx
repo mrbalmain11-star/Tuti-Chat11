@@ -1245,6 +1245,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const toggleMuteSeat = (seatNumber: number): void => {
     if (!activeRoom || !stagingBackend || !Number.isInteger(seatNumber)) return;
+    if (activeRoom.hostId !== currentUser.id && !(activeRoom.moderatorIds || []).includes(currentUser.id) && !currentUser.isSuperAdmin) {
+      alert('إدارة مايك الأعضاء متاحة لمالك الغرفة والمشرف فقط.');
+      return;
+    }
     const roomId = activeRoom.id;
     const seat = activeRoom.seats.find(item => item.seatNumber === seatNumber);
     const target = seat?.user?.id;
