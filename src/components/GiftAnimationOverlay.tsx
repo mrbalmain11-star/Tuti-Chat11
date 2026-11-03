@@ -60,7 +60,8 @@ export const GiftAnimationOverlay: React.FC = () => {
     if (!activeGiftAnimation) return;
     const name = activeGiftAnimation.gift.name;
     const isEpic = getEpicStyle(name) !== null && activeGiftAnimation.gift.price >= 10000;
-    const timer = window.setTimeout(clearGiftAnimation, isEpic ? 7000 : 3500);
+    const hasOriginalJson = activeGiftAnimation.gift.assetFormat === 'json' && !!activeGiftAnimation.gift.assetUrl;
+    const timer = window.setTimeout(clearGiftAnimation, (isEpic || hasOriginalJson) ? 7000 : 3500);
     return () => window.clearTimeout(timer);
   }, [activeGiftAnimation, clearGiftAnimation]);
 
