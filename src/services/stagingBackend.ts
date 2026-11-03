@@ -44,6 +44,10 @@ export type BackendProfile = {
   bio: string;
   avatar_url: string | null;
   cover_path: string | null;
+  age: number | null;
+  gender: string | null;
+  country: string | null;
+  onboarding_completed: boolean;
 };
 
 function requireBackend() {
@@ -93,7 +97,7 @@ export async function fetchMyProfile(): Promise<BackendProfile | null> {
   if (authError) throw authError;
   if (!auth.user) return null;
   const { data, error } = await client.from('profiles')
-    .select('id,public_id,display_name,bio,avatar_url,cover_path').eq('id', auth.user.id).maybeSingle();
+    .select('id,public_id,display_name,bio,avatar_url,cover_path,age,gender,country,onboarding_completed').eq('id', auth.user.id).maybeSingle();
   if (error) throw error;
   return data as BackendProfile | null;
 }
