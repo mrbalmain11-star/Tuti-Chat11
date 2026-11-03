@@ -31,8 +31,9 @@ import { AuthScreen } from './components/AuthScreen';
 import { GoogleEmailOtpScreen } from './components/GoogleEmailOtpScreen';
 import { stagingBackend } from './services/stagingBackend';
 
-// This flag MUST remain false until all server-side RLS/RPC/Storage/Edge gates are deployed.
-const GOOGLE_EMAIL_OTP_ENFORCED = import.meta.env.VITE_GOOGLE_EMAIL_OTP_ENFORCED === 'true';
+// Staging APK OTP UI test: enabled by default; VITE_GOOGLE_EMAIL_OTP_ENFORCED=false disables it.
+// Server enforcement remains separately disabled until end-to-end email/session tests pass.
+const GOOGLE_EMAIL_OTP_ENFORCED = import.meta.env.VITE_GOOGLE_EMAIL_OTP_ENFORCED !== 'false';
 
 
 class ErrorBoundary extends React.Component<
