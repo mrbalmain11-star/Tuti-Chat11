@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ChevronRight,
   ChevronLeft,
@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
+import { stagingBackend } from '../services/stagingBackend';
 
 interface ToggleSwitchProps {
   checked: boolean;
@@ -116,6 +117,28 @@ export const SettingsModal: React.FC = () => {
   const [activeDialog, setActiveDialog] = useState<
     'account' | 'permissions' | 'userAgreement' | 'privacy' | 'deleteAccount' | 'logout' | 'network' | null
   >(null);
+  const [accountAuth, setAccountAuth] = useState<{ provider: string; providers: string[] } | null>(null);
+  const [accountAuthError, setAccountAuthError] = useState('');
+  useEffect(() => {
+    if (activeDialog !== 'account') return;
+    let live = true;
+    setAccountAuth(null);
+    setAccountAuthError('');
+    if (!stagingBackend) {
+      setAccountAuthError('خدمة تسجيل الدخول غير متاحة');
+      return;
+    }
+    void stagingBackend.auth.getUser().then(({ data, error }) => {
+      if (!live) return;
+      if (error || !data.user) throw error ?? new Error('الجلسة غير متاحة');
+      const provider = typeof data.user.app_metadata?.provider === 'string' ? data.user.app_metadata.provider : '';
+      const fromMetadata = Array.isArray(data.user.app_metadata?.providers)
+        ? data.user.app_metadata.providers.filter((value: unknown): value is string => typeof value === 'string') : [];
+      const fromIdentities = (data.user.identities ?? []).map(identity => identity.provider);
+      setAccountAuth({ provider, providers: Array.from(new Set([...fromMetadata, ...fromIdentities])) });
+    }).catch(() => { if (live) setAccountAuthError('تعذر قراءة طريقة تسجيل الدخول من الخادم'); });
+    return () => { live = false; };
+  }, [activeDialog]);
   const [isFixingNetwork, setIsFixingNetwork] = useState(false);
   const [agreementLang, setAgreementLang] = useState<'both' | 'ar' | 'en'>('ar');
 
@@ -452,16 +475,13 @@ export const SettingsModal: React.FC = () => {
       {/* 1. Account & Security Dialog */}
       {activeDialog === 'account' && (
         <div className="fixed inset-0 z-60 bg-black/50 backdrop-blur-2xs flex items-center justify-center p-4">
-          <div className="w-full max-w-sm bg-white rounded-3xl p-5 shadow-2xl space-y-4">
+          <div role="dialog" aria-modal="true" aria-labelledby="account-security-title" className="w-full max-w-sm bg-white rounded-3xl p-5 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <CircleUserRound className="w-5 h-5 text-slate-800" />
-                <h3 className="text-base font-bold text-slate-900">الحساب والأمان</h3>
+                <h3 id="account-security-title" className="text-base font-bold text-slate-900">الحساب والأمان</h3>
               </div>
-              <button
-                onClick={() => setActiveDialog(null)}
-                className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-200"
-              >
+              <button type="button" onClick={() => setActiveDialog(null)} aria-label="إغلاق" className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-600">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -470,28 +490,24 @@ export const SettingsModal: React.FC = () => {
                 <span className="text-slate-500 font-bold">اسم الحساب:</span>
                 <span className="text-slate-900 font-black">{currentUser.name}</span>
               </div>
-              <div className="p-3 rounded-2xl bg-slate-50 flex items-center justify-between">
-                <span className="text-slate-500 font-bold">معرف الحساب (ID):</span>
-                <span className="text-slate-900 font-mono font-bold">{currentUser.id}</span>
-              </div>
-              <div className="p-3 rounded-2xl bg-slate-50 flex items-center justify-between">
-                <span className="text-slate-500 font-bold">حالة التوثيق:</span>
-                <span className="text-emerald-600 font-bold flex items-center gap-1">
-                  <span>موثق ومحمي</span>
-                  <ShieldCheck className="w-4 h-4" />
+              <p className="font-bold text-slate-700">طرق تسجيل الدخول وحالة الحساب</p>
+              <div className="p-3 rounded-2xl bg-slate-50 flex items-center justify-between gap-2">
+                <span className="font-bold text-slate-800">Google</span>
+                <span className="text-emerald-700 font-bold">
+                  {accountAuth?.provider === 'google' ? 'طريقة الدخول الحالية' : accountAuth?.providers.includes('google') ? 'مرتبط بالحساب' : 'متاح لتسجيل الدخول'}
                 </span>
               </div>
-              <div className="p-3 rounded-2xl bg-slate-50 flex items-center justify-between">
-                <span className="text-slate-500 font-bold">كلمة المرور:</span>
-                <span className="text-slate-700 font-bold">••••••••</span>
+              <div className="p-3 rounded-2xl bg-slate-50 flex items-center justify-between gap-2">
+                <span className="font-bold text-slate-800">رقم الهاتف</span>
+                <span className="text-slate-600 font-bold">
+                  {accountAuth?.provider === 'phone' ? 'طريقة الدخول الحالية' : accountAuth?.providers.includes('phone') ? 'مرتبط بالحساب' : 'غير مفعّل حالياً'}
+                </span>
               </div>
+              {accountAuthError ? <p role="status" className="text-red-600">{accountAuthError}</p> :
+                !accountAuth ? <p className="text-slate-500">جارٍ التحقق من طريقة الدخول...</p> : null}
+              <p className="text-slate-500">تعرض هذه الصفحة حالة تسجيل الدخول الفعلية فقط، ولا تعرض المعرّف التقني أو كلمة مرور وهمية.</p>
             </div>
-            <button
-              onClick={() => setActiveDialog(null)}
-              className="w-full py-2.5 rounded-full bg-slate-900 text-white font-bold text-xs"
-            >
-              تم
-            </button>
+            <button type="button" onClick={() => setActiveDialog(null)} className="w-full py-2.5 rounded-full bg-slate-900 text-white font-bold text-xs">تم</button>
           </div>
         </div>
       )}
