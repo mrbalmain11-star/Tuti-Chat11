@@ -188,6 +188,57 @@ export const VoiceRoomModal: React.FC = () => {
   const [showRoomInfoModal, setShowRoomInfoModal] = useState(false);
   const [showExitOptions, setShowExitOptions] = useState(false);
   const [showMembersModal, setShowMembersModal] = useState(false);
+  const [showBansModal, setShowBansModal] = useState(false);
+  const [roomBans, setRoomBans] = useState<Array<{ userId: string; reason?: string }>>([]);
+  const [personalBlocks, setPersonalBlocks] = useState<Array<{ blocked_id: string }>>([]);
+  const [banListError, setBanListError] = useState('');
+  const [banActionBusy, setBanActionBusy] = useState(false);
+  const refreshBanLists = async () => {
+    if (!activeRoom || !stagingBackend) return;
+    setBanListError('');
+    const { data: blocked, error: blockedError } = await stagingBackend.from('dm_blocks')
+      .select('blocked_id').eq('blocker_id', currentUser.id).order('created_at', { ascending: false }).limit(100);
+    if (blockedError) throw blockedError;
+    setPersonalBlocks(blocked ?? []);
+    if (isOwner) {
+      const { data, error } = await stagingBackend.rpc('phase2_room_moderation_state', { p_room_id: activeRoom.id });
+      if (error) throw error;
+      setRoomBans(data?.bans ?? []);
+    } else {
+      setRoomBans([]);
+    }
+  };
+  useEffect(() => {
+    if (!showBansModal) return;
+    void refreshBanLists().catch(error => setBanListError(error instanceof Error ? error.message : 'تعذر تحميل قائمة المحظورين'));
+  }, [showBansModal, activeRoom?.id]);
+  const setPersonalBlock = async (targetId: string, block: boolean) => {
+    if (!stagingBackend || targetId === currentUser.id || banActionBusy) return;
+    setBanActionBusy(true);
+    try {
+      const { data, error } = await stagingBackend.rpc('phase2_dm_block', { p_other_user: targetId, p_block: block });
+      if (error || data !== true) throw error ?? new Error('لم يؤكد الخادم الحظر');
+      await refreshBanLists();
+      showToast(block ? 'تم الحظر الشخصي' : 'تم فك الحظر الشخصي');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'تعذر تغيير الحظر الشخصي');
+    } finally { setBanActionBusy(false); }
+  };
+  const unbanRoomUser = async (targetId: string) => {
+    if (!isOwner || !activeRoom || !stagingBackend || banActionBusy) return;
+    setBanActionBusy(true);
+    try {
+      const { data, error } = await stagingBackend.rpc('phase2_room_moderate', {
+        p_room_id: activeRoom.id, p_target: targetId, p_action: 'unban', p_request_id: crypto.randomUUID(),
+      });
+      if (error || data?.success !== true) throw error ?? new Error('لم يؤكد الخادم فك الحظر');
+      await refreshBanLists();
+      showToast('تم فك حظر الغرفة؛ يستطيع المستخدم الدخول مجدداً');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'تعذر فك حظر الغرفة');
+    } finally { setBanActionBusy(false); }
+  };
+
   const [showAgencyInfoModal, setShowAgencyInfoModal] = useState(false);
   const [showHostCenterModal, setShowHostCenterModal] = useState(false);
   const [showRoomStatsModal, setShowRoomStatsModal] = useState(false);
@@ -552,7 +603,7 @@ export const VoiceRoomModal: React.FC = () => {
     }
   };
 
-  const handleVoiceModeration = async (userId: string, action: 'kick' | 'mute' | 'release_seat') => {
+  const handleVoiceModeration = async (userId: string, action: 'kick' | 'ban' | 'mute' | 'release_seat') => {
     if (!activeRoom || !stagingBackend || (!isOwner && !isModerator)) {
       showToast('هذا الأمر متاح لمالك الغرفة والمشرف فقط.');
       return;
@@ -561,10 +612,12 @@ export const VoiceRoomModal: React.FC = () => {
       showToast('لا يمكن تطبيق هذا الأمر على المالك أو نفسك.');
       return;
     }
+    const reason = action === 'ban' ? window.prompt('سبب الحظر (5 أحرف على الأقل):', 'مخالفة قواعد الغرفة') : null;
+    if (action === 'ban' && (!reason || reason.trim().length < 5 || reason.length > 300)) return;
     const requestId = crypto.randomUUID();
     try {
       const { data, error } = await stagingBackend.functions.invoke('phase2-voice-moderate', {
-        body: { roomId: activeRoom.id, targetId: userId, action, requestId },
+        body: { roomId: activeRoom.id, targetId: userId, action, requestId, ...(reason ? { reason: reason.trim() } : {}) },
       });
       if (error || data?.success !== true || data?.sfuDisconnected !== true) {
         console.error('Voice moderation not confirmed:', error, data);
@@ -573,7 +626,7 @@ export const VoiceRoomModal: React.FC = () => {
           : 'تعذر تنفيذ الأمر. تحقق من الصلاحيات واتصال الصوت.');
         return;
       }
-      showToast(action === 'kick' ? 'تم طرد العضو من الغرفة' : action === 'mute'
+      showToast(action === 'ban' ? 'تم حظر العضو وطرده؛ لن يستطيع العودة إلا بعد فك الحظر' : action === 'kick' ? 'تم طرد العضو من الغرفة' : action === 'mute'
         ? 'تم كتم مايك العضو من الخادم' : 'تم إنزال العضو من المقعد');
     } catch (error) {
       console.error('Voice moderation failed:', error);
@@ -2808,6 +2861,8 @@ export const VoiceRoomModal: React.FC = () => {
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
+                            {isOwner && <button type="button" onClick={() => void handleVoiceModeration(user.id, 'ban')} className="rounded-lg bg-red-800/50 px-2 py-1.5 text-[10px] font-bold text-red-200" title="حظر وطرد دائم من الغرفة">حظر الغرفة</button>}
+                            <button type="button" onClick={() => void setPersonalBlock(user.id, !personalBlocks.some(item => item.blocked_id === user.id))} className="rounded-lg bg-slate-700 px-2 py-1.5 text-[10px] text-white">{personalBlocks.some(item => item.blocked_id === user.id) ? 'فك الحظر الشخصي' : 'حظر شخصي'}</button>
                           </div>
                         )}
                       </div>
