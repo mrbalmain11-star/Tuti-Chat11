@@ -1067,16 +1067,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // Upload handlers already saved the canonical path via uploadMyAvatar().
     // Applying a signed URL to the profile row breaks the image on reload.
     if (updates.avatar !== undefined) {
-      setCurrentUser(prev => ({ ...prev, ...updates }));
+      setCurrentUser(prev => ({ ...prev, avatar: updates.avatar }));
       window.dispatchEvent(new Event('totichat:profile-changed'));
-      return;
+      // Continue saving any accompanying name or bio changes.
+      if (updates.name === undefined && updates.nickname === undefined && updates.bio === undefined) return;
     }
     const fields: { display_name?: string; bio?: string; avatar_url?: string | null } = {};
     if (updates.name !== undefined || updates.nickname !== undefined) {
       fields.display_name = updates.name ?? updates.nickname;
     }
     if (updates.bio !== undefined) fields.bio = updates.bio;
-    if (updates.avatar !== undefined) fields.avatar_url = updates.avatar || null;
     void saveProfileChanges(fields).then(async profile => {
       const { data, error } = await stagingBackend!.auth.getUser();
       if (error || data.user?.id !== profile.id) return;
@@ -1089,7 +1089,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           name: profile.display_name,
           nickname: profile.display_name,
           bio: profile.bio,
-          avatar,
+          avatar: updates.avatar !== undefined ? prev.avatar : avatar,
         };
       });
       window.dispatchEvent(new Event('totichat:profile-changed'));
