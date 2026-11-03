@@ -200,7 +200,7 @@ export const VoiceRoomModal: React.FC = () => {
       .select('blocked_id').eq('blocker_id', currentUser.id).order('created_at', { ascending: false }).limit(100);
     if (blockedError) throw blockedError;
     setPersonalBlocks(blocked ?? []);
-    if (isOwner) {
+    if (isOwner || isModerator) {
       const { data, error } = await stagingBackend.rpc('phase2_room_moderation_state', { p_room_id: activeRoom.id });
       if (error) throw error;
       setRoomBans(data?.bans ?? []);
@@ -225,7 +225,7 @@ export const VoiceRoomModal: React.FC = () => {
     } finally { setBanActionBusy(false); }
   };
   const unbanRoomUser = async (targetId: string) => {
-    if (!isOwner || !activeRoom || !stagingBackend || banActionBusy) return;
+    if ((!isOwner && !isModerator) || !activeRoom || !stagingBackend || banActionBusy) return;
     setBanActionBusy(true);
     try {
       const { data, error } = await stagingBackend.rpc('phase2_room_moderate', {
@@ -2237,7 +2237,7 @@ export const VoiceRoomModal: React.FC = () => {
               </button>
 
               {selectedMicUser.user.id !== currentUser.id && <button type="button" onClick={() => void setPersonalBlock(selectedMicUser.user.id, !personalBlocks.some(item => item.blocked_id === selectedMicUser.user.id))} className="mx-auto mt-2 block rounded-xl bg-slate-700 px-4 py-2 text-xs text-white">{personalBlocks.some(item => item.blocked_id === selectedMicUser.user.id) ? 'فك الحظر الشخصي' : 'حظر شخصي'}</button>}
-              {isOwner && selectedMicUser.user.id !== currentUser.id && <button type="button" onClick={() => void handleVoiceModeration(selectedMicUser.user.id, 'ban')} className="mx-auto mt-2 block rounded-xl bg-red-900/60 px-4 py-2 text-xs text-white">حظر وطرد من الغرفة</button>}
+              {(isOwner || isModerator) && selectedMicUser.user.id !== currentUser.id && <button type="button" onClick={() => void handleVoiceModeration(selectedMicUser.user.id, 'ban')} className="mx-auto mt-2 block rounded-xl bg-red-900/60 px-4 py-2 text-xs text-white">حظر وطرد من الغرفة</button>}
               {/* ID Row with Copy */}
               <div
                 onClick={() => {
@@ -2863,7 +2863,7 @@ export const VoiceRoomModal: React.FC = () => {
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
-                            {isOwner && <button type="button" onClick={() => void handleVoiceModeration(user.id, 'ban')} className="rounded-lg bg-red-800/50 px-2 py-1.5 text-[10px] font-bold text-red-200" title="حظر وطرد دائم من الغرفة">حظر الغرفة</button>}
+                            {(isOwner || isModerator) && <button type="button" onClick={() => void handleVoiceModeration(user.id, 'ban')} className="rounded-lg bg-red-800/50 px-2 py-1.5 text-[10px] font-bold text-red-200" title="حظر وطرد دائم من الغرفة">حظر الغرفة</button>}
                             <button type="button" onClick={() => void setPersonalBlock(user.id, !personalBlocks.some(item => item.blocked_id === user.id))} className="rounded-lg bg-slate-700 px-2 py-1.5 text-[10px] text-white">{personalBlocks.some(item => item.blocked_id === user.id) ? 'فك الحظر الشخصي' : 'حظر شخصي'}</button>
                           </div>
                         )}
@@ -3166,7 +3166,7 @@ export const VoiceRoomModal: React.FC = () => {
               </div>
               {banListError && <p className="mb-3 text-xs text-rose-300">{banListError}</p>}
               <button type="button" onClick={() => void refreshBanLists().catch(error => setBanListError(String(error)))} className="mb-4 rounded-lg bg-white/10 px-3 py-2 text-xs">تحديث القوائم</button>
-              {isOwner && <section className="mb-5">
+              {(isOwner || isModerator) && <section className="mb-5">
                 <h4 className="mb-2 text-sm font-bold text-amber-300">المحظورون من الغرفة ({roomBans.length})</h4>
                 {roomBans.length === 0 && <p className="text-xs text-slate-400">لا يوجد محظورون من الغرفة</p>}
                 {roomBans.map(item => <div key={item.userId} className="mb-2 rounded-xl bg-white/5 p-3 text-xs">
