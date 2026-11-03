@@ -421,7 +421,7 @@ export const InternalProfileModal: React.FC = () => {
               sounds.playClick();
               setOpenInternalProfileModal(false);
             }}
-            className={`absolute top-4 ${isSelf ? "right-4" : "left-4"} z-20 w-9 h-9 rounded-full bg-white/80 hover:bg-white flex items-center justify-center text-slate-800 transition active:scale-90 cursor-pointer shadow-md border border-amber-300"
+            className={`absolute top-4 ${isSelf ? "right-4" : "left-4"} z-20 w-9 h-9 rounded-full bg-white/80 hover:bg-white flex items-center justify-center text-slate-800 transition active:scale-90 cursor-pointer shadow-md border border-amber-300`}
             title="رجوع"
           >
             <ChevronRight className="w-6 h-6 stroke-[2.5]" />
