@@ -1920,8 +1920,13 @@ export const VoiceRoomModal: React.FC = () => {
                     e.target.value = '';
                     if (!files.length) return;
                     const unique = Array.from(new Map(files.map(file => [musicFileKey(file), file])).values());
-                    setMusicSelection(unique);
-                    setMusicSelectionKeys(unique.map(musicFileKey));
+                    // Android file pickers may return only one file even with multiple enabled.
+                    // Accumulate selections until the user confirms; never replace earlier picks.
+                    setMusicSelection(previous => {
+                      const known = new Set(previous.map(musicFileKey));
+                      return [...previous, ...unique.filter(file => !known.has(musicFileKey(file)))];
+                    });
+                    setMusicSelectionKeys(previous => Array.from(new Set([...previous, ...unique.map(musicFileKey)])));
                     setMusicSelectionOpen(true);
                   }}/> 
                   {musicQueue.length > 0 && <div className="rounded-xl border border-amber-500/20 bg-black/30 p-3 max-h-36 overflow-y-auto space-y-1"><p className="text-xs text-amber-300 mb-2">قائمة الأغاني ({musicQueue.length})</p>{musicQueue.map((file,index)=><button key={index} disabled={musicBusy} onClick={()=>void playQueuedMusic(file,index)} className={'w-full text-right text-xs truncate rounded-lg px-2 py-2 '+(musicIndex===index?'bg-amber-500/20 text-amber-200':'text-white/70')}>{index+1}. {file.name}</button>)}</div>}
@@ -1939,6 +1944,8 @@ export const VoiceRoomModal: React.FC = () => {
                 <h3 className="font-bold text-lg flex items-center gap-2"><FolderOpen size={22} className="text-amber-400"/> إضافة أغاني إلى القائمة</h3>
                 <p className="text-sm text-amber-100/70 mt-2">حدد الأغاني التي تريد إضافتها، ثم اضغط إضافة أو إلغاء.</p>
                 <p className="text-xs text-amber-300 mt-2">المحدد: {musicSelectionKeys.length} من {musicSelection.length}</p>
+                <p className="text-xs text-amber-100/70 mt-2">من ملفات الهاتف تگدر تحدد عدة أغاني بضغطة مطوّلة ثم تحديد الباقي. وإذا جهازك يختار أغنية واحدة فقط، اضغط «اختيار المزيد» وراح نجمعهن كلهن قبل الإضافة.</p>
+                <button type="button" onClick={() => musicPickerRef.current?.click()} className="mt-3 w-full flex items-center justify-center gap-2 rounded-xl border border-amber-400/60 bg-amber-400/10 py-3 font-bold text-amber-200"><Plus size={18}/> اختيار المزيد من الأغاني</button>
               </div>
               <div className="flex-1 overflow-y-auto p-3 space-y-2">
                 {musicSelection.map(file => (
