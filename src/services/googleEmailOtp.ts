@@ -25,7 +25,6 @@ export async function requestGoogleEmailOtp(): Promise<StartResponse> {
     } catch { /* The server returned a non-JSON error. */ }
   }
   throw error ?? new Error('OTP service unavailable');
-  return data;
 }
 
 export async function verifyGoogleEmailOtp(code: string): Promise<VerifyResponse> {
