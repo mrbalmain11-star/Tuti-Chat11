@@ -235,6 +235,24 @@ export const VoiceRoomModal: React.FC = () => {
   const [musicFileName, setMusicFileName] = useState('');
   const [musicBusy, setMusicBusy] = useState(false);
   const [musicQueue, setMusicQueue] = useState<File[]>([]);
+  const [musicSelectionOpen, setMusicSelectionOpen] = useState(false);
+  const [musicSelection, setMusicSelection] = useState<File[]>([]);
+  const [musicSelectionKeys, setMusicSelectionKeys] = useState<string[]>([]);
+  const musicPickerRef = useRef<HTMLInputElement>(null);
+  const musicFileKey = (file: File) => `${file.name}:${file.size}:${file.lastModified}`;
+  const cancelMusicSelection = () => { setMusicSelectionOpen(false); setMusicSelection([]); setMusicSelectionKeys([]); showToast('تم إلغاء إضافة الأغاني'); };
+  const confirmMusicSelection = () => {
+    const selected = musicSelection.filter(file => musicSelectionKeys.includes(musicFileKey(file)));
+    if (!selected.length) { showToast('حدد أغنية واحدة على الأقل'); return; }
+    setMusicQueue(previous => {
+      const existing = new Set(previous.map(musicFileKey));
+      return [...previous, ...selected.filter(file => !existing.has(musicFileKey(file)))];
+    });
+    setMusicSelectionOpen(false);
+    setMusicSelection([]);
+    setMusicSelectionKeys([]);
+    showToast(`تمت إضافة ${selected.length} أغنية إلى قائمة التشغيل`);
+  };
   const [musicIndex, setMusicIndex] = useState(-1);
   const [musicShuffle, setMusicShuffle] = useState(false);
   const [musicRepeat, setMusicRepeat] = useState(false);
@@ -1894,14 +1912,46 @@ export const VoiceRoomModal: React.FC = () => {
                     <button aria-label="تكرار" onClick={() => setMusicRepeat(v=>!v)} className={musicRepeat ? 'text-amber-400' : 'text-white/60'}><Repeat size={22}/></button>
                   </div>
                   <div dir="ltr" className="flex items-center gap-3"><Volume1 size={18} className="text-amber-300"/><input aria-label="صوت الموسيقى" type="range" min={0} max={100} value={musicVolume} onChange={e => {const v=Number(e.target.value); setMusicVolume(v); setRoomMusicVolume(v/100);}} className="flex-1 accent-[#d8aa52]"/><Volume2 size={18} className="text-amber-300"/></div>
-                  <label className="flex items-center justify-center gap-2 w-full rounded-xl bg-gradient-to-r from-[#b7812e] to-[#f1d18a] text-black font-bold py-3 cursor-pointer">
+                  <button type="button" onClick={() => musicPickerRef.current?.click()} className="flex items-center justify-center gap-2 w-full rounded-xl bg-gradient-to-r from-[#b7812e] to-[#f1d18a] text-black font-bold py-3">
                     <FolderOpen size={20}/> اختيار موسيقى من الهاتف
-                    <input type="file" multiple accept="audio/*" className="hidden" onChange={e => { const files=Array.from(e.target.files||[]); if(files.length) { setMusicQueue(files); setMusicIndex(-1); void playQueuedMusic(files[0],0); } e.target.value=''; }}/>
-                  </label>
+                  </button>
+                  <input ref={musicPickerRef} type="file" multiple accept="audio/*" className="hidden" onChange={e => {
+                    const files = Array.from(e.target.files || []).filter(file => file.type.startsWith('audio/') || /\.(mp3|m4a|aac|wav|ogg|flac)$/i.test(file.name));
+                    e.target.value = '';
+                    if (!files.length) return;
+                    const unique = Array.from(new Map(files.map(file => [musicFileKey(file), file])).values());
+                    setMusicSelection(unique);
+                    setMusicSelectionKeys(unique.map(musicFileKey));
+                    setMusicSelectionOpen(true);
+                  }}/> 
                   {musicQueue.length > 0 && <div className="rounded-xl border border-amber-500/20 bg-black/30 p-3 max-h-36 overflow-y-auto space-y-1"><p className="text-xs text-amber-300 mb-2">قائمة الأغاني ({musicQueue.length})</p>{musicQueue.map((file,index)=><button key={index} disabled={musicBusy} onClick={()=>void playQueuedMusic(file,index)} className={'w-full text-right text-xs truncate rounded-lg px-2 py-2 '+(musicIndex===index?'bg-amber-500/20 text-amber-200':'text-white/70')}>{index+1}. {file.name}</button>)}</div>}
                   <button onClick={() => {void stopRoomMusic().then(()=>{setMusicStatus('stopped');setMusicFileName('');setMusicProgress({position:0,duration:0});musicRoomRef.current=null;}).catch(error=>{console.error(error);showToast('تعذر إيقاف الموسيقى');});}} className="w-full border border-amber-500/40 rounded-xl py-2 text-amber-100 text-sm">إيقاف نهائي</button>
                 </>
               ) : <p className="text-center text-sm text-amber-100/70">التحكم ببث الموسيقى متاح لإدارة الغرفة فقط.</p>}
+            </div>
+          </div>
+        )}
+
+        {musicSelectionOpen && (
+          <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-lg flex items-center justify-center p-4" dir="rtl">
+            <div className="w-full max-w-sm max-h-[85vh] overflow-hidden rounded-3xl border border-amber-500/50 bg-gradient-to-b from-[#2d2113] to-[#0b0a09] text-amber-50 flex flex-col shadow-2xl">
+              <div className="p-5 border-b border-amber-500/20">
+                <h3 className="font-bold text-lg flex items-center gap-2"><FolderOpen size={22} className="text-amber-400"/> إضافة أغاني إلى القائمة</h3>
+                <p className="text-sm text-amber-100/70 mt-2">حدد الأغاني التي تريد إضافتها، ثم اضغط إضافة أو إلغاء.</p>
+                <p className="text-xs text-amber-300 mt-2">المحدد: {musicSelectionKeys.length} من {musicSelection.length}</p>
+              </div>
+              <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                {musicSelection.map(file => (
+                  <label key={musicFileKey(file)} className="flex items-center gap-3 rounded-xl bg-white/5 p-3 cursor-pointer">
+                    <input type="checkbox" checked={musicSelectionKeys.includes(musicFileKey(file))} onChange={e => setMusicSelectionKeys(prev => e.target.checked ? [...prev, musicFileKey(file)] : prev.filter(key => key !== musicFileKey(file)))} className="accent-amber-500 w-5 h-5"/>
+                    <span className="text-sm truncate flex-1">{file.name}</span>
+                  </label>
+                ))}
+              </div>
+              <div className="flex gap-3 p-4 border-t border-amber-500/20">
+                <button type="button" onClick={confirmMusicSelection} disabled={!musicSelectionKeys.length} className="flex-1 rounded-xl bg-gradient-to-r from-[#b7812e] to-[#f1d18a] text-black font-bold py-3 disabled:opacity-40">إضافة ({musicSelectionKeys.length})</button>
+                <button type="button" onClick={cancelMusicSelection} className="flex-1 rounded-xl border border-amber-500/50 py-3 font-bold">إلغاء</button>
+              </div>
             </div>
           </div>
         )}
