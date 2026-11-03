@@ -1008,6 +1008,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             return {
               ...prev,
               listenersCount: members.length,
+              memberAvatars: members.map(m => m.resolvedAvatar || (m.user_id === currentUser.id ? currentUser.avatar : '')).filter((avatar): avatar is string => Boolean(avatar)),
               activeMicCount: members.filter(m => m.seat_no != null).length,
               seats: prev.seats.map(seat => {
                 const member = members.find(m => m.seat_no === seat.seatNumber);
@@ -1115,6 +1116,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return {
           ...prev,
           listenersCount: members.length,
+          memberAvatars: members.map(m => m.resolvedAvatar || (m.user_id === currentUser.id ? currentUser.avatar : '')).filter((avatar): avatar is string => Boolean(avatar)),
           activeMicCount: members.filter(m => m.seat_no !== null).length,
           seats: prev.seats.map(seat => {
             const member = members.find(m => m.seat_no === seat.seatNumber);
