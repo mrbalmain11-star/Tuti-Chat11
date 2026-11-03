@@ -1,6 +1,6 @@
 import { stagingBackend } from '../services/stagingBackend';
 import { App as CapacitorApp } from '@capacitor/app';
-import { playRoomMusic, pauseRoomMusic, resumeRoomMusic, stopRoomMusic } from '../services/isolatedRoomMusic';
+import { playRoomMusic, pauseRoomMusic, resumeRoomMusic, stopRoomMusic, getRoomMusicProgress, seekRoomMusic, setRoomMusicVolume } from '../services/isolatedRoomMusic';
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Mic,
@@ -54,6 +54,7 @@ import {
   ArrowRightLeft,
   LogOut,
   Gift,
+  SkipBack, SkipForward, Shuffle, Repeat, FolderOpen, Play, Pause,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { MicSeat, UserProfile } from '../types';
@@ -233,6 +234,38 @@ export const VoiceRoomModal: React.FC = () => {
   const [musicStatus, setMusicStatus] = useState<'stopped'|'playing'|'paused'>('stopped');
   const [musicFileName, setMusicFileName] = useState('');
   const [musicBusy, setMusicBusy] = useState(false);
+  const [musicQueue, setMusicQueue] = useState<File[]>([]);
+  const [musicIndex, setMusicIndex] = useState(-1);
+  const [musicShuffle, setMusicShuffle] = useState(false);
+  const [musicRepeat, setMusicRepeat] = useState(false);
+  const [musicVolume, setMusicVolume] = useState(75);
+  const [musicProgress, setMusicProgress] = useState({ position: 0, duration: 0 });
+  useEffect(() => {
+    if (!showMusicPlayerModal || musicStatus === 'stopped') return;
+    const timer = window.setInterval(() => setMusicProgress(getRoomMusicProgress()), 500);
+    return () => window.clearInterval(timer);
+  }, [showMusicPlayerModal, musicStatus]);
+  const playQueuedMusic = async (file: File, index: number) => {
+    if (!activeRoom || musicBusy) return;
+    setMusicBusy(true);
+    try {
+      await playRoomMusic(activeRoom.id, file);
+      setRoomMusicVolume(musicVolume / 100);
+      musicRoomRef.current = activeRoom.id;
+      setMusicIndex(index);
+      setMusicFileName(file.name);
+      setMusicStatus('playing');
+    } catch (error) {
+      setMusicStatus('stopped');
+      console.error('Room music failed', error);
+      showToast('تعذر بث الموسيقى: ' + (error instanceof Error ? error.message : 'خطأ'));
+    } finally { setMusicBusy(false); }
+  };
+  const switchQueuedMusic = (direction: number) => {
+    if (!musicQueue.length || musicBusy) return;
+    const next = musicShuffle ? Math.floor(Math.random() * musicQueue.length) : (musicIndex + direction + musicQueue.length) % musicQueue.length;
+    void playQueuedMusic(musicQueue[next], next);
+  };
   const musicRoomRef = useRef<string | null>(null);
   const musicMutedRef = useRef(myMicMuted);
   useEffect(() => {
@@ -1830,68 +1863,45 @@ export const VoiceRoomModal: React.FC = () => {
           </div>
         )}
 
-        {/* =========================================================================
-            MUSIC PLAYER MODAL (الموسيقى 🎵)
-            ========================================================================= */}
+        {/* Royal room music player: separate from voice participant */}
         {showMusicPlayerModal && (
-          <div
-            onClick={() => setShowMusicPlayerModal(false)}
-            className="fixed inset-0 z-60 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in"
-          >
-            <div
-              onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-sm bg-gradient-to-b from-[#241a09] via-[#15120c] to-[#090909] border border-amber-400/60 rounded-3xl p-5 shadow-2xl shadow-amber-500/20 text-white space-y-4"
-            >
-              <div className="flex items-center justify-between border-b border-white/10 pb-2">
-                <div className="flex items-center gap-2">
-                  <Music className="w-5 h-5 text-amber-400" />
-                  <h3 className="font-bold text-sm text-amber-100">مشغل موسيقى الغرفة</h3>
-                </div>
-                <button
-                  onClick={() => setShowMusicPlayerModal(false)}
-                  className="w-7 h-7 rounded-full bg-white/10 text-white flex items-center justify-center"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+          <div onClick={() => setShowMusicPlayerModal(false)} className="fixed inset-0 z-60 bg-black/85 backdrop-blur-md flex items-center justify-center p-3">
+            <div onClick={e => e.stopPropagation()} dir="rtl" className="w-full max-w-sm max-h-[92vh] overflow-y-auto rounded-[30px] border border-[#bd8d38]/60 bg-gradient-to-b from-[#302316] via-[#18130f] to-[#080808] p-5 text-white shadow-2xl shadow-amber-700/20 space-y-5">
+              <div className="flex justify-between items-center">
+                <button aria-label="إغلاق" onClick={() => setShowMusicPlayerModal(false)} className="p-2 rounded-full bg-white/10"><X size={20}/></button>
+                <span className="text-[#e9c776] font-bold tracking-wider text-sm">TOTICHAT MUSIC</span>
+                <Music size={22} className="text-[#e9c776]"/>
               </div>
-
+              <div className="aspect-square max-h-[240px] mx-auto rounded-3xl border border-amber-500/40 bg-gradient-to-br from-[#594022] via-[#17120e] to-black flex flex-col items-center justify-center shadow-inner shadow-amber-600/20">
+                <Music size={76} className="text-[#e6bb61] drop-shadow-lg"/>
+                <span className="mt-4 text-amber-100/70 text-xs">موسيقى الغرفة الملكية</span>
+              </div>
+              <div className="text-center space-y-1">
+                <h3 className="font-bold text-lg text-amber-50 truncate">{musicFileName || 'اختر أغنية من هاتفك'}</h3>
+                <p className="text-xs text-amber-200/70">{musicStatus === 'playing' ? 'قيد التشغيل' : musicStatus === 'paused' ? 'متوقف مؤقتاً' : 'جاهز للتشغيل'}</p>
+              </div>
               {(isOwner || isModerator) ? (
-                <div className="space-y-3">
-                  <div className="rounded-2xl border border-amber-500/20 bg-black/30 p-4 text-center space-y-2"><Music className="w-9 h-9 mx-auto text-amber-400"/><p className="text-sm font-bold text-amber-100">{musicFileName || 'ماكو أغنية محددة'}</p><p className="text-xs text-amber-200/70">{musicStatus === 'playing' ? '● الموسيقى شغالة' : musicStatus === 'paused' ? 'Ⅱ متوقفة مؤقتاً' : 'اختر أغنية من جهازك'}</p></div>
-                  <input type="file" accept="audio/*" className="w-full text-xs" onChange={async event => {
-                    const file = event.target.files?.[0];
-                    if (!file) return;
-                    if (!activeRoom || musicBusy) return;
-                    setMusicBusy(true);
-                    try {
-                      await playRoomMusic(activeRoom.id, file);
-                      musicRoomRef.current = activeRoom.id;
-                      setMusicFileName(file.name);
-                      setMusicStatus('playing');
-                    } catch (error) {
-                      setMusicStatus('stopped');
-                      setMusicFileName('');
-                      console.error('Room music failed', error);
-                      showToast('تعذر بث الموسيقى: ' + (error instanceof Error ? error.message : 'خطأ'));
-                    }
-                    setMusicBusy(false);
-                    event.target.value = '';
-                  }} />
-                  <div className="flex gap-2">
-                    <button disabled={musicStatus === 'stopped' || musicBusy} className="rounded-xl bg-gradient-to-r from-amber-500 to-yellow-600 text-black font-bold px-3 py-2 text-xs disabled:opacity-40 disabled:cursor-not-allowed" onClick={async () => {
-                      try { if (musicStatus === 'paused') { await resumeRoomMusic(); setMusicStatus('playing'); }
-                        else { pauseRoomMusic(); setMusicStatus('paused'); } }
-                      catch (error) { showToast('تعذر تغيير تشغيل الموسيقى'); console.error(error); }
-                    }}>{musicStatus === 'paused' ? 'استئناف' : 'إيقاف مؤقت'}</button>
-                    <button className="rounded-xl bg-[#321515] border border-amber-500/40 px-3 py-2 text-xs" onClick={() => {
-                      void stopRoomMusic().then(() => { setMusicStatus('stopped'); setMusicFileName(''); musicRoomRef.current = null; }).catch(error => {
-                        console.error('Room music stop failed', error);
-                        showToast('تعذر إيقاف الموسيقى');
-                      });
-                    }}>إيقاف نهائي</button>
+                <>
+                  <div dir="ltr" className="space-y-1">
+                    <input aria-label="تقدم الأغنية" type="range" min={0} max={musicProgress.duration || 1} step={0.1} value={Math.min(musicProgress.position, musicProgress.duration || 1)} disabled={musicStatus === 'stopped'} onChange={e => { const position=Number(e.target.value); seekRoomMusic(position); setMusicProgress(p=>({...p,position})); }} className="w-full accent-[#d8aa52]"/>
+                    <div className="flex justify-between text-xs text-white/60"><span>{Math.floor(musicProgress.position/60)}:{String(Math.floor(musicProgress.position%60)).padStart(2,'0')}</span><span>{Math.floor(musicProgress.duration/60)}:{String(Math.floor(musicProgress.duration%60)).padStart(2,'0')}</span></div>
                   </div>
-                </div>
-              ) : <p className="text-xs text-slate-300">تشغيل الموسيقى متاح لإدارة الغرفة فقط.</p>}
+                  <div dir="ltr" className="flex items-center justify-between gap-2">
+                    <button aria-label="تشغيل عشوائي" onClick={() => setMusicShuffle(v=>!v)} className={musicShuffle ? 'text-amber-400' : 'text-white/60'}><Shuffle size={22}/></button>
+                    <button aria-label="السابق" disabled={!musicQueue.length || musicBusy} onClick={() => switchQueuedMusic(-1)}><SkipBack size={28}/></button>
+                    <button aria-label={musicStatus === 'playing' ? 'إيقاف مؤقت' : 'تشغيل'} disabled={musicBusy || musicStatus === 'stopped'} className="rounded-full bg-gradient-to-br from-[#f5d48a] to-[#bc852d] p-5 text-black disabled:opacity-40" onClick={async () => { try { if (musicStatus === 'paused') { await resumeRoomMusic(); setMusicStatus('playing'); } else { pauseRoomMusic(); setMusicStatus('paused'); } } catch(error) { console.error(error); showToast('تعذر التحكم بالموسيقى'); } }}>{musicStatus === 'playing' ? <Pause size={30} fill="currentColor"/> : <Play size={30} fill="currentColor"/>}</button>
+                    <button aria-label="التالي" disabled={!musicQueue.length || musicBusy} onClick={() => switchQueuedMusic(1)}><SkipForward size={28}/></button>
+                    <button aria-label="تكرار" onClick={() => setMusicRepeat(v=>!v)} className={musicRepeat ? 'text-amber-400' : 'text-white/60'}><Repeat size={22}/></button>
+                  </div>
+                  <div dir="ltr" className="flex items-center gap-3"><Volume1 size={18} className="text-amber-300"/><input aria-label="صوت الموسيقى" type="range" min={0} max={100} value={musicVolume} onChange={e => {const v=Number(e.target.value); setMusicVolume(v); setRoomMusicVolume(v/100);}} className="flex-1 accent-[#d8aa52]"/><Volume2 size={18} className="text-amber-300"/></div>
+                  <label className="flex items-center justify-center gap-2 w-full rounded-xl bg-gradient-to-r from-[#b7812e] to-[#f1d18a] text-black font-bold py-3 cursor-pointer">
+                    <FolderOpen size={20}/> اختيار موسيقى من الهاتف
+                    <input type="file" multiple accept="audio/*" className="hidden" onChange={e => { const files=Array.from(e.target.files||[]); if(files.length) { setMusicQueue(files); setMusicIndex(-1); void playQueuedMusic(files[0],0); } e.target.value=''; }}/>
+                  </label>
+                  {musicQueue.length > 0 && <div className="rounded-xl border border-amber-500/20 bg-black/30 p-3 max-h-36 overflow-y-auto space-y-1"><p className="text-xs text-amber-300 mb-2">قائمة الأغاني ({musicQueue.length})</p>{musicQueue.map((file,index)=><button key={index} disabled={musicBusy} onClick={()=>void playQueuedMusic(file,index)} className={'w-full text-right text-xs truncate rounded-lg px-2 py-2 '+(musicIndex===index?'bg-amber-500/20 text-amber-200':'text-white/70')}>{index+1}. {file.name}</button>)}</div>}
+                  <button onClick={() => {void stopRoomMusic().then(()=>{setMusicStatus('stopped');setMusicFileName('');setMusicProgress({position:0,duration:0});musicRoomRef.current=null;}).catch(error=>{console.error(error);showToast('تعذر إيقاف الموسيقى');});}} className="w-full border border-amber-500/40 rounded-xl py-2 text-amber-100 text-sm">إيقاف نهائي</button>
+                </>
+              ) : <p className="text-center text-sm text-amber-100/70">التحكم ببث الموسيقى متاح لإدارة الغرفة فقط.</p>}
             </div>
           </div>
         )}
