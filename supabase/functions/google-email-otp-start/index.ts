@@ -30,10 +30,10 @@ Deno.serve(async (req) => {
 
   const apiUrl = Deno.env.get("SUPABASE_URL");
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  const resendKey = Deno.env.get("RESEND_API_KEY");
+  const brevoKey = Deno.env.get("BREVO_API_KEY");
   const fromEmail = Deno.env.get("OTP_FROM_EMAIL");
   const hmacSecret = Deno.env.get("OTP_HMAC_SECRET");
-  if (!apiUrl || !serviceKey || !resendKey || !fromEmail || !hmacSecret || hmacSecret.length < 32) {
+  if (!apiUrl || !serviceKey || !brevoKey || !fromEmail || !hmacSecret || hmacSecret.length < 32) {
     return reply({ status: "not_configured" }, 503);
   }
 
@@ -69,14 +69,14 @@ Deno.serve(async (req) => {
     }
     if (issued.data?.status !== "sent") return reply({ status: "unauthorized" }, 401);
 
-    const send = await fetch("https://api.resend.com/emails", {
+    const send = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
-      headers: { Authorization: "Bearer " + resendKey, "Content-Type": "application/json" },
+      headers: { "api-key": brevoKey, "Content-Type": "application/json", "accept": "application/json" },
       body: JSON.stringify({
-        from: fromEmail,
-        to: [user.email],
+        sender: { name: "TotiChat Security", email: fromEmail },
+        to: [{ email: user.email }],
         subject: "TotiChat - رمز تأكيد تسجيل الدخول",
-        text: "رمز تأكيد الدخول إلى TotiChat: " + code + "\nمدة صلاحية الرمز 5 دقائق. إذا لم تطلب هذا الرمز فتجاهل الرسالة.",
+        textContent: "رمز تأكيد الدخول إلى TotiChat: " + code + "\nمدة صلاحية الرمز 5 دقائق. إذا لم تطلب هذا الرمز فتجاهل الرسالة.",
       }),
     });
     if (!send.ok) return reply({ status: "delivery_failed" }, 502);
