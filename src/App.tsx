@@ -98,10 +98,20 @@ const AppContent: React.FC = () => {
       setOtpState(!error && data === true ? 'verified' : 'pending');
     };
     void check();
+    // Supabase auth callbacks run under an internal auth lock. Defer client calls
+    // outside the callback to avoid getSession()/RPC deadlocks.
+    let scheduled: ReturnType<typeof setTimeout> | undefined;
     const { data: { subscription } } = stagingBackend.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') void check();
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+        if (scheduled !== undefined) clearTimeout(scheduled);
+        scheduled = setTimeout(() => { void check(); }, 0);
+      }
     });
-    return () => { mounted = false; subscription.unsubscribe(); };
+    return () => {
+      mounted = false;
+      if (scheduled !== undefined) clearTimeout(scheduled);
+      subscription.unsubscribe();
+    };
   }, []);
 
   if (!isLoggedIn) {
