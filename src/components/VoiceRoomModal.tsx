@@ -428,7 +428,7 @@ export const VoiceRoomModal: React.FC = () => {
   const handleAllowMic = async (userId: string) => {
     if (!activeRoom || (!isOwner && !isModerator) || !stagingBackend) return;
     try {
-      const { data, error } = await stagingBackend.rpc('phase2_room_moderate', {
+      const { data, error } = await stagingBackend.rpc('staging_moderate_room_microphone', {
         p_room_id: activeRoom.id, p_target: userId,
         p_action: 'allow_mic', p_request_id: crypto.randomUUID(),
       });
