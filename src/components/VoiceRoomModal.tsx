@@ -863,10 +863,22 @@ export const VoiceRoomModal: React.FC = () => {
                 <button
                   onClick={() => {
                     sounds.playClick();
-                    if (navigator.clipboard) {
-                      navigator.clipboard.writeText(window.location.href);
-                    }
-                    showToast('تم نسخ رابط الغرفة للمشاركة بنجاح 🔗');
+                    const roomReference = roomPublicId !== '—' ? roomPublicId : activeRoom.id;
+                    const shareText = `انضم إلى غرفتي في TotiChat 🎙️\nالغرفة: ${activeRoom.title}\nرقم الغرفة: ${roomReference}`;
+                    void (async () => {
+                      try {
+                        if (navigator.share) {
+                          await navigator.share({ title: activeRoom.title, text: shareText });
+                          return;
+                        }
+                        if (!navigator.clipboard) throw new Error('Clipboard unavailable');
+                        await navigator.clipboard.writeText(shareText);
+                        showToast('تم نسخ معلومات الغرفة للمشاركة');
+                      } catch (error) {
+                        if (error instanceof Error && error.name === 'AbortError') return;
+                        showToast('تعذرت المشاركة. حاول مرة أخرى.');
+                      }
+                    })();
                   }}
                   className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 text-white/90 flex items-center justify-center transition active:scale-95 cursor-pointer"
                   title="مشاركة الغرفة"
