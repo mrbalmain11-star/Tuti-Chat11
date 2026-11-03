@@ -1852,19 +1852,23 @@ export const VoiceRoomModal: React.FC = () => {
                       await playRoomMusic(file);
                       setMusicStatus('playing');
                     } catch (error) {
+                      setMusicStatus('stopped');
                       console.error('Room music failed', error);
                       showToast('تعذر بث الموسيقى: ' + (error instanceof Error ? error.message : 'خطأ'));
                     }
                     event.target.value = '';
                   }} />
                   <div className="flex gap-2">
-                    <button className="rounded-xl bg-purple-700 px-3 py-2 text-xs" onClick={async () => {
+                    <button disabled={musicStatus === 'stopped'} className="rounded-xl bg-purple-700 px-3 py-2 text-xs disabled:opacity-40 disabled:cursor-not-allowed" onClick={async () => {
                       try { if (musicStatus === 'paused') { await resumeRoomMusic(); setMusicStatus('playing'); }
                         else { pauseRoomMusic(); setMusicStatus('paused'); } }
                       catch (error) { showToast('تعذر تغيير تشغيل الموسيقى'); console.error(error); }
                     }}>{musicStatus === 'paused' ? 'استئناف' : 'إيقاف مؤقت'}</button>
                     <button className="rounded-xl bg-rose-700 px-3 py-2 text-xs" onClick={() => {
-                      void stopRoomMusic().then(() => setMusicStatus('stopped'));
+                      void stopRoomMusic().then(() => setMusicStatus('stopped')).catch(error => {
+                        console.error('Room music stop failed', error);
+                        showToast('تعذر إيقاف الموسيقى');
+                      });
                     }}>إيقاف نهائي</button>
                   </div>
                 </div>
