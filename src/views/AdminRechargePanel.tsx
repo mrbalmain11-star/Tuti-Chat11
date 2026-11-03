@@ -54,7 +54,12 @@ export const AdminRechargePanel: React.FC = () => {
     const saved = localStorage.getItem(storageKey(auth.user.id));
     actorRef.current = auth.user.id;
     setActor(auth.user.id);
-    setPending(saved ? JSON.parse(saved) as TreasuryIntent : null);
+    let savedIntent: TreasuryIntent | null = null;
+    if (saved) {
+      try { savedIntent = JSON.parse(saved) as TreasuryIntent; }
+      catch { throw new Error('تعذر قراءة طلب الشحن المحفوظ؛ لم يتم حذفه'); }
+    }
+    setPending(savedIntent);
     const { data, error: rpcError } = await stagingBackend.rpc('phase4_recharge_state');
     if (rpcError) throw rpcError;
     const next = rechargeState(data);
