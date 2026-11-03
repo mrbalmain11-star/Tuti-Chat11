@@ -191,6 +191,42 @@ export const VoiceRoomModal: React.FC = () => {
   const [showAgencyInfoModal, setShowAgencyInfoModal] = useState(false);
   const [showHostCenterModal, setShowHostCenterModal] = useState(false);
   const [showRoomStatsModal, setShowRoomStatsModal] = useState(false);
+  const [roomGiftStats, setRoomGiftStats] = useState<{ today: number; week: number; month: number } | null>(null);
+  const [roomGiftStatsError, setRoomGiftStatsError] = useState('');
+  useEffect(() => {
+    if (!showRoomStatsModal || !activeRoom?.id || !stagingBackend) return;
+    let active = true;
+    setRoomGiftStats(null);
+    setRoomGiftStatsError('');
+    const now = new Date();
+    const startOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    const startOfWeek = new Date(startOfDay);
+    startOfWeek.setUTCDate(startOfWeek.getUTCDate() - ((startOfWeek.getUTCDay() + 6) % 7));
+    const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+    const oldest = new Date(Math.min(startOfWeek.getTime(), startOfMonth.getTime()));
+    void (async () => {
+      const { data, error } = await stagingBackend.from('gift_events')
+        .select('amount,created_at').eq('room_id', activeRoom.id)
+        .gte('created_at', oldest.toISOString()).order('created_at', { ascending: false }).limit(1000);
+      if (error) throw error;
+      if (!active) return;
+      const totals = { today: 0, week: 0, month: 0 };
+      for (const gift of data ?? []) {
+        const time = new Date(gift.created_at).getTime();
+        const amount = Number(gift.amount);
+        if (!Number.isFinite(amount) || amount < 0) continue;
+        if (time >= startOfDay.getTime()) totals.today += amount;
+        if (time >= startOfWeek.getTime()) totals.week += amount;
+        if (time >= startOfMonth.getTime()) totals.month += amount;
+      }
+      if ((data ?? []).length >= 1000) throw new Error('عدد العمليات كبير؛ يلزم تجميع الإحصائيات على الخادم');
+      setRoomGiftStats(totals);
+    })().catch(error => {
+      if (active) setRoomGiftStatsError(error instanceof Error ? error.message : 'تعذر جلب إحصائيات الهدايا');
+    });
+    return () => { active = false; };
+  }, [showRoomStatsModal, activeRoom?.id]);
+
   const [showDecorationsModal, setShowDecorationsModal] = useState<'mic' | 'frame' | 'title' | null>(null);
 
   // Mic Seat Profile Popup (Image 1 for own account, Image 2 for other users)
@@ -840,7 +876,7 @@ export const VoiceRoomModal: React.FC = () => {
             2. TOP HEADER SECTION (Matching Screenshot 1 & 2)
             - Left: Power button (⏻), Share button (↗), Seat 1 Badge (👑 ○ 1)
             - Right: Capsule Card: Heart in teal circle, "العراق الع...", ID:5716905 (يحمل معرف الحساب)
-            - Directly under Capsule: 254K 🏆 (كأس الروم)
+            - Directly under Capsule: {roomGiftStats ? roomGiftStats.month.toLocaleString('en-US') + ' 🪙' : '—'} (كأس الروم)
             ========================================================================= */}
         <div className="relative z-20 pt-2 pb-1 px-3.5 flex flex-col gap-1.5">
           {/* Main Action Header Row */}
@@ -907,7 +943,7 @@ export const VoiceRoomModal: React.FC = () => {
               <div
                 onClick={() => {
                   sounds.playClick();
-                  showToast('المرتبة الأولى في الروم 👑');
+                  showToast('مجموع هدايا الشهر (ليس ترتيباً) في الروم 👑');
                 }}
                 className="flex items-center gap-1.5 cursor-pointer hover:opacity-90 transition pt-1"
                 title="المرتبة 1 في الروم"
@@ -3102,6 +3138,8 @@ export const VoiceRoomModal: React.FC = () => {
                 </button>
               </div>
 
+              {roomGiftStatsError && <p className="text-xs text-rose-300">تعذر عرض الإحصائيات: {roomGiftStatsError}</p>}
+              <p className="text-[10px] text-slate-400">هذه مبالغ الهدايا المسجلة للغرفة بالتوقيت العالمي، وليست ترتيب الثروة والسحر. الترتيب المنفصل قيد التطوير.</p>
               <div className="grid grid-cols-2 gap-2.5">
                 <div className="p-3 bg-purple-950/40 rounded-2xl border border-purple-400/30 text-center">
                   <span className="text-[10px] text-slate-400 block mb-1">كأس الغرفة والترتيب:</span>
@@ -3110,16 +3148,16 @@ export const VoiceRoomModal: React.FC = () => {
                 </div>
                 <div className="p-3 bg-purple-950/40 rounded-2xl border border-purple-400/30 text-center">
                   <span className="text-[10px] text-slate-400 block mb-1">المساهمات اليومية:</span>
-                  <span className="text-base font-black text-cyan-300 font-mono">254,000 🪙</span>
+                  <span className="text-base font-black text-cyan-300 font-mono">{roomGiftStats ? roomGiftStats.today.toLocaleString('en-US') + ' 🪙' : '—'}</span>
                   <span className="text-[9px] text-cyan-200 block">اليوم</span>
                 </div>
                 <div className="p-3 bg-white/5 rounded-2xl border border-white/10 text-center">
                   <span className="text-[10px] text-slate-400 block mb-1">المساهمات الأسبوعية:</span>
-                  <span className="text-sm font-black text-emerald-400 font-mono">1,450,000 🪙</span>
+                  <span className="text-sm font-black text-emerald-400 font-mono">{roomGiftStats ? roomGiftStats.week.toLocaleString('en-US') + ' 🪙' : '—'}</span>
                 </div>
                 <div className="p-3 bg-white/5 rounded-2xl border border-white/10 text-center">
                   <span className="text-[10px] text-slate-400 block mb-1">المساهمات الشهرية:</span>
-                  <span className="text-sm font-black text-purple-300 font-mono">5,600,000 🪙</span>
+                  <span className="text-sm font-black text-purple-300 font-mono">{roomGiftStats ? roomGiftStats.month.toLocaleString('en-US') + ' 🪙' : '—'}</span>
                 </div>
               </div>
 
@@ -3128,7 +3166,7 @@ export const VoiceRoomModal: React.FC = () => {
                   <Users className="w-4 h-4 text-purple-400" />
                   <span>أعلى ذروة حضور:</span>
                 </div>
-                <span className="font-mono font-bold text-white">1,540 مستمع</span>
+                <span className="font-mono font-bold text-white">{activeRoom.listenersCount} مستمع حالياً</span>
               </div>
 
               <button
