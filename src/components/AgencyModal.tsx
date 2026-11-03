@@ -98,6 +98,46 @@ export const AgencyModal: React.FC = () => {
   // Agency Members List for Agent
   const [membersList, setMembersList] = useState<Array<{ id: string; name: string; role: string; score: string; avatar: string }>>([]);
 
+  const [agencyJoinRequests, setAgencyJoinRequests] = useState<Array<{ id: string; agency_id: string; user_id: string; status: string }>>([]);
+  const [ownedAgencyIds, setOwnedAgencyIds] = useState<string[]>([]);
+  const [agencyActionBusy, setAgencyActionBusy] = useState(false);
+  const refreshAgencyMembers = async () => {
+    const { stagingBackend } = await import('../services/stagingBackend');
+    if (!stagingBackend) throw new Error('خادم الوكالات غير متصل');
+    const { data, error } = await stagingBackend.rpc('phase4_agency_state');
+    if (error) throw error;
+    const owned = (data?.agencies ?? []).filter((agency: { owner_id: string; is_active: boolean }) => agency.owner_id === currentUser.id && agency.is_active);
+    const ids = owned.map((agency: { id: string }) => agency.id);
+    setOwnedAgencyIds(ids);
+    setAgencyJoinRequests((data?.requests ?? []).filter((request: { agency_id: string; status: string }) => ids.includes(request.agency_id) && request.status === 'pending_new'));
+    setMembersList((data?.members ?? []).filter((member: { agency_id: string }) => ids.includes(member.agency_id)).map((member: { user_id: string }) => ({
+      id: member.user_id, name: 'مضيف مسجل', role: 'مضيف', score: '—', avatar: '',
+    })));
+  };
+  useEffect(() => {
+    if (openAgencyModal && activeSubView === 'agent_members' && role === 'agent') {
+      void refreshAgencyMembers().catch(error => console.error('Agency member load failed:', error));
+    }
+  }, [openAgencyModal, activeSubView, role, currentUser.id]);
+  const decideAgencyRequest = async (id: string, action: 'accept_join' | 'reject_join') => {
+    if (agencyActionBusy) return;
+    setAgencyActionBusy(true);
+    try {
+      const { stagingBackend } = await import('../services/stagingBackend');
+      if (!stagingBackend) throw new Error('خادم الوكالات غير متصل');
+      const { error } = await stagingBackend.rpc('phase4_agency_action', {
+        p_action: action,
+        p_data: { id },
+        p_request_id: crypto.randomUUID(),
+      });
+      if (error) throw error;
+      await refreshAgencyMembers();
+      showToast(action === 'accept_join' ? 'تم قبول المضيف وربطه بالوكالة' : 'تم رفض طلب الانضمام');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'تعذر معالجة الطلب');
+    } finally { setAgencyActionBusy(false); }
+  };
+
   // New member ID input in Agent Members
   const [newMemberId, setNewMemberId] = useState('');
 
@@ -988,7 +1028,7 @@ export const AgencyModal: React.FC = () => {
                     className="flex-1 bg-transparent text-xs text-white placeholder:text-slate-500 focus:outline-none text-right font-mono"
                   />
                   <button
-                    onClick={() => showToast('إرسال دعوات المضيفين غير متاح حتى ربطه بالخادم والتحقق من صلاحيات الوكالة')}
+                    onClick={() => showToast('للانضمام، يقدم المستخدم طلباً من قائمة الوكالات؛ بعدها يظهر هنا للموافقة. لا يمكن إضافة حساب دون موافقته.')}
                     className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 font-black text-xs shadow-xs active:scale-95 transition cursor-pointer"
                   >
                     إرسال دعوة
@@ -1007,6 +1047,22 @@ export const AgencyModal: React.FC = () => {
                     <span className="text-sm font-black text-emerald-400">1 مضيف 🟢</span>
                   </div>
                 </div>
+
+                {ownedAgencyIds.length > 0 && (
+                  <div className="space-y-2 rounded-xl border border-amber-400/30 bg-amber-400/5 p-3">
+                    <h5 className="text-xs font-bold text-amber-200">طلبات الانضمام بانتظار موافقتك ({agencyJoinRequests.length})</h5>
+                    {agencyJoinRequests.map(request => (
+                      <div key={request.id} className="rounded-xl bg-white/5 p-2 text-xs text-white">
+                        <p className="mb-2 font-mono text-[10px] break-all">معرّف المستخدم: {request.user_id}</p>
+                        <div className="flex gap-2">
+                          <button disabled={agencyActionBusy} onClick={() => void decideAgencyRequest(request.id, 'accept_join')} className="rounded-lg bg-emerald-600 px-3 py-2 font-bold disabled:opacity-50">قبول</button>
+                          <button disabled={agencyActionBusy} onClick={() => void decideAgencyRequest(request.id, 'reject_join')} className="rounded-lg bg-rose-700 px-3 py-2 font-bold disabled:opacity-50">رفض</button>
+                        </div>
+                      </div>
+                    ))}
+                    {agencyJoinRequests.length === 0 && <p className="text-[11px] text-slate-400">لا توجد طلبات جديدة حالياً</p>}
+                  </div>
+                )}
 
                 {/* Members List */}
                 <div className="space-y-2">
