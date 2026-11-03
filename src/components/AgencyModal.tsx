@@ -115,7 +115,7 @@ export const AgencyModal: React.FC = () => {
     setOwnedAgencyIds(ids);
     setAgencyJoinRequests((data?.requests ?? []).filter((request: { agency_id: string; status: string }) => ids.includes(request.agency_id) && request.status === 'pending_new'));
     setMembersList((data?.members ?? []).filter((member: { agency_id: string }) => ids.includes(member.agency_id)).map((member: { user_id: string }) => ({
-      id: member.user_id, name: `ID: ${member.user_id.slice(0, 8)}`, role: 'مضيف', score: '—', avatar: '',
+      id: member.user_id, name: 'مضيف مسجل', role: 'مضيف', score: '—', avatar: '',
     })));
     setAgencyMembersLoading(false);
   };
@@ -1081,11 +1081,7 @@ export const AgencyModal: React.FC = () => {
                       className="p-2.5 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between text-xs"
                     >
                       <div className="flex items-center gap-2">
-                        <img
-                          src={m.avatar}
-                          alt={m.name}
-                          className="w-8 h-8 rounded-full object-cover border border-amber-300"
-                        />
+                        {m.avatar ? <img src={m.avatar} alt={m.name} className="w-8 h-8 rounded-full object-cover border border-amber-300" /> : <div className="flex h-8 w-8 items-center justify-center rounded-full border border-amber-300 bg-amber-400/10 text-amber-200"><Users className="h-4 w-4" /></div>}
                         <div className="text-right">
                           <h5 className="font-black text-white">{m.name}</h5>
                           <span className="text-[10px] text-amber-300 font-bold block">{m.role}</span>
