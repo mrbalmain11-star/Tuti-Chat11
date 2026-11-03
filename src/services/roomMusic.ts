@@ -39,7 +39,7 @@ export class RoomMusicPublisher {
       await context.resume();
       await room.localParticipant.publishTrack(track, {
         name: 'totichat-room-music',
-        source: Track.Source.Unknown,
+        source: Track.Source.Microphone, // Dedicated music-only participant; never the voice mic.
       });
       await audio.play();
     } catch (error) {
