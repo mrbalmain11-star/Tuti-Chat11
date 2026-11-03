@@ -70,7 +70,7 @@ interface AppContextType {
   convertDiamondsToCoins: (diamondsAmount: number) => boolean;
   followedRoomHosts: Set<string>;
   toggleFollowHost: (hostId: string) => void;
-  createVoiceRoom: (title: string, tag: string, coverDataUrl?: string) => Promise<void>;
+  createVoiceRoom: (title: string, tag: string, coverDataUrl?: string) => Promise<string>;
   updateRoom: (roomId: string, updates: Partial<VoiceRoom>) => Promise<void>;
   changeRoomBackground: (roomId: string, backgroundUrl: string) => Promise<boolean>;
   // Modals state
@@ -1472,7 +1472,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
-  const createVoiceRoom = async (title: string, _tag: string, coverDataUrl?: string): Promise<void> => {
+  const createVoiceRoom = async (title: string, _tag: string, coverDataUrl?: string): Promise<string> => {
     const trimmed = title.trim();
     if (trimmed.length < 2 || trimmed.length > 60) throw new Error('اسم الغرفة يجب أن يكون بين حرفين و60 حرفاً.');
     if (!stagingBackend || !currentUser.id) throw new Error('يجب تسجيل الدخول قبل إنشاء غرفة.');
@@ -1495,7 +1495,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (saveError || saved !== true) throw new Error('تم إنشاء الغرفة لكن تعذر حفظ صورتها بالخادم.');
     }
     const rows = await fetchRealRooms();
+    const createdRoom = rows.find(room => room.id === roomId);
+    if (!createdRoom) throw new Error('تم إنشاء الغرفة لكن تعذر العثور عليها في قائمة الغرف.');
     setRooms(rows.map(mapRoomToUi));
+    return roomId;
   };
 
   const updateRoom = (roomId: string, updates: Partial<VoiceRoom>): Promise<void> => {
