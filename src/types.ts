@@ -98,6 +98,10 @@ export interface GiftItem {
   category: 'هدية' | 'الأمة' | 'CP' | 'مخصص' | 'حظ' | 'الكل';
   animationType: 'lion' | 'mosque' | 'sword' | 'samurai' | 'crown' | 'car' | 'diamond' | 'rose';
   rarity: 'legendary' | 'epic' | 'rare' | 'common';
+  /** Original animation file URL; optional until the licensed asset is uploaded. */
+  assetUrl?: string;
+  /** Native animation format, never inferred from gift name or price. */
+  assetFormat?: 'svga' | 'lottie' | 'json';
 }
 
 export interface ChatMessage {
