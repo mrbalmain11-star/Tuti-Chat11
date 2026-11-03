@@ -8,7 +8,7 @@ export const GOOGLE_EMAIL_OTP_RULES = {
   resendCooldownSeconds: 60,
 } as const;
 
-type StartResponse = { status: 'sent' | 'rate_limited' | 'not_configured'; retryAfterSeconds?: number };
+type StartResponse = { status: 'sent' | 'rate_limited' | 'not_configured' | 'already_verified'; retryAfterSeconds?: number };
 type VerifyResponse = { status: 'verified' | 'invalid' | 'expired' | 'locked'; remainingAttempts?: number };
 
 export async function requestGoogleEmailOtp(): Promise<StartResponse> {
