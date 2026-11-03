@@ -1,4 +1,4 @@
-import { Room, RoomEvent, Track } from 'livekit-client';
+import { Room, RoomEvent } from 'livekit-client';
 import { stagingBackend } from './stagingBackend';
 import { RoomMusicPublisher } from './roomMusic';
 
@@ -20,8 +20,10 @@ export async function playRoomMusic(roomId: string, file: File): Promise<void> {
     musicRoom = room;
     room.on(RoomEvent.Disconnected, () => { if (musicRoom === room) void stopRoomMusic(); });
     await publisher.play(room, file);
+    if (current !== generation) await stopCurrentMusic();
   } catch (cause) {
-    await stopCurrentMusic();
+    if (musicRoom === room) await stopCurrentMusic();
+    else await room.disconnect();
     throw cause;
   }
 }
