@@ -36,6 +36,7 @@ import { VipName } from './VipName';
 import { VipBadge, VIP_BEAST_METADATA } from './VipBadge';
 import { AgencyProfileCard } from './AgencyProfileCard';
 import { CpSearchModal } from './CpSearchModal';
+import { ProfileCpCard } from './ProfileCpCard';
 
 export const InternalProfileModal: React.FC = () => {
   const {
@@ -67,6 +68,7 @@ export const InternalProfileModal: React.FC = () => {
   const user: UserProfile = internalProfileUser?.id === currentUser.id ? currentUser : (internalProfileUser || currentUser);
   const isSelf = user.id === currentUser.id;
   const [showCpSearch,setShowCpSearch] = useState(false);
+  const [cpRefreshKey, setCpRefreshKey] = useState(0);
   const [verifiedAgency, setVerifiedAgency] = useState<{ name: string; public_id: number; member_count: number; role: string } | null>(null);
   useEffect(() => {
     let active = true;
@@ -401,6 +403,8 @@ export const InternalProfileModal: React.FC = () => {
             <ChevronRight className="w-6 h-6 stroke-[2.5]" />
           </button>
         </div>
+
+        <ProfileCpCard userId={user.id} refreshKey={cpRefreshKey} />
 
         {/* =========================================================================
             Profile Floating Row: CP Bubble & Full Circular Avatar (Completely Unclipped)
@@ -1433,7 +1437,7 @@ export const InternalProfileModal: React.FC = () => {
           </div>
         </div>
       )}
-      {showCpSearch && <CpSearchModal onClose={() => setShowCpSearch(false)} />}
+      {showCpSearch && <CpSearchModal onClose={() => { setShowCpSearch(false); setCpRefreshKey(value => value + 1); }} />}
     </div>
   );
 };
