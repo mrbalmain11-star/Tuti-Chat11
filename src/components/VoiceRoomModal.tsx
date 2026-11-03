@@ -189,24 +189,19 @@ export const VoiceRoomModal: React.FC = () => {
   const [showExitOptions, setShowExitOptions] = useState(false);
   const [showMembersModal, setShowMembersModal] = useState(false);
   const [showBansModal, setShowBansModal] = useState(false);
-  const [roomBans, setRoomBans] = useState<Array<{ userId: string; reason?: string }>>([]);
-  const [personalBlocks, setPersonalBlocks] = useState<Array<{ blocked_id: string }>>([]);
+  const [roomBans, setRoomBans] = useState<Array<{ userId: string; name?: string; publicId?: number; avatar?: string; reason?: string; bannedByOwner?: boolean }>>([]);
+  const [personalBlocks, setPersonalBlocks] = useState<Array<{ userId: string; name?: string; publicId?: number; avatar?: string }>>([]);
   const [banListError, setBanListError] = useState('');
   const [banActionBusy, setBanActionBusy] = useState(false);
   const refreshBanLists = async () => {
     if (!activeRoom || !stagingBackend) return;
     setBanListError('');
-    const { data: blocked, error: blockedError } = await stagingBackend.from('dm_blocks')
-      .select('blocked_id').eq('blocker_id', currentUser.id).order('created_at', { ascending: false }).limit(100);
-    if (blockedError) throw blockedError;
-    setPersonalBlocks(blocked ?? []);
-    if (isOwner || isModerator) {
-      const { data, error } = await stagingBackend.rpc('phase2_room_moderation_state', { p_room_id: activeRoom.id });
-      if (error) throw error;
-      setRoomBans(data?.bans ?? []);
-    } else {
-      setRoomBans([]);
-    }
+    const { data, error } = await stagingBackend.rpc('totichat_blocked_profiles', {
+      p_room_id: isOwner || isModerator ? activeRoom.id : null,
+    });
+    if (error) throw error;
+    setPersonalBlocks(data?.personal ?? []);
+    setRoomBans(data?.room ?? []);
   };
   useEffect(() => {
     if (!showBansModal) return;
@@ -2236,7 +2231,7 @@ export const VoiceRoomModal: React.FC = () => {
                 <CircleUserRound className="h-4 w-4" /> عرض الملف الشخصي والرسائل
               </button>
 
-              {selectedMicUser.user.id !== currentUser.id && <button type="button" onClick={() => void setPersonalBlock(selectedMicUser.user.id, !personalBlocks.some(item => item.blocked_id === selectedMicUser.user.id))} className="mx-auto mt-2 block rounded-xl bg-slate-700 px-4 py-2 text-xs text-white">{personalBlocks.some(item => item.blocked_id === selectedMicUser.user.id) ? 'فك الحظر الشخصي' : 'حظر شخصي'}</button>}
+              {selectedMicUser.user.id !== currentUser.id && <button type="button" onClick={() => void setPersonalBlock(selectedMicUser.user.id, !personalBlocks.some(item => item.userId === selectedMicUser.user.id))} className="mx-auto mt-2 block rounded-xl bg-slate-700 px-4 py-2 text-xs text-white">{personalBlocks.some(item => item.userId === selectedMicUser.user.id) ? 'فك الحظر الشخصي' : 'حظر شخصي'}</button>}
               {(isOwner || isModerator) && selectedMicUser.user.id !== currentUser.id && <button type="button" onClick={() => void handleVoiceModeration(selectedMicUser.user.id, 'ban')} className="mx-auto mt-2 block rounded-xl bg-red-900/60 px-4 py-2 text-xs text-white">حظر وطرد من الغرفة</button>}
               {/* ID Row with Copy */}
               <div
@@ -2864,7 +2859,7 @@ export const VoiceRoomModal: React.FC = () => {
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                             {(isOwner || isModerator) && <button type="button" onClick={() => void handleVoiceModeration(user.id, 'ban')} className="rounded-lg bg-red-800/50 px-2 py-1.5 text-[10px] font-bold text-red-200" title="حظر وطرد دائم من الغرفة">حظر الغرفة</button>}
-                            <button type="button" onClick={() => void setPersonalBlock(user.id, !personalBlocks.some(item => item.blocked_id === user.id))} className="rounded-lg bg-slate-700 px-2 py-1.5 text-[10px] text-white">{personalBlocks.some(item => item.blocked_id === user.id) ? 'فك الحظر الشخصي' : 'حظر شخصي'}</button>
+                            <button type="button" onClick={() => void setPersonalBlock(user.id, !personalBlocks.some(item => item.userId === user.id))} className="rounded-lg bg-slate-700 px-2 py-1.5 text-[10px] text-white">{personalBlocks.some(item => item.userId === user.id) ? 'فك الحظر الشخصي' : 'حظر شخصي'}</button>
                           </div>
                         )}
                       </div>
@@ -3170,17 +3165,17 @@ export const VoiceRoomModal: React.FC = () => {
                 <h4 className="mb-2 text-sm font-bold text-amber-300">المحظورون من الغرفة ({roomBans.length})</h4>
                 {roomBans.length === 0 && <p className="text-xs text-slate-400">لا يوجد محظورون من الغرفة</p>}
                 {roomBans.map(item => <div key={item.userId} className="mb-2 rounded-xl bg-white/5 p-3 text-xs">
-                  <p className="break-all">الحساب: {item.userId}</p>
+                  <div className="flex items-center gap-2">{item.avatar ? <img src={item.avatar} alt="" className="h-9 w-9 rounded-full object-cover" /> : <CircleUserRound className="h-9 w-9 text-slate-400" />}<div className="min-w-0"><p className="truncate font-bold">{item.name || 'مستخدم'}</p><p className="text-slate-400">ID: {item.publicId ?? '—'}</p></div></div>
                   {item.reason && <p className="mt-1 text-slate-400">السبب: {item.reason}</p>}
-                  <button disabled={banActionBusy} onClick={() => void unbanRoomUser(item.userId)} className="mt-2 rounded-lg bg-emerald-700 px-3 py-2 disabled:opacity-50">فك حظر الغرفة</button>
+                  <button disabled={banActionBusy || (!isOwner && item.bannedByOwner)} onClick={() => void unbanRoomUser(item.userId)} className="mt-2 rounded-lg bg-emerald-700 px-3 py-2 disabled:opacity-50">{!isOwner && item.bannedByOwner ? "حظر المالك" : "فك حظر الغرفة"}</button>
                 </div>)}
               </section>}
               <section>
                 <h4 className="mb-2 text-sm font-bold text-cyan-300">الحظر الشخصي ({personalBlocks.length})</h4>
                 {personalBlocks.length === 0 && <p className="text-xs text-slate-400">لا يوجد أشخاص محظورون</p>}
-                {personalBlocks.map(item => <div key={item.blocked_id} className="mb-2 flex items-center justify-between gap-2 rounded-xl bg-white/5 p-3 text-xs">
-                  <span className="min-w-0 break-all">{item.blocked_id}</span>
-                  <button disabled={banActionBusy} onClick={() => void setPersonalBlock(item.blocked_id, false)} className="shrink-0 rounded-lg bg-emerald-700 px-3 py-2 disabled:opacity-50">فك الحظر</button>
+                {personalBlocks.map(item => <div key={item.userId} className="mb-2 flex items-center justify-between gap-2 rounded-xl bg-white/5 p-3 text-xs">
+                  <div className="flex min-w-0 items-center gap-2">{item.avatar ? <img src={item.avatar} alt="" className="h-8 w-8 rounded-full object-cover" /> : <CircleUserRound className="h-8 w-8 text-slate-400" />}<div><p className="font-bold">{item.name || 'مستخدم'}</p><p className="text-slate-400">ID: {item.publicId ?? '—'}</p></div></div>
+                  <button disabled={banActionBusy} onClick={() => void setPersonalBlock(item.userId, false)} className="shrink-0 rounded-lg bg-emerald-700 px-3 py-2 disabled:opacity-50">فك الحظر</button>
                 </div>)}
               </section>
             </div>
