@@ -1222,7 +1222,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const toggleLockSeat = (seatNumber: number): void => {
-    if (!activeRoom || !stagingBackend || !Number.isInteger(seatNumber)) return;
+    if (!activeRoom || !stagingBackend || !Number.isInteger(seatNumber) || !activeRoom.seats.some(seat => seat.seatNumber === seatNumber)) return;
     const roomId = activeRoom.id;
     void Promise.resolve(stagingBackend.rpc('phase2_room_toggle_seat_lock', {
       p_room_id: roomId, p_seat: seatNumber,
