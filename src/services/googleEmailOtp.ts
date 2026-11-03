@@ -8,8 +8,8 @@ export const GOOGLE_EMAIL_OTP_RULES = {
   resendCooldownSeconds: 60,
 } as const;
 
-type StartResponse = { status: 'sent' | 'rate_limited' | 'not_configured' | 'already_verified'; retryAfterSeconds?: number };
-type VerifyResponse = { status: 'verified' | 'invalid' | 'expired' | 'locked'; remainingAttempts?: number };
+type StartResponse = { status: 'sent' | 'rate_limited' | 'not_configured' | 'already_verified' | 'delivery_failed' | 'server_unavailable' | 'unauthorized'; retryAfterSeconds?: number; expiresInSeconds?: number };
+type VerifyResponse = { status: 'verified' | 'invalid' | 'expired' | 'locked' | 'unauthorized' | 'server_unavailable'; remainingAttempts?: number };
 
 export async function requestGoogleEmailOtp(): Promise<StartResponse> {
   if (!stagingBackend) throw new Error('Staging backend unavailable');
