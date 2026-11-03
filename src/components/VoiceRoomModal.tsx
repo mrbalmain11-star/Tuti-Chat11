@@ -915,7 +915,7 @@ export const VoiceRoomModal: React.FC = () => {
                 <div className="relative w-8 h-8 rounded-full border-2 border-amber-300/80 bg-purple-950/60 flex items-center justify-center shadow-md">
                   <span className="text-[13px]">👑</span>
                 </div>
-                <span className="text-xs font-mono font-bold text-white/90">1</span>
+                <span className="text-xs font-mono font-bold text-white/90">{activeRoom.listenersCount}</span>
               </div>
             </div>
 
@@ -964,12 +964,12 @@ export const VoiceRoomModal: React.FC = () => {
               <div
                 onClick={() => {
                   sounds.playClick();
-                  showToast(`كأس ونقاط الروم: 254K 🏆 (المرتبة الأولى في الترتيب اليومي)`);
+                  setShowRoomStatsModal(true);
                 }}
                 className="flex items-center gap-1.5 bg-[#1a0e33]/80 border border-purple-400/20 rounded-full px-2.5 py-0.5 shadow-md cursor-pointer hover:bg-[#251449] transition active:scale-95"
                 title="كأس ونقاط دعم الغرفة"
               >
-                <span className="text-xs font-mono font-bold text-white/90">254K</span>
+                <span className="text-xs font-mono font-bold text-white/90">{activeRoom.roomPoints ?? '—'}</span>
                 <span className="text-xs">🏆</span>
               </div>
             </div>
