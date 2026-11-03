@@ -28,6 +28,12 @@ import { InternalProfileModal } from './components/InternalProfileModal';
 import { WealthLeaderboardModal } from './components/WealthLeaderboardModal';
 import { InviteModal } from './components/InviteModal';
 import { AuthScreen } from './components/AuthScreen';
+import { GoogleEmailOtpScreen } from './components/GoogleEmailOtpScreen';
+import { stagingBackend } from './services/stagingBackend';
+
+// This flag MUST remain false until all server-side RLS/RPC/Storage/Edge gates are deployed.
+const GOOGLE_EMAIL_OTP_ENFORCED = import.meta.env.VITE_GOOGLE_EMAIL_OTP_ENFORCED === 'true';
+
 
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -76,6 +82,27 @@ class ErrorBoundary extends React.Component<
 
 const AppContent: React.FC = () => {
   const { activeTab, isLoggedIn, isRtl } = useApp();
+  const [otpState, setOtpState] = React.useState<'checking' | 'pending' | 'verified'>('checking');
+  const [otpEmail, setOtpEmail] = React.useState('');
+  React.useEffect(() => {
+    if (!GOOGLE_EMAIL_OTP_ENFORCED || !stagingBackend) return;
+    let mounted = true;
+    const check = async () => {
+      if (mounted) setOtpState('checking');
+      const { data: session } = await stagingBackend!.auth.getSession();
+      if (!mounted) return;
+      if (!session.session) { setOtpState('checking'); return; }
+      setOtpEmail(session.session.user.email ?? '');
+      const { data, error } = await stagingBackend!.rpc('otp_session_verified');
+      if (!mounted) return;
+      setOtpState(!error && data === true ? 'verified' : 'pending');
+    };
+    void check();
+    const { data: { subscription } } = stagingBackend.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') void check();
+    });
+    return () => { mounted = false; subscription.unsubscribe(); };
+  }, []);
 
   if (!isLoggedIn) {
     return (
@@ -85,6 +112,17 @@ const AppContent: React.FC = () => {
         </div>
       </div>
     );
+  }
+
+  if (GOOGLE_EMAIL_OTP_ENFORCED && otpState !== 'verified') {
+    if (otpState === 'checking') {
+      return <div dir="rtl" className="flex min-h-screen items-center justify-center bg-[#001d18] text-amber-300 font-['Cairo',sans-serif]">جارٍ فحص أمان الجلسة...</div>;
+    }
+    return <GoogleEmailOtpScreen email={otpEmail}
+      onVerified={() => { void stagingBackend?.rpc('otp_session_verified').then(({ data, error }) => {
+        if (!error && data === true) setOtpState('verified');
+      }); }}
+      onBack={() => { void stagingBackend?.auth.signOut(); }} />;
   }
 
   return (
