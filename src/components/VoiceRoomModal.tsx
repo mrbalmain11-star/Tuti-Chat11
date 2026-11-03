@@ -540,6 +540,33 @@ export const VoiceRoomModal: React.FC = () => {
     }
   };
 
+  const [coverSaving,setCoverSaving]=useState(false);
+  const [coverPreview,setCoverPreview]=useState<string|null>(null);
+  const handleRoomCoverFile=async(e:React.ChangeEvent<HTMLInputElement>)=>{
+    const file=e.target.files?.[0];e.target.value='';
+    if(!file||!activeRoom||!stagingBackend)return;
+    if(!isOwner){showToast('تغيير صورة الغرفة للمالك فقط');return;}
+    if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>5*1024*1024){showToast('اختر PNG أو JPG أو WEBP بحجم أقل من 5MB');return;}
+    setCoverSaving(true);
+    try{
+      const bitmap=await createImageBitmap(file);
+      const canvas=document.createElement('canvas');canvas.width=512;canvas.height=512;
+      const ctx=canvas.getContext('2d');if(!ctx)throw new Error('تعذر تجهيز الصورة');
+      const side=Math.min(bitmap.width,bitmap.height);
+      ctx.drawImage(bitmap,(bitmap.width-side)/2,(bitmap.height-side)/2,side,side,0,0,512,512);
+      bitmap.close();
+      const blob=await new Promise<Blob>((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('تعذر معالجة الصورة')),'image/webp',0.85));
+      const path=activeRoom.id+'/cover-'+Date.now()+'.webp';
+      const {error:uploadError}=await stagingBackend.storage.from('totichat-room-images').upload(path,blob,{contentType:'image/webp',upsert:false});
+      if(uploadError)throw uploadError;
+      const {data,error}=await stagingBackend.rpc('phase2_room_customize',{p_room_id:activeRoom.id,p_cover_path:path});
+      if(error||data!==true)throw error||new Error('الخادم لم يؤكد حفظ الصورة');
+      const {data:signed,error:signError}=await stagingBackend.storage.from('totichat-room-images').createSignedUrl(path,3600);
+      if(signError||!signed?.signedUrl)throw signError||new Error('تعذر معاينة الصورة المحفوظة');
+      setCoverPreview(signed.signedUrl);showToast('تم تغيير صورة الغرفة بنجاح');
+    }catch(error){showToast(error instanceof Error?error.message:'فشل تغيير صورة الغرفة');}
+    finally{setCoverSaving(false);}
+  };
   const handleSaveRoomInfo = (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeRoom) return;
@@ -2534,8 +2561,9 @@ export const VoiceRoomModal: React.FC = () => {
                 <button type="button" onClick={()=>setShowRoomInfoModal(false)} className="rounded-full border border-slate-200 bg-white p-2 text-xl leading-none shadow-sm" aria-label="إغلاق">×</button>
               </header>
               <div className="mx-auto mb-4 aspect-square w-[min(65%,240px)] overflow-hidden rounded-3xl border-2 border-amber-400 bg-emerald-950 shadow-lg">
-                {activeRoom.coverImage ? <img src={activeRoom.coverImage} alt="صورة الغرفة" className="h-full w-full object-cover"/> : <div className="flex h-full items-center justify-center text-5xl text-amber-300">👑</div>}
+                {(coverPreview||activeRoom.coverImage) ? <img src={coverPreview||activeRoom.coverImage} alt="صورة الغرفة" className="h-full w-full object-cover"/> : <div className="flex h-full items-center justify-center text-5xl text-amber-300">👑</div>}
               </div>
+              {isOwner&&<label className="mb-4 flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs font-bold text-emerald-900">{coverSaving?'جاري رفع الصورة...':'📷 تغيير صورة الغرفة (مربعة)'}<input type="file" accept="image/png,image/jpeg,image/webp" disabled={coverSaving} className="hidden" onChange={e=>void handleRoomCoverFile(e)}/></label>}
               <form onSubmit={handleSaveRoomInfo} className="space-y-3">
                 <label className="block text-xs font-black">اسم الغرفة:
                   <input value={editTitleInput} onChange={e=>setEditTitleInput(e.target.value)} disabled={!isOwner&&!currentUser.isSuperAdmin} maxLength={80} className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm font-bold shadow-sm disabled:opacity-70"/>
