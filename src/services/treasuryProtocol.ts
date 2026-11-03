@@ -24,6 +24,9 @@ export function documentedReason(value: string): string {
   return reason;
 }
 export function rpcForIntent(intent: TreasuryIntent) {
+  if (!['issue', 'allocate', 'topup'].includes(intent.action)) {
+    throw new Error('نوع العملية المالية غير معروف');
+  }
   documentedReason(intent.note);
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(intent.requestId)) {
     throw new Error('معرّف طلب الشحن غير صالح');
