@@ -1021,6 +1021,20 @@ export const SettingsModal: React.FC = () => {
         </div>
       )}
 
+      {/* Logout confirmation: cancellation must preserve the active session. */}
+      {activeDialog === 'logout' && (
+        <div className="fixed inset-0 z-[200] bg-black/60 flex items-center justify-center p-4">
+          <div role="dialog" aria-modal="true" aria-labelledby="settings-logout-title" className="w-full max-w-sm rounded-3xl bg-white p-6 text-center shadow-2xl">
+            <h3 id="settings-logout-title" className="text-lg font-bold text-slate-900">تأكيد تسجيل الخروج</h3>
+            <p className="mt-2 text-sm text-slate-600">هل تريد تسجيل الخروج من حسابك في TotiChat؟</p>
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <button type="button" onClick={() => setActiveDialog(null)} className="rounded-xl bg-slate-100 py-3 font-bold text-slate-800">إلغاء</button>
+              <button type="button" onClick={() => { setActiveDialog(null); setOpenSettingsModal(false); setIsLoggedIn(false); }} className="rounded-xl bg-red-600 py-3 font-bold text-white">تسجيل الخروج</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 8. App Files & Source Code Dialog */}
 
     </div>
