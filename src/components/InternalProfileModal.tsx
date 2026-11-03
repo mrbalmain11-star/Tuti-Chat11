@@ -69,6 +69,32 @@ export const InternalProfileModal: React.FC = () => {
   const isSelf = user.id === currentUser.id;
   const [showCpSearch,setShowCpSearch] = useState(false);
   const [cpRefreshKey, setCpRefreshKey] = useState(0);
+  const [cpRequests, setCpRequests] = useState<Array<{ id: string; type_id: string; type_label: string; requested_by: string; accepted_at: string | null; partner: { id: string; display_name: string } }>>([]);
+  const [cpActionBusy, setCpActionBusy] = useState(false);
+  const [cpMessage, setCpMessage] = useState('');
+  const refreshCpRequests = async () => {
+    if (!stagingBackend) return;
+    const { data, error } = await stagingBackend.rpc('phase4_cp_state');
+    if (error) throw error;
+    setCpRequests((data?.relations ?? []).filter((relation: { accepted_at: string | null; requested_by: string }) => !relation.accepted_at && relation.requested_by !== currentUser.id));
+  };
+  useEffect(() => {
+    if (!openInternalProfileModal || !isSelf) return;
+    void refreshCpRequests().catch(error => setCpMessage(error instanceof Error ? error.message : 'تعذر تحميل طلبات CP'));
+  }, [openInternalProfileModal, isSelf, cpRefreshKey]);
+  const respondToCp = async (partnerId: string, typeId: string, action: 'accept' | 'reject') => {
+    if (!stagingBackend || cpActionBusy) return;
+    setCpActionBusy(true); setCpMessage('');
+    try {
+      const { error } = await stagingBackend.rpc('phase4_cp_action', { p_partner_id: partnerId, p_type_id: typeId, p_action: action, p_request_id: crypto.randomUUID() });
+      if (error) throw error;
+      await refreshCpRequests();
+      setCpRefreshKey(value => value + 1);
+      setCpMessage(action === 'accept' ? 'تم قبول علاقة CP' : 'تم رفض طلب CP');
+    } catch (error) { setCpMessage(error instanceof Error ? error.message : 'تعذر معالجة طلب CP'); }
+    finally { setCpActionBusy(false); }
+  };
+
   const [verifiedAgency, setVerifiedAgency] = useState<{ name: string; public_id: number; member_count: number; role: string } | null>(null);
   useEffect(() => {
     let active = true;
@@ -405,6 +431,19 @@ export const InternalProfileModal: React.FC = () => {
         </div>
 
         <ProfileCpCard userId={user.id} refreshKey={cpRefreshKey} />
+        {isSelf && <section className="mx-4 my-3 rounded-2xl border border-amber-200 bg-white p-3" dir="rtl">
+          <h3 className="text-sm font-black text-amber-800">طلبات CP الواردة ({cpRequests.length})</h3>
+          {cpRequests.length === 0 && <p className="mt-2 text-xs text-slate-500">لا توجد طلبات CP بانتظار الموافقة</p>}
+          {cpRequests.map(request => <div key={request.id} className="mt-2 rounded-xl bg-amber-50 p-3">
+            <p className="text-xs font-bold text-slate-800">{request.partner?.display_name || 'مستخدم'} · {request.type_label}</p>
+            <div className="mt-2 flex gap-2">
+              <button disabled={cpActionBusy} type="button" onClick={() => void respondToCp(request.partner.id, request.type_id, 'accept')} className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white disabled:opacity-50">قبول</button>
+              <button disabled={cpActionBusy} type="button" onClick={() => void respondToCp(request.partner.id, request.type_id, 'reject')} className="rounded-lg bg-rose-600 px-3 py-2 text-xs font-bold text-white disabled:opacity-50">رفض</button>
+            </div>
+          </div>)}
+          {cpMessage && <p role="status" className="mt-2 text-xs text-rose-600">{cpMessage}</p>}
+        </section>}
+
 
         {/* =========================================================================
             Profile Floating Row: CP Bubble & Full Circular Avatar (Completely Unclipped)
