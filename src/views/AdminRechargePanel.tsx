@@ -123,6 +123,7 @@ export const AdminRechargePanel: React.FC = () => {
       if (retry && pending?.requestId !== intent.requestId) throw new Error('الطلب المحدد لا يطابق الطلب المعلّق');
       if (saved && (!retry || saved !== JSON.stringify(intent))) throw new Error('يوجد طلب محفوظ؛ تحقق من حالته أولاً');
       if (retry && !saved) throw new Error('الطلب المحفوظ غير متاح؛ أعد تحميل البيانات');
+      if (!retry && confirmation?.requestId !== intent.requestId) throw new Error('راجع تأكيد العملية قبل الإرسال');
       const rpc = rpcForIntent(intent);
       // Validate before persisting; keep only valid requests available for retry.
       localStorage.setItem(storageKey(actor), JSON.stringify(intent));
