@@ -152,6 +152,9 @@ export const AdminRechargePanel: React.FC = () => {
     if (!pending || !stagingBackend || lock.current || pending.actorId !== actor || !state?.isOwner) return;
     lock.current = true; setBusy(true); setError('');
     try {
+      const { data: sessionData, error: sessionError } = await stagingBackend.auth.getUser();
+      if (sessionError) throw sessionError;
+      if (sessionData.user?.id !== actor) throw new Error('تغير الحساب؛ أعد تحميل بيانات الشحن');
       const response = await stagingBackend.from('financial_operations').select('id,status,result')
         .eq('actor_id', actor).eq('request_id', pending.requestId).maybeSingle();
       if (response.error) throw response.error;
