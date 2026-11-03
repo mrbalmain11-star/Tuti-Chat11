@@ -218,6 +218,10 @@ export const SettingsModal: React.FC = () => {
         {/* GROUP 1: الحساب، الأذونات، البث، الخيارات والدردشة (8 عناصر)              */}
         {/* ========================================================================= */}
         <div className="bg-white rounded-3xl shadow-[0_1px_3px_rgba(0,0,0,0.03)] overflow-hidden divide-y divide-slate-100/80">
+          <button type="button" onClick={() => setShowPersonalBlocks(true)} className="flex w-full items-center justify-between px-4 py-3.5 text-right hover:bg-slate-50 active:bg-slate-100">
+            <span className="flex items-center gap-3"><ShieldCheck className="h-5 w-5 text-slate-700" /><span className="text-[14px] font-bold text-slate-800">المحظورون شخصياً</span></span>
+            {isRtl ? <ChevronLeft className="h-4 w-4 text-slate-400" /> : <ChevronRight className="h-4 w-4 text-slate-400" />}
+          </button>
           {/* 1. الحساب والأمان */}
           <div
             onClick={() => {
@@ -1077,8 +1081,6 @@ export const SettingsModal: React.FC = () => {
           </div>
         </div>
       )}
-
-      {!showPersonalBlocks && <button type="button" onClick={() => setShowPersonalBlocks(true)} className="fixed bottom-5 left-4 z-[110] rounded-full bg-slate-800 px-4 py-2 text-xs font-bold text-white shadow-lg">المحظورون شخصياً</button>}
 
       {/* Logout confirmation: cancellation must preserve the active session. */}
       {activeDialog === 'logout' && (
