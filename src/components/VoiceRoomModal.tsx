@@ -4,6 +4,7 @@ import { playRoomMusic, pauseRoomMusic, resumeRoomMusic, stopRoomMusic, getRoomM
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Mic,
+  CircleUserRound,
   MicOff,
   Copy,
   Send,
@@ -2145,6 +2146,14 @@ export const VoiceRoomModal: React.FC = () => {
               <h3 className="text-xl sm:text-2xl font-black text-white text-center mt-2.5 tracking-wide flex items-center justify-center gap-1">
                 <span>{selectedMicUser.user.nickname || selectedMicUser.user.name}</span>
               </h3>
+
+              <div className="mt-2 flex items-center justify-center gap-2 text-xs font-bold">
+                <span className="rounded-full bg-amber-500/15 border border-amber-400/40 px-3 py-1 text-amber-200">الثروة Lv.{selectedMicUser.user.wealthLevel}</span>
+                <span className="rounded-full bg-fuchsia-500/15 border border-fuchsia-400/40 px-3 py-1 text-fuchsia-200">السحر Lv.{selectedMicUser.user.charmLevel}</span>
+              </div>
+              <button type="button" onClick={() => { const target = selectedMicUser.user; setSelectedMicUser(null); handleOpenUserProfile(target); }} className="mx-auto mt-3 flex items-center gap-2 rounded-full border border-cyan-400/50 bg-cyan-500/15 px-4 py-2 text-xs font-bold text-cyan-100">
+                <CircleUserRound className="h-4 w-4" /> عرض الملف الشخصي والرسائل
+              </button>
 
               {/* ID Row with Copy */}
               <div
