@@ -120,6 +120,7 @@ export const AdminRechargePanel: React.FC = () => {
       if (authError) throw authError;
       if (!auth.user || auth.user.id !== intent.actorId || intent.actorId !== actor) throw new Error('تغير الحساب؛ أعد تحميل البيانات');
       const saved = localStorage.getItem(storageKey(actor));
+      if (retry && pending?.requestId !== intent.requestId) throw new Error('الطلب المحدد لا يطابق الطلب المعلّق');
       if (saved && (!retry || saved !== JSON.stringify(intent))) throw new Error('يوجد طلب محفوظ؛ تحقق من حالته أولاً');
       if (retry && !saved) throw new Error('الطلب المحفوظ غير متاح؛ أعد تحميل البيانات');
       const rpc = rpcForIntent(intent);
