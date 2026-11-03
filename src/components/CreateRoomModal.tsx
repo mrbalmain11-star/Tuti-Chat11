@@ -37,10 +37,10 @@ export const CreateRoomModal: React.FC = () => {
     if (saving) return;
     setSaving(true);
     try {
-      const createdRoomId = await createVoiceRoom(roomName.trim(), welcomeMessage.trim() || 'اهلا وسهلا', coverImage.startsWith('data:image/') ? coverImage : undefined);
+      const createdRoom = await createVoiceRoom(roomName.trim(), welcomeMessage.trim() || 'اهلا وسهلا', coverImage.startsWith('data:image/') ? coverImage : undefined);
       sounds.playLevelUp();
       setOpenCreateRoomModal(false);
-      enterRoom(createdRoomId);
+      enterRoom(createdRoom.id, createdRoom);
     } catch (error) {
       console.error('Room creation or cover upload failed:', error);
       window.alert(error instanceof Error ? error.message : 'تعذر إنشاء الغرفة.');
