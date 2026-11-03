@@ -39,7 +39,7 @@ interface AppContextType {
   setHomeSubTab: (subTab: 'party' | 'royal' | 'discover') => void;
   rooms: VoiceRoom[];
   activeRoom: VoiceRoom | null;
-  enterRoom: (roomId: string) => void;
+  enterRoom: (roomId: string, newlyCreatedRoom?: VoiceRoom) => void;
   leaveRoom: () => void;
   isRoomMinimized: boolean;
   setIsRoomMinimized: (min: boolean) => void;
@@ -70,7 +70,7 @@ interface AppContextType {
   convertDiamondsToCoins: (diamondsAmount: number) => boolean;
   followedRoomHosts: Set<string>;
   toggleFollowHost: (hostId: string) => void;
-  createVoiceRoom: (title: string, tag: string, coverDataUrl?: string) => Promise<string>;
+  createVoiceRoom: (title: string, tag: string, coverDataUrl?: string) => Promise<VoiceRoom>;
   updateRoom: (roomId: string, updates: Partial<VoiceRoom>) => Promise<void>;
   changeRoomBackground: (roomId: string, backgroundUrl: string) => Promise<boolean>;
   // Modals state
@@ -1100,8 +1100,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
-  const enterRoom = (roomId: string): void => {
-    const room = rooms.find(r => r.id === roomId);
+  const enterRoom = (roomId: string, newlyCreatedRoom?: VoiceRoom): void => {
+    const room = newlyCreatedRoom?.id === roomId ? newlyCreatedRoom : rooms.find(r => r.id === roomId);
     if (!room) return;
     void joinRoomMembership(roomId).then(async () => {
       setActiveRoom(room);
@@ -1472,7 +1472,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
-  const createVoiceRoom = async (title: string, _tag: string, coverDataUrl?: string): Promise<string> => {
+  const createVoiceRoom = async (title: string, _tag: string, coverDataUrl?: string): Promise<VoiceRoom> => {
     const trimmed = title.trim();
     if (trimmed.length < 2 || trimmed.length > 60) throw new Error('اسم الغرفة يجب أن يكون بين حرفين و60 حرفاً.');
     if (!stagingBackend || !currentUser.id) throw new Error('يجب تسجيل الدخول قبل إنشاء غرفة.');
@@ -1497,8 +1497,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const rows = await fetchRealRooms();
     const createdRoom = rows.find(room => room.id === roomId);
     if (!createdRoom) throw new Error('تم إنشاء الغرفة لكن تعذر العثور عليها في قائمة الغرف.');
-    setRooms(rows.map(mapRoomToUi));
-    return roomId;
+    const mappedRooms = rows.map(mapRoomToUi);
+    const roomForEntry = mappedRooms.find(room => room.id === roomId);
+    if (!roomForEntry) throw new Error('تعذر تحميل الغرفة الجديدة.');
+    setRooms(mappedRooms);
+    return roomForEntry;
   };
 
   const updateRoom = (roomId: string, updates: Partial<VoiceRoom>): Promise<void> => {
