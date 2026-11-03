@@ -148,7 +148,7 @@ export const AdminRechargePanel: React.FC = () => {
   };
 
   const reconcile = async () => {
-    if (!pending || !stagingBackend || lock.current) return;
+    if (!pending || !stagingBackend || lock.current || pending.actorId !== actor) return;
     lock.current = true; setBusy(true); setError('');
     try {
       const response = await stagingBackend.from('financial_operations').select('id,status,result')
