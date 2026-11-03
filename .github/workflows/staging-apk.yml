@@ -127,6 +127,38 @@ jobs:
           PY
       - name: Sync Capacitor assets
         run: npx cap sync android
+      - name: Install approved TotiChat icon in regenerated Android project
+        run: |
+          set -euo pipefail
+          SRC="assets/totichat_launcher.webp"
+          RES="android/app/src/main/res"
+          test -s "$SRC"
+          # The CI workflow regenerates Android; inject the approved artwork after Capacitor sync.
+          for density in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+            mkdir -p "$RES/mipmap-$density"
+            rm -f "$RES/mipmap-$density/ic_launcher.png" "$RES/mipmap-$density/ic_launcher_round.png"
+            cp "$SRC" "$RES/mipmap-$density/ic_launcher.webp"
+            cp "$SRC" "$RES/mipmap-$density/ic_launcher_round.webp"
+          done
+          # Modern Android adaptive icons use the same photo, inset to avoid launcher masking.
+          mkdir -p "$RES/drawable-nodpi" "$RES/drawable" "$RES/mipmap-anydpi-v26"
+          cp "$SRC" "$RES/drawable-nodpi/totichat_launcher.webp"
+          cat > "$RES/drawable/totichat_launcher_foreground.xml" <<'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <inset xmlns:android="http://schemas.android.com/apk/res/android" android:inset="18dp">
+              <bitmap android:src="@drawable/totichat_launcher" android:gravity="fill" />
+          </inset>
+          XML
+          for name in ic_launcher ic_launcher_round; do
+            cat > "$RES/mipmap-anydpi-v26/$name.xml" <<'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+              <background android:drawable="@android:color/black" />
+              <foreground android:drawable="@drawable/totichat_launcher_foreground" />
+          </adaptive-icon>
+          XML
+          done
+          test -s "$RES/mipmap-xxxhdpi/ic_launcher.webp"
       - name: Register Google OAuth callback
         run: node scripts/configure-android-oauth.mjs
       - name: Build Android debug APK
