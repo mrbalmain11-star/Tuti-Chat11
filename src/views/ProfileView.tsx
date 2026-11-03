@@ -532,6 +532,14 @@ export const ProfileView: React.FC = () => {
           </button>
         </div>
 
+        {/* Verified account details from the Staging profile. */}
+        {(currentUser.country || currentUser.age) && (
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-bold text-emerald-900">
+            {currentUser.country && <span className="rounded-full border border-amber-200 bg-white px-3 py-2">🌍 {currentUser.country}</span>}
+            {currentUser.age != null && <span className="rounded-full border border-amber-200 bg-white px-3 py-2">العمر: {currentUser.age}</span>}
+            {currentUser.gender && <span className="rounded-full border border-amber-200 bg-white px-3 py-2">{currentUser.gender}</span>}
+          </div>
+        )}
         {/* Bio / السيرة الذاتية with Edit Button */}
         <div className="mt-4 bg-white/90 border border-amber-200/90 rounded-2xl p-3.5 shadow-sm flex items-center justify-between">
           <div
