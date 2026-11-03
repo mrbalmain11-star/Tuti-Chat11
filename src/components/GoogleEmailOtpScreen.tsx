@@ -50,6 +50,7 @@ export const GoogleEmailOtpScreen: React.FC<Props> = ({ email, onVerified, onBac
         window.setTimeout(() => inputs.current[0]?.focus(), 80);
       } else if (result.status === 'rate_limited') {
         // A prior challenge may still be valid; keep the existing code entry state.
+        setCodeIssued(true);
         setRemaining(result.retryAfterSeconds ?? 60);
         setMessage('يرجى الانتظار قبل إعادة إرسال الرمز');
       } else if (result.status === 'not_configured') {
@@ -90,7 +91,9 @@ export const GoogleEmailOtpScreen: React.FC<Props> = ({ email, onVerified, onBac
 
   const verify = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (busy || code.length !== 6 || !codeIssued || attempts === 0) return;
+    if (busy) return;
+    if (code.length !== 6) { setMessage('أدخل الأرقام الستة للرمز أولاً'); return; }
+    if (attempts === 0) { setMessage('تم استنفاد المحاولات، اطلب رمزاً جديداً'); return; }
     setBusy(true);
     setMessage('');
     try {
@@ -167,7 +170,7 @@ export const GoogleEmailOtpScreen: React.FC<Props> = ({ email, onVerified, onBac
           {expiresIn > 0 && <p className="mt-3 text-center text-xs text-emerald-100/65">صلاحية الرمز: {Math.floor(expiresIn / 60)}:{String(expiresIn % 60).padStart(2, '0')}</p>}
           {message && <p role="status" className="mt-4 text-center text-sm text-amber-200">{message}</p>}
           {attempts !== null && <p className="mt-2 text-center text-xs text-emerald-100/70">المحاولات المتبقية: {attempts}</p>}
-          <button type="submit" disabled={busy || code.length !== 6 || !codeIssued || attempts === 0} className="mt-8 flex h-14 w-full items-center justify-center gap-2 rounded-2xl border border-amber-300 bg-gradient-to-r from-emerald-800 via-emerald-700 to-emerald-900 text-xl font-bold text-white shadow-[0_0_20px_rgba(251,191,36,.2)] disabled:opacity-50">
+          <button type="submit" disabled={busy} className="mt-8 flex h-14 w-full items-center justify-center gap-2 rounded-2xl border border-amber-300 bg-gradient-to-r from-emerald-800 via-emerald-700 to-emerald-900 text-xl font-bold text-white shadow-[0_0_20px_rgba(251,191,36,.2)] disabled:opacity-50">
             {busy ? 'يرجى الانتظار...' : <><Check className="h-5 w-5" /> تحقق</>}
           </button>
         </form>
