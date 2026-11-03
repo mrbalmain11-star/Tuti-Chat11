@@ -60,6 +60,8 @@ import { MicSeat, UserProfile } from '../types';
 import { sounds } from '../utils/audio';
 import { VipName } from './VipName';
 import { VipBadge } from './VipBadge';
+import wealthLionsBackground from '../assets/images/wealth_lions_bg_1790538325613.jpg';
+import royalCpRoomBackground from '../assets/images/royal_cp_room_1790176778043.jpg';
 
 
 const PRESET_BACKGROUNDS = [
@@ -81,12 +83,12 @@ const PRESET_BACKGROUNDS = [
   {
     id: 'lions',
     name: 'قصر الأسود الملكي',
-    url: '/src/assets/images/wealth_lions_bg_1790538325613.jpg',
+    url: wealthLionsBackground,
   },
   {
     id: 'cp_room',
     name: 'غرفة العشاق الرومانسية',
-    url: '/src/assets/images/royal_cp_room_1790176778043.jpg',
+    url: royalCpRoomBackground,
   },
 ];
 
