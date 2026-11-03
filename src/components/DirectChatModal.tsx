@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { X, Send, UserRound } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
+import { stagingBackend } from '../services/stagingBackend';
 
 const formatTime = (value: string) => {
   const date = new Date(value);
@@ -11,6 +12,32 @@ const formatTime = (value: string) => {
 export const DirectChatModal: React.FC = () => {
   const { openChatThread, setOpenChatThread, sendDirectMessage, currentUser, setInternalProfileUser, setOpenInternalProfileModal } = useApp();
   const [inputText, setInputText] = useState('');
+  const [cpRequest,setCpRequest] = useState<{partnerId:string;typeId:string;typeLabel:string;requestedBy:string;accepted:boolean;relationshipId:string}|null>(null);
+  const [cpBusy,setCpBusy] = useState(false);
+  const [cpError,setCpError] = useState('');
+  const refreshCp = async () => {
+    if (!stagingBackend || !openChatThread || openChatThread.isSystem || openChatThread.isOfficial) return;
+    const {data,error}=await stagingBackend.rpc('totichat_cp_chat_request',{p_peer:openChatThread.userId});
+    if(error)throw error;
+    setCpRequest(data ?? null);
+  };
+  useEffect(()=>{
+    setCpRequest(null);setCpError('');
+    if(!openChatThread)return;
+    void refreshCp().catch(e=>setCpError(e instanceof Error?e.message:'تعذر تحميل CP'));
+    const timer=setInterval(()=>void refreshCp().catch(()=>{}),12000);
+    return ()=>clearInterval(timer);
+  },[openChatThread?.userId]);
+  const respondCp=async(action:'accept'|'reject')=>{
+    if(!stagingBackend||!cpRequest||cpBusy)return;
+    setCpBusy(true);setCpError('');
+    try{
+      const {error}=await stagingBackend.rpc('phase4_cp_action',{p_partner_id:cpRequest.partnerId,p_type_id:cpRequest.typeId,p_action:action,p_request_id:crypto.randomUUID()});
+      if(error)throw error;
+      await refreshCp();
+    }catch(e){setCpError(e instanceof Error?e.message:'تعذر معالجة CP');}
+    finally{setCpBusy(false);}
+  };
   const endRef = useRef<HTMLDivElement>(null);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [openChatThread?.messages]);
   if (!openChatThread) return null;
@@ -66,6 +93,16 @@ export const DirectChatModal: React.FC = () => {
           <button type="button" aria-label="إغلاق المحادثة" onClick={() => { sounds.playClick(); setOpenChatThread(null); }} className="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center"><X className="w-5 h-5" /></button>
         </header>
         <div className="flex-1 min-h-0 px-3 py-4 overflow-y-auto space-y-2 bg-[#efeae2]">
+          {cpRequest && !cpRequest.accepted && cpRequest.requestedBy !== currentUser.id && <div className="mx-auto w-full max-w-[90%] rounded-2xl border border-rose-200 bg-white p-4 text-center shadow-md">
+            <p className="font-black text-rose-700">💞 طلب ارتباط CP</p>
+            <p className="mt-1 text-xs text-slate-700">{openChatThread.userName} يريد الارتباط: {cpRequest.typeLabel}</p>
+            <div className="mt-3 flex justify-center gap-3">
+              <button type="button" disabled={cpBusy} onClick={()=>void respondCp('accept')} className="rounded-xl bg-emerald-600 px-5 py-2 text-sm font-bold text-white disabled:opacity-50">قبول</button>
+              <button type="button" disabled={cpBusy} onClick={()=>void respondCp('reject')} className="rounded-xl bg-rose-600 px-5 py-2 text-sm font-bold text-white disabled:opacity-50">رفض</button>
+            </div>
+          </div>}
+          {cpRequest?.accepted && <p className="mx-auto rounded-full bg-rose-100 px-4 py-2 text-xs font-bold text-rose-700">💞 علاقة CP مؤكدة: {cpRequest.typeLabel}</p>}
+          {cpError && <p role="alert" className="text-center text-xs text-rose-600">{cpError}</p>}
           {openChatThread.messages.map(m => {
             const mine = m.sender === 'me';
             return (
