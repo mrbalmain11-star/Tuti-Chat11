@@ -11,6 +11,7 @@ export const AdminRoomModerationPanel: React.FC = () => {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const load = async () => {
+    if (busy || !roomId.trim()) return;
     setBusy(true); setError(''); setState(null);
     try {
       if (!stagingBackend) throw new Error('الخادم غير متصل');
