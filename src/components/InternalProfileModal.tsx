@@ -24,6 +24,9 @@ import {
   Award,
   Car,
   Shield,
+  EllipsisVertical,
+  Ban,
+  Flag,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
@@ -37,6 +40,7 @@ import { VipBadge, VIP_BEAST_METADATA } from './VipBadge';
 import { AgencyProfileCard } from './AgencyProfileCard';
 import { CpSearchModal } from './CpSearchModal';
 import { ProfileCpCard } from './ProfileCpCard';
+import { ProfileReportForm } from './ProfileReportForm';
 
 export const InternalProfileModal: React.FC = () => {
   const {
@@ -70,6 +74,17 @@ export const InternalProfileModal: React.FC = () => {
   const [showCpSearch,setShowCpSearch] = useState(false);
   const [cpRefreshKey, setCpRefreshKey] = useState(0);
   const [cpPartnerAvatar, setCpPartnerAvatar] = useState<string | null>(null);
+  const [showProfileOptions, setShowProfileOptions] = useState(false);
+  const [showReportForm, setShowReportForm] = useState(false);
+  const [profileBlockBusy, setProfileBlockBusy] = useState(false);
+  const [profileActionError, setProfileActionError] = useState('');
+  const blockVisitedUser = async () => {
+    if (!stagingBackend || isSelf || profileBlockBusy || !window.confirm('هل تريد حظر هذا المستخدم؟')) return;
+    setProfileBlockBusy(true);setProfileActionError('');
+    try { const {error}=await stagingBackend.rpc('phase2_dm_block',{p_other_user:user.id,p_block:true});if(error)throw error;setShowProfileOptions(false);showToast('تم حظر المستخدم ويمكن فك الحظر من الإعدادات'); }
+    catch(e){setProfileActionError(e instanceof Error?e.message:'تعذر الحظر');}
+    finally{setProfileBlockBusy(false);}
+  };
   const [verifiedAgency, setVerifiedAgency] = useState<{ name: string; public_id: number; member_count: number; role: string } | null>(null);
   useEffect(() => {
     let active = true;
@@ -392,13 +407,21 @@ export const InternalProfileModal: React.FC = () => {
             </button>
           )}
 
+          {!isSelf && <div className="absolute top-4 right-4 z-30" dir="rtl">
+            <button type="button" onClick={()=>setShowProfileOptions(v=>!v)} aria-label="خيارات المستخدم" className="flex h-10 w-10 items-center justify-center rounded-full border border-amber-300 bg-white text-slate-800 shadow-md"><EllipsisVertical className="h-6 w-6"/></button>
+            {showProfileOptions && <div className="absolute right-0 top-12 w-44 overflow-hidden rounded-2xl border border-amber-200 bg-white p-1 shadow-xl">
+              <button type="button" disabled={profileBlockBusy} onClick={()=>void blockVisitedUser()} className="flex w-full items-center gap-2 rounded-xl p-3 text-sm font-bold text-rose-700"><Ban className="h-4 w-4"/> حظر المستخدم</button>
+              <button type="button" onClick={()=>{setShowProfileOptions(false);setShowReportForm(true);}} className="flex w-full items-center gap-2 rounded-xl p-3 text-sm font-bold text-slate-800"><Flag className="h-4 w-4"/> الإبلاغ عن المستخدم</button>
+              {profileActionError&&<p className="p-2 text-xs text-rose-600">{profileActionError}</p>}
+            </div>}
+          </div>}
           {/* Top Right Back Button (السهم في أعلى اليمين) */}
           <button
             onClick={() => {
               sounds.playClick();
               setOpenInternalProfileModal(false);
             }}
-            className="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-white/80 hover:bg-white flex items-center justify-center text-slate-800 transition active:scale-90 cursor-pointer shadow-md border border-amber-300"
+            className={`absolute top-4 ${isSelf ? "right-4" : "left-4"} z-20 w-9 h-9 rounded-full bg-white/80 hover:bg-white flex items-center justify-center text-slate-800 transition active:scale-90 cursor-pointer shadow-md border border-amber-300"
             title="رجوع"
           >
             <ChevronRight className="w-6 h-6 stroke-[2.5]" />
@@ -1437,6 +1460,7 @@ export const InternalProfileModal: React.FC = () => {
           </div>
         </div>
       )}
+      {showReportForm && !isSelf && <ProfileReportForm targetId={user.id} targetName={user.nickname || user.name} onClose={()=>setShowReportForm(false)} />}
       {showCpSearch && <CpSearchModal onClose={() => { setShowCpSearch(false); setCpRefreshKey(value => value + 1); }} />}
     </div>
   );
