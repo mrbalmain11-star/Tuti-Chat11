@@ -41,7 +41,7 @@ export const GoogleEmailOtpScreen: React.FC<Props> = ({ email, onVerified, onBac
       }
       if (result.status === 'sent') {
         setRemaining(60);
-        setExpiresIn(300);
+        setExpiresIn(result.expiresInSeconds ?? 300);
         setDigits(['', '', '', '', '', '']);
         setAttempts(null);
         setMessage('تم إرسال رمز التحقق إلى بريدك الإلكتروني');
@@ -49,6 +49,11 @@ export const GoogleEmailOtpScreen: React.FC<Props> = ({ email, onVerified, onBac
       } else if (result.status === 'rate_limited') {
         setRemaining(result.retryAfterSeconds ?? 60);
         setMessage('يرجى الانتظار قبل إعادة إرسال الرمز');
+      } else if (result.status === 'delivery_failed') {
+        setRemaining(60);
+        setMessage('تعذر إرسال البريد، حاول مجدداً بعد دقيقة');
+      } else if (result.status === 'unauthorized') {
+        setMessage('انتهت جلسة Google، سجّل الدخول مرة أخرى');
       } else {
         setMessage('خدمة التحقق غير متاحة حالياً، حاول لاحقاً');
       }
