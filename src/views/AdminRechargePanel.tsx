@@ -59,6 +59,9 @@ export const AdminRechargePanel: React.FC = () => {
       try { savedIntent = JSON.parse(saved) as TreasuryIntent; }
       catch { throw new Error('تعذر قراءة طلب الشحن المحفوظ؛ لم يتم حذفه'); }
     }
+    if (savedIntent && (savedIntent.actorId !== auth.user.id || !savedIntent.requestId || !Number.isSafeInteger(savedIntent.coins) || savedIntent.coins < 1)) {
+      throw new Error('طلب الشحن المحفوظ لا يطابق الحساب أو يحتوي بيانات غير صالحة؛ لم يتم حذفه');
+    }
     setPending(savedIntent);
     const { data, error: rpcError } = await stagingBackend.rpc('phase4_recharge_state');
     if (rpcError) throw rpcError;
