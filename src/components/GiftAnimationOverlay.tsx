@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { GiftLottieAnimation } from './GiftLottieAnimation';
 import { X } from 'lucide-react';
 import { EpicGiftArtwork } from './EpicGiftArtwork';
 import { useApp } from '../context/AppContext';
@@ -42,6 +43,17 @@ export const SwordArt: React.FC = () => (
   </svg>
 );
 
+const GiftAssetStage: React.FC<{ url: string; name: string }> = ({ url, name }) => {
+  const [failed, setFailed] = useState(false);
+  if (failed) return <div className="text-7xl text-amber-200">🎁</div>;
+  return (
+    <div className="w-[min(85vw,420px)] h-[min(65vh,520px)]">
+      <GiftLottieAnimation url={url} onFailure={() => setFailed(true)} />
+      <span className="sr-only">{name}</span>
+    </div>
+  );
+};
+
 export const GiftAnimationOverlay: React.FC = () => {
   const { activeGiftAnimation, clearGiftAnimation } = useApp();
   useEffect(() => {
@@ -56,6 +68,17 @@ export const GiftAnimationOverlay: React.FC = () => {
   const { gift, sender, receiver, count } = activeGiftAnimation;
   const epic = gift.price >= 10000 ? getEpicStyle(gift.name) : null;
   const style = epic ? epicStyles[epic] : null;
+  // Prefer the original hosted JSON animation; existing gifts retain their legacy visuals.
+  if (gift.assetFormat === 'json' && gift.assetUrl) {
+    return (
+      <div className="fixed inset-0 z-[80] pointer-events-none flex flex-col items-center justify-center bg-black/75">
+        <GiftAssetStage key={gift.id + gift.assetUrl} url={gift.assetUrl} name={gift.name} />
+        <div className="text-amber-200 font-bold text-center mt-2" dir="rtl">{sender} أهدى {gift.name} إلى {receiver} ×{count}</div>
+        <button type="button" onClick={clearGiftAnimation} className="pointer-events-auto absolute right-4 top-10 rounded-full bg-black/70 text-white p-2" aria-label="إغلاق"><X size={18}/></button>
+      </div>
+    );
+  }
+
 
   if (!epic || !style) {
     return (
