@@ -21,7 +21,7 @@ export const AdminRoomModerationPanel: React.FC = () => {
     finally { setBusy(false); }
   };
   const act = async (person: Person, action: 'ban' | 'unban') => {
-    if (!stagingBackend) return;
+    if (!stagingBackend || busy || !state || state.roomId !== roomId.trim()) return;
     const why = reason.trim();
     if (why.length < 10 || why.length > 300) { setError('اكتب سبباً من 10 إلى 300 حرف'); return; }
     if (!window.confirm(action === 'ban' ? 'تأكيد حظر هذا المستخدم من الغرفة فقط؟' : 'تأكيد رفع حظر هذا المستخدم من الغرفة؟')) return;
