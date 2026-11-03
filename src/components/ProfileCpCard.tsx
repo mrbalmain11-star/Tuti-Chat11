@@ -24,7 +24,8 @@ export const ProfileCpCard: React.FC<{ userId: string; compact?: boolean; refres
     window.addEventListener('focus', refresh);
     return () => { active = false; window.removeEventListener('focus', refresh); };
   }, [userId, refreshKey]);
-  if (!loading && !error && links.length === 0) return null;
+  // Do not render a placeholder CP rectangle for profiles without a confirmed link.
+  if (links.length === 0) return null;
   return <section className={compact ? 'mx-4 mt-3 rounded-2xl border border-rose-400/25 bg-rose-500/10 p-3' : 'mx-4 my-4 rounded-3xl border border-rose-200 bg-gradient-to-l from-rose-50 to-amber-50 p-4'} dir="rtl">
     <div className="flex items-center gap-2 text-rose-600"><Heart className="h-4 w-4 fill-current" /><span className="text-sm font-black">علاقات CP</span></div>
     {loading ? <p className="mt-2 text-xs text-slate-500">جارٍ تحميل العلاقات...</p> :
