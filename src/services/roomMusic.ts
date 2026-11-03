@@ -79,9 +79,12 @@ export class RoomMusicPublisher {
         console.warn('[RoomMusic] unpublish failed', error);
       }
     }
-    track?.stop();
-    if (context && context.state !== 'closed') await context.close();
-    if (url) URL.revokeObjectURL(url);
-    if (audio || track) window.dispatchEvent(new Event('totichat:music-stopped'));
+    try {
+      track?.stop();
+      if (context && context.state !== 'closed') await context.close();
+    } finally {
+      if (url) URL.revokeObjectURL(url);
+      if (audio || track) window.dispatchEvent(new Event('totichat:music-stopped'));
+    }
   }
 }
