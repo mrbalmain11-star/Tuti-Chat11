@@ -29,6 +29,9 @@ export function rpcForIntent(intent: TreasuryIntent) {
     throw new Error('معرّف طلب الشحن غير صالح');
   }
   if (!Number.isSafeInteger(intent.coins) || intent.coins < 1) throw new Error('مبلغ الشحن غير صالح');
+  if (intent.action === 'issue' && intent.coins !== STAGING_ISSUANCE) {
+    throw new Error('قيمة إصدار الخزينة التجريبية غير مطابقة للقيمة المعتمدة');
+  }
   if (intent.action === 'topup' && (intent.coins > 1_000_000_000 || !Number.isSafeInteger(intent.recipient) || Number(intent.recipient) < 1)) {
     throw new Error('تحقق من رقم المستلم ومبلغ الشحن');
   }
