@@ -273,7 +273,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             nickname: profile.display_name, bio: profile.bio ?? '', avatar,
             country: profile.country ?? prev.country,
             gender: (profile.gender === 'ذكر' || profile.gender === 'أنثى') ? profile.gender : prev.gender,
-            birthdate: profile.age ? String(profile.age) : prev.birthdate,
+            age: profile.age ?? prev.age,
           }));
         } while (active && pending);
       } catch (error) {
