@@ -470,6 +470,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const voiceSeat = activeRoom?.seats.some(seat => seat.user?.id === currentUser.id) ?? false;
   const voicePublishRef = useRef(false);
   const voiceLifecycleRef = useRef<Promise<void>>(Promise.resolve());
+  const voiceConnectionRef = useRef<Awaited<ReturnType<typeof connectRoomVoice>> | null>(null);
   voicePublishRef.current = voiceSeat && !myMicMuted;
   useEffect(() => {
     if (!isLoggedIn || !voiceRoomId) return;
@@ -482,7 +483,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           if (!cancelled) console.error('Room voice:', message);
         });
         connection = connected;
-        if (!cancelled) await connected.sync();
+        if (!cancelled) {
+          voiceConnectionRef.current = connected;
+          await connected.sync();
+        }
       } catch (error) {
         if (!cancelled) {
           console.error('Voice connection failed:', error);
@@ -496,10 +500,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // Cleanup is queued after setup, including microphone acquisition.
       // Next connection must wait for this queued close to finish.
       voiceLifecycleRef.current = setup.then(async () => {
-        if (connection) await connection.close();
+        if (connection) {
+          if (voiceConnectionRef.current === connection) voiceConnectionRef.current = null;
+          await connection.close();
+        }
       });
     };
-  }, [isLoggedIn, voiceRoomId, voiceSeat && !myMicMuted]);
+  }, [isLoggedIn, voiceRoomId, voiceSeat]);
+
+  // Muting a seated microphone only updates the existing LiveKit publication.
+  // Reissuing tokens and reconnecting for every mute can exhaust the 20/min preflight budget.
+  useEffect(() => {
+    if (!isLoggedIn || !voiceRoomId || !voiceSeat) return;
+    const connection = voiceConnectionRef.current;
+    if (connection) {
+      void connection.sync().catch(error => console.error('Microphone sync failed:', error));
+    }
+  }, [isLoggedIn, voiceRoomId, voiceSeat, myMicMuted]);
 
   useEffect(() => {
     if (isLoggedIn) return;
