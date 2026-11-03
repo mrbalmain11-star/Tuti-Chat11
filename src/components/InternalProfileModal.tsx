@@ -69,6 +69,7 @@ export const InternalProfileModal: React.FC = () => {
   const isSelf = user.id === currentUser.id;
   const [showCpSearch,setShowCpSearch] = useState(false);
   const [cpRefreshKey, setCpRefreshKey] = useState(0);
+  const [cpPartnerAvatar, setCpPartnerAvatar] = useState<string | null>(null);
   const [verifiedAgency, setVerifiedAgency] = useState<{ name: string; public_id: number; member_count: number; role: string } | null>(null);
   useEffect(() => {
     let active = true;
@@ -419,7 +420,7 @@ export const InternalProfileModal: React.FC = () => {
               className="w-13 h-13 rounded-full bg-gradient-to-b from-amber-400 to-amber-600 border-2 border-amber-200 shadow-[0_0_15px_rgba(245,158,11,0.4)] flex items-center justify-center cursor-pointer active:scale-95 transition backdrop-blur-md relative overflow-hidden group"
             >
               <div className="absolute inset-0 bg-gradient-to-tr from-white/30 via-transparent to-transparent opacity-80" />
-              <Plus className="w-6 h-6 text-slate-950 stroke-[2.5] group-hover:scale-110 transition" />
+              {cpPartnerAvatar ? <img src={cpPartnerAvatar} alt="شريك CP" className="h-full w-full rounded-full object-cover" /> : <Plus className="w-6 h-6 text-slate-950 stroke-[2.5] group-hover:scale-110 transition" />}
             </div>
 
             {/* Pill Button: ابحث عن CP */}
@@ -608,7 +609,7 @@ export const InternalProfileModal: React.FC = () => {
             )}
           </div>
 
-          <ProfileCpCard userId={user.id} refreshKey={cpRefreshKey} />
+          <ProfileCpCard userId={user.id} refreshKey={cpRefreshKey} onLinksChange={links => setCpPartnerAvatar(links[0]?.partnerAvatar || null)} />
           {/* Realistic Dynamic Agency Rectangle (مستطيل الوكالة الفعلي مطابق للصورة تماماً) */}
           {verifiedAgency && (
             <AgencyProfileCard
