@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Headphones, Smartphone, ChevronLeft, ShieldCheck, X, FileText, Check, Loader2, ArrowRight } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
-import { signInWithRealGoogle, stagingBackend, NATIVE_AUTH_ERROR_EVENT } from '../services/stagingBackend';
+import { signInWithRealGoogle, NATIVE_AUTH_ERROR_EVENT } from '../services/stagingBackend';
 
 interface AuthScreenProps {
   onLoginSuccess?: () => void;
@@ -58,49 +58,14 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
     }
   };
 
-  const normalizedPhone = () => {
-    const local = phoneNumber.replace(/[٠-٩۰-۹]/g, digit => String('٠١٢٣٤٥٦٧٨٩'.indexOf(digit) >= 0 ? '٠١٢٣٤٥٦٧٨٩'.indexOf(digit) : '۰۱۲۳۴۵۶۷۸۹'.indexOf(digit))).replace(/\D/g, '').replace(/^0+/, '');
-    return countryCode + local;
+  const handleSendOtp = (e: React.FormEvent) => {
+    e.preventDefault();
+    showToast('تسجيل الهاتف غير متاح حتى يتم تفعيل خدمة OTP الحقيقية.');
   };
 
-  const handleSendOtp = async (e: React.FormEvent) => {
+  const handleVerifyOtp = (e: React.FormEvent) => {
     e.preventDefault();
-    if (isLoading) return;
-    if (!stagingBackend) { showToast('خدمة تسجيل الدخول غير مهيأة'); return; }
-    const phone = normalizedPhone();
-    if (!/^\+[1-9]\d{7,14}$/.test(phone)) { showToast('أدخل رقم هاتف صحيحاً'); return; }
-    setIsLoading(true);
-    try {
-      const { error } = await stagingBackend.auth.signInWithOtp({ phone });
-      if (error) throw error;
-      setOtpCode('');
-      setStep('otp');
-      showToast('تم طلب رمز التحقق، افحص رسائل هاتفك');
-    } catch (error) {
-      console.error('Phone OTP request failed:', error);
-      showToast(error instanceof Error ? error.message : 'تعذر إرسال رمز التحقق');
-    } finally { setIsLoading(false); }
-  };
-
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isLoading) return;
-    if (!stagingBackend) { showToast('خدمة تسجيل الدخول غير مهيأة'); return; }
-    const token = otpCode.replace(/[٠-٩۰-۹]/g, digit => String('٠١٢٣٤٥٦٧٨٩'.indexOf(digit) >= 0 ? '٠١٢٣٤٥٦٧٨٩'.indexOf(digit) : '۰۱۲۳۴۵۶۷۸۹'.indexOf(digit))).replace(/\D/g, '');
-    if (token.length !== 6) { showToast('أدخل رمز التحقق المكوّن من 6 أرقام'); return; }
-    setIsLoading(true);
-    try {
-      const { data, error } = await stagingBackend.auth.verifyOtp({ phone: normalizedPhone(), token, type: 'sms' });
-      if (error) throw error;
-      if (!data.session || !data.user) throw new Error('لم يتم تأكيد جلسة تسجيل الدخول');
-      setShowPhoneModal(false);
-      setOtpCode('');
-      showToast('تم التحقق بنجاح');
-      // Existing auth state listener observes the verified Supabase session.
-    } catch (error) {
-      console.error('Phone OTP verification failed:', error);
-      showToast(error instanceof Error ? error.message : 'رمز التحقق غير صحيح أو منتهي');
-    } finally { setIsLoading(false); }
+    showToast('تسجيل الهاتف غير متاح حتى يتم تفعيل التحقق الحقيقي.');
   };
 
   return (
@@ -381,17 +346,15 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
             ) : (
               <form onSubmit={handleVerifyOtp} className="pt-4 space-y-4">
                 <p className="text-xs text-slate-300">
-                  أدخل رمز التحقق المكوّن من 6 أرقام المرسل إلى هاتفك:
+                  تم إرسال رمز التحقق المكوّن من 4 أرقام إلى هاتفك:
                 </p>
 
                 <input
                   type="text"
                   maxLength={6}
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  placeholder="1 2 3 4 5 6"
+                  placeholder="1 2 3 4"
                   value={otpCode}
-                  onChange={(e) => setOtpCode(e.target.value.replace(/[^0-9٠-٩۰-۹]/g, '').slice(0, 6))}
+                  onChange={(e) => setOtpCode(e.target.value)}
                   required
                   className="w-full p-3.5 rounded-xl bg-purple-950/80 border border-amber-400 text-amber-300 text-xl font-mono text-center tracking-widest focus:outline-none"
                 />
