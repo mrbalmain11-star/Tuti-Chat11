@@ -1,4 +1,5 @@
 import { stagingBackend } from '../services/stagingBackend';
+import { RoomManagementPanel } from './RoomManagementPanel';
 import { App as CapacitorApp } from '@capacitor/app';
 import { playRoomMusic, pauseRoomMusic, resumeRoomMusic, stopRoomMusic, getRoomMusicProgress, seekRoomMusic, setRoomMusicVolume } from '../services/isolatedRoomMusic';
 import React, { useState, useRef, useEffect } from 'react';
@@ -188,6 +189,7 @@ export const VoiceRoomModal: React.FC = () => {
   // Owner & Management Modals
   const [showRoomInfoModal, setShowRoomInfoModal] = useState(false);
   const [showSeatLayouts, setShowSeatLayouts] = useState(false);
+  const [roomManagementSection,setRoomManagementSection]=useState<'rules'|'auto_message'|'announcement'|'history'|null>(null);
   const [seatLayout, setSeatLayout] = useState<'grid'|'classic'|'circle'|'stage'>('grid');
   const [layoutSaving, setLayoutSaving] = useState(false);
   const [showExitOptions, setShowExitOptions] = useState(false);
@@ -2513,6 +2515,7 @@ export const VoiceRoomModal: React.FC = () => {
         {/* =========================================================================
             ROOM INFO & MANAGEMENT MODAL (معلومات الغرفة وإدارتها 👑)
             ========================================================================= */}
+        {roomManagementSection && <RoomManagementPanel roomId={activeRoom.id} section={roomManagementSection} canManage={isOwner||currentUser.isSuperAdmin} onClose={()=>setRoomManagementSection(null)}/>}
         {showSeatLayouts && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4" dir="rtl" onClick={()=>setShowSeatLayouts(false)}>
           <div className="w-full max-w-sm rounded-3xl border-2 border-amber-400 bg-emerald-950 p-5 text-white" onClick={e=>e.stopPropagation()}>
             <div className="flex items-center justify-between"><h3 className="font-black text-lg text-amber-300">🛋️ أشكال ترتيب المقاعد</h3><button onClick={()=>setShowSeatLayouts(false)} aria-label="إغلاق"><X/></button></div>
@@ -2557,8 +2560,11 @@ export const VoiceRoomModal: React.FC = () => {
                     {title:'المحظورون',value:'عرض القائمة',action:()=>{setShowRoomInfoModal(false);setShowBansModal(true);}},
                     {title:'المشرفون',value:`${activeRoom.moderatorIds?.length ?? 0} مشرف`,action:()=>{setShowRoomInfoModal(false);setShowMembersModal(true);}},
                     {title:'أعضاء الغرفة',value:`${activeRoom.listenersCount} عضو`,action:()=>{setShowRoomInfoModal(false);setShowMembersModal(true);}},
-                    {title:'قواعد الغرفة',value:'قراءة القواعد',action:()=>document.getElementById('room-info-rules')?.scrollIntoView({behavior:'smooth',block:'center'})},
+                    {title:'قواعد الغرفة',value:'عرض وتعديل',action:()=>{setShowRoomInfoModal(false);setRoomManagementSection('rules');}},
                     {title:'إعدادات متقدمة',value:'صلاحيات الإدارة',action:()=>{setShowRoomInfoModal(false);setShowMembersModal(true);}},
+                    {title:'الرسائل التلقائية',value:'إدارة النص',action:()=>{setShowRoomInfoModal(false);setRoomManagementSection('auto_message');}},
+                    {title:'إعلانات الغرفة',value:'إدارة الإعلان',action:()=>{setShowRoomInfoModal(false);setRoomManagementSection('announcement');}},
+                    {title:'سجل الإدارة',value:'آخر الإجراءات',action:()=>{setShowRoomInfoModal(false);setRoomManagementSection('history');}},
                   ].map(item=><button key={item.title} type="button" onClick={item.action} className="min-h-20 rounded-xl border border-amber-200 bg-white p-2 text-center shadow-sm"><p className="text-[12px] font-black">{item.title}</p><p className="mt-1 text-[10px] text-emerald-800">{item.value}</p><span className="text-amber-600">‹</span></button>)}
                 </div>
                 <div id="room-info-rules" className="rounded-xl border border-amber-200 bg-amber-50 p-3"><p className="text-xs font-black">قواعد الغرفة ورسالة الترحيب</p><p className="mt-1 whitespace-pre-wrap text-xs text-slate-700">{activeRoom.announcement || 'لم يضف مالك الغرفة رسالة بعد'}</p></div>
