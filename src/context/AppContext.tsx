@@ -1223,6 +1223,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const toggleLockSeat = (seatNumber: number): void => {
     if (!activeRoom || !stagingBackend || !Number.isInteger(seatNumber) || !activeRoom.seats.some(seat => seat.seatNumber === seatNumber)) return;
+    if (activeRoom.hostId !== currentUser.id && !(activeRoom.moderatorIds || []).includes(currentUser.id) && !currentUser.isSuperAdmin) {
+      alert('قفل المقاعد متاح لمالك الغرفة والمشرف فقط.');
+      return;
+    }
     const roomId = activeRoom.id;
     void Promise.resolve(stagingBackend.rpc('phase2_room_toggle_seat_lock', {
       p_room_id: roomId, p_seat: seatNumber,
