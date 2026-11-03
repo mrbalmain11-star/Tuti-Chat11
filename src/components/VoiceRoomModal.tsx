@@ -138,6 +138,48 @@ export const VoiceRoomModal: React.FC = () => {
   const [copiedId, setCopiedId] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  const [bubblePosition, setBubblePosition] = useState<{ x: number; y: number }>(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem('totichat_room_bubble_position') || 'null');
+      if (stored && Number.isFinite(stored.x) && Number.isFinite(stored.y)) return stored;
+    } catch { /* use default */ }
+    return { x: 16, y: 110 };
+  });
+  const bubbleDragRef = useRef<{ pointerId: number; startX: number; startY: number; x: number; y: number; moved: boolean } | null>(null);
+  const [bubbleDragging, setBubbleDragging] = useState(false);
+  const onBubblePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0) return;
+    bubbleDragRef.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, x: bubblePosition.x, y: bubblePosition.y, moved: false };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+  const onBubblePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    const drag = bubbleDragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    const dx = event.clientX - drag.startX;
+    const dy = event.clientY - drag.startY;
+    if (Math.abs(dx) + Math.abs(dy) > 7) drag.moved = true;
+    if (!drag.moved) return;
+    setBubbleDragging(true);
+    setBubblePosition({
+      x: Math.max(0, Math.min(window.innerWidth - 150, drag.x + dx)),
+      y: Math.max(0, Math.min(window.innerHeight - 72, drag.y - dy)),
+    });
+  };
+  const onBubblePointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    const drag = bubbleDragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    bubbleDragRef.current = null;
+    if (drag.moved) {
+      setBubblePosition(position => {
+        const clamped = { x: Math.max(0, Math.min(window.innerWidth - 150, position.x)), y: Math.max(0, Math.min(window.innerHeight - 72, position.y)) };
+        localStorage.setItem('totichat_room_bubble_position', JSON.stringify(clamped));
+        return clamped;
+      });
+      window.setTimeout(() => setBubbleDragging(false), 100);
+    } else {
+      setIsRoomMinimized(false);
+    }
+  };
   // Screen clearance mode (مسح الشاشة للمشاهدة النقية)
   const [clearScreen, setClearScreen] = useState(false);
 
@@ -649,8 +691,12 @@ export const VoiceRoomModal: React.FC = () => {
   if (isRoomMinimized) {
     return (
       <div
-        onClick={() => setIsRoomMinimized(false)}
-        className="fixed bottom-20 left-4 z-50 flex items-center gap-2 bg-[#1b0d3a]/95 border border-purple-400/50 rounded-full py-1.5 px-3 shadow-[0_4px_20px_rgba(147,51,234,0.6)] cursor-pointer backdrop-blur-md animate-bounce select-none"
+        onPointerDown={onBubblePointerDown}
+        onPointerMove={onBubblePointerMove}
+        onPointerUp={onBubblePointerUp}
+        onPointerCancel={() => { bubbleDragRef.current = null; setBubbleDragging(false); }}
+        style={{ left: bubblePosition.x, bottom: bubblePosition.y, touchAction: 'none', maxWidth: 'calc(100vw - 12px)' }}
+        className={`fixed z-50 flex items-center gap-2 bg-[#1b0d3a]/95 border border-purple-400/50 rounded-full py-1.5 px-3 shadow-[0_4px_20px_rgba(147,51,234,0.6)] cursor-grab active:cursor-grabbing backdrop-blur-md select-none ${bubbleDragging ? 'scale-105' : ''}`}
         dir="rtl"
       >
         <div className="w-8 h-8 rounded-full overflow-hidden border border-purple-300">
