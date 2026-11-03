@@ -40,7 +40,7 @@ export const RoomManagementPanel:React.FC<{roomId:string;section:Section;canMana
   }catch(e){setError(e instanceof Error?e.message:'تعذر الحفظ');}
   finally{setBusy(false);}
  };
- const actions:Record<string,string>={updated_rules:'تعديل قواعد الغرفة',updated_auto_message:'تعديل الرسائل التلقائية',updated_announcement:'تعديل إعلان الغرفة'};
+ const actions:Record<string,string>={updated_rules:'تعديل قواعد الغرفة',updated_auto_message:'تعديل الرسائل التلقائية',updated_announcement:'تعديل إعلان الغرفة',ban_user:'حظر مستخدم',unban_user:'رفع الحظر عن مستخدم',add_moderator:'تعيين مشرف',remove_moderator:'إزالة مشرف'};
  return <div className="fixed inset-0 z-[115] flex items-center justify-center bg-black/80 p-3" dir="rtl" onClick={onClose}>
   <div className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-3xl border-2 border-amber-400 bg-[#fffefa] p-5 text-slate-900 shadow-2xl" onClick={e=>e.stopPropagation()}>
    <header className="flex items-center justify-between gap-3"><h3 className="text-lg font-black text-emerald-900">{labels[section]}</h3><div className="flex gap-2"><button type="button" onClick={()=>void load()} aria-label="تحديث"><RefreshCw size={18}/></button><button type="button" onClick={onClose} aria-label="إغلاق"><X size={20}/></button></div></header>
