@@ -120,15 +120,6 @@ export const InternalProfileModal: React.FC = () => {
       .then(({ data, error }) => {
         if (error) throw error;
         if (!active || !data) return;
-        const agency = data.agency;
-        if (agency && typeof agency.name === 'string' && Number.isInteger(Number(agency.public_id))) {
-          setVerifiedAgency({
-            name: agency.name,
-            public_id: Number(agency.public_id),
-            member_count: Number(agency.member_count) || 0,
-            role: String(agency.role || 'مضيف وكالة'),
-          });
-        }
         setVisitorStatus({
           userId: user.id,
           wealthLevel: getLevelFromExp(Number(data.wealth_exp) || 0, 260),
