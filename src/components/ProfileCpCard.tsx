@@ -15,6 +15,9 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
   const previousUserId = useRef(userId);
   const requestVersion = useRef(0);
   const endingRef = useRef(false);
+  // Keep asynchronous refreshes connected to the latest parent callback.
+  const onLinksChangeRef = useRef(onLinksChange);
+  onLinksChangeRef.current = onLinksChange;
   useEffect(() => {
     let active = true;
 
@@ -24,7 +27,7 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
       try {
         const { data, error: fetchError } = await stagingBackend.rpc('totichat_profile_cp', { p_user_id: userId });
         if (fetchError) throw fetchError;
-        if (active && requestId === requestVersion.current) { const next: CpLink[] = Array.isArray(data) ? data.filter((link: CpLink) => link.accepted === true) : []; setLinks(next); onLinksChange?.(next); setError(false); }
+        if (active && requestId === requestVersion.current) { const next: CpLink[] = Array.isArray(data) ? data.filter((link: CpLink) => link.accepted === true) : []; setLinks(next); onLinksChangeRef.current?.(next); setError(false); }
       } catch (e) { if (active && requestId === requestVersion.current) { setError(true); } console.error('CP profile load failed', e); }
       finally { if (active && requestId === requestVersion.current) setLoading(false); }
     };
@@ -34,7 +37,7 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
       previousUserId.current = userId;
       setLinks([]);
       setError(false);
-      onLinksChange?.([]);
+      onLinksChangeRef.current?.([]);
     }
     void load();
     const refresh = () => { if (!document.hidden && !endingRef.current) void load(); };
@@ -65,13 +68,13 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
       const { data, error: reloadError } = await stagingBackend.rpc('totichat_profile_cp', { p_user_id: userId });
       if (reloadError) {
         setLinks([]);
-        onLinksChange?.([]);
+        onLinksChangeRef.current?.([]);
         setError(true);
         throw reloadError;
       }
       const next: CpLink[] = Array.isArray(data) ? data.filter((item: CpLink) => item.accepted === true) : [];
       setLinks(next);
-      onLinksChange?.(next);
+      onLinksChangeRef.current?.(next);
       setError(false);
     } catch (err) {
       window.alert(err instanceof Error ? err.message : 'تعذر فك علاقة CP');
