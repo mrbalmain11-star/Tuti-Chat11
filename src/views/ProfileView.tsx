@@ -536,7 +536,7 @@ export const ProfileView: React.FC = () => {
         {/* Verified account details from the Staging profile. */}
         {(currentUser.country || currentUser.age) && (
           <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-bold text-emerald-900">
-            {currentUser.country && <span className="rounded-full border border-amber-200 bg-white px-3 py-2">🌍 {currentUser.country}</span>}
+            {currentUser.countryFlag && <span className="rounded-full border border-amber-200 bg-white px-3 py-2" title={currentUser.country || 'الدولة'} aria-label={currentUser.country || 'الدولة'}>{currentUser.countryFlag}</span>}
             {currentUser.age != null && <span className="rounded-full border border-amber-200 bg-white px-3 py-2">العمر: {currentUser.age}</span>}
             {currentUser.gender && <span className="rounded-full border border-amber-200 bg-white px-3 py-2">{currentUser.gender}</span>}
           </div>
