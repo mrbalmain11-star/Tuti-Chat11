@@ -33,6 +33,7 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
     if (previousUserId.current !== userId) {
       previousUserId.current = userId;
       setLinks([]);
+      setError(false);
       onLinksChange?.([]);
     }
     void load();
