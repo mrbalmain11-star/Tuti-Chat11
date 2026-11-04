@@ -199,15 +199,32 @@ export const VoiceRoomModal: React.FC = () => {
   useEffect(() => {
     if (!activeRoom?.id || !stagingBackend) return;
     let mounted = true;
+    let pending = false;
+    const roomId = activeRoom.id;
+    setServerRoomMembers([]);
     setServerMembersStatus('loading');
-    void stagingBackend.rpc('phase2_room_members_visual_v2', { p_room_id: activeRoom.id }).then(({data,error}) => {
-      if (!mounted) return;
-      if (error || !Array.isArray(data)) { setServerMembersStatus('error'); return; }
-      setServerRoomMembers(data);
-      setServerMembersStatus('ready');
-    }).catch(() => { if (mounted) setServerMembersStatus('error'); });
-    return () => { mounted = false; };
-  }, [showMembersModal, activeRoom?.id]);
+    const refreshMembers = async () => {
+      if (pending) return;
+      pending = true;
+      try {
+        const { data, error } = await stagingBackend.rpc('phase2_room_members_visual_v2', { p_room_id: roomId });
+        if (!mounted) return;
+        if (error || !Array.isArray(data)) {
+          setServerMembersStatus('error');
+          return;
+        }
+        setServerRoomMembers(data);
+        setServerMembersStatus('ready');
+      } catch {
+        if (mounted) setServerMembersStatus('error');
+      } finally {
+        pending = false;
+      }
+    };
+    void refreshMembers();
+    const interval = window.setInterval(() => { if (!document.hidden) void refreshMembers(); }, 30000);
+    return () => { mounted = false; window.clearInterval(interval); };
+  }, [activeRoom?.id]);
 
   const [showBansModal, setShowBansModal] = useState(false);
   const [roomBans, setRoomBans] = useState<Array<{ userId: string; name?: string; publicId?: number; avatar?: string; reason?: string; bannedByOwner?: boolean }>>([]);
