@@ -194,6 +194,21 @@ export const VoiceRoomModal: React.FC = () => {
   const [layoutSaving, setLayoutSaving] = useState(false);
   const [showExitOptions, setShowExitOptions] = useState(false);
   const [showMembersModal, setShowMembersModal] = useState(false);
+  const [serverRoomMembers, setServerRoomMembers] = useState<Array<{user_id:string;display_name:string;avatar_url:string|null;seat_no:number|null}>>([]);
+  const [serverMembersStatus, setServerMembersStatus] = useState<'loading'|'ready'|'error'>('loading');
+  useEffect(() => {
+    if (!showMembersModal || !activeRoom?.id || !stagingBackend) return;
+    let mounted = true;
+    setServerMembersStatus('loading');
+    void stagingBackend.rpc('phase2_room_members_visual_v2', { p_room_id: activeRoom.id }).then(({data,error}) => {
+      if (!mounted) return;
+      if (error || !Array.isArray(data)) { setServerMembersStatus('error'); return; }
+      setServerRoomMembers(data);
+      setServerMembersStatus('ready');
+    }).catch(() => { if (mounted) setServerMembersStatus('error'); });
+    return () => { mounted = false; };
+  }, [showMembersModal, activeRoom?.id]);
+
   const [showBansModal, setShowBansModal] = useState(false);
   const [roomBans, setRoomBans] = useState<Array<{ userId: string; name?: string; publicId?: number; avatar?: string; reason?: string; bannedByOwner?: boolean }>>([]);
   const [personalBlocks, setPersonalBlocks] = useState<Array<{ userId: string; name?: string; publicId?: number; avatar?: string }>>([]);
@@ -2678,6 +2693,15 @@ export const VoiceRoomModal: React.FC = () => {
               </div>
 
               <div className="flex-1 overflow-y-auto space-y-2.5 pr-0.5">
+                {serverMembersStatus === 'loading' && <p className="text-xs text-slate-300">جارٍ جلب الأعضاء...</p>}
+                {serverMembersStatus === 'error' && <p className="text-xs text-rose-300">تعذر تحميل القائمة المباشرة من الخادم</p>}
+                {serverMembersStatus === 'ready' && <p className="text-xs text-emerald-300">الأعضاء المسجلون بالغرفة: {serverRoomMembers.length}</p>}
+                {serverMembersStatus === 'ready' && serverRoomMembers.filter(member => member.seat_no == null && member.user_id !== activeRoom.hostId).map(member => (
+                  <div key={member.user_id} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-3">
+                    <span className="text-xs font-bold text-white">{member.display_name}</span>
+                    <span className="text-[10px] text-slate-300">مستمع</span>
+                  </div>
+                ))}
                 {/* Host User */}
                 <div className="p-2.5 rounded-2xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
