@@ -42,6 +42,8 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
     if (!window.confirm('هل تريد فك علاقة CP مع هذا المستخدم؟')) return;
     endingRef.current = true;
     ++requestVersion.current;
+    // A pending initial CP load was invalidated; its finally block cannot clear loading.
+    setLoading(false);
     setEndingPartner(link.partnerId);
     try {
       const { error: actionError } = await stagingBackend.rpc('phase4_cp_action', {
@@ -63,7 +65,11 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
       setError(false);
     } catch (err) {
       window.alert(err instanceof Error ? err.message : 'تعذر فك علاقة CP');
-    } finally { endingRef.current = false; setEndingPartner(null); }
+    } finally {
+      endingRef.current = false;
+      setEndingPartner(null);
+      setLoading(false);
+    }
   };
   // Do not render a placeholder CP rectangle for profiles without a confirmed link.
   if (links.length === 0) return null;
