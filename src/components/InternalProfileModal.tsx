@@ -134,7 +134,7 @@ export const InternalProfileModal: React.FC = () => {
       }).catch(error => console.error('Visitor levels load failed:', error));
     return () => { active = false; };
   }, [openInternalProfileModal, isSelf, user.id]);
-  const displayedUser = !isSelf && visitorStatus?.userId === user.id ? { ...user, ...visitorStatus } : user;
+  const displayedUser = openInternalProfileModal && !isSelf && visitorStatus?.userId === user.id ? { ...user, ...visitorStatus } : user;
   const [visitorAssets, setVisitorAssets] = useState<{ userId: string; publicId: string; cover: string; avatar: string } | null>(null);
   const visitorAssetsForUser = openInternalProfileModal && !isSelf && visitorAssets?.userId === user.id ? visitorAssets : null;
   const visitorPublicId = visitorAssetsForUser?.publicId || '';
