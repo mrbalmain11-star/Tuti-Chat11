@@ -5,7 +5,7 @@ import { useApp } from '../context/AppContext';
 
 type CpLink = { typeId: string; typeLabel: string; level: number; partnerId: string; partnerName: string; partnerAvatar?: string | null; partnerPublicId?: number; accepted: boolean };
 
-export const ProfileCpCard: React.FC<{ userId: string; compact?: boolean; refreshKey?: number; onLinksChange?: (links: CpLink[]) => void }> = ({ userId, compact = false, refreshKey = 0, onLinksChange }) => {
+export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAvatar?: string | null; compact?: boolean; refreshKey?: number; onLinksChange?: (links: CpLink[]) => void }> = ({ userId, userName, userAvatar, compact = false, refreshKey = 0, onLinksChange }) => {
   const { currentUser } = useApp();
   const [endingPartner, setEndingPartner] = useState<string | null>(null);
   const [links, setLinks] = useState<CpLink[]>([]);
@@ -68,7 +68,13 @@ export const ProfileCpCard: React.FC<{ userId: string; compact?: boolean; refres
     {loading ? <p className="mt-2 text-xs text-slate-500">جارٍ تحميل العلاقات...</p> :
       error ? <p className="mt-2 text-xs text-rose-500">تعذر تحميل علاقات CP</p> :
       links.length === 0 ? null :
-      <div className="mt-2 space-y-2">{links.map(link => <div key={link.typeId + link.partnerId} className="flex items-center gap-2 rounded-xl border border-amber-300/50 bg-[#2c142b]/85 p-2 text-amber-50 backdrop-blur-sm">
+      <div className="mt-2 space-y-2">{links.map(link => <div key={link.typeId + link.partnerId} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-300/50 bg-[#2c142b]/85 p-2 text-amber-50 backdrop-blur-sm">
+        {(userAvatar || userName) && <div className="flex min-w-0 flex-1 flex-col items-center gap-1 text-center">
+          <div className="h-14 w-14 rounded-full border-[3px] border-amber-300 bg-[#5c3048] p-0.5 shadow-[0_3px_12px_rgba(244,183,74,.45)]">
+            {userAvatar ? <img src={userAvatar} alt={userName || 'صاحب الملف'} className="h-full w-full rounded-full object-cover" /> : <CircleUserRound className="h-full w-full text-amber-200" />}
+          </div>
+          <span className="max-w-[95px] truncate text-[11px] font-bold">{userName || 'صاحب الملف'}</span>
+        </div>}
         <div className="relative h-14 w-14 shrink-0 rounded-full border-[3px] border-amber-300 bg-gradient-to-br from-[#fff3bd] via-[#a86a28] to-[#fff0aa] p-0.5 shadow-[0_3px_12px_rgba(244,183,74,.45)]" aria-label="صورة شريك CP">
           {link.partnerAvatar ? <img src={link.partnerAvatar} alt={link.partnerName || 'الشريك'} className="h-full w-full rounded-full object-cover" /> : <CircleUserRound className="h-full w-full rounded-full text-amber-950" />}
         </div>
