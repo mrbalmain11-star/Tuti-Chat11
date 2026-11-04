@@ -333,12 +333,17 @@ jobs:
           test "$(unzip -Z1 "$NAME.zip" | wc -l)" -eq 1
           test "$(unzip -Z1 "$NAME.zip")" = "TotiChat.apk"
           TAG="staging-apk-${GITHUB_SHA:0:8}"
-          gh release create "$TAG" "$NAME.apk" "$NAME.zip" \
-            --repo "$GITHUB_REPOSITORY" \
-            --target "$GITHUB_SHA" \
-            --title "TotiChat Staging APK ${GITHUB_SHA:0:8}" \
-            --notes "ZIP contains one installable APK; ZIP archive integrity verified before release." \
-            --prerelease
+          # Reruns of the same commit must reuse the release instead of failing on an existing tag.
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$NAME.apk" "$NAME.zip" --clobber --repo "$GITHUB_REPOSITORY"
+          else
+            gh release create "$TAG" "$NAME.apk" "$NAME.zip" \
+              --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" \
+              --title "TotiChat Staging APK ${GITHUB_SHA:0:8}" \
+              --notes "ZIP contains one installable APK; ZIP archive integrity verified before release." \
+              --prerelease
+          fi
           # Validate the actual published release ZIP, not just the local build file.
           mkdir -p /tmp/totichat-published-download /tmp/totichat-published-extract
           gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern "$NAME.zip" --dir /tmp/totichat-published-download
