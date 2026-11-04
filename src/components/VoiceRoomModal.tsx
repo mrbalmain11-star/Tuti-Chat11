@@ -2721,7 +2721,7 @@ export const VoiceRoomModal: React.FC = () => {
                 {serverMembersStatus === 'loading' && <p className="text-xs text-slate-300">جارٍ جلب الأعضاء...</p>}
                 {serverMembersStatus === 'error' && <p className="text-xs text-rose-300">تعذر تحميل القائمة المباشرة من الخادم</p>}
                 {serverMembersStatus === 'ready' && <p className="text-xs text-emerald-300">الأعضاء المسجلون بالغرفة: {serverRoomMembers.length}</p>}
-                {serverMembersStatus === 'ready' && serverRoomMembers.filter(member => member.seat_no == null && member.user_id !== activeRoom.hostId).map(member => (
+                {serverMembersStatus === 'ready' && serverRoomMembers.filter(member => member.seat_no == null && member.user_id !== activeRoom.hostId && !activeRoom.seats.some(seat => seat.user?.id === member.user_id)).map(member => (
                   <button type="button" key={member.user_id} onClick={() => {
                     setInternalProfileUser({
                       ...currentUser,
