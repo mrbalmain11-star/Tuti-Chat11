@@ -3119,7 +3119,7 @@ export const VoiceRoomModal: React.FC = () => {
               <div className="p-3 bg-white/5 rounded-2xl border border-white/10 flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
                   <Users className="w-4 h-4 text-purple-400" />
-                  <span>أعلى ذروة حضور:</span>
+                  <span>عدد الحضور المعروض حالياً:</span>
                 </div>
                 <span className="font-mono font-bold text-white">{activeRoom.listenersCount} مستمع حالياً</span>
               </div>
