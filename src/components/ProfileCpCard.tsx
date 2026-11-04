@@ -10,7 +10,9 @@ const isConfirmedCpLink = (value: unknown): value is CpLink => {
   const link = value as Partial<CpLink>;
   return link.accepted === true && typeof link.typeId === 'string' && link.typeId.length > 0
     && typeof link.partnerId === 'string' && link.partnerId.length > 0
-    && typeof link.partnerName === 'string' && typeof link.typeLabel === 'string';
+    && typeof link.partnerName === 'string' && typeof link.typeLabel === 'string'
+    && typeof link.level === 'number' && Number.isFinite(link.level) && link.level >= 0
+    && (link.partnerAvatar == null || typeof link.partnerAvatar === 'string');
 };
 
 export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAvatar?: string | null; compact?: boolean; refreshKey?: number; onLinksChange?: (links: CpLink[]) => void; onPartnerClick?: (partnerId: string) => void }> = ({ userId, userName, userAvatar, compact = false, refreshKey = 0, onLinksChange, onPartnerClick }) => {
