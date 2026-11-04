@@ -12,6 +12,7 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
   const requestVersion = useRef(0);
+  const endingRef = useRef(false);
   useEffect(() => {
     let active = true;
 
@@ -26,7 +27,7 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
       finally { if (active && requestId === requestVersion.current) setLoading(false); }
     };
     setLoading(true); setLinks([]); onLinksChange?.([]); void load();
-    const refresh = () => { if (!document.hidden) void load(); };
+    const refresh = () => { if (!document.hidden && !endingRef.current) void load(); };
     window.addEventListener('focus', refresh);
     document.addEventListener('visibilitychange', refresh);
     return () => {
@@ -37,8 +38,10 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
     };
   }, [userId, refreshKey]);
   const endRelationship = async (link: CpLink) => {
-    if (!stagingBackend || userId !== currentUser.id || endingPartner) return;
+    if (!stagingBackend || userId !== currentUser.id || endingRef.current) return;
     if (!window.confirm('هل تريد فك علاقة CP مع هذا المستخدم؟')) return;
+    endingRef.current = true;
+    ++requestVersion.current;
     setEndingPartner(link.partnerId);
     try {
       const { error: actionError } = await stagingBackend.rpc('phase4_cp_action', {
@@ -46,8 +49,7 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
         p_action: 'end', p_request_id: crypto.randomUUID(),
       });
       if (actionError) throw actionError;
-      // Invalidate any older focus/visibility refresh before reloading the ended relationship.
-      ++requestVersion.current;
+      // Refresh events are blocked during unlink; older responses were invalidated before the mutation.
       const { data, error: reloadError } = await stagingBackend.rpc('totichat_profile_cp', { p_user_id: userId });
       if (reloadError) {
         setLinks([]);
@@ -61,7 +63,7 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
       setError(false);
     } catch (err) {
       window.alert(err instanceof Error ? err.message : 'تعذر فك علاقة CP');
-    } finally { setEndingPartner(null); }
+    } finally { endingRef.current = false; setEndingPartner(null); }
   };
   // Do not render a placeholder CP rectangle for profiles without a confirmed link.
   if (links.length === 0) return null;
