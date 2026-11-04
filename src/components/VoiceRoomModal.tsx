@@ -222,8 +222,16 @@ export const VoiceRoomModal: React.FC = () => {
       }
     };
     void refreshMembers();
-    const interval = window.setInterval(() => { if (!document.hidden) void refreshMembers(); }, 30000);
-    return () => { mounted = false; window.clearInterval(interval); };
+    const refreshOnReturn = () => { if (!document.hidden) void refreshMembers(); };
+    const interval = window.setInterval(refreshOnReturn, 30000);
+    window.addEventListener('focus', refreshOnReturn);
+    document.addEventListener('visibilitychange', refreshOnReturn);
+    return () => {
+      mounted = false;
+      window.clearInterval(interval);
+      window.removeEventListener('focus', refreshOnReturn);
+      document.removeEventListener('visibilitychange', refreshOnReturn);
+    };
   }, [activeRoom?.id]);
 
   const [showBansModal, setShowBansModal] = useState(false);
