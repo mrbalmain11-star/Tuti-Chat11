@@ -3198,7 +3198,7 @@ export const VoiceRoomModal: React.FC = () => {
               </div>
 
               {roomGiftStatsError && <p className="text-xs text-rose-300">تعذر عرض الإحصائيات: {roomGiftStatsError}</p>}
-              <p className="text-[10px] text-slate-400">كأس الغرفة: الثروة والسحر حسب الفترة. لا تُعرض أرقام غير مؤكدة.</p>
+              <p className="text-[10px] text-slate-400">الثروة = الهدايا المرسلة، والسحر = الهدايا المستلمة داخل الغرفة. إجمالي القيمتين متساوٍ لأن كل هدية مسجلة لها مرسل ومستلم.</p>
               <div className="grid grid-cols-4 gap-1.5 text-center text-[10px]">
                 <span className="text-amber-300 font-bold">الكأس</span>
                 <span className="text-slate-200">يومياً</span>
@@ -3207,11 +3207,11 @@ export const VoiceRoomModal: React.FC = () => {
                 {(['الثروة', 'السحر'] as const).map(label => (
                   <React.Fragment key={label}>
                     <span className="rounded-lg bg-amber-500/10 py-2 font-bold text-amber-300">{label}</span>
-                    {[1, 2, 3].map(period => <span key={period} className="rounded-lg bg-white/5 py-2 text-slate-300" title="بانتظار مصدر بيانات معتمد">—</span>)}
+                    {(['today', 'week', 'month'] as const).map(period => <span key={period} className="rounded-lg bg-white/5 py-2 text-slate-300" title={label === 'الثروة' ? 'قيمة الهدايا المرسلة داخل الغرفة' : 'قيمة الهدايا المستلمة داخل الغرفة'}>{roomGiftStats ? roomGiftStats[period].toLocaleString('en-US') : '—'}</span>)}
                   </React.Fragment>
                 ))}
               </div>
-              <p className="text-[10px] text-slate-400">مساهمات الهدايا المسجلة بالغرفة (منفصلة عن كأس الثروة والسحر):</p>
+              <p className="text-[10px] text-slate-400">إجمالي قيمة الهدايا المسجلة بالغرفة حسب الفترة:</p>
               <div className="grid grid-cols-2 gap-2.5">
                 <div className="p-3 bg-purple-950/40 rounded-2xl border border-purple-400/30 text-center">
                   <span className="text-[10px] text-slate-400 block mb-1">كأس الغرفة والترتيب:</span>
