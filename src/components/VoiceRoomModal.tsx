@@ -2156,6 +2156,7 @@ export const VoiceRoomModal: React.FC = () => {
               <div className="mt-2 flex items-center justify-center gap-2 text-xs font-bold">
                 <span className="rounded-full bg-amber-500/15 border border-amber-400/40 px-3 py-1 text-amber-200">الثروة Lv.{selectedMicUser.user.wealthLevel}</span>
                 <span className="rounded-full bg-fuchsia-500/15 border border-fuchsia-400/40 px-3 py-1 text-fuchsia-200">السحر Lv.{selectedMicUser.user.charmLevel}</span>
+                {Number(selectedMicUser.user.vipLevel || 0) > 0 && <span className="rounded-full border border-yellow-400/50 bg-yellow-500/15 px-3 py-1 text-yellow-200">VIP {selectedMicUser.user.vipLevel}</span>}
               </div>
               <ProfileCpCard userId={selectedMicUser.user.id} compact />
               <button type="button" onClick={() => { const target = selectedMicUser.user; setSelectedMicUser(null); handleOpenUserProfile(target); }} className="mx-auto mt-3 flex items-center gap-2 rounded-full border border-cyan-400/50 bg-cyan-500/15 px-4 py-2 text-xs font-bold text-cyan-100">
