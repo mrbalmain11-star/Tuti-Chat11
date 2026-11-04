@@ -79,9 +79,9 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
             </div>
             <div className="flex min-w-[58px] flex-col items-center gap-1 text-center">
               {Number.isFinite(Number(link.level)) && Number(link.level) > 0 ? (
-                <div className="flex h-14 w-14 flex-col items-center justify-center rounded-full border-2 border-amber-200 bg-gradient-to-br from-[#6d3b15] via-[#e9ba64] to-[#67310e] text-[#fff7d6] shadow-[inset_0_1px_5px_rgba(255,255,255,.6),0_3px_10px_rgba(0,0,0,.4)]" aria-label={`مستوى العلاقة ${link.level}`}>
-                  <span className="text-[9px] font-bold leading-none">CP</span>
-                  <span className="text-base font-black leading-tight">{link.level}</span>
+                <div className="relative flex h-[76px] w-[76px] items-center justify-center" aria-label={`مستوى العلاقة ${link.level}`}>
+                  {link.typeLabel?.includes('حب') || /love/i.test(link.typeLabel || '') ? <img src="/assets/royal-cp-heart.svg" alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-contain" /> : <span className="absolute inset-2 rounded-full border-2 border-amber-200 bg-gradient-to-br from-[#6d3b15] via-[#e9ba64] to-[#67310e]" />}
+                  <span className="relative z-10 mt-1 rounded-md bg-[#54132d]/60 px-1 text-sm font-black text-white drop-shadow-[0_1px_2px_#33051b]">{link.level}</span>
                 </div>
               ) : <span className="text-[11px] font-bold text-amber-200">CP</span>}
               <span className="max-w-[90px] break-words text-[10px] font-bold text-amber-100">{link.typeLabel}</span>
