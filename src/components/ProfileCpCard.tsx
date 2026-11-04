@@ -67,10 +67,9 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
       // Refresh events are blocked during unlink; older responses were invalidated before the mutation.
       const { data, error: reloadError } = await stagingBackend.rpc('totichat_profile_cp', { p_user_id: userId });
       if (reloadError) {
-        setLinks([]);
-        onLinksChangeRef.current?.([]);
         setError(true);
-        throw reloadError;
+        window.alert('تم فك العلاقة، لكن تعذر تحديث القائمة. أعد المحاولة عند توفر الاتصال.');
+        return;
       }
       const next: CpLink[] = Array.isArray(data) ? data.filter((item: CpLink) => item.accepted === true) : [];
       setLinks(next);
