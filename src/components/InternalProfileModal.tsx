@@ -111,7 +111,7 @@ export const InternalProfileModal: React.FC = () => {
   const [myPublicId, setMyPublicId] = useState<number | null>(null);
   const [displaySpecialId, setDisplaySpecialId] = useState<string | null>(null);
   const [savedCover, setSavedCover] = useState<string>('');
-  const [visitorStatus, setVisitorStatus] = useState<{ wealthLevel: number; charmLevel: number; vipLevel: number } | null>(null);
+  const [visitorStatus, setVisitorStatus] = useState<{ userId: string; wealthLevel: number; charmLevel: number; vipLevel: number } | null>(null);
   useEffect(() => {
     let active = true;
     setVisitorStatus(null);
@@ -130,6 +130,7 @@ export const InternalProfileModal: React.FC = () => {
           });
         }
         setVisitorStatus({
+          userId: user.id,
           wealthLevel: getLevelFromExp(Number(data.wealth_exp) || 0, 260),
           charmLevel: getLevelFromExp(Number(data.charm_exp) || 0, 260),
           vipLevel: Math.max(0, Number(data.vip_tier) || 0),
@@ -137,7 +138,7 @@ export const InternalProfileModal: React.FC = () => {
       }).catch(error => console.error('Visitor levels load failed:', error));
     return () => { active = false; };
   }, [openInternalProfileModal, isSelf, user.id]);
-  const displayedUser = !isSelf && visitorStatus ? { ...user, ...visitorStatus } : user;
+  const displayedUser = !isSelf && visitorStatus?.userId === user.id ? { ...user, ...visitorStatus } : user;
   const [visitorPublicId, setVisitorPublicId] = useState<string>('');
   const [visitorCover, setVisitorCover] = useState<string>('');
   const [visitorAvatar, setVisitorAvatar] = useState<string>('');
