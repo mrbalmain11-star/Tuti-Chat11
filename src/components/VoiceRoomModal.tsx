@@ -299,14 +299,20 @@ export const VoiceRoomModal: React.FC = () => {
         const { data, error } = await stagingBackend.rpc('totichat_room_gift_totals', { p_room_id: statsRoomId });
         if (error) throw error;
         if (!active) return;
-        const totals = { today: Number(data?.today), week: Number(data?.week), month: Number(data?.month) };
-        if (Object.values(totals).some(value => !Number.isFinite(value) || value < 0)) {
+        if (!data || ['today', 'week', 'month'].some(key =>
+          data[key] === null || data[key] === undefined || data[key] === '' ||
+          !Number.isFinite(Number(data[key])) || Number(data[key]) < 0
+        )) {
           throw new Error('استجابة إحصائيات الغرفة غير صالحة');
         }
+        const totals = { today: Number(data.today), week: Number(data.week), month: Number(data.month) };
         setRoomGiftStats(totals);
         setRoomGiftStatsError('');
       } catch (error) {
-        if (active) setRoomGiftStatsError(error instanceof Error ? error.message : 'تعذر جلب إحصائيات الهدايا');
+        if (active) {
+          setRoomGiftStats(null);
+          setRoomGiftStatsError(error instanceof Error ? error.message : 'تعذر جلب إحصائيات الهدايا');
+        }
       } finally {
         pending = false;
       }
