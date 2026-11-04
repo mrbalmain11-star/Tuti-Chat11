@@ -1950,6 +1950,15 @@ export const VoiceRoomModal: React.FC = () => {
                   <button type="button" onClick={openMusicPicker} className="flex items-center justify-center gap-2 w-full rounded-xl bg-gradient-to-r from-[#b7812e] to-[#f1d18a] text-black font-bold py-3">
                     <FolderOpen size={20}/> اختيار موسيقى من الهاتف
                   </button>
+
+                  {musicQueue.length > 0 && <div className="rounded-xl border border-amber-500/20 bg-black/30 p-3 max-h-36 overflow-y-auto space-y-1"><p className="text-xs text-amber-300 mb-2">قائمة الأغاني ({musicQueue.length})</p>{musicQueue.map((file,index)=><button key={index} disabled={musicBusy} onClick={()=>void playQueuedMusic(file,index)} className={'w-full text-right text-xs truncate rounded-lg px-2 py-2 '+(musicIndex===index?'bg-amber-500/20 text-amber-200':'text-white/70')}>{index+1}. {file.name}</button>)}</div>}
+                  <button onClick={() => {void stopRoomMusic().then(()=>{setMusicStatus('stopped');setMusicFileName('');setMusicProgress({position:0,duration:0});musicRoomRef.current=null;}).catch(error=>{console.error(error);showToast('تعذر إيقاف الموسيقى');});}} className="w-full border border-amber-500/40 rounded-xl py-2 text-amber-100 text-sm">إيقاف نهائي</button>
+                </>
+              ) : <p className="text-center text-sm text-amber-100/70">التحكم ببث الموسيقى متاح لإدارة الغرفة فقط.</p>}
+            </div>
+          </div>
+        )}
+
                   <input ref={musicPickerRef} type="file" multiple accept="audio/*" className="hidden" onChange={e => {
                     musicPickerPendingRef.current = false;
                     setShowMusicPlayerModal(true);
@@ -1966,13 +1975,6 @@ export const VoiceRoomModal: React.FC = () => {
                     setMusicSelectionKeys(previous => Array.from(new Set([...previous, ...unique.map(musicFileKey)])));
                     setMusicSelectionOpen(true);
                   }}/> 
-                  {musicQueue.length > 0 && <div className="rounded-xl border border-amber-500/20 bg-black/30 p-3 max-h-36 overflow-y-auto space-y-1"><p className="text-xs text-amber-300 mb-2">قائمة الأغاني ({musicQueue.length})</p>{musicQueue.map((file,index)=><button key={index} disabled={musicBusy} onClick={()=>void playQueuedMusic(file,index)} className={'w-full text-right text-xs truncate rounded-lg px-2 py-2 '+(musicIndex===index?'bg-amber-500/20 text-amber-200':'text-white/70')}>{index+1}. {file.name}</button>)}</div>}
-                  <button onClick={() => {void stopRoomMusic().then(()=>{setMusicStatus('stopped');setMusicFileName('');setMusicProgress({position:0,duration:0});musicRoomRef.current=null;}).catch(error=>{console.error(error);showToast('تعذر إيقاف الموسيقى');});}} className="w-full border border-amber-500/40 rounded-xl py-2 text-amber-100 text-sm">إيقاف نهائي</button>
-                </>
-              ) : <p className="text-center text-sm text-amber-100/70">التحكم ببث الموسيقى متاح لإدارة الغرفة فقط.</p>}
-            </div>
-          </div>
-        )}
 
         {musicSelectionOpen && (
           <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-lg flex items-center justify-center p-4" dir="rtl">
