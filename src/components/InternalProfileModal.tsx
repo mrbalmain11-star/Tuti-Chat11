@@ -439,7 +439,7 @@ export const InternalProfileModal: React.FC = () => {
           {hasConfirmedCp && <div className="flex flex-col items-center gap-1.5 mb-1"><button type="button" disabled={!cpPartnerId} onClick={() => { if (!cpPartnerId || !stagingBackend) return; void (async () => {
             const { data, error } = await stagingBackend.from('profiles').select('id,display_name,avatar_url').eq('id', cpPartnerId).maybeSingle();
             if (error || !data) { showToast('تعذر فتح ملف الشريك'); return; }
-            const avatar = data.avatar_url ? (/^https?:\\/\\//.test(data.avatar_url) ? data.avatar_url : stagingBackend.storage.from('profile-avatars').getPublicUrl(data.avatar_url).data.publicUrl) : '';
+            const avatar = data.avatar_url ? (data.avatar_url.startsWith('https://') || data.avatar_url.startsWith('http://') ? data.avatar_url : stagingBackend.storage.from('profile-avatars').getPublicUrl(data.avatar_url).data.publicUrl) : '';
             setInternalProfileUser({ ...currentUser, id: data.id, name: data.display_name || 'مستخدم', nickname: data.display_name || 'مستخدم', avatar, wealthExp: 0, charmExp: 0, coins: 0, diamonds: 0, vipLevel: 0 });
           })().catch(() => showToast('تعذر فتح ملف الشريك')); }} className="w-13 h-13 rounded-full border-2 border-amber-200 bg-amber-100 flex items-center justify-center overflow-hidden disabled:opacity-60" aria-label="فتح ملف شريك CP">{cpPartnerAvatar ? <img src={cpPartnerAvatar} alt="شريك CP" className="w-full h-full object-cover" /> : <Heart className="w-6 h-6 text-rose-500" />}</button></div>}
           {!hasConfirmedCp && <div className="flex flex-col items-center gap-1.5 mb-1">
