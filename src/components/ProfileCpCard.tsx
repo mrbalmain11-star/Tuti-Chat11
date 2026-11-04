@@ -22,7 +22,7 @@ export const ProfileCpCard: React.FC<{ userId: string; compact?: boolean; refres
       } catch (e) { if (active) setError(true); console.error('CP profile load failed', e); }
       finally { if (active) setLoading(false); }
     };
-    setLoading(true); setLinks([]); void load();
+    setLoading(true); setLinks([]); onLinksChange?.([]); void load();
     const refresh = () => { void load(); };
     window.addEventListener('focus', refresh);
     return () => { active = false; window.removeEventListener('focus', refresh); };
@@ -38,7 +38,7 @@ export const ProfileCpCard: React.FC<{ userId: string; compact?: boolean; refres
       });
       if (actionError) throw actionError;
       const { data, error: reloadError } = await stagingBackend.rpc('totichat_profile_cp', { p_user_id: userId });
-      if (reloadError) throw reloadError;
+      if (reloadError) { setLinks([]); onLinksChange?.([]); throw reloadError; }
       const next: CpLink[] = Array.isArray(data) ? data.filter((item: CpLink) => item.accepted === true) : [];
       setLinks(next);
       onLinksChange?.(next);
