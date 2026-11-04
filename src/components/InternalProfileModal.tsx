@@ -646,7 +646,7 @@ export const InternalProfileModal: React.FC = () => {
             )}
           </div>
 
-          <ProfileCpCard userId={user.id} refreshKey={cpRefreshKey} onLinksChange={links => { const confirmed = links.find(link => link.accepted); setCpPartnerAvatar(confirmed?.partnerAvatar || null); setCpPartnerId(confirmed?.partnerId || null); setHasConfirmedCp(Boolean(confirmed)); }} />
+          <ProfileCpCard key={user.id} userId={user.id} userName={user.nickname || user.name} userAvatar={user.avatar} refreshKey={cpRefreshKey} onLinksChange={links => { const confirmed = links.find(link => link.accepted); setCpPartnerAvatar(confirmed?.partnerAvatar || null); setCpPartnerId(confirmed?.partnerId || null); setHasConfirmedCp(Boolean(confirmed)); }} />
           {/* Realistic Dynamic Agency Rectangle (مستطيل الوكالة الفعلي مطابق للصورة تماماً) */}
           {verifiedAgency && (
             <AgencyProfileCard
