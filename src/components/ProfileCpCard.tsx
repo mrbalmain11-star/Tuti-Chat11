@@ -15,7 +15,7 @@ export const ProfileCpCard: React.FC<{ userId: string; compact?: boolean; refres
       try {
         const { data, error: fetchError } = await stagingBackend.rpc('totichat_profile_cp', { p_user_id: userId });
         if (fetchError) throw fetchError;
-        if (active) { const next = Array.isArray(data) ? data : []; setLinks(next); onLinksChange?.(next); setError(false); }
+        if (active) { const next: CpLink[] = Array.isArray(data) ? data.filter((link: CpLink) => link.accepted === true) : []; setLinks(next); onLinksChange?.(next); setError(false); }
       } catch (e) { if (active) setError(true); console.error('CP profile load failed', e); }
       finally { if (active) setLoading(false); }
     };
