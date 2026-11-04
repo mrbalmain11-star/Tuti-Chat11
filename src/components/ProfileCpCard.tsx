@@ -5,6 +5,14 @@ import { useApp } from '../context/AppContext';
 
 type CpLink = { typeId: string; typeLabel: string; level: number; partnerId: string; partnerName: string; partnerAvatar?: string | null; partnerPublicId?: number; accepted: boolean };
 
+const isConfirmedCpLink = (value: unknown): value is CpLink => {
+  if (!value || typeof value !== 'object') return false;
+  const link = value as Partial<CpLink>;
+  return link.accepted === true && typeof link.typeId === 'string' && link.typeId.length > 0
+    && typeof link.partnerId === 'string' && link.partnerId.length > 0
+    && typeof link.partnerName === 'string' && typeof link.typeLabel === 'string';
+};
+
 export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAvatar?: string | null; compact?: boolean; refreshKey?: number; onLinksChange?: (links: CpLink[]) => void; onPartnerClick?: (partnerId: string) => void }> = ({ userId, userName, userAvatar, compact = false, refreshKey = 0, onLinksChange, onPartnerClick }) => {
   const { currentUser } = useApp();
   const [endingPartner, setEndingPartner] = useState<string | null>(null);
@@ -30,7 +38,7 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
         const { data, error: fetchError } = await stagingBackend.rpc('totichat_profile_cp', { p_user_id: userId });
         if (fetchError) throw fetchError;
         if (!Array.isArray(data)) throw new Error('Invalid CP relationship response');
-        if (active && requestId === requestVersion.current) { const next: CpLink[] = data.filter((link: CpLink) => link.accepted === true); setLinks(next); onLinksChangeRef.current?.(next); setError(false); }
+        if (active && requestId === requestVersion.current) { const next: CpLink[] = data.filter(isConfirmedCpLink); setLinks(next); onLinksChangeRef.current?.(next); setError(false); }
       } catch (e) { if (active && requestId === requestVersion.current) { setError(true); } console.error('CP profile load failed', e); }
       finally { if (active && requestId === requestVersion.current) setLoading(false); }
     };
@@ -76,7 +84,7 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
         window.alert('تم فك العلاقة، لكن تعذر تحديث القائمة. أعد المحاولة عند توفر الاتصال.');
         return;
       }
-      const next: CpLink[] = data.filter((item: CpLink) => item.accepted === true);
+      const next: CpLink[] = data.filter(isConfirmedCpLink);
       setLinks(next);
       onLinksChangeRef.current?.(next);
       setError(false);
