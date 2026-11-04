@@ -21,7 +21,7 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
         const { data, error: fetchError } = await stagingBackend.rpc('totichat_profile_cp', { p_user_id: userId });
         if (fetchError) throw fetchError;
         if (active && requestId === latestRequest) { const next: CpLink[] = Array.isArray(data) ? data.filter((link: CpLink) => link.accepted === true) : []; setLinks(next); onLinksChange?.(next); setError(false); }
-      } catch (e) { if (active && requestId === latestRequest) { setLinks([]); onLinksChange?.([]); setError(true); } console.error('CP profile load failed', e); }
+      } catch (e) { if (active && requestId === latestRequest) { setError(true); } console.error('CP profile load failed', e); }
       finally { if (active && requestId === latestRequest) setLoading(false); }
     };
     setLoading(true); setLinks([]); onLinksChange?.([]); void load();
@@ -65,10 +65,9 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
     <img src="/assets/royal-cp-ornament.svg" alt="" aria-hidden="true" className="pointer-events-none absolute inset-0 z-0 h-full w-full object-fill opacity-90" />
     <div className="relative z-10">
     <div className="flex items-center gap-2 text-amber-100"><span className="text-sm font-black">علاقات CP</span></div>
-    {loading ? <p className="mt-2 text-xs text-slate-500">جارٍ تحميل العلاقات...</p> :
-      error ? <p className="mt-2 text-xs text-rose-500">تعذر تحميل علاقات CP</p> :
-      links.length === 0 ? null :
-      <div className="mt-3 space-y-3">{links.map(link => (
+    {error && <p role="status" className="mt-2 text-xs text-rose-200">تعذر تحديث العلاقات، تُعرض آخر بيانات مؤكدة.</p>}
+    {loading && <p role="status" className="mt-2 text-xs text-amber-100/70">جارٍ تحديث العلاقات...</p>}
+    <div className="mt-3 space-y-3">{links.map(link => (
         <div key={link.typeId + link.partnerId} className="rounded-2xl border border-amber-300/50 bg-[#2c142b]/75 p-2.5 text-amber-50 backdrop-blur-sm">
           <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1.5">
             <div className="flex min-w-0 flex-col items-center gap-1 text-center">
