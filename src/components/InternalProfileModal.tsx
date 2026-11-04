@@ -646,7 +646,12 @@ export const InternalProfileModal: React.FC = () => {
             )}
           </div>
 
-          <ProfileCpCard key={user.id} userId={user.id} userName={user.nickname || user.name} userAvatar={user.avatar} refreshKey={cpRefreshKey} onLinksChange={links => { const confirmed = links.find(link => link.accepted); setCpPartnerAvatar(confirmed?.partnerAvatar || null); setCpPartnerId(confirmed?.partnerId || null); setHasConfirmedCp(Boolean(confirmed)); }} />
+          <ProfileCpCard key={user.id} userId={user.id} userName={user.nickname || user.name} userAvatar={user.avatar} onPartnerClick={partnerId => { if (!stagingBackend) return; void (async () => {
+            const { data, error } = await stagingBackend.from('profiles').select('id,display_name,avatar_url').eq('id', partnerId).maybeSingle();
+            if (error || !data) { showToast('تعذر فتح ملف الشريك'); return; }
+            const avatar = data.avatar_url ? (/^https?:\/\//.test(data.avatar_url) ? data.avatar_url : stagingBackend.storage.from('profile-avatars').getPublicUrl(data.avatar_url).data.publicUrl) : '';
+            setInternalProfileUser({ ...currentUser, id: data.id, name: data.display_name || 'مستخدم', nickname: data.display_name || 'مستخدم', avatar, wealthExp: 0, charmExp: 0, coins: 0, diamonds: 0, vipLevel: 0 });
+          })().catch(() => showToast('تعذر فتح ملف الشريك')); }} refreshKey={cpRefreshKey} onLinksChange={links => { const confirmed = links.find(link => link.accepted); setCpPartnerAvatar(confirmed?.partnerAvatar || null); setCpPartnerId(confirmed?.partnerId || null); setHasConfirmedCp(Boolean(confirmed)); }} />
           {/* Realistic Dynamic Agency Rectangle (مستطيل الوكالة الفعلي مطابق للصورة تماماً) */}
           {verifiedAgency && (
             <AgencyProfileCard
