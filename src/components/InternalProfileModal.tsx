@@ -136,9 +136,10 @@ export const InternalProfileModal: React.FC = () => {
   }, [openInternalProfileModal, isSelf, user.id]);
   const displayedUser = !isSelf && visitorStatus?.userId === user.id ? { ...user, ...visitorStatus } : user;
   const [visitorAssets, setVisitorAssets] = useState<{ userId: string; publicId: string; cover: string; avatar: string } | null>(null);
-  const visitorPublicId = visitorAssets?.userId === user.id ? visitorAssets.publicId : '';
-  const visitorCover = visitorAssets?.userId === user.id ? visitorAssets.cover : '';
-  const visitorAvatar = visitorAssets?.userId === user.id ? visitorAssets.avatar : '';
+  const visitorAssetsForUser = openInternalProfileModal && !isSelf && visitorAssets?.userId === user.id ? visitorAssets : null;
+  const visitorPublicId = visitorAssetsForUser?.publicId || '';
+  const visitorCover = visitorAssetsForUser?.cover || '';
+  const visitorAvatar = visitorAssetsForUser?.avatar || '';
   useEffect(() => {
     let active = true;
     if (!openInternalProfileModal || isSelf || !stagingBackend || !user.id) return;
