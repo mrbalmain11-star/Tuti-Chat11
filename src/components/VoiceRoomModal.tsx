@@ -2231,7 +2231,7 @@ export const VoiceRoomModal: React.FC = () => {
                 <span className="rounded-full bg-fuchsia-500/15 border border-fuchsia-400/40 px-3 py-1 text-fuchsia-200">السحر Lv.{selectedMicUser.user.charmLevel}</span>
                 {Number(selectedMicUser.user.vipLevel || 0) > 0 && <span className="rounded-full border border-yellow-400/50 bg-yellow-500/15 px-3 py-1 text-yellow-200">VIP {selectedMicUser.user.vipLevel}</span>}
               </div>
-              <ProfileCpCard userId={selectedMicUser.user.id} userName={selectedMicUser.user.nickname || selectedMicUser.user.name} userAvatar={selectedMicUser.user.avatar} compact />
+              <ProfileCpCard key={selectedMicUser.user.id} userId={selectedMicUser.user.id} userName={selectedMicUser.user.nickname || selectedMicUser.user.name} userAvatar={selectedMicUser.user.avatar} compact />
               <button type="button" onClick={() => { const target = selectedMicUser.user; setSelectedMicUser(null); handleOpenUserProfile(target); }} className="mx-auto mt-4 flex min-h-12 w-[min(100%,340px)] items-center justify-center gap-2 rounded-full bg-gradient-to-l from-emerald-400 via-green-400 to-teal-500 px-5 py-3 text-base font-black text-emerald-950 shadow-[0_8px_22px_rgba(16,185,129,.28)] transition active:scale-[.98]">
                 <CircleUserRound className="h-5 w-5" /> المزيد
               </button>
