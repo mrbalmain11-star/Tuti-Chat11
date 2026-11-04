@@ -434,6 +434,7 @@ export const InternalProfileModal: React.FC = () => {
             ========================================================================= */}
         <div className="relative -mt-16 px-6 flex items-end justify-between z-20 pointer-events-auto">
           {/* Search for CP (ابحث عن CP) Container */}
+          {hasConfirmedCp && <div className="flex flex-col items-center gap-1.5 mb-1"><div className="w-13 h-13 rounded-full border-2 border-amber-200 bg-amber-100 flex items-center justify-center overflow-hidden">{cpPartnerAvatar ? <img src={cpPartnerAvatar} alt="شريك CP" className="w-full h-full object-cover" /> : <Heart className="w-6 h-6 text-rose-500" />}</div></div>}
           {!hasConfirmedCp && <div className="flex flex-col items-center gap-1.5 mb-1">
             {/* Glass Orb with "+" icon */}
             <div
