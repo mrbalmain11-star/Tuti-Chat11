@@ -152,17 +152,30 @@ export const InternalProfileModal: React.FC = () => {
       const { data: profile, error } = await client.from('profiles')
         .select('public_id,cover_path,avatar_url,bio,display_name').eq('id', user.id).maybeSingle();
       if (error) throw error;
-      const { data: special } = await client.rpc('phase5_special_id_status', { p_target: user.id });
-      const status = special as { assigned?: boolean; publicId?: string } | null;
       if (!active) return;
-      const publicId = status?.assigned && status.publicId ? String(status.publicId) : String(profile?.public_id || '');
-      // Stored images can be full URLs or storage object paths. Avoid wrapping
-      // an already-public URL in another storage URL (which breaks the image).
+      // The public ID lookup must not delay the visitor's real profile details.
       const resolveProfileImage = (value: string) =>
         /^(https?:\/\/|data:image\/)/i.test(value)
           ? value
           : client.storage.from('profile-avatars').getPublicUrl(value).data.publicUrl;
-      setVisitorAssets({ userId: user.id, publicId, cover: profile?.cover_path ? resolveProfileImage(profile.cover_path) : '', avatar: profile?.avatar_url ? resolveProfileImage(profile.avatar_url) : '', bio: profile?.bio || '', name: profile?.display_name || '' });
+      const baseAssets = {
+        userId: user.id,
+        publicId: String(profile?.public_id || ''),
+        cover: profile?.cover_path ? resolveProfileImage(profile.cover_path) : '',
+        avatar: profile?.avatar_url ? resolveProfileImage(profile.avatar_url) : '',
+        bio: profile?.bio || '',
+        name: profile?.display_name || '',
+      };
+      setVisitorAssets(baseAssets);
+      const { data: special, error: specialError } = await client.rpc('phase5_special_id_status', { p_target: user.id });
+      if (specialError) {
+        console.error('Visitor special ID unavailable:', specialError);
+        return;
+      }
+      const status = special as { assigned?: boolean; publicId?: string } | null;
+      if (active && status?.assigned && status.publicId) {
+        setVisitorAssets({ ...baseAssets, publicId: String(status.publicId) });
+      }
     })().catch(error => console.error('Visitor profile load failed:', error));
     return () => { active = false; };
   }, [openInternalProfileModal, isSelf, user.id]);
