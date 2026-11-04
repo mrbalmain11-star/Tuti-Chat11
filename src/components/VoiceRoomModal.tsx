@@ -363,7 +363,8 @@ export const VoiceRoomModal: React.FC = () => {
     // Preserve the player while Android's document picker takes focus.
     setShowMusicPlayerModal(true);
     musicPickerPendingRef.current = true;
-    musicPickerRef.current?.click();
+    // The native file input is activated by its label's real user gesture.
+    // Avoid synthetic .click() on a display:none input in Android WebView.
   };
   const musicFileKey = (file: File) => `${file.name}:${file.size}:${file.lastModified}`;
   const cancelMusicSelection = () => { setMusicSelectionOpen(false); setMusicSelection([]); setMusicSelectionKeys([]); showToast('تم إلغاء إضافة الأغاني'); };
@@ -1952,9 +1953,9 @@ export const VoiceRoomModal: React.FC = () => {
                     <button aria-label="تكرار" onClick={() => setMusicRepeat(v=>!v)} className={musicRepeat ? 'text-amber-400' : 'text-white/60'}><Repeat size={22}/></button>
                   </div>
                   <div dir="ltr" className="flex items-center gap-3"><Volume1 size={18} className="text-amber-300"/><input aria-label="صوت الموسيقى" type="range" min={0} max={100} value={musicVolume} onChange={e => {const v=Number(e.target.value); setMusicVolume(v); setRoomMusicVolume(v/100);}} className="flex-1 accent-[#d8aa52]"/><Volume2 size={18} className="text-amber-300"/></div>
-                  <button type="button" onClick={openMusicPicker} className="flex items-center justify-center gap-2 w-full rounded-xl bg-gradient-to-r from-[#b7812e] to-[#f1d18a] text-black font-bold py-3">
+                  <label htmlFor="totichat-room-music-file" onClick={openMusicPicker} className="flex items-center justify-center gap-2 w-full rounded-xl bg-gradient-to-r from-[#b7812e] to-[#f1d18a] text-black font-bold py-3 cursor-pointer">
                     <FolderOpen size={20}/> اختيار موسيقى من الهاتف
-                  </button>
+                  </label>
 
                   {musicQueue.length > 0 && <div className="rounded-xl border border-amber-500/20 bg-black/30 p-3 max-h-36 overflow-y-auto space-y-1"><p className="text-xs text-amber-300 mb-2">قائمة الأغاني ({musicQueue.length})</p>{musicQueue.map((file,index)=><button key={index} disabled={musicBusy} onClick={()=>void playQueuedMusic(file,index)} className={'w-full text-right text-xs truncate rounded-lg px-2 py-2 '+(musicIndex===index?'bg-amber-500/20 text-amber-200':'text-white/70')}>{index+1}. {file.name}</button>)}</div>}
                   <button onClick={() => {void stopRoomMusic().then(()=>{setMusicStatus('stopped');setMusicFileName('');setMusicProgress({position:0,duration:0});musicRoomRef.current=null;}).catch(error=>{console.error(error);showToast('تعذر إيقاف الموسيقى');});}} className="w-full border border-amber-500/40 rounded-xl py-2 text-amber-100 text-sm">إيقاف نهائي</button>
@@ -1964,7 +1965,7 @@ export const VoiceRoomModal: React.FC = () => {
           </div>
         )}
 
-                  <input ref={musicPickerRef} type="file" multiple accept="audio/*" className="hidden" onChange={e => {
+                  <input id="totichat-room-music-file" ref={musicPickerRef} type="file" multiple accept="audio/*" className="absolute w-px h-px opacity-0 pointer-events-none" onChange={e => {
                     musicPickerReturnAtRef.current = Date.now();
                     musicPickerPendingRef.current = false;
                     setShowMusicPlayerModal(true);
@@ -1993,7 +1994,7 @@ export const VoiceRoomModal: React.FC = () => {
                 <p className="text-sm text-amber-100/70 mt-2">حدد الأغاني التي تريد إضافتها، ثم اضغط إضافة أو إلغاء.</p>
                 <p className="text-xs text-amber-300 mt-2">المحدد: {musicSelectionKeys.length} من {musicSelection.length}</p>
                 <p className="text-xs text-amber-100/70 mt-2">من ملفات الهاتف تگدر تحدد عدة أغاني بضغطة مطوّلة ثم تحديد الباقي. وإذا جهازك يختار أغنية واحدة فقط، اضغط «اختيار المزيد» وراح نجمعهن كلهن قبل الإضافة.</p>
-                <button type="button" onClick={openMusicPicker} className="mt-3 w-full flex items-center justify-center gap-2 rounded-xl border border-amber-400/60 bg-amber-400/10 py-3 font-bold text-amber-200"><Plus size={18}/> اختيار المزيد من الأغاني</button>
+                <label htmlFor="totichat-room-music-file" onClick={openMusicPicker} className="mt-3 w-full flex items-center justify-center gap-2 rounded-xl border border-amber-400/60 bg-amber-400/10 py-3 font-bold text-amber-200 cursor-pointer"><Plus size={18}/> اختيار المزيد من الأغاني</label>
               </div>
               <div className="flex-1 overflow-y-auto p-3 space-y-2">
                 {musicSelection.map(file => (
