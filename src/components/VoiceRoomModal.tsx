@@ -209,14 +209,23 @@ export const VoiceRoomModal: React.FC = () => {
       try {
         const { data, error } = await stagingBackend.rpc('phase2_room_members_visual_v2', { p_room_id: roomId });
         if (!mounted) return;
-        if (error || !Array.isArray(data)) {
+        if (error || !Array.isArray(data) || data.some(member =>
+          !member || typeof member.user_id !== 'string' || !member.user_id ||
+          typeof member.display_name !== 'string' ||
+          (member.avatar_url !== null && typeof member.avatar_url !== 'string') ||
+          (member.seat_no !== null && (!Number.isInteger(member.seat_no) || member.seat_no < 0))
+        )) {
+          setServerRoomMembers([]);
           setServerMembersStatus('error');
           return;
         }
         setServerRoomMembers(data);
         setServerMembersStatus('ready');
       } catch {
-        if (mounted) setServerMembersStatus('error');
+        if (mounted) {
+          setServerRoomMembers([]);
+          setServerMembersStatus('error');
+        }
       } finally {
         pending = false;
       }
