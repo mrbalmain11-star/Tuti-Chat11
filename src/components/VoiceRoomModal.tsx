@@ -197,7 +197,7 @@ export const VoiceRoomModal: React.FC = () => {
   const [serverRoomMembers, setServerRoomMembers] = useState<Array<{user_id:string;display_name:string;avatar_url:string|null;seat_no:number|null}>>([]);
   const [serverMembersStatus, setServerMembersStatus] = useState<'loading'|'ready'|'error'>('loading');
   useEffect(() => {
-    if (!showMembersModal || !activeRoom?.id || !stagingBackend) return;
+    if (!activeRoom?.id || !stagingBackend) return;
     let mounted = true;
     setServerMembersStatus('loading');
     void stagingBackend.rpc('phase2_room_members_visual_v2', { p_room_id: activeRoom.id }).then(({data,error}) => {
@@ -1072,7 +1072,7 @@ export const VoiceRoomModal: React.FC = () => {
                 <div className="relative w-8 h-8 rounded-full border-2 border-amber-300/80 bg-purple-950/60 flex items-center justify-center shadow-md">
                   <Users className="w-4 h-4 text-amber-200" />
                 </div>
-                <span className="text-xs font-mono font-bold text-white/90">{activeRoom.listenersCount}</span>
+                <span className="text-xs font-mono font-bold text-white/90">{(serverMembersStatus === 'ready' ? serverRoomMembers.length : activeRoom.listenersCount)}</span>
                 <div className="flex items-center -space-x-2 space-x-reverse" aria-label="صور أعضاء الغرفة">
                   {activeRoom.memberAvatars.slice(0, 3).map((avatar, index) => (
                     <img key={`${avatar}-${index}`} src={avatar} alt="عضو في الغرفة" className="h-6 w-6 rounded-full border-2 border-[#1b0d3a] object-cover bg-slate-800" />
@@ -2642,7 +2642,7 @@ export const VoiceRoomModal: React.FC = () => {
                     {title:'ترتيب المقاعد',value:`${activeRoom.seats.length} مقعداً`,action:()=>{setShowRoomInfoModal(false);setShowSeatLayouts(true);}},
                     {title:'المحظورون',value:'عرض القائمة',action:()=>{setShowRoomInfoModal(false);setShowBansModal(true);}},
                     {title:'المشرفون',value:`${activeRoom.moderatorIds?.length ?? 0} مشرف`,action:()=>{setShowRoomInfoModal(false);setShowMembersModal(true);}},
-                    {title:'أعضاء الغرفة',value:`${activeRoom.listenersCount} عضو`,action:()=>{setShowRoomInfoModal(false);setShowMembersModal(true);}},
+                    {title:'أعضاء الغرفة',value:`${(serverMembersStatus === 'ready' ? serverRoomMembers.length : activeRoom.listenersCount)} عضو`,action:()=>{setShowRoomInfoModal(false);setShowMembersModal(true);}},
                     {title:'قواعد الغرفة',value:'عرض وتعديل',action:()=>{setShowRoomInfoModal(false);setRoomManagementSection('rules');}},
                     {title:'إعدادات متقدمة',value:'صلاحيات الإدارة',action:()=>{setShowRoomInfoModal(false);setShowMembersModal(true);}},
                     {title:'الرسائل التلقائية',value:'إدارة النص',action:()=>{setShowRoomInfoModal(false);setRoomManagementSection('auto_message');}},
@@ -3145,7 +3145,7 @@ export const VoiceRoomModal: React.FC = () => {
                   <Users className="w-4 h-4 text-purple-400" />
                   <span>عدد الحضور المعروض حالياً:</span>
                 </div>
-                <span className="font-mono font-bold text-white">{activeRoom.listenersCount} مستمع حالياً</span>
+                <span className="font-mono font-bold text-white">{(serverMembersStatus === 'ready' ? serverRoomMembers.length : activeRoom.listenersCount)} مستمع حالياً</span>
               </div>
 
               <button
