@@ -313,6 +313,21 @@ jobs:
           cmp android/app/build/outputs/apk/debug/app-debug.apk /tmp/totichat-artifact-extracted/TotiChat.apk
           AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -n 1)"
           "$AAPT" dump badging /tmp/totichat-artifact-extracted/TotiChat.apk | head -n 2
+          # Detect archive features unsupported by some Android built-in extractors.
+          python3 - <<'PY'
+          import struct,zipfile
+          p='/tmp/totichat-actions-download.zip'
+          with zipfile.ZipFile(p) as z:
+              entries=z.infolist()
+              assert len(entries)==1 and entries[0].filename=='TotiChat.apk'
+              info=entries[0]
+              assert info.file_size < 0xffffffff, 'Unexpected ZIP64 entry'
+              assert info.header_offset < 0xffffffff, 'Unexpected ZIP64 offset'
+              assert info.flag_bits & 1 == 0, 'Encrypted artifact'
+              assert info.flag_bits & 8 == 0, 'Data-descriptor archive'
+              assert info.compress_type in (0,8), 'Unexpected compression method'
+              print('Actions ZIP compatibility: method',info.compress_type,'flags',hex(info.flag_bits),'creator',info.create_system)
+          PY
           echo "Published GitHub Actions ZIP extracts correctly and APK bytes match."
 
       - name: Publish directly downloadable staging APK
