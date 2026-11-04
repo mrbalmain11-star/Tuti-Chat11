@@ -1,0 +1,5 @@
+TotiChat Staging APK build request
+Source branch: integration/legacy-backend-staging
+Validated source head before trigger: f88c1fbe8362290f308f3d80b4259688d2c63075
+Purpose: package all approved CP/profile fixes with the existing successful staging-verify.yml workflow and its legacy-compatible ZIP packaging.
+No changes to audio, music, Android packaging or production branches.
