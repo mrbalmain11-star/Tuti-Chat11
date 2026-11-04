@@ -63,7 +63,7 @@ export const ProfileCpCard: React.FC<{ userId: string; compact?: boolean; refres
       error ? <p className="mt-2 text-xs text-rose-500">تعذر تحميل علاقات CP</p> :
       links.length === 0 ? null :
       <div className="mt-2 space-y-2">{links.map(link => <div key={link.typeId + link.partnerId} className="flex items-center gap-2 rounded-xl border border-amber-300/50 bg-[#2c142b]/85 p-2 text-amber-50 backdrop-blur-sm">
-        <div className="relative h-14 w-14 shrink-0 rounded-full border-[3px] border-amber-300 bg-gradient-to-br from-[#fff3bd] via-[#a86a28] to-[#fff0aa] p-0.5 shadow-[0_3px_12px_rgba(244,183,74,.45)]">
+        <div className="relative h-14 w-14 shrink-0 rounded-full border-[3px] border-amber-300 bg-gradient-to-br from-[#fff3bd] via-[#a86a28] to-[#fff0aa] p-0.5 shadow-[0_3px_12px_rgba(244,183,74,.45)]" aria-label="صورة شريك CP">
           {link.partnerAvatar ? <img src={link.partnerAvatar} alt={link.partnerName || 'الشريك'} className="h-full w-full rounded-full object-cover" /> : <CircleUserRound className="h-full w-full rounded-full text-amber-950" />}
         </div>
         <div className="min-w-0 flex-1"><p className="truncate text-xs font-black">{link.partnerName || 'مستخدم'}</p><p className="text-[11px] text-amber-100/75">{link.typeLabel} · {Number.isFinite(Number(link.level)) && Number(link.level) > 0 ? `Lv.${link.level} · ` : ''}ID {link.partnerPublicId ?? '—'}</p></div>
