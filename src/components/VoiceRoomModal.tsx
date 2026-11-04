@@ -307,6 +307,21 @@ export const VoiceRoomModal: React.FC = () => {
     return () => { active = false; };
   }, [selectedMicUser?.user.id]);
 
+  const [selectedMicAgencyName, setSelectedMicAgencyName] = useState<string | null>(null);
+  useEffect(() => {
+    let active = true;
+    setSelectedMicAgencyName(null);
+    const userId = selectedMicUser?.user.id;
+    if (!userId || !stagingBackend) return;
+    void stagingBackend.rpc('staging_profile_agency', { p_user_id: userId })
+      .then(({ data, error }) => {
+        if (error) throw error;
+        if (active && data && typeof data.name === 'string') setSelectedMicAgencyName(data.name);
+      })
+      .catch(error => console.warn('Room user agency lookup failed:', error));
+    return () => { active = false; };
+  }, [selectedMicUser?.user.id]);
+
   const [selectedEmptySeat, setSelectedEmptySeat] = useState<number | null>(null);
   const [followedUsers, setFollowedUsers] = useState<Record<string, boolean>>({});
   const [mutedUsersLocally, setMutedUsersLocally] = useState<Record<string, boolean>>({});
@@ -2137,6 +2152,7 @@ export const VoiceRoomModal: React.FC = () => {
                 <span>{selectedMicUser.user.nickname || selectedMicUser.user.name}</span>
               </h3>
 
+              {selectedMicAgencyName && <p className="mt-1 text-center text-[11px] font-bold text-red-400">{selectedMicAgencyName}</p>}
               <div className="mt-2 flex items-center justify-center gap-2 text-xs font-bold">
                 <span className="rounded-full bg-amber-500/15 border border-amber-400/40 px-3 py-1 text-amber-200">الثروة Lv.{selectedMicUser.user.wealthLevel}</span>
                 <span className="rounded-full bg-fuchsia-500/15 border border-fuchsia-400/40 px-3 py-1 text-fuchsia-200">السحر Lv.{selectedMicUser.user.charmLevel}</span>
