@@ -14,7 +14,10 @@ export class RoomMusicPublisher {
 
   async play(room: Room, file: File): Promise<void> {
     await this.stop();
-    if (!file.type.startsWith('audio/')) throw new Error('اختر ملفاً صوتياً');
+    // Android document providers sometimes omit MIME even for valid music files.
+    if (!file.type.startsWith('audio/') && !/\.(mp3|m4a|aac|wav|ogg|flac|opus)$/i.test(file.name)) {
+      throw new Error('اختر ملفاً صوتياً');
+    }
     const url = URL.createObjectURL(file);
     const audio = new Audio(url);
     audio.preload = 'auto';
