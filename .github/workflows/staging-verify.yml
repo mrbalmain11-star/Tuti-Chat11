@@ -324,7 +324,9 @@ jobs:
               assert info.file_size < 0xffffffff, 'Unexpected ZIP64 entry'
               assert info.header_offset < 0xffffffff, 'Unexpected ZIP64 offset'
               assert info.flag_bits & 1 == 0, 'Encrypted artifact'
-              assert info.flag_bits & 8 == 0, 'Data-descriptor archive'
+              # GitHub Actions uses streaming ZIP entries with data descriptors.
+              # This is valid ZIP and must not fail an otherwise successful extraction.
+              print('ZIP data descriptor:', bool(info.flag_bits & 8))
               assert info.compress_type in (0,8), 'Unexpected compression method'
               print('Actions ZIP compatibility: method',info.compress_type,'flags',hex(info.flag_bits),'creator',info.create_system)
           PY
