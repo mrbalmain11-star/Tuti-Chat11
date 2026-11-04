@@ -5,7 +5,7 @@ import { useApp } from '../context/AppContext';
 
 type CpLink = { typeId: string; typeLabel: string; level: number; partnerId: string; partnerName: string; partnerAvatar?: string | null; partnerPublicId?: number; accepted: boolean };
 
-export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAvatar?: string | null; compact?: boolean; refreshKey?: number; onLinksChange?: (links: CpLink[]) => void }> = ({ userId, userName, userAvatar, compact = false, refreshKey = 0, onLinksChange }) => {
+export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAvatar?: string | null; compact?: boolean; refreshKey?: number; onLinksChange?: (links: CpLink[]) => void; onPartnerClick?: (partnerId: string) => void }> = ({ userId, userName, userAvatar, compact = false, refreshKey = 0, onLinksChange, onPartnerClick }) => {
   const { currentUser } = useApp();
   const [endingPartner, setEndingPartner] = useState<string | null>(null);
   const [links, setLinks] = useState<CpLink[]>([]);
@@ -90,12 +90,12 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
               <span className="max-w-[90px] break-words text-[10px] font-bold text-amber-100">{link.typeLabel}</span>
             </div>
             <div className="flex min-w-0 flex-col items-center gap-1 text-center">
-              <div className="relative h-[76px] w-[76px] shrink-0">
+              <button type="button" disabled={!onPartnerClick} onClick={() => onPartnerClick?.(link.partnerId)} aria-label={`فتح ملف ${link.partnerName || 'الشريك'}`} className="relative h-[76px] w-[76px] shrink-0 disabled:cursor-default enabled:active:scale-95">
                 <div className="absolute inset-[12px] overflow-hidden rounded-full bg-[#5c3048]">
                 {link.partnerAvatar ? <img src={link.partnerAvatar} alt={link.partnerName || 'الشريك'} className="h-full w-full rounded-full object-cover" /> : <CircleUserRound className="h-full w-full text-amber-200" />}
                 </div>
                 <img src="/assets/royal-cp-avatar-frame.svg" alt="" aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full object-contain" />
-              </div>
+              </button>
               <span className="w-full truncate text-[11px] font-bold">{link.partnerName || 'الشريك'}</span>
             </div>
           </div>
