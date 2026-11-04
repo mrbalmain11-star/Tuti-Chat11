@@ -359,6 +359,8 @@ export const VoiceRoomModal: React.FC = () => {
   const musicPickerRef = useRef<HTMLInputElement>(null);
   const musicPickerPendingRef = useRef(false);
   const openMusicPicker = () => {
+    // Preserve the player while Android's document picker takes focus.
+    setShowMusicPlayerModal(true);
     musicPickerPendingRef.current = true;
     musicPickerRef.current?.click();
   };
@@ -756,6 +758,8 @@ export const VoiceRoomModal: React.FC = () => {
         setShowEmojiPicker(false);
       } else if (showEmojiPicker) {
         setShowEmojiPicker(false);
+      } else if (musicSelectionOpen) {
+        setMusicSelectionOpen(false);
       } else if (showMusicPlayerModal) {
         setShowMusicPlayerModal(false);
       } else if (showTasksModal) {
@@ -1918,7 +1922,7 @@ export const VoiceRoomModal: React.FC = () => {
 
         {/* Royal room music player: separate from voice participant */}
         {showMusicPlayerModal && (
-          <div onClick={() => setShowMusicPlayerModal(false)} className="fixed inset-0 z-60 bg-black/85 backdrop-blur-md flex items-center justify-center p-3">
+          <div onClick={() => { if (!musicPickerPendingRef.current) setShowMusicPlayerModal(false); }} className="fixed inset-0 z-60 bg-black/85 backdrop-blur-md flex items-center justify-center p-3">
             <div onClick={e => e.stopPropagation()} dir="rtl" className="w-full max-w-sm max-h-[92vh] overflow-y-auto rounded-[30px] border border-[#bd8d38]/60 bg-gradient-to-b from-[#302316] via-[#18130f] to-[#080808] p-5 text-white shadow-2xl shadow-amber-700/20 space-y-5">
               <div className="flex justify-between items-center">
                 <button aria-label="إغلاق" onClick={() => setShowMusicPlayerModal(false)} className="p-2 rounded-full bg-white/10"><X size={20}/></button>
