@@ -113,7 +113,8 @@ const AppContent: React.FC = () => {
     if (!GOOGLE_EMAIL_OTP_ENFORCED || !stagingBackend) return;
     let mounted = true;
     const check = async () => {
-      if (mounted) setOtpState('checking');
+      // Supabase may emit SIGNED_IN again when Android returns from the file picker.
+      // Never unmount the active room by switching an already verified session to 'checking'.
       const { data: session } = await stagingBackend!.auth.getSession();
       if (!mounted) return;
       if (!session.session) { setOtpState('checking'); return; }
