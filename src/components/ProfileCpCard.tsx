@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { CircleUserRound } from 'lucide-react';
 import { stagingBackend } from '../services/stagingBackend';
 import { useApp } from '../context/AppContext';
@@ -11,18 +11,19 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
   const [links, setLinks] = useState<CpLink[]>([]);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
+  const requestVersion = useRef(0);
   useEffect(() => {
     let active = true;
-    let latestRequest = 0;
+
     const load = async () => {
-      const requestId = ++latestRequest;
-      if (!stagingBackend || !userId) { if (active && requestId === latestRequest) { setError(true); setLoading(false); } return; }
+      const requestId = ++requestVersion.current;
+      if (!stagingBackend || !userId) { if (active && requestId === requestVersion.current) { setError(true); setLoading(false); } return; }
       try {
         const { data, error: fetchError } = await stagingBackend.rpc('totichat_profile_cp', { p_user_id: userId });
         if (fetchError) throw fetchError;
-        if (active && requestId === latestRequest) { const next: CpLink[] = Array.isArray(data) ? data.filter((link: CpLink) => link.accepted === true) : []; setLinks(next); onLinksChange?.(next); setError(false); }
-      } catch (e) { if (active && requestId === latestRequest) { setError(true); } console.error('CP profile load failed', e); }
-      finally { if (active && requestId === latestRequest) setLoading(false); }
+        if (active && requestId === requestVersion.current) { const next: CpLink[] = Array.isArray(data) ? data.filter((link: CpLink) => link.accepted === true) : []; setLinks(next); onLinksChange?.(next); setError(false); }
+      } catch (e) { if (active && requestId === requestVersion.current) { setError(true); } console.error('CP profile load failed', e); }
+      finally { if (active && requestId === requestVersion.current) setLoading(false); }
     };
     setLoading(true); setLinks([]); onLinksChange?.([]); void load();
     const refresh = () => { if (!document.hidden) void load(); };
@@ -30,6 +31,7 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
     document.addEventListener('visibilitychange', refresh);
     return () => {
       active = false;
+      ++requestVersion.current;
       window.removeEventListener('focus', refresh);
       document.removeEventListener('visibilitychange', refresh);
     };
@@ -44,6 +46,8 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
         p_action: 'end', p_request_id: crypto.randomUUID(),
       });
       if (actionError) throw actionError;
+      // Invalidate any older focus/visibility refresh before reloading the ended relationship.
+      ++requestVersion.current;
       const { data, error: reloadError } = await stagingBackend.rpc('totichat_profile_cp', { p_user_id: userId });
       if (reloadError) {
         setLinks([]);
