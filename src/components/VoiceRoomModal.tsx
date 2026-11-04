@@ -3098,8 +3098,8 @@ export const VoiceRoomModal: React.FC = () => {
               <div className="grid grid-cols-2 gap-2.5">
                 <div className="p-3 bg-purple-950/40 rounded-2xl border border-purple-400/30 text-center">
                   <span className="text-[10px] text-slate-400 block mb-1">كأس الغرفة والترتيب:</span>
-                  <span className="text-base font-black text-amber-300 font-mono">254K 🏆</span>
-                  <span className="text-[9px] text-amber-200 block">المرتبة الأولى</span>
+                  <span className="text-base font-black text-amber-300 font-mono">—</span>
+                  <span className="text-[9px] text-amber-200 block">بانتظار بيانات ترتيب موثوقة</span>
                 </div>
                 <div className="p-3 bg-purple-950/40 rounded-2xl border border-purple-400/30 text-center">
                   <span className="text-[10px] text-slate-400 block mb-1">المساهمات اليومية:</span>
