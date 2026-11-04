@@ -357,6 +357,8 @@ export const VoiceRoomModal: React.FC = () => {
   const [musicSelection, setMusicSelection] = useState<File[]>([]);
   const [musicSelectionKeys, setMusicSelectionKeys] = useState<string[]>([]);
   const musicPickerRef = useRef<HTMLInputElement>(null);
+  const musicPickerGuardUntilRef = useRef(0);
+  const openMusicPicker = () => { musicPickerGuardUntilRef.current = Date.now() + 5000; musicPickerRef.current?.click(); };
   const musicFileKey = (file: File) => `${file.name}:${file.size}:${file.lastModified}`;
   const cancelMusicSelection = () => { setMusicSelectionOpen(false); setMusicSelection([]); setMusicSelectionKeys([]); showToast('تم إلغاء إضافة الأغاني'); };
   const confirmMusicSelection = () => {
@@ -739,6 +741,7 @@ export const VoiceRoomModal: React.FC = () => {
     let disposed = false;
     let listener: { remove: () => Promise<void> } | undefined;
     void CapacitorApp.addListener('backButton', () => {
+      if (showMusicPlayerModal && Date.now() < musicPickerGuardUntilRef.current) return;
       if (isRoomMinimized) {
         setIsRoomMinimized(false);
       } else if (showExitOptions) {
@@ -1939,10 +1942,11 @@ export const VoiceRoomModal: React.FC = () => {
                     <button aria-label="تكرار" onClick={() => setMusicRepeat(v=>!v)} className={musicRepeat ? 'text-amber-400' : 'text-white/60'}><Repeat size={22}/></button>
                   </div>
                   <div dir="ltr" className="flex items-center gap-3"><Volume1 size={18} className="text-amber-300"/><input aria-label="صوت الموسيقى" type="range" min={0} max={100} value={musicVolume} onChange={e => {const v=Number(e.target.value); setMusicVolume(v); setRoomMusicVolume(v/100);}} className="flex-1 accent-[#d8aa52]"/><Volume2 size={18} className="text-amber-300"/></div>
-                  <button type="button" onClick={() => musicPickerRef.current?.click()} className="flex items-center justify-center gap-2 w-full rounded-xl bg-gradient-to-r from-[#b7812e] to-[#f1d18a] text-black font-bold py-3">
+                  <button type="button" onClick={openMusicPicker} className="flex items-center justify-center gap-2 w-full rounded-xl bg-gradient-to-r from-[#b7812e] to-[#f1d18a] text-black font-bold py-3">
                     <FolderOpen size={20}/> اختيار موسيقى من الهاتف
                   </button>
                   <input ref={musicPickerRef} type="file" multiple accept="audio/*" className="hidden" onChange={e => {
+                    musicPickerGuardUntilRef.current = Date.now() + 1200;
                     const files = Array.from(e.target.files || []).filter(file => file.type.startsWith('audio/') || /\.(mp3|m4a|aac|wav|ogg|flac)$/i.test(file.name));
                     e.target.value = '';
                     if (!files.length) return;
@@ -1972,7 +1976,7 @@ export const VoiceRoomModal: React.FC = () => {
                 <p className="text-sm text-amber-100/70 mt-2">حدد الأغاني التي تريد إضافتها، ثم اضغط إضافة أو إلغاء.</p>
                 <p className="text-xs text-amber-300 mt-2">المحدد: {musicSelectionKeys.length} من {musicSelection.length}</p>
                 <p className="text-xs text-amber-100/70 mt-2">من ملفات الهاتف تگدر تحدد عدة أغاني بضغطة مطوّلة ثم تحديد الباقي. وإذا جهازك يختار أغنية واحدة فقط، اضغط «اختيار المزيد» وراح نجمعهن كلهن قبل الإضافة.</p>
-                <button type="button" onClick={() => musicPickerRef.current?.click()} className="mt-3 w-full flex items-center justify-center gap-2 rounded-xl border border-amber-400/60 bg-amber-400/10 py-3 font-bold text-amber-200"><Plus size={18}/> اختيار المزيد من الأغاني</button>
+                <button type="button" onClick={openMusicPicker} className="mt-3 w-full flex items-center justify-center gap-2 rounded-xl border border-amber-400/60 bg-amber-400/10 py-3 font-bold text-amber-200"><Plus size={18}/> اختيار المزيد من الأغاني</button>
               </div>
               <div className="flex-1 overflow-y-auto p-3 space-y-2">
                 {musicSelection.map(file => (
