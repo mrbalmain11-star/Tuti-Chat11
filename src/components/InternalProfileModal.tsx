@@ -142,6 +142,7 @@ export const InternalProfileModal: React.FC = () => {
   const visitorAvatar = visitorAssetsForUser?.avatar || '';
   useEffect(() => {
     let active = true;
+    setVisitorAssets(null);
     if (!openInternalProfileModal || isSelf || !stagingBackend || !user.id) return;
     const client = stagingBackend;
     void (async () => {
