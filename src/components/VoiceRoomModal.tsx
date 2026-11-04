@@ -2187,7 +2187,7 @@ export const VoiceRoomModal: React.FC = () => {
           >
             <div
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-md bg-[#101924]/95 border-t border-slate-700/70 rounded-t-3xl backdrop-blur-xl shadow-2xl p-5 pt-3 pb-6 text-white relative animate-in slide-in-from-bottom"
+              className="w-full max-w-md max-h-[min(88dvh,780px)] overflow-y-auto overscroll-contain bg-[#101924]/95 border-t border-slate-700/70 rounded-t-3xl backdrop-blur-xl shadow-2xl p-5 pt-3 text-white relative animate-in slide-in-from-bottom [padding-bottom:calc(1.5rem+env(safe-area-inset-bottom,0px))]"
             >
               {/* Top Header Row: Close button on left, Role badge on right */}
               <div className="flex items-center justify-between">
