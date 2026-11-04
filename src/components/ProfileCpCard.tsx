@@ -72,7 +72,7 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
         window.alert('تم فك العلاقة، لكن تعذر تحديث القائمة. أعد المحاولة عند توفر الاتصال.');
         return;
       }
-      const next: CpLink[] = Array.isArray(data) ? data.filter((item: CpLink) => item.accepted === true) : [];
+      const next: CpLink[] = data.filter((item: CpLink) => item.accepted === true);
       setLinks(next);
       onLinksChangeRef.current?.(next);
       setError(false);
