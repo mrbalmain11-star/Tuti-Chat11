@@ -358,6 +358,7 @@ export const VoiceRoomModal: React.FC = () => {
   const [musicSelectionKeys, setMusicSelectionKeys] = useState<string[]>([]);
   const musicPickerRef = useRef<HTMLInputElement>(null);
   const musicPickerPendingRef = useRef(false);
+  const musicPickerReturnAtRef = useRef(0);
   const openMusicPicker = () => {
     // Preserve the player while Android's document picker takes focus.
     setShowMusicPlayerModal(true);
@@ -748,7 +749,7 @@ export const VoiceRoomModal: React.FC = () => {
     void CapacitorApp.addListener('backButton', () => {
       // Android's native document picker emits back while handing the file to WebView.
       // Ignore it until the file input has received its change event.
-      if (musicPickerPendingRef.current) return;
+      if (musicPickerPendingRef.current || Date.now() - musicPickerReturnAtRef.current < 2000) return;
       if (isRoomMinimized) {
         setIsRoomMinimized(false);
       } else if (showExitOptions) {
@@ -1922,7 +1923,7 @@ export const VoiceRoomModal: React.FC = () => {
 
         {/* Royal room music player: separate from voice participant */}
         {showMusicPlayerModal && (
-          <div onClick={() => { if (!musicPickerPendingRef.current) setShowMusicPlayerModal(false); }} className="fixed inset-0 z-60 bg-black/85 backdrop-blur-md flex items-center justify-center p-3">
+          <div onClick={() => { if (!musicPickerPendingRef.current && Date.now() - musicPickerReturnAtRef.current >= 2000) setShowMusicPlayerModal(false); }} className="fixed inset-0 z-60 bg-black/85 backdrop-blur-md flex items-center justify-center p-3">
             <div onClick={e => e.stopPropagation()} dir="rtl" className="w-full max-w-sm max-h-[92vh] overflow-y-auto rounded-[30px] border border-[#bd8d38]/60 bg-gradient-to-b from-[#302316] via-[#18130f] to-[#080808] p-5 text-white shadow-2xl shadow-amber-700/20 space-y-5">
               <div className="flex justify-between items-center">
                 <button aria-label="إغلاق" onClick={() => setShowMusicPlayerModal(false)} className="p-2 rounded-full bg-white/10"><X size={20}/></button>
@@ -1964,11 +1965,15 @@ export const VoiceRoomModal: React.FC = () => {
         )}
 
                   <input ref={musicPickerRef} type="file" multiple accept="audio/*" className="hidden" onChange={e => {
+                    musicPickerReturnAtRef.current = Date.now();
                     musicPickerPendingRef.current = false;
                     setShowMusicPlayerModal(true);
                     const files = Array.from(e.target.files || []).filter(file => file.type.startsWith('audio/') || /\.(mp3|m4a|aac|wav|ogg|flac)$/i.test(file.name));
                     e.target.value = '';
-                    if (!files.length) return;
+                    if (!files.length) {
+                      showToast('لم يصل ملف صوتي من منتقي ملفات Android');
+                      return;
+                    }
                     const unique = Array.from(new Map(files.map(file => [musicFileKey(file), file])).values());
                     // Android file pickers may return only one file even with multiple enabled.
                     // Accumulate selections until the user confirms; never replace earlier picks.
