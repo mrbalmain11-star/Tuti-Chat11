@@ -357,8 +357,11 @@ export const VoiceRoomModal: React.FC = () => {
   const [musicSelection, setMusicSelection] = useState<File[]>([]);
   const [musicSelectionKeys, setMusicSelectionKeys] = useState<string[]>([]);
   const musicPickerRef = useRef<HTMLInputElement>(null);
-  const musicPickerGuardUntilRef = useRef(0);
-  const openMusicPicker = () => { musicPickerGuardUntilRef.current = Date.now() + 5000; musicPickerRef.current?.click(); };
+  const musicPickerPendingRef = useRef(false);
+  const openMusicPicker = () => {
+    musicPickerPendingRef.current = true;
+    musicPickerRef.current?.click();
+  };
   const musicFileKey = (file: File) => `${file.name}:${file.size}:${file.lastModified}`;
   const cancelMusicSelection = () => { setMusicSelectionOpen(false); setMusicSelection([]); setMusicSelectionKeys([]); showToast('تم إلغاء إضافة الأغاني'); };
   const confirmMusicSelection = () => {
@@ -741,7 +744,9 @@ export const VoiceRoomModal: React.FC = () => {
     let disposed = false;
     let listener: { remove: () => Promise<void> } | undefined;
     void CapacitorApp.addListener('backButton', () => {
-      if (showMusicPlayerModal && Date.now() < musicPickerGuardUntilRef.current) return;
+      // Android's native document picker emits back while handing the file to WebView.
+      // Ignore it until the file input has received its change event.
+      if (musicPickerPendingRef.current) return;
       if (isRoomMinimized) {
         setIsRoomMinimized(false);
       } else if (showExitOptions) {
@@ -1946,7 +1951,8 @@ export const VoiceRoomModal: React.FC = () => {
                     <FolderOpen size={20}/> اختيار موسيقى من الهاتف
                   </button>
                   <input ref={musicPickerRef} type="file" multiple accept="audio/*" className="hidden" onChange={e => {
-                    musicPickerGuardUntilRef.current = Date.now() + 1200;
+                    musicPickerPendingRef.current = false;
+                    setShowMusicPlayerModal(true);
                     const files = Array.from(e.target.files || []).filter(file => file.type.startsWith('audio/') || /\.(mp3|m4a|aac|wav|ogg|flac)$/i.test(file.name));
                     e.target.value = '';
                     if (!files.length) return;
