@@ -2124,13 +2124,13 @@ export const VoiceRoomModal: React.FC = () => {
               </div>
 
               {/* Circular Avatar popping up out of the top edge */}
-              <div className="relative -mt-9 mx-auto w-20 h-20 sm:w-22 sm:h-22 rounded-full border-2 border-white/90 overflow-hidden shadow-2xl bg-slate-900">
+              <button type="button" onClick={() => { const target = selectedMicUser.user; setSelectedMicUser(null); handleOpenUserProfile(target); }} aria-label="فتح الملف الشخصي الكامل" className="relative -mt-9 mx-auto block w-20 h-20 sm:w-22 sm:h-22 rounded-full border-2 border-white/90 overflow-hidden shadow-2xl bg-slate-900">
                 <img
                   src={selectedMicUser.user.avatar}
                   alt={selectedMicUser.user.name}
                   className="w-full h-full object-cover"
                 />
-              </div>
+              </button>
 
               {/* User Name in large, bold, clear white text */}
               <h3 className="text-xl sm:text-2xl font-black text-white text-center mt-2.5 tracking-wide flex items-center justify-center gap-1">
