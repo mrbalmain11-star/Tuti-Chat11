@@ -26,7 +26,7 @@ export const ProfileCpCard: React.FC<{ userId: string; compact?: boolean; refres
   }, [userId, refreshKey]);
   // Do not render a placeholder CP rectangle for profiles without a confirmed link.
   if (links.length === 0) return null;
-  return <section className={compact ? 'mx-4 mt-3 rounded-2xl border border-rose-400/25 bg-rose-500/10 p-3' : 'mx-4 my-4 rounded-3xl border border-rose-200 bg-gradient-to-l from-rose-50 to-amber-50 p-4'} dir="rtl">
+  return <section className={compact ? 'mx-4 mt-3 min-h-[86px] rounded-[26px] border border-rose-400/25 bg-rose-500/10 p-3' : 'mx-4 my-3.5 min-h-[86px] rounded-[26px] border border-amber-200 bg-gradient-to-l from-rose-50 to-amber-50 p-3.5 shadow-sm'} dir="rtl">
     <div className="flex items-center gap-2 text-rose-600"><Heart className="h-4 w-4 fill-current" /><span className="text-sm font-black">علاقات CP</span></div>
     {loading ? <p className="mt-2 text-xs text-slate-500">جارٍ تحميل العلاقات...</p> :
       error ? <p className="mt-2 text-xs text-rose-500">تعذر تحميل علاقات CP</p> :
