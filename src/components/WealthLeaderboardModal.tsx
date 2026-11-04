@@ -737,7 +737,7 @@ export const WealthLeaderboardModal: React.FC = () => {
     const interval=setInterval(()=>void refresh(),30000);
     return()=>{alive=false;clearInterval(interval);};
   },[openWealthLeaderboardModal,period,leaderboardTab]);
-  const profileFor=(r:RankingRow):UserProfile=>({...currentUser,id:String(r.public_id),name:r.display_name,nickname:r.display_name,avatar:imageUrl(r.avatar_url) || rankingImageFallback,wealthExp:0,charmExp:0,coins:0,diamonds:0});
+  const profileFor=(r:RankingRow):UserProfile=>({...currentUser,id:r.entity_id,name:r.display_name,nickname:r.display_name,avatar:imageUrl(r.avatar_url) || rankingImageFallback,wealthExp:0,charmExp:0,coins:0,diamonds:0});
 
 
   if (!openWealthLeaderboardModal) return null;
