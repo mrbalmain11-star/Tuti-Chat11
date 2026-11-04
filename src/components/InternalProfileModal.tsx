@@ -135,14 +135,12 @@ export const InternalProfileModal: React.FC = () => {
     return () => { active = false; };
   }, [openInternalProfileModal, isSelf, user.id]);
   const displayedUser = !isSelf && visitorStatus?.userId === user.id ? { ...user, ...visitorStatus } : user;
-  const [visitorPublicId, setVisitorPublicId] = useState<string>('');
-  const [visitorCover, setVisitorCover] = useState<string>('');
-  const [visitorAvatar, setVisitorAvatar] = useState<string>('');
+  const [visitorAssets, setVisitorAssets] = useState<{ userId: string; publicId: string; cover: string; avatar: string } | null>(null);
+  const visitorPublicId = visitorAssets?.userId === user.id ? visitorAssets.publicId : '';
+  const visitorCover = visitorAssets?.userId === user.id ? visitorAssets.cover : '';
+  const visitorAvatar = visitorAssets?.userId === user.id ? visitorAssets.avatar : '';
   useEffect(() => {
     let active = true;
-    setVisitorPublicId('');
-    setVisitorCover('');
-    setVisitorAvatar('');
     if (!openInternalProfileModal || isSelf || !stagingBackend || !user.id) return;
     const client = stagingBackend;
     void (async () => {
@@ -152,15 +150,14 @@ export const InternalProfileModal: React.FC = () => {
       const { data: special } = await client.rpc('phase5_special_id_status', { p_target: user.id });
       const status = special as { assigned?: boolean; publicId?: string } | null;
       if (!active) return;
-      setVisitorPublicId(status?.assigned && status.publicId ? String(status.publicId) : String(profile?.public_id || ''));
+      const publicId = status?.assigned && status.publicId ? String(status.publicId) : String(profile?.public_id || '');
       // Stored images can be full URLs or storage object paths. Avoid wrapping
       // an already-public URL in another storage URL (which breaks the image).
       const resolveProfileImage = (value: string) =>
         /^(https?:\/\/|data:image\/)/i.test(value)
           ? value
           : client.storage.from('profile-avatars').getPublicUrl(value).data.publicUrl;
-      if (profile?.cover_path && active) setVisitorCover(resolveProfileImage(profile.cover_path));
-      if (profile?.avatar_url && active) setVisitorAvatar(resolveProfileImage(profile.avatar_url));
+      setVisitorAssets({ userId: user.id, publicId, cover: profile?.cover_path ? resolveProfileImage(profile.cover_path) : '', avatar: profile?.avatar_url ? resolveProfileImage(profile.avatar_url) : '' });
     })().catch(error => console.error('Visitor profile load failed:', error));
     return () => { active = false; };
   }, [openInternalProfileModal, isSelf, user.id]);
