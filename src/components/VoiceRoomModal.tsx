@@ -2232,8 +2232,8 @@ export const VoiceRoomModal: React.FC = () => {
                 {Number(selectedMicUser.user.vipLevel || 0) > 0 && <span className="rounded-full border border-yellow-400/50 bg-yellow-500/15 px-3 py-1 text-yellow-200">VIP {selectedMicUser.user.vipLevel}</span>}
               </div>
               <ProfileCpCard userId={selectedMicUser.user.id} userName={selectedMicUser.user.nickname || selectedMicUser.user.name} userAvatar={selectedMicUser.user.avatar} compact />
-              <button type="button" onClick={() => { const target = selectedMicUser.user; setSelectedMicUser(null); handleOpenUserProfile(target); }} className="mx-auto mt-3 flex items-center gap-2 rounded-full border border-cyan-400/50 bg-cyan-500/15 px-4 py-2 text-xs font-bold text-cyan-100">
-                <CircleUserRound className="h-4 w-4" /> عرض الملف الشخصي والرسائل
+              <button type="button" onClick={() => { const target = selectedMicUser.user; setSelectedMicUser(null); handleOpenUserProfile(target); }} className="mx-auto mt-4 flex min-h-12 w-[min(100%,340px)] items-center justify-center gap-2 rounded-full bg-gradient-to-l from-emerald-400 via-green-400 to-teal-500 px-5 py-3 text-base font-black text-emerald-950 shadow-[0_8px_22px_rgba(16,185,129,.28)] transition active:scale-[.98]">
+                <CircleUserRound className="h-5 w-5" /> المزيد
               </button>
 
               {selectedMicUser.user.id !== currentUser.id && <button type="button" onClick={() => void setPersonalBlock(selectedMicUser.user.id, !personalBlocks.some(item => item.userId === selectedMicUser.user.id))} className="mx-auto mt-2 block rounded-xl bg-slate-700 px-4 py-2 text-xs text-white">{personalBlocks.some(item => item.userId === selectedMicUser.user.id) ? 'فك الحظر الشخصي' : 'حظر شخصي'}</button>}
