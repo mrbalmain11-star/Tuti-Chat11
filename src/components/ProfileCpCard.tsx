@@ -109,7 +109,7 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
     <img src="/assets/royal-cp-ornament.svg" alt="" aria-hidden="true" className="pointer-events-none absolute inset-0 z-0 h-full w-full object-fill opacity-90" />
     <div className="relative z-10">
     <div className="flex items-center gap-2 text-amber-100"><span className="text-sm font-black">علاقات CP</span></div>
-    {error && <div role="status" className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-rose-200"><span>{links.length > 0 ? 'تعذر تحديث العلاقات، تُعرض آخر بيانات مؤكدة.' : 'تعذر تحميل العلاقات. تحقق من الاتصال وحاول مجدداً.'}</span><button type="button" disabled={loading || endingPartner !== null} onClick={() => setRetryNonce(n => n + 1)} className="rounded-lg border border-amber-300/70 px-3 py-1 font-bold text-amber-100 disabled:opacity-50">إعادة المحاولة</button></div>
+    {error && <div role="status" className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-rose-200"><span>{links.length > 0 ? 'تعذر تحديث العلاقات، تُعرض آخر بيانات مؤكدة.' : 'تعذر تحميل العلاقات. تحقق من الاتصال وحاول مجدداً.'}</span><button type="button" disabled={loading || endingPartner !== null} onClick={() => setRetryNonce(n => n + 1)} className="rounded-lg border border-amber-300/70 px-3 py-1 font-bold text-amber-100 disabled:opacity-50">إعادة المحاولة</button></div>}
     {loading && <p role="status" className="mt-2 text-xs text-amber-100/70">جارٍ تحديث العلاقات...</p>}
     {links.length > 0 && <div className="mt-3 space-y-3">{links.map(link => (
         <div key={link.typeId + link.partnerId} className="rounded-2xl border border-amber-300/50 bg-[#2c142b]/75 p-2.5 text-amber-50 backdrop-blur-sm">
