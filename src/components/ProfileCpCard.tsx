@@ -81,14 +81,15 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
     }
   };
   // Do not render a placeholder CP rectangle for profiles without a confirmed link.
-  if (links.length === 0) return null;
+  // Hide only a confirmed empty state. On fetch errors the retry control must remain reachable.
+  if (links.length === 0 && !error) return null;
   return <section className={compact ? 'relative isolate mx-2 mt-3 min-h-[180px] overflow-hidden rounded-[26px] border border-amber-400/70 bg-gradient-to-b from-[#4b173c] via-[#7d2c54] to-[#301327] p-4 shadow-[0_12px_36px_rgba(0,0,0,.35)]' : 'relative isolate mx-3 my-3.5 min-h-[180px] overflow-hidden rounded-[26px] border border-amber-500/70 bg-gradient-to-b from-[#4b173c] via-[#7d2c54] to-[#301327] p-4 shadow-[0_12px_36px_rgba(0,0,0,.35)]'} dir="rtl">
     <img src="/assets/royal-cp-ornament.svg" alt="" aria-hidden="true" className="pointer-events-none absolute inset-0 z-0 h-full w-full object-fill opacity-90" />
     <div className="relative z-10">
     <div className="flex items-center gap-2 text-amber-100"><span className="text-sm font-black">علاقات CP</span></div>
     {error && <div role="status" className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-rose-200"><span>تعذر تحديث العلاقات، تُعرض آخر بيانات مؤكدة.</span><button type="button" disabled={loading || endingPartner !== null} onClick={() => setRetryNonce(n => n + 1)} className="rounded-lg border border-amber-300/70 px-3 py-1 font-bold text-amber-100 disabled:opacity-50">إعادة المحاولة</button></div>
     {loading && <p role="status" className="mt-2 text-xs text-amber-100/70">جارٍ تحديث العلاقات...</p>}
-    <div className="mt-3 space-y-3">{links.map(link => (
+    {links.length > 0 && <div className="mt-3 space-y-3">{links.map(link => (
         <div key={link.typeId + link.partnerId} className="rounded-2xl border border-amber-300/50 bg-[#2c142b]/75 p-2.5 text-amber-50 backdrop-blur-sm">
           <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1.5">
             <div className="flex min-w-0 flex-col items-center gap-1 text-center">
@@ -127,7 +128,7 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
             </button>
           )}
         </div>
-      ))}</div>
+      ))}</div>}
     </div>
   </section>;
 };
