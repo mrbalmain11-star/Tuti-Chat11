@@ -2714,9 +2714,16 @@ export const VoiceRoomModal: React.FC = () => {
                 {serverMembersStatus === 'error' && <p className="text-xs text-rose-300">تعذر تحميل القائمة المباشرة من الخادم</p>}
                 {serverMembersStatus === 'ready' && <p className="text-xs text-emerald-300">الأعضاء المسجلون بالغرفة: {serverRoomMembers.length}</p>}
                 {serverMembersStatus === 'ready' && serverRoomMembers.filter(member => member.seat_no == null && member.user_id !== activeRoom.hostId).map(member => (
-                  <div key={member.user_id} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-3">
-                    <span className="text-xs font-bold text-white">{member.display_name}</span>
-                    <span className="text-[10px] text-slate-300">مستمع</span>
+                  <div key={member.user_id} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 p-3">
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      {member.avatar_url && /^https?:\/\//i.test(member.avatar_url) ? (
+                        <img src={member.avatar_url} alt="" className="h-9 w-9 shrink-0 rounded-full border border-emerald-300/40 object-cover" />
+                      ) : (
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-900/40"><Users className="h-4 w-4 text-emerald-200" /></div>
+                      )}
+                      <span className="truncate text-xs font-bold text-white">{member.display_name || 'مستخدم'}</span>
+                    </div>
+                    <span className="shrink-0 text-[10px] text-slate-300">مستمع</span>
                   </div>
                 ))}
                 {/* Host User */}
