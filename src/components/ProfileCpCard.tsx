@@ -13,14 +13,16 @@ export const ProfileCpCard: React.FC<{ userId: string; compact?: boolean; refres
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     let active = true;
+    let latestRequest = 0;
     const load = async () => {
-      if (!stagingBackend || !userId) { if (active) { setError(true); setLoading(false); } return; }
+      const requestId = ++latestRequest;
+      if (!stagingBackend || !userId) { if (active && requestId === latestRequest) { setError(true); setLoading(false); } return; }
       try {
         const { data, error: fetchError } = await stagingBackend.rpc('totichat_profile_cp', { p_user_id: userId });
         if (fetchError) throw fetchError;
-        if (active) { const next: CpLink[] = Array.isArray(data) ? data.filter((link: CpLink) => link.accepted === true) : []; setLinks(next); onLinksChange?.(next); setError(false); }
-      } catch (e) { if (active) { setLinks([]); onLinksChange?.([]); setError(true); } console.error('CP profile load failed', e); }
-      finally { if (active) setLoading(false); }
+        if (active && requestId === latestRequest) { const next: CpLink[] = Array.isArray(data) ? data.filter((link: CpLink) => link.accepted === true) : []; setLinks(next); onLinksChange?.(next); setError(false); }
+      } catch (e) { if (active && requestId === latestRequest) { setLinks([]); onLinksChange?.([]); setError(true); } console.error('CP profile load failed', e); }
+      finally { if (active && requestId === latestRequest) setLoading(false); }
     };
     setLoading(true); setLinks([]); onLinksChange?.([]); void load();
     const refresh = () => { void load(); };
