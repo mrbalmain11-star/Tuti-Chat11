@@ -339,14 +339,24 @@ jobs:
             --title "TotiChat Staging APK ${GITHUB_SHA:0:8}" \
             --notes "ZIP contains one installable APK; ZIP archive integrity verified before release." \
             --prerelease
+          # Validate the actual published release ZIP, not just the local build file.
+          mkdir -p /tmp/totichat-published-download /tmp/totichat-published-extract
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern "$NAME.zip" --dir /tmp/totichat-published-download
+          unzip -t "/tmp/totichat-published-download/$NAME.zip"
+          test "$(unzip -Z1 "/tmp/totichat-published-download/$NAME.zip")" = "TotiChat.apk"
+          unzip -o "/tmp/totichat-published-download/$NAME.zip" -d /tmp/totichat-published-extract
+          cmp "$APK" /tmp/totichat-published-extract/TotiChat.apk
           {
-            echo "## Android phone download"
+            echo "## تحميل نسخة الهاتف من نفس صفحة البناء"
             echo ""
-            echo "Use the **release ZIP**, not a GitHub Actions artifact:"
+            echo "**استخدم رابط ZIP التالي بالتغليف التقليدي المفحوص بعد النشر، وليس ملف Actions Artifacts:**"
             echo ""
             echo "https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/$NAME.zip"
             echo ""
-            echo "Inside the ZIP: TotiChat.apk (one file, no nested archive)."
+            echo "### APK بدون استخراج"
+            echo "https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/$NAME.apk"
+            echo ""
+            echo "تم تنزيل ZIP المنشور مجدداً وفكّه ومطابقة APK مع ناتج البناء."
           } >> "$GITHUB_STEP_SUMMARY"
 
 
