@@ -645,7 +645,7 @@ export const InternalProfileModal: React.FC = () => {
             )}
           </div>
 
-          <ProfileCpCard key={user.id} userId={user.id} userName={user.nickname || user.name} userAvatar={user.avatar} onPartnerClick={partnerId => { if (!stagingBackend) return; void (async () => {
+          <ProfileCpCard key={user.id} userId={user.id} userName={isSelf ? (user.nickname || user.name) : (visitorName || user.nickname || user.name)} userAvatar={isSelf ? user.avatar : (visitorAvatar || user.avatar)} onPartnerClick={partnerId => { if (!stagingBackend) return; void (async () => {
             const { data, error } = await stagingBackend.from('profiles').select('id,display_name,avatar_url').eq('id', partnerId).maybeSingle();
             if (error || !data) { showToast('تعذر فتح ملف الشريك'); return; }
             const avatar = data.avatar_url ? (/^https?:\/\//.test(data.avatar_url) ? data.avatar_url : stagingBackend.storage.from('profile-avatars').getPublicUrl(data.avatar_url).data.publicUrl) : '';
