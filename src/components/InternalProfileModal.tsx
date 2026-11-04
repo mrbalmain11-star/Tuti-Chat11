@@ -77,6 +77,11 @@ export const InternalProfileModal: React.FC = () => {
   const [cpPartnerAvatar, setCpPartnerAvatar] = useState<string | null>(null);
   const [cpPartnerId, setCpPartnerId] = useState<string | null>(null);
   const [hasConfirmedCp, setHasConfirmedCp] = useState(false);
+  useEffect(() => {
+    setCpPartnerAvatar(null);
+    setCpPartnerId(null);
+    setHasConfirmedCp(false);
+  }, [user.id]);
   const [showProfileOptions, setShowProfileOptions] = useState(false);
   const [showReportForm, setShowReportForm] = useState(false);
   const [profileBlockBusy, setProfileBlockBusy] = useState(false);
@@ -641,7 +646,7 @@ export const InternalProfileModal: React.FC = () => {
             )}
           </div>
 
-          <ProfileCpCard userId={user.id} refreshKey={cpRefreshKey} onLinksChange={links => { setCpPartnerAvatar(links[0]?.partnerAvatar || null); setCpPartnerId(links[0]?.partnerId || null); setHasConfirmedCp(links.some(link => link.accepted)); }} />
+          <ProfileCpCard userId={user.id} refreshKey={cpRefreshKey} onLinksChange={links => { const confirmed = links.find(link => link.accepted); setCpPartnerAvatar(confirmed?.partnerAvatar || null); setCpPartnerId(confirmed?.partnerId || null); setHasConfirmedCp(Boolean(confirmed)); }} />
           {/* Realistic Dynamic Agency Rectangle (مستطيل الوكالة الفعلي مطابق للصورة تماماً) */}
           {verifiedAgency && (
             <AgencyProfileCard
