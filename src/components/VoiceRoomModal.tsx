@@ -2714,7 +2714,22 @@ export const VoiceRoomModal: React.FC = () => {
                 {serverMembersStatus === 'error' && <p className="text-xs text-rose-300">تعذر تحميل القائمة المباشرة من الخادم</p>}
                 {serverMembersStatus === 'ready' && <p className="text-xs text-emerald-300">الأعضاء المسجلون بالغرفة: {serverRoomMembers.length}</p>}
                 {serverMembersStatus === 'ready' && serverRoomMembers.filter(member => member.seat_no == null && member.user_id !== activeRoom.hostId).map(member => (
-                  <div key={member.user_id} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 p-3">
+                  <button type="button" key={member.user_id} onClick={() => {
+                    setInternalProfileUser({
+                      ...currentUser,
+                      id: member.user_id,
+                      name: member.display_name || 'مستخدم',
+                      nickname: member.display_name || 'مستخدم',
+                      avatar: member.avatar_url || '',
+                      wealthExp: 0,
+                      charmExp: 0,
+                      coins: 0,
+                      diamonds: 0,
+                      vipLevel: 0,
+                    });
+                    setOpenInternalProfileModal(true);
+                    setShowMembersModal(false);
+                  }} className="flex w-full items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 p-3 text-right hover:bg-white/10" aria-label={`فتح ملف ${member.display_name || 'مستخدم'}`}>
                     <div className="flex min-w-0 items-center gap-2.5">
                       {member.avatar_url && /^https?:\/\//i.test(member.avatar_url) ? (
                         <img src={member.avatar_url} alt="" className="h-9 w-9 shrink-0 rounded-full border border-emerald-300/40 object-cover" />
@@ -2723,8 +2738,8 @@ export const VoiceRoomModal: React.FC = () => {
                       )}
                       <span className="truncate text-xs font-bold text-white">{member.display_name || 'مستخدم'}</span>
                     </div>
-                    <span className="shrink-0 text-[10px] text-slate-300">مستمع</span>
-                  </div>
+                    <span className="shrink-0 text-[10px] text-slate-300">عرض الملف</span>
+                  </button>
                 ))}
                 {/* Host User */}
                 <div className="p-2.5 rounded-2xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-between">
