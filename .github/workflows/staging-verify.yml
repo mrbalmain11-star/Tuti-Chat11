@@ -228,32 +228,36 @@ jobs:
               assert hashlib.sha256(extracted.read_bytes()).digest()==hashlib.sha256(source.read_bytes()).digest()
           print('Android APK archive extraction verified')
           PY
-      - name: Package and verify single-APK ZIP for Android phones
+      - name: Package APK with legacy-compatible ZIP tooling
         run: |
+          set -euo pipefail
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          NAME="TotiChat-Staging-${GITHUB_SHA:0:8}"
+          test -s "$APK"
+          mkdir -p /tmp/totichat-legacy-package
+          cp "$APK" /tmp/totichat-legacy-package/TotiChat.apk
+          # Use the traditional system ZIP writer instead of Python's archive writer.
+          # -0 stores the already-compressed APK; -X strips extended metadata.
+          (cd /tmp/totichat-legacy-package && zip -0 -X "$GITHUB_WORKSPACE/$NAME.zip" TotiChat.apk)
+          test "$(unzip -Z1 "$NAME.zip")" = "TotiChat.apk"
+          unzip -t "$NAME.zip"
+          mkdir -p /tmp/totichat-legacy-extract
+          unzip -o "$NAME.zip" -d /tmp/totichat-legacy-extract
+          cmp "$APK" /tmp/totichat-legacy-extract/TotiChat.apk
+          # Independent Java ZIP reader validation, matching Android's ZIP family.
+          jar tf "$NAME.zip" | grep -qx TotiChat.apk
           python3 - <<'PY'
-          from pathlib import Path
-          from zipfile import ZipFile, ZIP_STORED, is_zipfile
-          import hashlib
-          apk=Path('android/app/build/outputs/apk/debug/app-debug.apk')
-          assert apk.is_file() and apk.stat().st_size>1000000, 'Missing or unexpectedly small APK'
-          name='TotiChat-Staging-'+__import__('os').environ['GITHUB_SHA'][:8]
-          target=Path(name+'.zip')
-          # Keep the archive as simple as possible for Android file managers:
-          # one short ASCII entry, no Zip64, no compression, no extra metadata.
-          with ZipFile(target,'w',compression=ZIP_STORED,allowZip64=False) as archive:
-              archive.write(apk,arcname='TotiChat.apk',compress_type=ZIP_STORED)
-          assert is_zipfile(target)
-          with ZipFile(target) as archive:
-              assert archive.namelist()==['TotiChat.apk']
+          from zipfile import ZipFile, ZIP_STORED
+          import os
+          name='TotiChat-Staging-'+os.environ['GITHUB_SHA'][:8]+'.zip'
+          with ZipFile(name) as archive:
+              assert len(archive.infolist())==1
+              item=archive.infolist()[0]
+              assert item.filename=='TotiChat.apk'
+              assert item.compress_type==ZIP_STORED
+              assert not item.flag_bits & 0x08
               assert archive.testzip() is None
-              assert hashlib.sha256(archive.read('TotiChat.apk')).digest()==hashlib.sha256(apk.read_bytes()).digest()
-          with __import__('tempfile').TemporaryDirectory() as tmp:
-              with ZipFile(target) as archive:
-                  archive.extractall(tmp)
-              extracted=Path(tmp)/'TotiChat.apk'
-              assert extracted.is_file() and extracted.stat().st_size==apk.stat().st_size
-              assert hashlib.sha256(extracted.read_bytes()).digest()==hashlib.sha256(apk.read_bytes()).digest()
-          print('Verified Android-compatible ZIP extraction and byte-for-byte APK match:',target,'size:',target.stat().st_size)
+          print('Legacy ZIP validated by unzip, jar, and Python; APK bytes identical')
           PY
       # Do not publish a GitHub Actions artifact: the Actions download is
       # automatically wrapped in another ZIP, which Android file managers
