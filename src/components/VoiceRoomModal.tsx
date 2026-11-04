@@ -291,19 +291,35 @@ export const VoiceRoomModal: React.FC = () => {
     const statsRoomId = activeRoom.id;
     setRoomGiftStats(null);
     setRoomGiftStatsError('');
-    void (async () => {
-      const { data, error } = await stagingBackend.rpc('totichat_room_gift_totals', { p_room_id: statsRoomId });
-      if (error) throw error;
-      if (!active) return;
-      const totals = { today: Number(data?.today), week: Number(data?.week), month: Number(data?.month) };
-      if (Object.values(totals).some(value => !Number.isFinite(value) || value < 0)) {
-        throw new Error('استجابة إحصائيات الغرفة غير صالحة');
+    let pending = false;
+    const refreshGiftTotals = async () => {
+      if (pending || document.hidden) return;
+      pending = true;
+      try {
+        const { data, error } = await stagingBackend.rpc('totichat_room_gift_totals', { p_room_id: statsRoomId });
+        if (error) throw error;
+        if (!active) return;
+        const totals = { today: Number(data?.today), week: Number(data?.week), month: Number(data?.month) };
+        if (Object.values(totals).some(value => !Number.isFinite(value) || value < 0)) {
+          throw new Error('استجابة إحصائيات الغرفة غير صالحة');
+        }
+        setRoomGiftStats(totals);
+        setRoomGiftStatsError('');
+      } catch (error) {
+        if (active) setRoomGiftStatsError(error instanceof Error ? error.message : 'تعذر جلب إحصائيات الهدايا');
+      } finally {
+        pending = false;
       }
-      setRoomGiftStats(totals);
-    })().catch(error => {
-      if (active) setRoomGiftStatsError(error instanceof Error ? error.message : 'تعذر جلب إحصائيات الهدايا');
-    });
-    return () => { active = false; };
+    };
+    void refreshGiftTotals();
+    const refreshOnReturn = () => { if (!document.hidden) void refreshGiftTotals(); };
+    window.addEventListener('focus', refreshOnReturn);
+    document.addEventListener('visibilitychange', refreshOnReturn);
+    return () => {
+      active = false;
+      window.removeEventListener('focus', refreshOnReturn);
+      document.removeEventListener('visibilitychange', refreshOnReturn);
+    };
   }, [showRoomStatsModal, activeRoom?.id]);
 
   const [showDecorationsModal, setShowDecorationsModal] = useState<'mic' | 'frame' | 'title' | null>(null);
