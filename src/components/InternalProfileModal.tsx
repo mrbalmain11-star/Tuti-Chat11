@@ -94,11 +94,12 @@ export const InternalProfileModal: React.FC = () => {
     finally{setProfileBlockBusy(false);}
   };
   const [verifiedAgencyResult, setVerifiedAgencyResult] = useState<{ userId: string; agency: { name: string; public_id: number; member_count: number; role: string } | null } | null>(null);
-  const verifiedAgency = verifiedAgencyResult?.userId === user.id ? verifiedAgencyResult.agency : null;
+  const verifiedAgency = openInternalProfileModal && verifiedAgencyResult?.userId === user.id ? verifiedAgencyResult.agency : null;
   useEffect(() => {
     let active = true;
     let requestId = 0;
-    if (!stagingBackend || !user.id) return;
+    setVerifiedAgencyResult(null);
+    if (!openInternalProfileModal || !stagingBackend || !user.id) return;
     const loadAgency = async () => {
       const thisRequest = ++requestId;
       const { data, error } = await stagingBackend!.rpc('staging_profile_agency', { p_user_id: user.id });
@@ -112,7 +113,7 @@ export const InternalProfileModal: React.FC = () => {
     const refresh = () => { void loadAgency().catch(error => console.error('Agency refresh failed:', error)); };
     window.addEventListener('focus', refresh);
     return () => { active = false; window.removeEventListener('focus', refresh); };
-  }, [user.id]);
+  }, [openInternalProfileModal, user.id]);
   const [myPublicId, setMyPublicId] = useState<number | null>(null);
   const [displaySpecialId, setDisplaySpecialId] = useState<string | null>(null);
   const [savedCover, setSavedCover] = useState<string>('');
