@@ -67,6 +67,12 @@ export const ProfileCpCard: React.FC<{ userId: string; compact?: boolean; refres
           {link.partnerAvatar ? <img src={link.partnerAvatar} alt={link.partnerName || 'الشريك'} className="h-full w-full rounded-full object-cover" /> : <CircleUserRound className="h-full w-full rounded-full text-amber-950" />}
         </div>
         <div className="min-w-0 flex-1"><p className="truncate text-xs font-black">{link.partnerName || 'مستخدم'}</p><p className="text-[11px] text-amber-100/75">{link.typeLabel} · {Number.isFinite(Number(link.level)) && Number(link.level) > 0 ? `Lv.${link.level} · ` : ''}ID {link.partnerPublicId ?? '—'}</p></div>
+        {Number.isFinite(Number(link.level)) && Number(link.level) > 0 && (
+          <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-full border-2 border-amber-200 bg-gradient-to-br from-[#6d3b15] via-[#e9ba64] to-[#67310e] text-[#fff7d6] shadow-[inset_0_1px_5px_rgba(255,255,255,.6),0_3px_10px_rgba(0,0,0,.4)]" aria-label={`مستوى العلاقة ${link.level}`}>
+            <span className="text-[9px] font-bold leading-none">CP</span>
+            <span className="text-base font-black leading-tight">{link.level}</span>
+          </div>
+        )}
         {userId === currentUser.id && <button type="button" disabled={endingPartner !== null} onClick={() => void endRelationship(link)} className="rounded-lg border border-amber-300/70 px-2 py-1 text-[11px] font-bold text-amber-100 disabled:opacity-50">{endingPartner === link.partnerId ? 'جارٍ الفك...' : 'فك العلاقة'}</button>}
         {link.typeLabel?.includes('حب') || /love/i.test(link.typeLabel || '') ? <Heart className="h-4 w-4 text-rose-300" aria-label="علاقة حب" /> : null}
       </div>)}</div>}
