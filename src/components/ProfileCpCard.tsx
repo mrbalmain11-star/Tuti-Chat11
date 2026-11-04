@@ -81,11 +81,15 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
       onLinksChangeRef.current?.(next);
       setError(false);
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : 'تعذر فك علاقة CP');
+      if (activeProfileIdRef.current === userId) {
+        window.alert(err instanceof Error ? err.message : 'تعذر فك علاقة CP');
+      }
     } finally {
       endingRef.current = false;
-      setEndingPartner(null);
-      setLoading(false);
+      if (activeProfileIdRef.current === userId) {
+        setEndingPartner(null);
+        setLoading(false);
+      }
     }
   };
   // Do not render a placeholder CP rectangle for profiles without a confirmed link.
