@@ -1034,13 +1034,13 @@ export const VoiceRoomModal: React.FC = () => {
               <div
                 onClick={() => {
                   sounds.playClick();
-                  showToast('مجموع هدايا الشهر (ليس ترتيباً) في الروم 👑');
+                  setShowMembersModal(true);
                 }}
                 className="flex items-center gap-1.5 cursor-pointer hover:opacity-90 transition pt-1"
-                title="المرتبة 1 في الروم"
+                title="عرض أعضاء الغرفة"
               >
                 <div className="relative w-8 h-8 rounded-full border-2 border-amber-300/80 bg-purple-950/60 flex items-center justify-center shadow-md">
-                  <span className="text-[13px]">👑</span>
+                  <Users className="w-4 h-4 text-amber-200" />
                 </div>
                 <span className="text-xs font-mono font-bold text-white/90">{activeRoom.listenersCount}</span>
                 <div className="flex items-center -space-x-2 space-x-reverse" aria-label="صور أعضاء الغرفة">
