@@ -72,8 +72,11 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
         <div key={link.typeId + link.partnerId} className="rounded-2xl border border-amber-300/50 bg-[#2c142b]/75 p-2.5 text-amber-50 backdrop-blur-sm">
           <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1.5">
             <div className="flex min-w-0 flex-col items-center gap-1 text-center">
-              <div className="h-14 w-14 rounded-full border-[3px] border-amber-300 bg-[#5c3048] p-0.5 shadow-[0_3px_12px_rgba(244,183,74,.45)]">
+              <div className="relative h-[76px] w-[76px] shrink-0">
+                <div className="absolute inset-[12px] overflow-hidden rounded-full bg-[#5c3048]">
                 {userAvatar ? <img src={userAvatar} alt={userName || 'صاحب الملف'} className="h-full w-full rounded-full object-cover" /> : <CircleUserRound className="h-full w-full text-amber-200" />}
+                </div>
+                <img src="/assets/royal-cp-avatar-frame.svg" alt="" aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full object-contain" />
               </div>
               <span className="w-full truncate text-[11px] font-bold">{userName || 'صاحب الملف'}</span>
             </div>
@@ -87,8 +90,11 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
               <span className="max-w-[90px] break-words text-[10px] font-bold text-amber-100">{link.typeLabel}</span>
             </div>
             <div className="flex min-w-0 flex-col items-center gap-1 text-center">
-              <div className="h-14 w-14 rounded-full border-[3px] border-amber-300 bg-[#5c3048] p-0.5 shadow-[0_3px_12px_rgba(244,183,74,.45)]">
+              <div className="relative h-[76px] w-[76px] shrink-0">
+                <div className="absolute inset-[12px] overflow-hidden rounded-full bg-[#5c3048]">
                 {link.partnerAvatar ? <img src={link.partnerAvatar} alt={link.partnerName || 'الشريك'} className="h-full w-full rounded-full object-cover" /> : <CircleUserRound className="h-full w-full text-amber-200" />}
+                </div>
+                <img src="/assets/royal-cp-avatar-frame.svg" alt="" aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full object-contain" />
               </div>
               <span className="w-full truncate text-[11px] font-bold">{link.partnerName || 'الشريك'}</span>
             </div>
