@@ -15,6 +15,8 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
   const previousUserId = useRef(userId);
   const requestVersion = useRef(0);
   const endingRef = useRef(false);
+  const activeProfileIdRef = useRef(userId);
+  activeProfileIdRef.current = userId;
   // Keep asynchronous refreshes connected to the latest parent callback.
   const onLinksChangeRef = useRef(onLinksChange);
   onLinksChangeRef.current = onLinksChange;
@@ -65,8 +67,10 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
         p_action: 'end', p_request_id: crypto.randomUUID(),
       });
       if (actionError) throw actionError;
+      if (activeProfileIdRef.current !== userId) return;
       // Refresh events are blocked during unlink; older responses were invalidated before the mutation.
       const { data, error: reloadError } = await stagingBackend.rpc('totichat_profile_cp', { p_user_id: userId });
+      if (activeProfileIdRef.current !== userId) return;
       if (reloadError || !Array.isArray(data)) {
         setError(true);
         window.alert('تم فك العلاقة، لكن تعذر تحديث القائمة. أعد المحاولة عند توفر الاتصال.');
