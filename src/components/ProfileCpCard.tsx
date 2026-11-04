@@ -25,9 +25,14 @@ export const ProfileCpCard: React.FC<{ userId: string; compact?: boolean; refres
       finally { if (active && requestId === latestRequest) setLoading(false); }
     };
     setLoading(true); setLinks([]); onLinksChange?.([]); void load();
-    const refresh = () => { void load(); };
+    const refresh = () => { if (!document.hidden) void load(); };
     window.addEventListener('focus', refresh);
-    return () => { active = false; window.removeEventListener('focus', refresh); };
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      active = false;
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', refresh);
+    };
   }, [userId, refreshKey]);
   const endRelationship = async (link: CpLink) => {
     if (!stagingBackend || userId !== currentUser.id || endingPartner) return;
