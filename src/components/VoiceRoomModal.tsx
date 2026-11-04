@@ -207,7 +207,7 @@ export const VoiceRoomModal: React.FC = () => {
       if (pending) return;
       pending = true;
       try {
-        const { data, error } = await stagingBackend.rpc('phase2_room_members_visual_v2', { p_room_id: roomId });
+        const { data, error } = await stagingBackend!.rpc('phase2_room_members_visual_v2', { p_room_id: roomId });
         if (!mounted) return;
         if (error || !Array.isArray(data) || data.some(member =>
           !member || typeof member.user_id !== 'string' || !member.user_id ||
@@ -305,7 +305,7 @@ export const VoiceRoomModal: React.FC = () => {
       if (pending || document.hidden) return;
       pending = true;
       try {
-        const { data, error } = await stagingBackend.rpc('totichat_room_gift_totals', { p_room_id: statsRoomId });
+        const { data, error } = await stagingBackend!.rpc('totichat_room_gift_totals', { p_room_id: statsRoomId });
         if (error) throw error;
         if (!active) return;
         if (!data || ['today', 'week', 'month'].some(key =>
@@ -386,7 +386,7 @@ export const VoiceRoomModal: React.FC = () => {
     setSelectedMicAgencyName(null);
     const userId = selectedMicUser?.user.id;
     if (!userId || !stagingBackend) return;
-    void stagingBackend.rpc('staging_profile_agency', { p_user_id: userId })
+    void Promise.resolve(stagingBackend.rpc('staging_profile_agency', { p_user_id: userId }))
       .then(({ data, error }) => {
         if (error) throw error;
         if (active && data && typeof data.name === 'string') setSelectedMicAgencyName(data.name);
