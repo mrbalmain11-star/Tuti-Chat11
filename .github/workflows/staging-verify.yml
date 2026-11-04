@@ -180,6 +180,13 @@ jobs:
       - name: Register Google OAuth callback
         id: stage9
         run: node scripts/configure-android-oauth.mjs
+      # CI runners are disposable. Without a persisted debug keystore, each build
+      # gets a new signing certificate and Android rejects in-place upgrades.
+      - name: Restore stable staging debug signing key
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: totichat-staging-debug-keystore-v1
       - name: Build Android debug APK
         id: stage10
         working-directory: android
@@ -206,6 +213,8 @@ jobs:
           test "$(stat -c %s "$APK")" -gt 1000000
           unzip -Z1 "$APK" | grep -qx "AndroidManifest.xml"
           jarsigner -verify "$APK"
+          # Record the actual signing identity to diagnose Android install failures.
+          keytool -printcert -jarfile "$APK" | tee /tmp/totichat-apk-signing.txt
           sha256sum "$APK" | tee android/app/build/outputs/apk/debug/app-debug.apk.sha256
           ls -lh "$APK"
       - name: Verify APK is extractable from Android ZIP
