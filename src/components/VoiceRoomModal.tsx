@@ -3205,7 +3205,7 @@ export const VoiceRoomModal: React.FC = () => {
                   <Users className="w-4 h-4 text-purple-400" />
                   <span>عدد الحضور المعروض حالياً:</span>
                 </div>
-                <span className="font-mono font-bold text-white">{(serverMembersStatus === 'ready' ? serverRoomMembers.length : activeRoom.listenersCount)} مستمع حالياً</span>
+                <span className="font-mono font-bold text-white">{(serverMembersStatus === 'ready' ? serverRoomMembers.length : activeRoom.listenersCount)} عضو حالياً</span>
               </div>
 
               <button
