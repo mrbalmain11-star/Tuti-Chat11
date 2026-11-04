@@ -93,15 +93,20 @@ export const InternalProfileModal: React.FC = () => {
     catch(e){setProfileActionError(e instanceof Error?e.message:'تعذر الحظر');}
     finally{setProfileBlockBusy(false);}
   };
-  const [verifiedAgency, setVerifiedAgency] = useState<{ name: string; public_id: number; member_count: number; role: string } | null>(null);
+  const [verifiedAgencyResult, setVerifiedAgencyResult] = useState<{ userId: string; agency: { name: string; public_id: number; member_count: number; role: string } | null } | null>(null);
+  const verifiedAgency = verifiedAgencyResult?.userId === user.id ? verifiedAgencyResult.agency : null;
   useEffect(() => {
     let active = true;
-    setVerifiedAgency(null);
+    let requestId = 0;
     if (!stagingBackend || !user.id) return;
     const loadAgency = async () => {
+      const thisRequest = ++requestId;
       const { data, error } = await stagingBackend!.rpc('staging_profile_agency', { p_user_id: user.id });
       if (error) throw error;
-      if (active) setVerifiedAgency(data && typeof data.name === 'string' && Number.isInteger(Number(data.public_id)) ? data : null);
+      if (active && thisRequest === requestId) {
+        const agency = data && typeof data.name === 'string' && Number.isInteger(Number(data.public_id)) ? data : null;
+        setVerifiedAgencyResult({ userId: user.id, agency });
+      }
     };
     void loadAgency().catch(error => console.error('Verified agency unavailable:', error));
     const refresh = () => { void loadAgency().catch(error => console.error('Agency refresh failed:', error)); };
