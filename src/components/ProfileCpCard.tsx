@@ -37,7 +37,7 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
       try {
         const { data, error: fetchError } = await stagingBackend.rpc('totichat_profile_cp', { p_user_id: userId });
         if (fetchError) throw fetchError;
-        if (!Array.isArray(data)) throw new Error('Invalid CP relationship response');
+        if (!Array.isArray(data) || data.some((item: unknown) => item && typeof item === 'object' && (item as Partial<CpLink>).accepted === true && !isConfirmedCpLink(item))) throw new Error('Invalid CP relationship response');
         if (active && requestId === requestVersion.current) { const next: CpLink[] = data.filter(isConfirmedCpLink); setLinks(next); onLinksChangeRef.current?.(next); setError(false); }
       } catch (e) { if (active && requestId === requestVersion.current) { setError(true); } console.error('CP profile load failed', e); }
       finally { if (active && requestId === requestVersion.current) setLoading(false); }
@@ -79,7 +79,7 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
       // Refresh events are blocked during unlink; older responses were invalidated before the mutation.
       const { data, error: reloadError } = await stagingBackend.rpc('totichat_profile_cp', { p_user_id: userId });
       if (activeProfileIdRef.current !== userId) return;
-      if (reloadError || !Array.isArray(data)) {
+      if (reloadError || !Array.isArray(data) || data.some((item: unknown) => item && typeof item === 'object' && (item as Partial<CpLink>).accepted === true && !isConfirmedCpLink(item))) {
         setError(true);
         window.alert('تم فك العلاقة، لكن تعذر تحديث القائمة. أعد المحاولة عند توفر الاتصال.');
         return;
