@@ -45,10 +45,16 @@ export const ProfileCpCard: React.FC<{ userId: string; compact?: boolean; refres
       });
       if (actionError) throw actionError;
       const { data, error: reloadError } = await stagingBackend.rpc('totichat_profile_cp', { p_user_id: userId });
-      if (reloadError) { setLinks([]); onLinksChange?.([]); throw reloadError; }
+      if (reloadError) {
+        setLinks([]);
+        onLinksChange?.([]);
+        setError(true);
+        throw reloadError;
+      }
       const next: CpLink[] = Array.isArray(data) ? data.filter((item: CpLink) => item.accepted === true) : [];
       setLinks(next);
       onLinksChange?.(next);
+      setError(false);
     } catch (err) {
       window.alert(err instanceof Error ? err.message : 'تعذر فك علاقة CP');
     } finally { setEndingPartner(null); }
