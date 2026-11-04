@@ -1074,7 +1074,7 @@ export const VoiceRoomModal: React.FC = () => {
                 </div>
                 <span className="text-xs font-mono font-bold text-white/90">{(serverMembersStatus === 'ready' ? serverRoomMembers.length : activeRoom.listenersCount)}</span>
                 <div className="flex items-center -space-x-2 space-x-reverse" aria-label="صور أعضاء الغرفة">
-                  {activeRoom.memberAvatars.slice(0, 3).map((avatar, index) => (
+                  {(serverMembersStatus === 'ready' ? serverRoomMembers.map(member => member.avatar_url).filter((avatar): avatar is string => typeof avatar === 'string' && avatar.startsWith('http')).slice(0, 3) : activeRoom.memberAvatars.slice(0, 3)).map((avatar, index) => (
                     <img key={`${avatar}-${index}`} src={avatar} alt="عضو في الغرفة" className="h-6 w-6 rounded-full border-2 border-[#1b0d3a] object-cover bg-slate-800" />
                   ))}
                 </div>
