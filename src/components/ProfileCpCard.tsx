@@ -94,7 +94,7 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
             </div>
           </div>
           {link.partnerPublicId != null && <p className="mt-1 text-center text-[10px] text-amber-100/75">ID {link.partnerPublicId}</p>}
-          <p className="mt-1 text-center text-[10px] text-amber-100/70">نقاط العلاقة: غير متاحة حالياً</p>
+          {/* CP progress is intentionally hidden until the authenticated RPC exposes gift_gold and the next level threshold. */}
           {userId === currentUser.id && (
             <button type="button" disabled={endingPartner !== null} onClick={() => void endRelationship(link)} className="mx-auto mt-2 block rounded-lg border border-amber-300/70 bg-[#39172e]/90 px-3 py-1 text-[11px] font-bold text-amber-100 disabled:opacity-50">
               {endingPartner === link.partnerId ? 'جارٍ الفك...' : 'فك العلاقة'}
