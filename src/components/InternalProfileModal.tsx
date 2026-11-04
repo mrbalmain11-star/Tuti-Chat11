@@ -136,11 +136,12 @@ export const InternalProfileModal: React.FC = () => {
     return () => { active = false; };
   }, [openInternalProfileModal, isSelf, user.id]);
   const displayedUser = openInternalProfileModal && !isSelf && visitorStatus?.userId === user.id ? { ...user, ...visitorStatus } : user;
-  const [visitorAssets, setVisitorAssets] = useState<{ userId: string; publicId: string; cover: string; avatar: string } | null>(null);
+  const [visitorAssets, setVisitorAssets] = useState<{ userId: string; publicId: string; cover: string; avatar: string; bio: string } | null>(null);
   const visitorAssetsForUser = openInternalProfileModal && !isSelf && visitorAssets?.userId === user.id ? visitorAssets : null;
   const visitorPublicId = visitorAssetsForUser?.publicId || '';
   const visitorCover = visitorAssetsForUser?.cover || '';
   const visitorAvatar = visitorAssetsForUser?.avatar || '';
+  const visitorBio = visitorAssetsForUser?.bio || '';
   useEffect(() => {
     let active = true;
     setVisitorAssets(null);
@@ -148,7 +149,7 @@ export const InternalProfileModal: React.FC = () => {
     const client = stagingBackend;
     void (async () => {
       const { data: profile, error } = await client.from('profiles')
-        .select('public_id,cover_path,avatar_url').eq('id', user.id).maybeSingle();
+        .select('public_id,cover_path,avatar_url,bio').eq('id', user.id).maybeSingle();
       if (error) throw error;
       const { data: special } = await client.rpc('phase5_special_id_status', { p_target: user.id });
       const status = special as { assigned?: boolean; publicId?: string } | null;
@@ -160,7 +161,7 @@ export const InternalProfileModal: React.FC = () => {
         /^(https?:\/\/|data:image\/)/i.test(value)
           ? value
           : client.storage.from('profile-avatars').getPublicUrl(value).data.publicUrl;
-      setVisitorAssets({ userId: user.id, publicId, cover: profile?.cover_path ? resolveProfileImage(profile.cover_path) : '', avatar: profile?.avatar_url ? resolveProfileImage(profile.avatar_url) : '' });
+      setVisitorAssets({ userId: user.id, publicId, cover: profile?.cover_path ? resolveProfileImage(profile.cover_path) : '', avatar: profile?.avatar_url ? resolveProfileImage(profile.avatar_url) : '', bio: profile?.bio || '' });
     })().catch(error => console.error('Visitor profile load failed:', error));
     return () => { active = false; };
   }, [openInternalProfileModal, isSelf, user.id]);
@@ -626,7 +627,7 @@ export const InternalProfileModal: React.FC = () => {
           {/* Bio / Status Line with Edit Pencil for self */}
           <div className="flex items-start justify-between gap-2 mt-2">
             <p className="text-sm text-slate-700 text-right font-medium flex-1">
-              {user.bio || 'هذا المستخدم غامض ولم يترك أي أثر.'}
+              {(isSelf ? user.bio : visitorBio) || 'هذا المستخدم غامض ولم يترك أي أثر.'}
             </p>
             {isSelf && (
               <button
