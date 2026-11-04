@@ -74,6 +74,7 @@ export const InternalProfileModal: React.FC = () => {
   const [showCpSearch,setShowCpSearch] = useState(false);
   const [cpRefreshKey, setCpRefreshKey] = useState(0);
   const [cpPartnerAvatar, setCpPartnerAvatar] = useState<string | null>(null);
+  const [hasConfirmedCp, setHasConfirmedCp] = useState(false);
   const [showProfileOptions, setShowProfileOptions] = useState(false);
   const [showReportForm, setShowReportForm] = useState(false);
   const [profileBlockBusy, setProfileBlockBusy] = useState(false);
@@ -433,7 +434,7 @@ export const InternalProfileModal: React.FC = () => {
             ========================================================================= */}
         <div className="relative -mt-16 px-6 flex items-end justify-between z-20 pointer-events-auto">
           {/* Search for CP (ابحث عن CP) Container */}
-          <div className="flex flex-col items-center gap-1.5 mb-1">
+          {!hasConfirmedCp && <div className="flex flex-col items-center gap-1.5 mb-1">
             {/* Glass Orb with "+" icon */}
             <div
               onClick={() => {
@@ -456,7 +457,7 @@ export const InternalProfileModal: React.FC = () => {
             >
               ابحث عن CP
             </button>
-          </div>
+          </div>}
 
           {/* Complete Circular User Avatar with Glowing Ring and Zero Clipping */}
           <div className="relative w-26 h-26 rounded-full p-[3px] bg-gradient-to-tr from-amber-300 via-yellow-400 to-amber-600 shadow-[0_4px_24px_rgba(245,158,11,0.5)] ring-4 ring-[#FAF6EE]">
@@ -632,7 +633,7 @@ export const InternalProfileModal: React.FC = () => {
             )}
           </div>
 
-          <ProfileCpCard userId={user.id} refreshKey={cpRefreshKey} onLinksChange={links => setCpPartnerAvatar(links[0]?.partnerAvatar || null)} />
+          <ProfileCpCard userId={user.id} refreshKey={cpRefreshKey} onLinksChange={links => { setCpPartnerAvatar(links[0]?.partnerAvatar || null); setHasConfirmedCp(links.some(link => link.accepted)); }} />
           {/* Realistic Dynamic Agency Rectangle (مستطيل الوكالة الفعلي مطابق للصورة تماماً) */}
           {verifiedAgency && (
             <AgencyProfileCard
