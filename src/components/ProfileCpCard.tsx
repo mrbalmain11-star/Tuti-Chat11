@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Heart, CircleUserRound } from 'lucide-react';
+import { CircleUserRound } from 'lucide-react';
 import { stagingBackend } from '../services/stagingBackend';
 import { useApp } from '../context/AppContext';
 
@@ -68,26 +68,39 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
     {loading ? <p className="mt-2 text-xs text-slate-500">جارٍ تحميل العلاقات...</p> :
       error ? <p className="mt-2 text-xs text-rose-500">تعذر تحميل علاقات CP</p> :
       links.length === 0 ? null :
-      <div className="mt-2 space-y-2">{links.map(link => <div key={link.typeId + link.partnerId} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-300/50 bg-[#2c142b]/85 p-2 text-amber-50 backdrop-blur-sm">
-        {(userAvatar || userName) && <div className="flex min-w-0 flex-1 flex-col items-center gap-1 text-center">
-          <div className="h-14 w-14 rounded-full border-[3px] border-amber-300 bg-[#5c3048] p-0.5 shadow-[0_3px_12px_rgba(244,183,74,.45)]">
-            {userAvatar ? <img src={userAvatar} alt={userName || 'صاحب الملف'} className="h-full w-full rounded-full object-cover" /> : <CircleUserRound className="h-full w-full text-amber-200" />}
+      <div className="mt-3 space-y-3">{links.map(link => (
+        <div key={link.typeId + link.partnerId} className="rounded-2xl border border-amber-300/50 bg-[#2c142b]/75 p-2.5 text-amber-50 backdrop-blur-sm">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1.5">
+            <div className="flex min-w-0 flex-col items-center gap-1 text-center">
+              <div className="h-14 w-14 rounded-full border-[3px] border-amber-300 bg-[#5c3048] p-0.5 shadow-[0_3px_12px_rgba(244,183,74,.45)]">
+                {userAvatar ? <img src={userAvatar} alt={userName || 'صاحب الملف'} className="h-full w-full rounded-full object-cover" /> : <CircleUserRound className="h-full w-full text-amber-200" />}
+              </div>
+              <span className="w-full truncate text-[11px] font-bold">{userName || 'صاحب الملف'}</span>
+            </div>
+            <div className="flex min-w-[58px] flex-col items-center gap-1 text-center">
+              {Number.isFinite(Number(link.level)) && Number(link.level) > 0 ? (
+                <div className="flex h-14 w-14 flex-col items-center justify-center rounded-full border-2 border-amber-200 bg-gradient-to-br from-[#6d3b15] via-[#e9ba64] to-[#67310e] text-[#fff7d6] shadow-[inset_0_1px_5px_rgba(255,255,255,.6),0_3px_10px_rgba(0,0,0,.4)]" aria-label={`مستوى العلاقة ${link.level}`}>
+                  <span className="text-[9px] font-bold leading-none">CP</span>
+                  <span className="text-base font-black leading-tight">{link.level}</span>
+                </div>
+              ) : <span className="text-[11px] font-bold text-amber-200">CP</span>}
+              <span className="max-w-[90px] break-words text-[10px] font-bold text-amber-100">{link.typeLabel}</span>
+            </div>
+            <div className="flex min-w-0 flex-col items-center gap-1 text-center">
+              <div className="h-14 w-14 rounded-full border-[3px] border-amber-300 bg-[#5c3048] p-0.5 shadow-[0_3px_12px_rgba(244,183,74,.45)]">
+                {link.partnerAvatar ? <img src={link.partnerAvatar} alt={link.partnerName || 'الشريك'} className="h-full w-full rounded-full object-cover" /> : <CircleUserRound className="h-full w-full text-amber-200" />}
+              </div>
+              <span className="w-full truncate text-[11px] font-bold">{link.partnerName || 'الشريك'}</span>
+            </div>
           </div>
-          <span className="max-w-[95px] truncate text-[11px] font-bold">{userName || 'صاحب الملف'}</span>
-        </div>}
-        <div className="relative h-14 w-14 shrink-0 rounded-full border-[3px] border-amber-300 bg-gradient-to-br from-[#fff3bd] via-[#a86a28] to-[#fff0aa] p-0.5 shadow-[0_3px_12px_rgba(244,183,74,.45)]" aria-label="صورة شريك CP">
-          {link.partnerAvatar ? <img src={link.partnerAvatar} alt={link.partnerName || 'الشريك'} className="h-full w-full rounded-full object-cover" /> : <CircleUserRound className="h-full w-full rounded-full text-amber-950" />}
+          {link.partnerPublicId != null && <p className="mt-1 text-center text-[10px] text-amber-100/75">ID {link.partnerPublicId}</p>}
+          {userId === currentUser.id && (
+            <button type="button" disabled={endingPartner !== null} onClick={() => void endRelationship(link)} className="mx-auto mt-2 block rounded-lg border border-amber-300/70 bg-[#39172e]/90 px-3 py-1 text-[11px] font-bold text-amber-100 disabled:opacity-50">
+              {endingPartner === link.partnerId ? 'جارٍ الفك...' : 'فك العلاقة'}
+            </button>
+          )}
         </div>
-        <div className="min-w-0 flex-1"><p className="truncate text-xs font-black">{link.partnerName || 'مستخدم'}</p><p className="text-[11px] text-amber-100/75">{link.typeLabel} · {Number.isFinite(Number(link.level)) && Number(link.level) > 0 ? `Lv.${link.level} · ` : ''}ID {link.partnerPublicId ?? '—'}</p></div>
-        {Number.isFinite(Number(link.level)) && Number(link.level) > 0 && (
-          <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-full border-2 border-amber-200 bg-gradient-to-br from-[#6d3b15] via-[#e9ba64] to-[#67310e] text-[#fff7d6] shadow-[inset_0_1px_5px_rgba(255,255,255,.6),0_3px_10px_rgba(0,0,0,.4)]" aria-label={`مستوى العلاقة ${link.level}`}>
-            <span className="text-[9px] font-bold leading-none">CP</span>
-            <span className="text-base font-black leading-tight">{link.level}</span>
-          </div>
-        )}
-        {userId === currentUser.id && <button type="button" disabled={endingPartner !== null} onClick={() => void endRelationship(link)} className="rounded-lg border border-amber-300/70 px-2 py-1 text-[11px] font-bold text-amber-100 disabled:opacity-50">{endingPartner === link.partnerId ? 'جارٍ الفك...' : 'فك العلاقة'}</button>}
-        {link.typeLabel?.includes('حب') || /love/i.test(link.typeLabel || '') ? <Heart className="h-4 w-4 text-rose-300" aria-label="علاقة حب" /> : null}
-      </div>)}</div>}
+      ))}</div>
     </div>
   </section>;
 };
