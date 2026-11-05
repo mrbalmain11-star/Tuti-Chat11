@@ -3,13 +3,16 @@ import { VoiceRoom } from '../types';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
 import { RoyalRoomRankFrame } from './RoyalRoomRankFrame';
+import { RoyalRoomFollowIcon } from './RoyalRoomFollowIcon';
 
 interface RoomCardProps {
   room: VoiceRoom;
 }
 
 export const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
-  const { enterRoom } = useApp();
+  const { enterRoom, currentUser, followedRoomHosts, toggleFollowHost } = useApp();
+  const isOwnRoom = room.hostId === currentUser.id;
+  const isFollowed = followedRoomHosts.has(room.hostId);
   const [coverFailed, setCoverFailed] = useState(false);
   const [hostAvatarFailed, setHostAvatarFailed] = useState(false);
   useEffect(() => { setCoverFailed(false); }, [room.coverImage]);
@@ -45,6 +48,21 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
 
         {/* Subtle dark gradient overlay at top and bottom for readability */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/65 pointer-events-none" />
+
+        {!isOwnRoom && room.hostId && (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              toggleFollowHost(room.hostId);
+            }}
+            className="absolute top-1.5 left-1.5 z-20 w-9 h-9 flex items-center justify-center rounded-full bg-slate-950/60 backdrop-blur-sm border border-emerald-300/40 active:scale-90 transition-transform"
+            aria-label={isFollowed ? 'إلغاء متابعة الغرفة' : 'متابعة الغرفة'}
+            title={isFollowed ? 'إلغاء المتابعة' : 'متابعة الغرفة'}
+          >
+            <RoyalRoomFollowIcon followed={isFollowed} className="w-7 h-7" />
+          </button>
+        )}
 
         {/* Top-Right Badge: Rank 1 (Gold Royal Laurel Crest) */}
         {room.rank === 1 && (
