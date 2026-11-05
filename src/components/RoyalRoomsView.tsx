@@ -15,6 +15,7 @@ import {
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
 import { VipName } from './VipName';
+import { RoyalRoomFollowIcon } from './RoyalRoomFollowIcon';
 import { fetchMyProfile } from '../services/stagingBackend';
 
 export const RoyalRoomsView: React.FC = () => {
@@ -299,7 +300,7 @@ export const RoyalRoomsView: React.FC = () => {
                       className="absolute top-1.5 left-1.5 z-10 p-1.5 rounded-full bg-black/50 hover:bg-black/70 text-rose-400 hover:text-rose-300 backdrop-blur-xs transition active:scale-90"
                       title="إلغاء أو تعديل المتابعة"
                     >
-                      <Heart className="w-3.5 h-3.5 fill-rose-500 text-rose-500" />
+                      <RoyalRoomFollowIcon followed={true} className="w-5 h-5" />
                     </button>
 
                     {/* Listeners Count (Bottom Left) */}
