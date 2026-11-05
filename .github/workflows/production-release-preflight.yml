@@ -1,0 +1,26 @@
+name: TotiChat Production Release Preflight (No Build)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  release-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: integration/legacy-backend-staging
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify release prerequisites without exposing secrets
+        env:
+          TOTICHAT_RELEASE_KEYSTORE_BASE64: ${{ secrets.TOTICHAT_RELEASE_KEYSTORE_BASE64 }}
+          TOTICHAT_RELEASE_STORE_PASSWORD: ${{ secrets.TOTICHAT_RELEASE_STORE_PASSWORD }}
+          TOTICHAT_RELEASE_KEY_ALIAS: ${{ secrets.TOTICHAT_RELEASE_KEY_ALIAS }}
+          TOTICHAT_RELEASE_KEY_PASSWORD: ${{ secrets.TOTICHAT_RELEASE_KEY_PASSWORD }}
+          TOTICHAT_PRODUCTION_OAUTH_REDIRECT_CONFIRMED: ${{ vars.TOTICHAT_PRODUCTION_OAUTH_REDIRECT_CONFIRMED }}
+          TOTICHAT_PLAY_SIGNING_COMPATIBILITY_CONFIRMED: ${{ vars.TOTICHAT_PLAY_SIGNING_COMPATIBILITY_CONFIRMED }}
+          TOTICHAT_RELEASE_APPROVED: ${{ vars.TOTICHAT_RELEASE_APPROVED }}
+        run: node scripts/check-production-release-readiness.mjs
