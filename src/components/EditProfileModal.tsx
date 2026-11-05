@@ -3,7 +3,7 @@ import { X, Check, Camera, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
 import { processImageFile } from '../utils/imageUpload';
-import { uploadMyAvatar, uploadMyCover, getMyAvatarUrl } from '../services/stagingBackend';
+import { uploadMyAvatar, uploadMyCover } from '../services/stagingBackend';
 import { saveProfileChanges } from '../services/profileWrites';
 
 /** Convert gallery preview to the WebP format required by authenticated storage. */
