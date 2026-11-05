@@ -3,6 +3,7 @@ import { RoomManagementPanel } from './RoomManagementPanel';
 import { App as CapacitorApp } from '@capacitor/app';
 import { playRoomMusic, pauseRoomMusic, resumeRoomMusic, stopRoomMusic, getRoomMusicProgress, seekRoomMusic, setRoomMusicVolume } from '../services/isolatedRoomMusic';
 import React, { useState, useRef, useEffect } from 'react';
+import { RoyalGiftIcon } from './RoyalGiftIcon';
 import {
   Mic,
   CircleUserRound,
@@ -1501,7 +1502,7 @@ export const VoiceRoomModal: React.FC = () => {
               title="إرسال هدية 🎁"
             >
               <div className="w-full h-full rounded-full bg-[#1e103f] flex items-center justify-center">
-                <span className="text-xl">🎁</span>
+                <RoyalGiftIcon className="w-8 h-8 drop-shadow-[0_2px_5px_rgba(245,105,220,0.6)]" />
               </div>
             </button>
 
