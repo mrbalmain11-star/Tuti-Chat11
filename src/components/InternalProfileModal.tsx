@@ -735,9 +735,9 @@ export const InternalProfileModal: React.FC = () => {
 
           {/* Active Voice Room Mic Control Banner if user is currently on mic in room */}
           {seatOnActiveRoom && (
-            <div className="mt-4 p-3 rounded-2xl bg-gradient-to-r from-amber-100 via-amber-50 to-amber-100 border border-amber-300 flex items-center justify-between shadow-xs">
+            <div className="mt-4 relative overflow-hidden p-3.5 rounded-2xl bg-gradient-to-r from-[#e6fff2] via-[#f6fff8] to-[#fff4d7] border border-[#c5a55a]/70 flex flex-wrap items-center justify-between gap-2 shadow-[0_4px_16px_rgba(10,91,61,0.12)]">
               <div className="flex items-center gap-2.5">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${seatOnActiveRoom.isMuted ? 'bg-amber-200 text-amber-900' : 'bg-emerald-100 text-emerald-700'}`}>
+                <div className={`w-9 h-9 rounded-xl border border-[#e2c87e] shadow-[inset_0_1px_3px_rgba(255,255,255,0.8)] flex items-center justify-center ${seatOnActiveRoom.isMuted ? 'bg-amber-100 text-amber-900' : 'bg-gradient-to-br from-emerald-100 to-emerald-300 text-emerald-900'}`}>
                   {seatOnActiveRoom.isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4 animate-pulse" />}
                 </div>
                 <div className="text-right">
@@ -759,7 +759,7 @@ export const InternalProfileModal: React.FC = () => {
                         toggleMuteSeat(seatOnActiveRoom.seatNumber);
                         showToast(seatOnActiveRoom.isMuted ? 'تم تفعيل المايك 🎙️' : 'تم كتم المايك 🔇');
                       }}
-                      className="px-3 py-1.5 rounded-xl bg-white hover:bg-amber-50 text-slate-900 border border-amber-300 text-[11px] font-black transition active:scale-95 cursor-pointer shadow-2xs"
+                      className="px-3 py-2 rounded-xl bg-white hover:bg-emerald-50 text-emerald-950 border border-emerald-300 text-[11px] font-black transition active:scale-95 cursor-pointer shadow-sm"
                     >
                       {seatOnActiveRoom.isMuted ? 'إلغاء الكتم' : 'كتم المايك'}
                     </button>
@@ -769,7 +769,7 @@ export const InternalProfileModal: React.FC = () => {
                         leaveSeat(seatOnActiveRoom.seatNumber);
                         showToast(`نزلت من المايك رقم ${seatOnActiveRoom.seatNumber}`);
                       }}
-                      className="px-3 py-1.5 rounded-xl bg-rose-600/80 hover:bg-rose-500 text-white text-[11px] font-bold transition active:scale-95 cursor-pointer flex items-center gap-1"
+                      className="px-3 py-2 rounded-xl bg-gradient-to-r from-emerald-800 to-emerald-700 hover:from-emerald-700 hover:to-emerald-600 text-white border border-amber-400/60 text-[11px] font-bold transition active:scale-95 cursor-pointer flex items-center gap-1 shadow-sm"
                     >
                       <LogOut className="w-3 h-3" />
                       <span>نزول</span>
