@@ -994,14 +994,31 @@ export const VoiceRoomModal: React.FC = () => {
       )}
 
       {showExitOptions && (
-        <div className="absolute inset-0 z-[120] flex items-center justify-center bg-black/70 px-6" onClick={() => setShowExitOptions(false)}>
-          <div className="w-full max-w-xs rounded-3xl border border-amber-400/50 bg-[#17112b] p-5 shadow-2xl" onClick={event => event.stopPropagation()} dir="rtl">
-            <h3 className="text-center text-lg font-black text-amber-200 mb-4">خيارات الغرفة</h3>
+        <div
+          className="absolute inset-0 z-[120] flex items-center justify-center bg-slate-950/55 backdrop-blur-lg px-6"
+          onClick={() => setShowExitOptions(false)}
+        >
+          <div
+            className="w-full max-w-xs overflow-hidden rounded-[28px] border border-white/25 bg-gradient-to-br from-slate-900/90 via-[#152c32]/90 to-[#071b1b]/95 p-5 shadow-[0_22px_65px_rgba(0,0,0,0.55)] backdrop-blur-2xl"
+            onClick={event => event.stopPropagation()}
+            dir="rtl"
+            role="dialog"
+            aria-modal="true"
+            aria-label="خيارات الغرفة"
+          >
+            <div className="mx-auto mb-3 h-1 w-12 rounded-full bg-white/25" />
+            <h3 className="mb-5 text-center text-lg font-black text-[#f8df9a]">خيارات الغرفة</h3>
             <div className="flex flex-col gap-3">
-              <button onClick={() => { setShowExitOptions(false); setIsRoomMinimized(true); }} className="w-full rounded-xl border border-amber-400/40 bg-amber-400/10 py-3 font-bold text-amber-100 flex items-center justify-center gap-2"><Maximize2 className="w-5 h-5" /> تصغير الغرفة</button>
-              <button onClick={() => { setShowExitOptions(false); leaveRoom(); }} className="w-full rounded-xl border border-red-400/40 bg-red-500/10 py-3 font-bold text-red-100 flex items-center justify-center gap-2"><LogOut className="w-5 h-5" /> مغادرة الغرفة</button>
+              <button type="button" onClick={() => setShowExitOptions(false)} className="flex w-full items-center justify-center gap-2 rounded-2xl border border-white/25 bg-white/10 py-3.5 font-bold text-white transition active:scale-[0.98]">
+                <Maximize2 className="h-5 w-5 text-emerald-200" /> للأمام — العودة إلى الغرفة
+              </button>
+              <button type="button" onClick={() => { setShowExitOptions(false); setIsRoomMinimized(true); }} className="flex w-full items-center justify-center gap-2 rounded-2xl border border-amber-300/35 bg-amber-300/10 py-3.5 font-bold text-amber-100 transition active:scale-[0.98]">
+                <Maximize2 className="h-5 w-5" /> تصغير الغرفة
+              </button>
+              <button type="button" onClick={() => { setShowExitOptions(false); leaveRoom(); }} className="flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-300/35 bg-rose-500/15 py-3.5 font-bold text-rose-100 transition active:scale-[0.98]">
+                <LogOut className="h-5 w-5" /> الخروج من الغرفة
+              </button>
             </div>
-            <button onClick={() => setShowExitOptions(false)} className="w-full mt-3 py-2 text-sm text-slate-300">إلغاء</button>
           </div>
         </div>
       )}
