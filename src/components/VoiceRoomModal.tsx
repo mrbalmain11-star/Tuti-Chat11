@@ -4,6 +4,7 @@ import { App as CapacitorApp } from '@capacitor/app';
 import { playRoomMusic, pauseRoomMusic, resumeRoomMusic, stopRoomMusic, getRoomMusicProgress, seekRoomMusic, setRoomMusicVolume } from '../services/isolatedRoomMusic';
 import React, { useState, useRef, useEffect } from 'react';
 import { RoyalGiftIcon } from './RoyalGiftIcon';
+import { RoyalGamepadIcon } from './RoyalGamepadIcon';
 import {
   Mic,
   CircleUserRound,
@@ -1391,7 +1392,7 @@ export const VoiceRoomModal: React.FC = () => {
                     className="w-10 h-10 rounded-2xl bg-[#1b1038]/80 border border-purple-400/30 flex items-center justify-center shadow-lg text-emerald-400 cursor-pointer active:scale-95 transition"
                     title="الألعاب والمسابقات"
                   >
-                    <Gamepad2 className="w-5 h-5 text-emerald-400 stroke-[2]" />
+                    <RoyalGamepadIcon className="w-7 h-7 drop-shadow-[0_2px_5px_rgba(16,185,129,0.45)]" />
                   </div>
 
                   {/* Double dot */}
