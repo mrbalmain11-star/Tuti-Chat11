@@ -3,27 +3,54 @@ import { X, Check, Camera, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
 import { processImageFile } from '../utils/imageUpload';
+import { uploadMyAvatar, uploadMyCover, getMyAvatarUrl } from '../services/stagingBackend';
+import { saveProfileChanges } from '../services/profileWrites';
+
+/** Convert gallery preview to the WebP format required by authenticated storage. */
+async function toWebpBlob(dataUrl: string): Promise<Blob> {
+  const image = new Image();
+  await new Promise<void>((resolve, reject) => {
+    image.onload = () => resolve();
+    image.onerror = () => reject(new Error('تعذر معالجة الصورة'));
+    image.src = dataUrl;
+  });
+  const canvas = document.createElement('canvas');
+  canvas.width = image.naturalWidth;
+  canvas.height = image.naturalHeight;
+  const context = canvas.getContext('2d');
+  if (!context) throw new Error('تعذر تجهيز الصورة');
+  context.drawImage(image, 0, 0);
+  const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob(
+    result => result && result.type === 'image/webp' ? resolve(result) : reject(new Error('صيغة WebP غير مدعومة')),
+    'image/webp', 0.82,
+  ));
+  if (blob.size > 2 * 1024 * 1024) throw new Error('حجم الصورة يتجاوز 2MB');
+  return blob;
+}
 
 export const EditProfileModal: React.FC = () => {
-  const { openEditProfileModal, setOpenEditProfileModal, currentUser, updateUserProfile } = useApp();
+  const { openEditProfileModal, setOpenEditProfileModal, currentUser } = useApp();
 
   const [name, setName] = useState(currentUser.name);
-  const [nickname, setNickname] = useState(currentUser.nickname);
   const [bio, setBio] = useState(currentUser.bio || '');
-  const [country, setCountry] = useState(currentUser.country);
   const [avatar, setAvatar] = useState(currentUser.avatar);
   const [cover, setCover] = useState(currentUser.cover || 'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?w=800&auto=format&fit=crop&q=80');
   const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [avatarBlob, setAvatarBlob] = useState<Blob | null>(null);
+  const [coverBlob, setCoverBlob] = useState<Blob | null>(null);
   const [uploadingCover, setUploadingCover] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     if (openEditProfileModal) {
+      setSaveError('');
+      setAvatarBlob(null);
+      setCoverBlob(null);
       setName(currentUser.name || '');
-      setNickname(currentUser.nickname || '');
       setBio(currentUser.bio || '');
-      setCountry(currentUser.country || 'العراق');
       setAvatar(currentUser.avatar || '');
       setCover(currentUser.cover || 'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?w=800&auto=format&fit=crop&q=80');
     }
@@ -39,6 +66,7 @@ export const EditProfileModal: React.FC = () => {
       setUploading(true);
       const dataUrl = await processImageFile(file);
       setAvatar(dataUrl);
+      setAvatarBlob(await toWebpBlob(dataUrl));
       sounds.playCoin();
     } catch (err) {
       console.error(err);
@@ -57,6 +85,7 @@ export const EditProfileModal: React.FC = () => {
       setUploadingCover(true);
       const dataUrl = await processImageFile(file);
       setCover(dataUrl);
+      setCoverBlob(await toWebpBlob(dataUrl));
       sounds.playCoin();
     } catch (err) {
       console.error(err);
@@ -66,13 +95,26 @@ export const EditProfileModal: React.FC = () => {
     }
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    sounds.playClick();
-    // The authenticated profile API supports display name and biography.
-    // Never submit an editable auth ID or unsupported profile fields.
-    updateUserProfile({ name: name.trim(), bio });
-    setOpenEditProfileModal(false);
+    if (saving || uploading || uploadingCover) return;
+    setSaving(true);
+    setSaveError('');
+    try {
+      const updatedName = name.trim();
+      if (updatedName.length < 2 || updatedName.length > 40) throw new Error('الاسم يجب أن يكون من 2 إلى 40 حرفاً');
+      await saveProfileChanges({ display_name: updatedName, bio: bio.trim() });
+      if (avatarBlob) await uploadMyAvatar(avatarBlob);
+      if (coverBlob) await uploadMyCover(coverBlob);
+      window.dispatchEvent(new Event('totichat:profile-changed'));
+      sounds.playClick();
+      setOpenEditProfileModal(false);
+    } catch (error) {
+      console.error('Profile update failed:', error);
+      setSaveError(error instanceof Error ? error.message : 'تعذر حفظ التغييرات، حاول مجدداً');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -177,30 +219,6 @@ export const EditProfileModal: React.FC = () => {
           </div>
 
           <div className="text-right">
-            <label className="text-xs font-bold text-amber-200 block mb-1">اللقب المستعار (النيكنيم):</label>
-            <input
-              type="text"
-              value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
-              className="w-full p-2.5 rounded-xl border border-amber-400/50 bg-emerald-950/80 text-xs text-white text-right focus:outline-none focus:border-amber-400"
-            />
-          </div>
-
-          <div className="text-right">
-            <label className="text-xs font-bold text-amber-200 block mb-1">الدولة:</label>
-            <select
-              value={country}
-              onChange={(e) => setCountry(e.target.value)}
-              className="w-full p-2.5 rounded-xl border border-amber-400/50 bg-emerald-950/80 text-xs text-white text-right focus:outline-none focus:border-amber-400"
-            >
-              <option value="العراق">العراق 🇮🇶</option>
-              <option value="المملكة العربية السعودية">المملكة العربية السعودية 🇸🇦</option>
-              <option value="مصر">مصر 🇪🇬</option>
-              <option value="سوريا">سوريا 🇸🇾</option>
-            </select>
-          </div>
-
-          <div className="text-right">
             <label className="text-xs font-bold text-amber-200 block mb-1">النبذة الشخصية (Bio):</label>
             <textarea
               rows={2}
@@ -210,11 +228,13 @@ export const EditProfileModal: React.FC = () => {
             />
           </div>
 
+          {saveError && <p role="alert" className="rounded-xl border border-rose-300/50 bg-rose-950/50 p-3 text-xs text-rose-100">{saveError}</p>}
           <button
             type="submit"
+            disabled={saving || uploading || uploadingCover}
             className="w-full py-3 rounded-2xl bg-gradient-to-r from-emerald-700 via-emerald-600 to-emerald-700 border border-amber-300/70 text-white font-black text-sm shadow-md transition active:scale-95"
           >
-            حفظ التغييرات
+            {saving ? "جارٍ حفظ التغييرات..." : "حفظ التغييرات"}
           </button>
         </form>
       </div>
