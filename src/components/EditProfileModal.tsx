@@ -76,19 +76,19 @@ export const EditProfileModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs font-['Cairo',sans-serif] p-4 animate-in fade-in">
-      <div className="w-full max-w-sm bg-white text-slate-900 rounded-3xl p-5 shadow-2xl flex flex-col">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-          <h3 className="text-base font-black text-slate-900">تعديل الملف الشخصي</h3>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#001b15]/90 backdrop-blur-md font-['Cairo',sans-serif] p-4 animate-in fade-in">
+      <div className="w-full max-w-sm max-h-[92dvh] overflow-y-auto bg-gradient-to-b from-[#084e39] via-[#063b2e] to-[#001d19] text-white rounded-3xl p-5 shadow-2xl border border-amber-400/60 flex flex-col">
+        <div className="flex items-center justify-between pb-3 border-b border-amber-400/30">
+          <h3 className="text-base font-black text-amber-200">تعديل الملف الشخصي</h3>
           <button
             onClick={() => setOpenEditProfileModal(false)}
-            className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-600"
+            className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-amber-100"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <form onSubmit={handleSave} className="py-3 space-y-3">
+        <form onSubmit={handleSave} className="py-3 space-y-3" dir="rtl">
           {/* Profile Cover Banner selector */}
           <div className="flex flex-col">
             <input
@@ -99,29 +99,29 @@ export const EditProfileModal: React.FC = () => {
               onChange={handleCoverChange}
             />
 
-            <label className="text-xs font-bold text-slate-700 block mb-1 text-right">
+            <label className="text-xs font-bold text-amber-200 block mb-1 text-right">
               غلاف الملف الشخصي:
             </label>
             <div
               onClick={() => coverInputRef.current?.click()}
-              className="relative w-full h-24 rounded-2xl border-2 border-dashed border-purple-300 hover:border-purple-500 overflow-hidden shadow-xs cursor-pointer group bg-slate-900 active:scale-98 transition flex items-center justify-center"
+              className="relative w-full h-24 rounded-2xl border-2 border-dashed border-amber-300 hover:border-amber-400 overflow-hidden shadow-xs cursor-pointer group bg-slate-900 active:scale-98 transition flex items-center justify-center"
               title="اضغط لتغيير الغلاف من المعرض"
             >
               <img src={cover} alt="Cover" className="w-full h-full object-cover" />
               {uploadingCover && (
                 <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white z-10">
-                  <Loader2 className="w-6 h-6 animate-spin text-purple-300" />
+                  <Loader2 className="w-6 h-6 animate-spin text-amber-300" />
                 </div>
               )}
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition gap-2">
-                <Camera className="w-4 h-4 text-purple-300" />
+                <Camera className="w-4 h-4 text-amber-300" />
                 <span className="text-xs font-bold">تغيير صورة الغلاف</span>
               </div>
             </div>
             <button
               type="button"
               onClick={() => coverInputRef.current?.click()}
-              className="mt-1 text-[11px] font-bold text-purple-600 hover:text-purple-700 self-center flex items-center gap-1.5 transition active:scale-95 py-1"
+              className="mt-1 text-[11px] font-bold text-amber-200 hover:text-amber-100 self-center flex items-center gap-1.5 transition active:scale-95 py-1"
             >
               <ImageIcon className="w-3.5 h-3.5" />
               <span>اختيار غلاف جديد من المعرض</span>
@@ -166,32 +166,32 @@ export const EditProfileModal: React.FC = () => {
           </div>
 
           <div className="text-right">
-            <label className="text-xs font-bold text-slate-600 block mb-1">الاسم الأساسي:</label>
+            <label className="text-xs font-bold text-amber-200 block mb-1">الاسم الأساسي:</label>
             <input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full p-2.5 rounded-xl border border-slate-200 text-xs text-slate-800 text-right focus:outline-none focus:border-emerald-500"
+              className="w-full p-2.5 rounded-xl border border-amber-400/50 bg-emerald-950/80 text-xs text-white text-right focus:outline-none focus:border-amber-400"
             />
           </div>
 
           <div className="text-right">
-            <label className="text-xs font-bold text-slate-600 block mb-1">اللقب المستعار (النيكنيم):</label>
+            <label className="text-xs font-bold text-amber-200 block mb-1">اللقب المستعار (النيكنيم):</label>
             <input
               type="text"
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
-              className="w-full p-2.5 rounded-xl border border-slate-200 text-xs text-slate-800 text-right focus:outline-none focus:border-emerald-500"
+              className="w-full p-2.5 rounded-xl border border-amber-400/50 bg-emerald-950/80 text-xs text-white text-right focus:outline-none focus:border-amber-400"
             />
           </div>
 
           <div className="text-right">
-            <label className="text-xs font-bold text-slate-600 block mb-1">الدولة:</label>
+            <label className="text-xs font-bold text-amber-200 block mb-1">الدولة:</label>
             <select
               value={country}
               onChange={(e) => setCountry(e.target.value)}
-              className="w-full p-2.5 rounded-xl border border-slate-200 text-xs text-slate-800 text-right focus:outline-none focus:border-emerald-500"
+              className="w-full p-2.5 rounded-xl border border-amber-400/50 bg-emerald-950/80 text-xs text-white text-right focus:outline-none focus:border-amber-400"
             >
               <option value="العراق">العراق 🇮🇶</option>
               <option value="المملكة العربية السعودية">المملكة العربية السعودية 🇸🇦</option>
@@ -201,18 +201,18 @@ export const EditProfileModal: React.FC = () => {
           </div>
 
           <div className="text-right">
-            <label className="text-xs font-bold text-slate-600 block mb-1">النبذة الشخصية (Bio):</label>
+            <label className="text-xs font-bold text-amber-200 block mb-1">النبذة الشخصية (Bio):</label>
             <textarea
               rows={2}
               value={bio}
               onChange={(e) => setBio(e.target.value)}
-              className="w-full p-2.5 rounded-xl border border-slate-200 text-xs text-slate-800 text-right focus:outline-none focus:border-emerald-500"
+              className="w-full p-2.5 rounded-xl border border-amber-400/50 bg-emerald-950/80 text-xs text-white text-right focus:outline-none focus:border-amber-400"
             />
           </div>
 
           <button
             type="submit"
-            className="w-full py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition active:scale-95"
+            className="w-full py-3 rounded-2xl bg-gradient-to-r from-emerald-700 via-emerald-600 to-emerald-700 border border-amber-300/70 text-white font-black text-sm shadow-md transition active:scale-95"
           >
             حفظ التغييرات
           </button>
