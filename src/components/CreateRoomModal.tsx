@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { ChevronRight, Plus } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
+import { RoyalCreateRoomIcon } from './RoyalCreateRoomIcon';
 
 export const CreateRoomModal: React.FC = () => {
   const { openCreateRoomModal, setOpenCreateRoomModal, createVoiceRoom, enterRoom } = useApp();
@@ -67,7 +68,7 @@ export const CreateRoomModal: React.FC = () => {
           >
             <ChevronRight className="w-7 h-7" />
           </button>
-          <h2 className="text-lg font-bold text-white tracking-wide">أنشئ غرفة</h2>
+          <h2 className="text-lg font-bold text-white tracking-wide flex items-center gap-2"><RoyalCreateRoomIcon className="w-9 h-9" />أنشئ غرفة</h2>
         </div>
 
         {/* Room Cover Upload Box */}
