@@ -3,6 +3,7 @@ import { BannerSlider } from '../components/BannerSlider';
 import { CategoryCards } from '../components/CategoryCards';
 import { CountryFilter } from '../components/CountryFilter';
 import { RoomCard } from '../components/RoomCard';
+import { TopRoomsPodium } from '../components/TopRoomsPodium';
 import { RoyalRoomsView } from '../components/RoyalRoomsView';
 import { DiscoverRoomsView } from '../components/DiscoverRoomsView';
 import { useApp } from '../context/AppContext';
@@ -33,6 +34,8 @@ export const HomeView: React.FC = () => {
 
       {/* 2. Top 3 Islamic Ranking Cards: غرفة | الجاذبية | ثروة (Screenshot 1:1) */}
       <CategoryCards />
+
+      <TopRoomsPodium rooms={filteredRooms} />
 
       {/* 3. Country & Category Filter Chips: شائع 🔥 | العراق 🇮🇶 | المملكة العربية السعودية 🇸🇦 | ▼ */}
       <CountryFilter />
