@@ -163,7 +163,7 @@ export const InternalProfileModal: React.FC = () => {
       };
       const baseAssets = {
         userId: user.id,
-        publicId: String(profile?.public_id || ''),
+        publicId: profile?.public_id == null ? '' : String(profile.public_id),
         cover: profile?.cover_path ? resolveProfileImage(profile.cover_path) : '',
         avatar: profile?.avatar_url ? resolveProfileImage(profile.avatar_url) : '',
         bio: profile?.bio || '',
