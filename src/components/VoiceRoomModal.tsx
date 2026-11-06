@@ -547,6 +547,17 @@ export const VoiceRoomModal: React.FC = () => {
   };
 
   const chatSubmitLockedRef = useRef(false);
+  useEffect(() => {
+    const recoverRejectedDraft = (event: Event) => {
+      const detail = (event as CustomEvent<{ roomId: string; text: string }>).detail;
+      if (!detail || detail.roomId !== activeRoom?.id) return;
+      setChatMessage(previous => previous.trim() ? previous : detail.text);
+      setShowChatInput(true);
+    };
+    window.addEventListener('totichat:room-message-failed', recoverRejectedDraft);
+    return () => window.removeEventListener('totichat:room-message-failed', recoverRejectedDraft);
+  }, [activeRoom?.id]);
+
   const handleSendChat = (e: React.FormEvent) => {
     e.preventDefault();
     if (chatSubmitLockedRef.current || !chatMessage.trim() || !activeRoom) return;
