@@ -25,11 +25,14 @@ export const OffersPopup: React.FC = () => {
       if(!data || typeof data!=='object')throw new Error('Missing reward status');
       const status=data as {day?:number;claimed?:boolean;coins?:number};
       if(!Number.isInteger(status.day) || (status.day ?? 0)<1 || (status.day ?? 0)>7 || typeof status.claimed!=='boolean' || typeof status.coins!=='number' || !Number.isFinite(status.coins) || (status.coins ?? -1)<0)throw new Error('Invalid reward status');
-      setDaily({day:status.day!,claimed:status.claimed,coins:status.coins});
+      const verified={day:status.day!,claimed:status.claimed,coins:status.coins};
+      setDaily(verified);
+      return verified;
     }catch(error){
       console.error('Daily reward status failed',error);
       setDaily(null);
       setNotice('تعذر تأكيد حالة المكافأة من الخادم. حاول لاحقاً.');
+      return null;
     }finally{
       setDailyLoading(false);
     }
@@ -43,10 +46,15 @@ export const OffersPopup: React.FC = () => {
       if(error)throw error;
       const rawCoins=(data as {coins?:number}|null)?.coins;
       const confirmedCoins=typeof rawCoins==='number' && Number.isFinite(rawCoins) && rawCoins>0 ? rawCoins : null;
-      await loadDaily();
-      setNotice(confirmedCoins!==null
-        ? 'تم إرسال طلب الاستلام بقيمة '+confirmedCoins.toLocaleString('ar-IQ')+' عملة. راجع حالة المكافأة للتأكد.'
-        : 'تم إرسال الطلب. راجع حالة المكافأة للتأكد من الاستلام.');
+      const refreshed=await loadDaily();
+      if(refreshed?.claimed){
+        setNotice(confirmedCoins!==null
+          ? 'تم تأكيد استلام المكافأة اليومية بقيمة '+confirmedCoins.toLocaleString('ar-IQ')+' عملة.'
+          : 'تم تأكيد استلام المكافأة اليومية من الخادم.');
+      }else if(refreshed){
+        setNotice('تم إرسال طلب الاستلام، لكن الخادم لم يؤكد المكافأة بعد. تحقق من الحالة قبل المحاولة مجدداً.');
+      }
+
     }catch(error){
       console.error('Daily reward claim failed',error);
       await loadDaily();
