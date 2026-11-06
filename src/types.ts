@@ -52,6 +52,7 @@ export interface MicSeat {
   user: UserProfile | null;
   isLocked: boolean;
   isMuted: boolean;
+  isModeratorMuted?: boolean;
   isSpeaking: boolean;
 }
 
