@@ -54,15 +54,18 @@ manifest.write_text(text)
 text = project_gradle.read_text()
 anchor = "dependencies {"
 assert anchor in text, "Unexpected root Gradle format"
-assert "com.google.gms:google-services" not in text
-text = text.replace(anchor, anchor + "\n        classpath 'com.google.gms:google-services:4.4.2'", 1)
+# Recent Capacitor versions may already include the Google Services classpath.
+# Keep the generated plugin configuration and avoid duplicate declarations.
+if "com.google.gms:google-services" not in text:
+    text = text.replace(anchor, anchor + "\n        classpath 'com.google.gms:google-services:4.4.2'", 1)
 project_gradle.write_text(text)
 
 text = app_gradle.read_text()
 assert "dependencies {" in text, "Unexpected app Gradle format"
 assert "com.android.application" in text, "Unexpected generated Android app Gradle configuration"
-assert "com.google.firebase:firebase-messaging" not in text
-text = text.replace("dependencies {", "dependencies {\n    implementation 'com.google.firebase:firebase-messaging:24.1.2'", 1)
-text += "\napply plugin: 'com.google.gms.google-services'\n"
+if "com.google.firebase:firebase-messaging" not in text:
+    text = text.replace("dependencies {", "dependencies {\n    implementation 'com.google.firebase:firebase-messaging:24.1.2'", 1)
+if "com.google.gms.google-services" not in text:
+    text += "\napply plugin: 'com.google.gms.google-services'\n"
 app_gradle.write_text(text)
 print("Capacitor staging Firebase Messaging native integration prepared")
