@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavType
@@ -23,8 +24,18 @@ import com.totichat.app.ui.screens.VoiceRoomScreen
 import com.totichat.app.ui.theme.BackgroundDark
 
 @Composable
-fun TotiChatApp(openMessagesOnLaunch: Boolean = false) {
+fun TotiChatApp(openMessagesRequested: Boolean = false, onMessagesOpened: () -> Unit = {}) {
     val navController = rememberNavController()
+    LaunchedEffect(openMessagesRequested) {
+        if (openMessagesRequested) {
+            navController.navigate(Screen.Messages.route) {
+                popUpTo(Screen.Home.route) { saveState = true }
+                launchSingleTop = true
+                restoreState = true
+            }
+            onMessagesOpened()
+        }
+    }
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
@@ -61,7 +72,7 @@ fun TotiChatApp(openMessagesOnLaunch: Boolean = false) {
         ) {
             NavHost(
                 navController = navController,
-                startDestination = if (openMessagesOnLaunch) Screen.Messages.route else Screen.Home.route
+                startDestination = Screen.Home.route
             ) {
                 composable(Screen.Home.route) {
                     HomeScreen(
