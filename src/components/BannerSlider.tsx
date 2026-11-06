@@ -9,6 +9,7 @@ type Banner = { id: string; title: string; image_url: string; link_kind: string;
 export const BannerSlider: React.FC = () => {
   const [items, setItems] = useState<Banner[]>([]);
   const [index, setIndex] = useState(0);
+  const [loadError, setLoadError] = useState(false);
   const startX = useRef<number | null>(null);
   const app = useApp();
   useEffect(() => {
@@ -26,7 +27,8 @@ export const BannerSlider: React.FC = () => {
         .order('sort_order', { ascending: true })
         .limit(10);
       if (!alive || currentRequest !== requestVersion) return;
-      if (error) { console.error('Banner loading failed:', error); return; }
+      if (error) { console.error('Banner loading failed:', error); setLoadError(true); return; }
+      setLoadError(false);
       setItems(data ?? []);
     };
     void refresh();
@@ -73,7 +75,7 @@ export const BannerSlider: React.FC = () => {
           {items.map((item,i) => <button key={item.id} type="button" onClick={() => setIndex(i)}
             aria-label={`البنر ${i+1}`} className={`h-2 rounded-full ${i===index?'w-5 bg-white':'w-2 bg-white/50'}`} />)}
         </div>}
-      </> : <div className="h-full flex items-center justify-center text-white/70 text-sm">لا توجد بنرات نشطة حالياً</div>}
+      </> : <div role="status" className="h-full flex items-center justify-center text-white/70 text-sm">{loadError ? 'تعذر تحميل البنرات. سيتم إعادة المحاولة تلقائياً.' : 'لا توجد بنرات نشطة حالياً'}</div>}
     </div>
   </div>;
 };
