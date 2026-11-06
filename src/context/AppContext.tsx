@@ -1112,11 +1112,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const refreshOnForeground = () => {
       if (document.visibilityState === 'visible') void refreshRoster();
     };
+    const refreshOnReconnect = () => { void refreshRoster(); };
     window.addEventListener('focus', refreshOnForeground);
+    window.addEventListener('online', refreshOnReconnect);
     document.addEventListener('visibilitychange', refreshOnForeground);
     return () => {
       alive = false;
       window.removeEventListener('focus', refreshOnForeground);
+      window.removeEventListener('online', refreshOnReconnect);
       document.removeEventListener('visibilitychange', refreshOnForeground);
       void client.removeChannel(channel);
     };
