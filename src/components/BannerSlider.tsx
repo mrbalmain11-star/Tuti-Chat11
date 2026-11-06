@@ -17,12 +17,12 @@ export const BannerSlider: React.FC = () => {
     const refresh = async () => {
       const { data, error } = await stagingBackend!.from('home_banners')
         .select('id,title,image_url,link_kind,link_target,sort_order,starts_at,ends_at')
-        .eq('status','published').order('sort_order',{ascending:true}).limit(10);
+        .eq('status','published').order('sort_order',{ascending:true}).limit(60);
       if (error) { console.error('Banner loading failed:',error); return; }
       const now = Date.now();
       if (alive) setItems((data ?? []).filter(b =>
         (!b.starts_at || Date.parse(b.starts_at) <= now) &&
-        (!b.ends_at || Date.parse(b.ends_at) > now)));
+        (!b.ends_at || Date.parse(b.ends_at) > now)).slice(0, 10));
     };
     void refresh();
     const refreshTimer = window.setInterval(() => void refresh(), 60000);
