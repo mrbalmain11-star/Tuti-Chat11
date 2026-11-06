@@ -79,7 +79,13 @@ export const RoyalRoomsView: React.FC = () => {
     if (!myRoom) { showToast('أنشئ غرفتك أولاً حتى تتمكن من مشاركتها'); return; }
     // Native Capacitor uses a local origin; it is not a shareable public URL.
     const publicBase = import.meta.env.VITE_PUBLIC_APP_URL || window.location.origin;
-    const publicUrl = new URL(publicBase);
+    let publicUrl: URL;
+    try {
+      publicUrl = new URL(publicBase);
+    } catch {
+      showToast('عنوان التطبيق العام غير صالح. تواصل مع الإدارة.');
+      return;
+    }
     if (publicUrl.protocol !== 'https:' || ['localhost', '127.0.0.1', '10.0.2.2'].includes(publicUrl.hostname)) {
       showToast('رابط المشاركة العام غير مهيأ لهذا الإصدار.');
       return;
