@@ -49,7 +49,7 @@ export const GlobalGiftBanner: React.FC = () => {
               const avatarFor = (id: string) => {
                 const path = profiles?.find(profile => profile.id === id)?.avatar_url;
                 if (!path) return '';
-                return /^https?:\\/\\//i.test(path) ? path : stagingBackend!.storage.from('profile-avatars').getPublicUrl(path).data.publicUrl;
+                return path.startsWith('https://') || path.startsWith('http://') ? path : stagingBackend!.storage.from('profile-avatars').getPublicUrl(path).data.publicUrl;
               };
               setAvatars({ sender: avatarFor(next.sender_id), recipient: avatarFor(next.recipient_id) });
             });
@@ -69,7 +69,7 @@ export const GlobalGiftBanner: React.FC = () => {
   return <button type="button" dir="rtl" onClick={() => { enterRoom(announcement.room_id); setAnnouncement(null); }}
     className="fixed top-[max(64px,env(safe-area-inset-top))] inset-x-4 z-[95] mx-auto flex max-w-sm flex-col items-center rounded-2xl border-2 border-amber-300 bg-gradient-to-r from-[#063d32] via-[#0a634b] to-[#073629] px-4 py-3 text-center shadow-[0_8px_30px_rgba(203,155,53,.45)]"
     aria-label="فتح غرفة الهدية">
-    <span className="w-full truncate text-xs font-black text-amber-100">{announcement.sender_name} أهدى إلى {announcement.recipient_name}</span>
+    <span className="flex w-full items-center justify-center gap-2 text-xs font-black text-amber-100"><span className="truncate">{announcement.sender_name}</span>{avatars.sender && <img src={avatars.sender} alt="" className="h-8 w-8 shrink-0 rounded-full border border-amber-300 object-cover" />}<span className="shrink-0">أهدى إلى</span>{avatars.recipient && <img src={avatars.recipient} alt="" className="h-8 w-8 shrink-0 rounded-full border border-amber-300 object-cover" />}<span className="truncate">{announcement.recipient_name}</span></span>
     <span className="mt-1 w-full truncate text-sm font-black text-[#ffe6a0]">{announcement.gift_name} ×{announcement.quantity} · {announcement.total_coins.toLocaleString('ar-IQ')} عملة</span>
     <span className="mt-1 text-[10px] text-emerald-100">اضغط للدخول إلى الغرفة</span>
   </button>;
