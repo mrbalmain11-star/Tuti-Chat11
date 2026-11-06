@@ -270,6 +270,10 @@ export const VoiceRoomModal: React.FC = () => {
   const [banActionBusy, setBanActionBusy] = useState(false);
   const moderationPendingRef = useRef(new Set<string>());
   const [moderationBusy, setModerationBusy] = useState(false);
+  useEffect(() => {
+    if (!isOwner && !isModerator) setRoomBans([]);
+  }, [activeRoom?.id, isOwner, isModerator]);
+
   const refreshBanLists = async () => {
     if (!activeRoom || !stagingBackend) return;
     setBanListError('');
