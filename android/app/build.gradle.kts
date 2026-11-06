@@ -57,6 +57,8 @@ android {
 }
 
 dependencies {
+    // Firebase Cloud Messaging receiver; Firebase app configuration is supplied separately.
+    implementation("com.google.firebase:firebase-messaging:24.1.2")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
