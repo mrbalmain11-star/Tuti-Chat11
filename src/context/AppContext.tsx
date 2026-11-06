@@ -664,7 +664,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'direct_messages' }, () => {
         void loadDirectMessages().catch(error => console.error('DM refresh failed:', error));
       }).subscribe();
-    return () => { active = false; void client.removeChannel(channel); };
+    const refreshOnReturn = () => {
+      if (!document.hidden && navigator.onLine) {
+        void loadDirectMessages().catch(error => console.error('DM resume refresh failed:', error));
+      }
+    };
+    window.addEventListener('focus', refreshOnReturn);
+    window.addEventListener('online', refreshOnReturn);
+    document.addEventListener('visibilitychange', refreshOnReturn);
+    return () => {
+      active = false;
+      window.removeEventListener('focus', refreshOnReturn);
+      window.removeEventListener('online', refreshOnReturn);
+      document.removeEventListener('visibilitychange', refreshOnReturn);
+      void client.removeChannel(channel);
+    };
   }, [isLoggedIn, currentUser.id]);
 
   useEffect(() => {
