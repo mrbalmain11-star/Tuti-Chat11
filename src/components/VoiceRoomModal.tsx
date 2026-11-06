@@ -934,7 +934,7 @@ export const VoiceRoomModal: React.FC = () => {
     }
     const nextIds = currentMessages.map(message => message.id);
     const previous = seenRoomMessagesRef.current;
-    if (previous?.roomId === activeRoom.id && previous.ids.length && !chatNearBottomRef.current) {
+    if (previous?.roomId === activeRoom.id && previous.ids.length && !chatNearBottomRef.current && !isRoomMinimized) {
       // Only messages after the previously newest message count as unread.
       // Backfilled history and a fully rotated 100-message window are ambiguous:
       // do not label old messages as new in either case.
@@ -947,7 +947,11 @@ export const VoiceRoomModal: React.FC = () => {
       }
     }
     seenRoomMessagesRef.current = { roomId: activeRoom.id, ids: nextIds };
-  }, [activeRoom?.id, currentMessages]);
+  }, [activeRoom?.id, currentMessages, isRoomMinimized]);
+
+  useEffect(() => {
+    if (!isRoomMinimized && chatNearBottomRef.current) setUnreadRoomMessages(0);
+  }, [isRoomMinimized]);
 
   useEffect(() => {
     chatNearBottomRef.current = true;
