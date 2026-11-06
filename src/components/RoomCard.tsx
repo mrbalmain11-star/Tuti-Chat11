@@ -11,17 +11,27 @@ interface RoomCardProps {
 }
 
 export const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
-  const { enterRoom, currentUser, followedRoomHosts, toggleFollowHost } = useApp();
+  const { enterRoom, currentUser } = useApp();
   const isOwnRoom = room.hostId === currentUser.id;
   const [isFollowed, setIsFollowed] = useState(false);
   const [followPending, setFollowPending] = useState(false);
+  const [followLoaded, setFollowLoaded] = useState(false);
   useEffect(() => {
-    if (!stagingBackend || !currentUser.id) { setIsFollowed(false); return; }
+    setIsFollowed(false);
+    setFollowLoaded(false);
+    if (!stagingBackend || !currentUser.id) return;
     let active = true;
-    void stagingBackend.from('room_follows').select('room_id').eq('follower_id', currentUser.id).eq('room_id', room.id).maybeSingle().then(({ data, error }) => {
-      if (active && !error) setIsFollowed(!!data);
-    });
-    return () => { active = false; };
+    const refresh = async () => {
+      const { data, error } = await stagingBackend!.from('room_follows')
+        .select('room_id').eq('follower_id', currentUser.id).eq('room_id', room.id).maybeSingle();
+      if (!active) return;
+      if (error) { console.error('Unable to load room follow:', error); return; }
+      setIsFollowed(!!data);
+      setFollowLoaded(true);
+    };
+    void refresh();
+    window.addEventListener('totichat:room-follows-changed', refresh);
+    return () => { active = false; window.removeEventListener('totichat:room-follows-changed', refresh); };
   }, [currentUser.id, room.id]);
   const [coverFailed, setCoverFailed] = useState(false);
   const [hostAvatarFailed, setHostAvatarFailed] = useState(false);
@@ -64,7 +74,7 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
             type="button"
             onClick={(event) => {
               event.stopPropagation();
-              if (!stagingBackend || followPending) return;
+              if (!stagingBackend || !followLoaded || followPending) return;
               setFollowPending(true);
               const query = isFollowed
                 ? stagingBackend.from('room_follows').delete().eq('follower_id', currentUser.id).eq('room_id', room.id)
@@ -75,7 +85,7 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
               }).finally(() => setFollowPending(false));
             }}
             className="absolute top-1.5 left-1.5 z-20 min-w-11 min-h-11 flex items-center justify-center rounded-full bg-slate-950/60 backdrop-blur-sm border border-emerald-300/40 active:scale-90 transition-transform"
-            disabled={followPending}
+            disabled={!followLoaded || followPending}
             aria-pressed={isFollowed}
             aria-label={isFollowed ? 'إلغاء متابعة الغرفة' : 'متابعة الغرفة'}
             title={isFollowed ? 'إلغاء متابعة الغرفة' : 'متابعة الغرفة'}
