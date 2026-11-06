@@ -86,7 +86,7 @@ export const OffersPopup: React.FC = () => {
   return <>
     {open&&<div className="fixed inset-0 z-[110] bg-black/75 flex items-center justify-center p-3" dir="rtl" role="dialog" aria-modal="true" aria-label="المكافآت والعروض">
       <div className="w-full max-w-sm max-h-[88dvh] overflow-y-auto rounded-[28px] bg-[#e6fff3] border-[3px] border-[#a4e8c9] shadow-[0_0_30px_rgba(246,210,86,.25)]">
-        <div className="relative bg-gradient-to-b from-[#006b51] via-[#0cb47f] to-[#61dfb2] px-4 pt-6 pb-5 text-center text-white">
+        <div className="relative overflow-hidden bg-gradient-to-b from-[#004c3c] via-[#087e60] to-[#2ab48b] px-4 pt-6 pb-5 text-center text-white"><div aria-hidden="true" className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-amber-200 to-transparent" /><div aria-hidden="true" className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full border border-amber-200/20" /><div aria-hidden="true" className="pointer-events-none absolute -left-10 -bottom-16 h-36 w-36 rounded-full border border-amber-200/20" />
           <button onClick={()=>setOpen(false)} aria-label="إغلاق" className="absolute top-3 left-3 w-9 h-9 rounded-full bg-black/25 flex items-center justify-center"><X size={22}/></button>
           <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl border border-amber-200/70 bg-gradient-to-br from-amber-100/25 to-emerald-950/20 shadow-[0_4px_18px_rgba(255,215,110,.25)]"><Gift size={34} strokeWidth={1.8} className="text-amber-100" aria-hidden="true" /></div>
           <h2 className="text-2xl font-black text-[#fff0a8] drop-shadow">{tab === 'daily' ? 'المكافأة اليومية' : 'العروض الملكية'}</h2>
@@ -98,7 +98,7 @@ export const OffersPopup: React.FC = () => {
             <button type="button" onClick={()=>setTab('offers')} className={`flex items-center justify-center gap-1.5 rounded-xl py-2.5 font-black text-sm ${tab==='offers'?'bg-[#0a9d72] text-white':'bg-white text-[#137b60]'}`}><Coins size={17} aria-hidden="true" /> عروض الشحن</button>
           </div>
           {tab==='daily'?<>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-2" aria-label="جدول المكافآت للأيام السبعة">
               {Array.from({length:6},(_,i)=>i).map(i=><div key={i} aria-label={`اليوم ${i+1}: ${daily && daily.day===i+1 ? (daily.claimed?'تم الاستلام':'متاح للاستلام') : daily && i+1<daily.day ? 'يوم سابق' : 'غير متاح حالياً'}`} className={`relative rounded-xl border-2 p-2 text-center min-h-[98px] flex flex-col items-center justify-between ${daily?.day===i+1?'bg-gradient-to-b from-[#fff5a3] to-[#f5bd42] border-[#d6a230]':'bg-gradient-to-b from-white to-[#9ee8d0] border-[#71cbb0]'}`}>
                 <strong className="text-[#0b735a] text-sm">اليوم {i+1}</strong>{daily?.day===i+1 && <span className={`rounded-full px-2 py-0.5 text-[10px] font-black ${daily.claimed ? 'bg-emerald-700 text-white' : 'bg-amber-100 text-amber-900'}`}>{daily.claimed ? 'تم الاستلام' : 'متاح اليوم'}</span>}
                 <div className="flex h-10 w-10 items-center justify-center rounded-full border border-amber-300/70 bg-gradient-to-br from-amber-100 via-amber-300 to-amber-500 shadow-[0_3px_9px_rgba(130,88,10,.18)]"><Coins className="text-amber-900" size={24} strokeWidth={1.8} aria-hidden="true"/></div>
