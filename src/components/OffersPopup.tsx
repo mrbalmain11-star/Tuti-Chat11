@@ -44,11 +44,12 @@ export const OffersPopup: React.FC = () => {
     try{
       const {data,error}=await stagingBackend.rpc('claim_daily_reward');
       if(error)throw error;
+      // The claim RPC committed successfully; refresh balances even if status recheck fails.
+      window.dispatchEvent(new Event('totichat:wallet-changed'));
       const rawCoins=(data as {coins?:number}|null)?.coins;
       const confirmedCoins=typeof rawCoins==='number' && Number.isFinite(rawCoins) && rawCoins>0 ? rawCoins : null;
       const refreshed=await loadDaily();
       if(refreshed?.claimed){
-        window.dispatchEvent(new Event('totichat:wallet-changed'));
         setNotice(confirmedCoins!==null
           ? 'تم تأكيد استلام المكافأة اليومية بقيمة '+confirmedCoins.toLocaleString('ar-IQ')+' عملة.'
           : 'تم تأكيد استلام المكافأة اليومية من الخادم.');
