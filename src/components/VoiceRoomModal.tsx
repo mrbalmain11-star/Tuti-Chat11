@@ -2743,11 +2743,13 @@ export const VoiceRoomModal: React.FC = () => {
                   <>
                     {/* انتقل إلى هذا المايك */}
                     <button
+                      disabled={getSeat(selectedEmptySeat).isLocked}
                       onClick={() => {
+                        if (getSeat(selectedEmptySeat).isLocked) return;
                         takeSeat(selectedEmptySeat);
                         setSelectedEmptySeat(null);
                       }}
-                      className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-cyan-600 via-blue-600 to-cyan-500 hover:from-cyan-500 hover:to-blue-500 text-white font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-cyan-900/30 active:scale-98 transition cursor-pointer"
+                      className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-cyan-600 via-blue-600 to-cyan-500 hover:from-cyan-500 hover:to-blue-500 text-white font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-cyan-900/30 active:scale-98 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       <ArrowRightLeft className="w-5 h-5" />
                       <span>انتقل إلى هذا المايك</span>
@@ -2784,11 +2786,13 @@ export const VoiceRoomModal: React.FC = () => {
                   <>
                     {/* اصعد بنفسي */}
                     <button
+                      disabled={getSeat(selectedEmptySeat).isLocked}
                       onClick={() => {
+                        if (getSeat(selectedEmptySeat).isLocked) return;
                         takeSeat(selectedEmptySeat);
                         setSelectedEmptySeat(null);
                       }}
-                      className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/30 active:scale-98 transition cursor-pointer"
+                      className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/30 active:scale-98 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       <Mic className="w-5 h-5" />
                       <span>اصعد بنفسي</span>
