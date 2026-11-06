@@ -12,7 +12,7 @@
 
 ## Not yet verified / external setup required
 1. No APK or Gradle build was run: owner explicitly requires separate permission. Check Java compilation, Gradle dependency resolution, generated manifest merge and real Android notification permission.
-2. Supabase Staging Edge Function `send-direct-message-push` is **not deployed** as of inspection. Do not enable `VITE_ENABLE_DM_PUSH` until deployment and authenticated tests succeed.
+2. Supabase Staging Edge Function `send-direct-message-push` was deployed as ACTIVE version 1 on 2026-11-06, with JWT verification enabled. This does not prove FCM delivery. Do not enable `VITE_ENABLE_DM_PUSH` until server secrets and authenticated delivery tests succeed.
 3. Server-only `FCM_SERVICE_ACCOUNT_JSON` secret must be configured securely in Supabase by an authorized operator; never place its private key in GitHub or the Android bundle.
 4. Verify Supabase `push_device_tokens` and `direct_message_push_claims` policies, real device token creation, logout cleanup and blocked-user behavior.
 5. Test cold launch, warm launch, background/foreground notifications, denied permission, duplicate delivery, OTP gate, account switch and active voice room on real Android.
@@ -23,3 +23,9 @@
 - Do not modify the stable voice/music engine or successful APK packaging.
 - Do not trigger a GitHub APK workflow without explicit separate owner approval.
 - Do not call this feature production-ready or tested until the checklist above passes.
+
+## Verified on 2026-11-06
+- Live Staging database query: RLS enabled for `push_device_tokens`, `direct_message_push_claims`, `direct_messages` and `dm_blocks`.
+- Live `pg_policies` query: own-user SELECT, INSERT, UPDATE and DELETE policies on `push_device_tokens`.
+- Live Edge Functions listing: `send-direct-message-push` ACTIVE version 1 with `verify_jwt=true`.
+- Still untested: FCM delivery, Gradle compilation and real-device lifecycle.
