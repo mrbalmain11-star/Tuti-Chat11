@@ -736,13 +736,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     if (!isLoggedIn) return;
     let active = true;
-    void fetchMyLedger().then(entries => {
-      if (active) setTransactions(entries);
-    }).catch(error => {
-      console.error('Failed to fetch real wallet ledger:', error);
-      if (active) setTransactions([]);
-    });
-    return () => { active = false; };
+    let requestId = 0;
+    const refreshLedger = async () => {
+      const currentRequest = ++requestId;
+      try {
+        const entries = await fetchMyLedger();
+        if (active && currentRequest === requestId) setTransactions(entries);
+      } catch (error) {
+        console.error('Failed to fetch real wallet ledger:', error);
+        // Keep the last verified ledger on transient network errors.
+      }
+    };
+    void refreshLedger();
+    window.addEventListener('totichat:wallet-changed', refreshLedger);
+    const onFocus = () => { void refreshLedger(); };
+    window.addEventListener('focus', onFocus);
+    return () => {
+      active = false;
+      window.removeEventListener('totichat:wallet-changed', refreshLedger);
+      window.removeEventListener('focus', onFocus);
+    };
   }, [isLoggedIn]);
 
   const [activeGiftAnimation, setActiveGiftAnimation] = useState<GiftAnimationPayload | null>(null);
