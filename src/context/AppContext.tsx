@@ -1682,7 +1682,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
     }).catch(error => {
       console.error('Direct message send failed:', error);
-      alert('تعذر إرسال الرسالة من الخادم.');
+      const message = error instanceof Error ? error.message : String(error ?? '');
+      alert(/blocked|dm_block/i.test(message)
+        ? 'لا يمكن إرسال رسالة خاصة بسبب وجود حظر بين الحسابين.'
+        : 'تعذر إرسال الرسالة من الخادم.');
     });
   };
 
