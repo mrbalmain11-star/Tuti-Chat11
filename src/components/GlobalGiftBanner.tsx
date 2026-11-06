@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { stagingBackend } from '../services/stagingBackend';
 
 type Announcement = {
-  id: string; room_id: string; sender_name: string; recipient_name: string;
+  id: string; room_id: string; sender_id: string; recipient_id: string; sender_name: string; recipient_name: string;
   gift_name: string; quantity: number; total_coins: number; created_at: string;
 };
 
@@ -11,6 +11,7 @@ type Announcement = {
 export const GlobalGiftBanner: React.FC = () => {
   const { isLoggedIn, enterRoom } = useApp();
   const [announcement, setAnnouncement] = useState<Announcement | null>(null);
+  const [avatars, setAvatars] = useState({ sender: '', recipient: '' });
   const cursor = useRef<string | null>(null);
   const seen = useRef(new Set<string>());
 
@@ -24,7 +25,7 @@ export const GlobalGiftBanner: React.FC = () => {
       busy = true;
       try {
         const { data, error } = await stagingBackend!.from('gift_global_announcements')
-          .select('id,room_id,sender_name,recipient_name,gift_name,quantity,total_coins,created_at')
+          .select('id,room_id,sender_id,recipient_id,sender_name,recipient_name,gift_name,quantity,total_coins,created_at')
           .order('created_at', { ascending: false }).limit(12);
         if (error) throw error;
         if (!active) return;
