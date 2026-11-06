@@ -771,6 +771,7 @@ export const VoiceRoomModal: React.FC = () => {
       });
       if (error || !data?.success) throw error ?? new Error('Server did not confirm role change');
       showToast(isMod ? `تم سحب إشراف ${userName}` : `تم منح ${userName} صلاحية المشرف`);
+      window.dispatchEvent(new CustomEvent('totichat:room-moderators-changed', { detail: roomId }));
       // Preserve the active voice session; do not reload the entire app.
     } catch (error) {
       console.error('Moderator update failed:', error);
