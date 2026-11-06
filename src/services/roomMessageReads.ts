@@ -1,5 +1,6 @@
 import { stagingBackend } from './stagingBackend';
 import type { ChatMessage } from '../types';
+import { fetchRoomVisualMembers } from './roomVisualMembers';
 
 type MessageRow = {
   id: number | string;
@@ -28,11 +29,24 @@ export async function fetchRealRoomMessages(roomId: string, since?: string): Pro
     : { data: [], error: null };
   if (profileError) throw profileError;
   const names = new Map((profiles ?? []).map(p => [p.id, p]));
+  // Only trust VIP levels returned by the existing authenticated room roster RPC.
+  // A roster failure must not prevent chat messages from being displayed.
+  const vipLevels = new Map<string, number>();
+  try {
+    const members = await fetchRoomVisualMembers(roomId);
+    for (const member of members) {
+      const level = Number(member.vip_level);
+      if (Number.isInteger(level) && level > 0) vipLevels.set(member.user_id, level);
+    }
+  } catch (error) {
+    console.warn('Room VIP roster unavailable; using regular chat bubbles:', error);
+  }
   return rows.reverse().map(row => ({
     id: String(row.id),
     senderId: row.sender_id,
     senderName: names.get(row.sender_id)?.display_name ?? '',
     senderAvatar: names.get(row.sender_id)?.avatar_url ?? '',
+    vipLevel: vipLevels.get(row.sender_id) ?? 0,
     text: row.body,
     timestamp: row.created_at,
   }));
