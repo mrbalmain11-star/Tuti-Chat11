@@ -548,6 +548,13 @@ export const VoiceRoomModal: React.FC = () => {
 
   const chatSubmitLockedRef = useRef(false);
   useEffect(() => {
+    // Room chat drafts are session-local; never carry text into another room.
+    setChatMessage('');
+    setShowChatInput(false);
+    chatSubmitLockedRef.current = false;
+  }, [activeRoom?.id]);
+
+  useEffect(() => {
     const recoverRejectedDraft = (event: Event) => {
       const detail = (event as CustomEvent<{ roomId: string; text: string }>).detail;
       if (!detail || detail.roomId !== activeRoom?.id) return;
