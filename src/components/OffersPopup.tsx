@@ -89,8 +89,8 @@ export const OffersPopup: React.FC = () => {
         <div className="relative bg-gradient-to-b from-[#006b51] via-[#0cb47f] to-[#61dfb2] px-4 pt-6 pb-5 text-center text-white">
           <button onClick={()=>setOpen(false)} aria-label="إغلاق" className="absolute top-3 left-3 w-9 h-9 rounded-full bg-black/25 flex items-center justify-center"><X size={22}/></button>
           <div className="text-3xl mb-1">🌙 ✨</div>
-          <h2 className="text-2xl font-black text-[#fff0a8] drop-shadow">المكافأة اليومية</h2>
-          <p className="text-xs text-emerald-50">استلم مكافأتك كل يوم واكتشف عروض الشحن الخاصة</p>
+          <h2 className="text-2xl font-black text-[#fff0a8] drop-shadow">{tab === 'daily' ? 'المكافأة اليومية' : 'العروض الملكية'}</h2>
+          <p className="text-xs text-emerald-50">{tab === 'daily' ? 'استلم مكافأتك كل يوم واكتشف عروض الشحن الخاصة' : 'اكتشف عروض الشحن المنشورة من الإدارة'}</p>
         </div>
         <div className="p-3">
           <div className="grid grid-cols-2 gap-2 mb-3">
