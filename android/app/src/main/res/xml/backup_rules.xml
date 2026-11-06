@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <full-backup-content>
     <include domain="sharedpref" path="."/>
+    <!-- FCM tokens belong to this installation; never restore on another device. -->
+    <exclude domain="sharedpref" path="totichat_push_device.xml"/>
 </full-backup-content>
