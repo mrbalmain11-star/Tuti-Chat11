@@ -10,7 +10,7 @@ export const AdminOffersPanel:React.FC=()=>{
  const [message,setMessage]=useState('');
  const load=async()=>{if(!stagingBackend)return;const {data,error}=await stagingBackend.from('recharge_offers').select('*').order('created_at',{ascending:false});if(error)throw error;setItems((data??[]) as Offer[]);};
  useEffect(()=>{void load().catch(e=>setMessage(String(e)));},[]);
- const edit=(o:Offer)=>{setEditId(o.id);setForm({title:o.title,description:o.description,price_iqd:String(o.price_iqd),coins:String(o.coins),bonus_coins:String(o.bonus_coins),image_url:o.image_url??'',status:o.status,starts_at:o.starts_at?.slice(0,16)??'',ends_at:o.ends_at?.slice(0,16)??''});};
+ const edit=(o:Offer)=>{setEditId(o.id);setForm({title:o.title,description:o.description,price_iqd:String(o.price_iqd),coins:String(o.coins),bonus_coins:String(o.bonus_coins??0),image_url:o.image_url??'',status:o.status,starts_at:o.starts_at?.slice(0,16)??'',ends_at:o.ends_at?.slice(0,16)??''});};
  const save=async()=>{if(!stagingBackend||busy)return;
  const price=Number(form.price_iqd),coins=Number(form.coins),bonus=Number(form.bonus_coins);
  if(!form.title.trim() || !Number.isSafeInteger(price) || price<=0 || !Number.isSafeInteger(coins) || coins<=0 || !Number.isSafeInteger(bonus) || bonus<0 || !Number.isSafeInteger(coins+bonus)) {setMessage('تحقق من العنوان والسعر والعملات: يجب إدخال أعداد صحيحة وموجبة، والمكافأة الإضافية لا تقل عن صفر.');return;}
@@ -31,7 +31,7 @@ export const AdminOffersPanel:React.FC=()=>{
  {field('starts_at','بداية العرض (اختياري)','datetime-local')}
  {field('ends_at','نهاية العرض (اختياري)','datetime-local')}
  <label className="block font-bold text-sm">الحالة<select value={form.status} onChange={e=>setForm(p=>({...p,status:e.target.value}))} className="block mt-1 w-full p-3 rounded-xl border"><option value="draft">مسودة</option><option value="published">منشور</option><option value="paused">متوقف</option></select></label>
- <button disabled={busy||!form.title.trim()||Number(form.price_iqd)<=0||Number(form.coins)<=0} onClick={()=>void save()} className="w-full rounded-xl bg-emerald-700 text-white p-3 font-bold disabled:opacity-40">{editId?'تحديث العرض':'إنشاء العرض'}</button>
+ <button disabled={busy||!form.title.trim()||!Number.isSafeInteger(Number(form.price_iqd))||Number(form.price_iqd)<=0||!Number.isSafeInteger(Number(form.coins))||Number(form.coins)<=0||!Number.isSafeInteger(Number(form.bonus_coins))||Number(form.bonus_coins)<0||!Number.isSafeInteger(Number(form.coins)+Number(form.bonus_coins))} onClick={()=>void save()} className="w-full rounded-xl bg-emerald-700 text-white p-3 font-bold disabled:opacity-40">{editId?'تحديث العرض':'إنشاء العرض'}</button>
  {editId&&<button onClick={()=>{setEditId(null);setForm({...empty});}} className="w-full p-2 text-slate-600">إلغاء التعديل</button>}
  </div>
  {message&&<p role="status" className="text-sm text-slate-700">{message}</p>}
