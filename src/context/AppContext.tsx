@@ -772,6 +772,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [activeGiftAnimation, setActiveGiftAnimation] = useState<GiftAnimationPayload | null>(null);
   const pendingGiftAnimations = useRef<GiftAnimationPayload[]>([]);
+  const activeGiftAnimationRef = useRef<GiftAnimationPayload | null>(null);
 
   // Modals
   const [openGiftStore, setOpenGiftStore] = useState(false);
@@ -1445,13 +1446,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (error) throw error;
       if (!data?.id) throw new Error('Gift event not confirmed');
       const confirmedAnimation = { gift, sender: currentUser.name, receiver: receiver.name, count };
-      setActiveGiftAnimation(previous => {
-        if (previous) {
-          pendingGiftAnimations.current.push(confirmedAnimation);
-          return previous;
-        }
-        return confirmedAnimation;
-      });
+      if (activeGiftAnimationRef.current) {
+        pendingGiftAnimations.current.push(confirmedAnimation);
+      } else {
+        activeGiftAnimationRef.current = confirmedAnimation;
+        setActiveGiftAnimation(confirmedAnimation);
+      }
       const wallet = await fetchMyWallet().catch(() => null);
       if (wallet) setCurrentUser(prev => ({ ...prev, coins: wallet.coins, diamonds: wallet.diamonds }));
       window.dispatchEvent(new Event('totichat:wallet-changed'));
@@ -1472,7 +1472,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const clearGiftAnimation = () => {
-    setActiveGiftAnimation(pendingGiftAnimations.current.shift() ?? null);
+    const next = pendingGiftAnimations.current.shift() ?? null;
+    activeGiftAnimationRef.current = next;
+    setActiveGiftAnimation(next);
   };
 
   // Charging is performed by authorized agents through audited server operations only.
