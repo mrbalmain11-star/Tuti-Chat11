@@ -15,19 +15,18 @@ export const GiftLottieAnimation: React.FC<{
     }
     let disposed = false;
     let failed = false;
+    const controller = new AbortController();
+    let animation: ReturnType<typeof lottie.loadAnimation> | undefined;
+    let timeout: number;
     const failOnce = () => {
       if (disposed || failed) return;
       failed = true;
+      window.clearTimeout(timeout);
+      controller.abort();
+      animation?.destroy();
       onFailure();
     };
-    const controller = new AbortController();
-    let animation: ReturnType<typeof lottie.loadAnimation> | undefined;
-    const timeout = window.setTimeout(() => {
-      if (!disposed) {
-        controller.abort();
-        failOnce();
-      }
-    }, 8000);
+    timeout = window.setTimeout(failOnce, 8000);
     setReady(false);
     (async () => {
       try {
