@@ -45,6 +45,7 @@ export const AdminOffersPanel:React.FC=()=>{
  {message&&<p role="status" className="text-sm text-slate-700">{message}</p>}
  <h4 className="font-black">العروض المسجلة ({items.length})</h4>
  {loading&&<p role="status" className="text-sm text-slate-600">جارِ تحميل العروض...</p>}
+ {!loading&&items.length===0&&<p className="rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-600">لا توجد عروض محمّلة حالياً. إذا ظهر خطأ أعلاه، تحقق من الاتصال قبل إنشاء عرض جديد.</p>}
  {items.map(o=><div key={o.id} className="rounded-xl bg-white border border-slate-200 p-3 flex justify-between items-center gap-3"><div><strong>{o.title}</strong><div className="text-xs text-slate-600">{Number(o.price_iqd).toLocaleString('ar-IQ')} د.ع — {Number(o.coins+o.bonus_coins).toLocaleString('ar-IQ')} عملة</div><div className="text-xs text-emerald-700">{o.status==='published'?'منشور':o.status==='draft'?'مسودة':'متوقف'}</div></div><button onClick={()=>edit(o)} className="rounded-lg bg-emerald-50 text-emerald-800 px-3 py-2">تعديل</button></div>)}
  </section>;
 };
