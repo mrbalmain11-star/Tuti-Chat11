@@ -46,6 +46,29 @@ Deno.serve(async (request) => {
   try { account = JSON.parse(serviceAccountRaw); } catch { return json({ error: 'Invalid server configuration' }, 503); }
   if (account.project_id !== 'totichatpro') return json({ error: 'Firebase project mismatch' }, 503);
 
+  // Acquire Google credentials BEFORE claiming the message. Auth failures are
+  // safe to retry because no delivery attempt has been made.
+  let accessToken: string;
+  try {
+    const key = await importPKCS8(account.private_key, 'RS256');
+    const assertion = await new SignJWT({ scope: 'https://www.googleapis.com/auth/firebase.messaging' })
+      .setProtectedHeader({ alg: 'RS256', typ: 'JWT' })
+      .setIssuer(account.client_email).setSubject(account.client_email)
+      .setAudience('https://oauth2.googleapis.com/token')
+      .setIssuedAt().setExpirationTime('1h').sign(key);
+    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer', assertion }),
+    });
+    if (!tokenResponse.ok) return json({ error: 'FCM authorization failed' }, 502);
+    const body = await tokenResponse.json();
+    if (typeof body.access_token !== 'string' || !body.access_token)
+      return json({ error: 'FCM authorization failed' }, 502);
+    accessToken = body.access_token;
+  } catch {
+    return json({ error: 'FCM authorization failed' }, 502);
+  }
+
   // Atomically claim the message before sending. Unique primary key rejects
   // concurrent and repeated requests, including attempts from multiple devices.
   const { error: claimError } = await admin.from('direct_message_push_claims')
@@ -53,27 +76,30 @@ Deno.serve(async (request) => {
   if (claimError?.code === '23505') return json({ sent: 0, duplicate: true });
   if (claimError) return json({ error: 'Push claim failed' }, 500);
 
-  const key = await importPKCS8(account.private_key, 'RS256');
-  const assertion = await new SignJWT({ scope: 'https://www.googleapis.com/auth/firebase.messaging' })
-    .setProtectedHeader({ alg: 'RS256', typ: 'JWT' })
-    .setIssuer(account.client_email).setSubject(account.client_email)
-    .setAudience('https://oauth2.googleapis.com/token')
-    .setIssuedAt().setExpirationTime('1h').sign(key);
-  const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer', assertion }),
-  });
-  if (!tokenResponse.ok) return json({ error: 'FCM authorization failed' }, 502);
-  const accessToken = (await tokenResponse.json()).access_token as string;
+  // Once claimed, a failed/ambiguous network delivery is NOT automatically
+  // retried: FCM may have accepted the request before the connection failed.
+  // This favors no duplicates over guaranteed delivery.
   let sent = 0;
+  let failed = 0;
   for (const device of devices) {
-    const response = await fetch('https://fcm.googleapis.com/v1/projects/totichatpro/messages:send', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${accessToken}`, 'content-type': 'application/json' },
-      body: JSON.stringify({ message: { token: device.token, data: { type: 'direct_message' },
-        android: { priority: 'high' } } }),
-    });
-    if (response.ok) sent++;
+    try {
+      const response = await fetch('https://fcm.googleapis.com/v1/projects/totichatpro/messages:send', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}`, 'content-type': 'application/json' },
+        body: JSON.stringify({ message: { token: device.token, data: { type: 'direct_message' },
+          android: { priority: 'high' } } }),
+      });
+      if (response.ok) {
+        sent++;
+      } else {
+        failed++;
+        // No token, private message or server response details in logs.
+        console.error('FCM delivery rejected; status:', response.status);
+      }
+    } catch {
+      failed++;
+      console.error('FCM delivery network failure');
+    }
   }
-  return json({ sent });
+  return json({ sent, failed, retryable: false });
 });
