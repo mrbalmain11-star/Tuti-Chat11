@@ -523,7 +523,7 @@ export const InternalProfileModal: React.FC = () => {
               <img
                 src={
                   (isSelf ? user.avatar : (visitorAvatar || user.avatar)) ||
-                  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&fit=crop&q=80'
+                  '/default-avatar.svg'
                 }
                 alt={user.name}
                 className="w-full h-full object-cover rounded-full"
