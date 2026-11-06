@@ -1106,6 +1106,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         do {
           pending = false;
           const members = await resolveRoomAvatars(await fetchRoomVisualMembers(roomId));
+          const rawMembers = await fetchRoomMembers(roomId);
+          const moderatorMutedIds = new Set(rawMembers.filter(m => m.moderation_muted).map(m => m.user_id));
           const { data: moderatorIds, error: moderatorsError } = await roomClient.rpc('totichat_room_moderator_ids', { p_room_id: roomId });
           if (!alive) return;
           if (moderatorsError) console.error('Room moderator roster refresh failed:', moderatorsError);
@@ -1143,6 +1145,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                     avatar: member.resolvedAvatar || (member.user_id === currentUser.id ? currentUser.avatar : '') || '',
                   } : null,
                   isMuted: member?.is_muted ?? true,
+                  isModeratorMuted: member ? moderatorMutedIds.has(member.user_id) : false,
                   isSpeaking: false,
                 };
               }),
@@ -1435,7 +1438,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const seat = activeRoom.seats.find(item => item.seatNumber === seatNumber);
     const target = seat?.user?.id;
     if (!target || target === currentUser.id) return;
-    const action = seat.isMuted ? 'allow_mic' : 'mute';
+    const action = seat.isModeratorMuted ? 'allow_mic' : 'mute';
     void Promise.resolve(stagingBackend.rpc('staging_moderate_room_microphone', {
       p_room_id: roomId,
       p_target: target,
@@ -1448,7 +1451,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setActiveRoom(prev => prev?.id !== roomId ? prev : ({
         ...prev,
         seats: prev.seats.map(item => item.user?.id === target
-          ? { ...item, isMuted: action === 'mute', isSpeaking: false } : item),
+          ? { ...item, isMuted: true, isModeratorMuted: action === 'mute', isSpeaking: false } : item),
       }));
     }).catch(error => {
       console.error('Room microphone moderation failed:', error);
