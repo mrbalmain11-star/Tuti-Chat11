@@ -16,6 +16,9 @@ export const AdminBannersPanel: React.FC = () => {
   useEffect(() => { void refresh().catch(e => setError(String(e))); }, []);
   const create = async () => {
     if (!file || !fileSizeValid) { setError('اختر صورة بقياس 1200 × 600 بكسل بالضبط'); return; }
+    if ((start && !Number.isFinite(Date.parse(start))) || (end && !Number.isFinite(Date.parse(end)))) { setError('تاريخ النشر غير صالح'); return; }
+    if (start && end && Date.parse(end) <= Date.parse(start)) { setError('يجب أن يكون تاريخ نهاية النشر بعد تاريخ البداية'); return; }
+    if (end && Date.parse(end) <= Date.now()) { setError('تاريخ نهاية النشر يجب أن يكون في المستقبل'); return; }
     setBusy(true); setError(''); setNotice('');
     try {
       await createAdminBanner(file, title, { link_kind: target === 'none' ? 'none' : 'screen', link_target: target === 'none' ? null : target, starts_at: start ? new Date(start).toISOString() : null, ends_at: end ? new Date(end).toISOString() : null });
