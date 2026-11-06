@@ -411,7 +411,7 @@ export const InternalProfileModal: React.FC = () => {
               (isSelf && savedCover) ||
               visitorCover ||
               user.cover ||
-              'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?w=800&auto=format&fit=crop&q=80'
+              '/royal-profile-cover.svg'
             }
             alt="Cover"
             className="w-full h-full object-cover"
