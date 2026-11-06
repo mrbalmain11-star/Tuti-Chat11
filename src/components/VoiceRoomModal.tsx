@@ -140,6 +140,7 @@ export const VoiceRoomModal: React.FC = () => {
   // Local interactive states
   const [showChatInput, setShowChatInput] = useState(false);
   const [chatMessage, setChatMessage] = useState('');
+  const [unreadRoomMessages, setUnreadRoomMessages] = useState(0);
   const [copiedId, setCopiedId] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -527,6 +528,7 @@ export const VoiceRoomModal: React.FC = () => {
   const chatScrollPositionRef = useRef(0);
   const chatAnchorRef = useRef<{ id: string; offset: number } | null>(null);
   const chatProgrammaticScrollRef = useRef<number | null>(null);
+  const lastRoomMessageIdRef = useRef<string | null>(null);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -925,12 +927,23 @@ export const VoiceRoomModal: React.FC = () => {
 
   // Get current messages
   const currentMessages = activeRoom ? roomMessages[activeRoom.id] || [] : [];
+  const latestRoomMessageId = currentMessages[currentMessages.length - 1]?.id ?? null;
+
+  useEffect(() => {
+    const previousId = lastRoomMessageIdRef.current;
+    if (previousId && latestRoomMessageId && previousId !== latestRoomMessageId && !chatNearBottomRef.current) {
+      setUnreadRoomMessages(count => Math.min(99, count + 1));
+    }
+    lastRoomMessageIdRef.current = latestRoomMessageId;
+  }, [latestRoomMessageId]);
 
   useEffect(() => {
     chatNearBottomRef.current = true;
     chatScrollPositionRef.current = 0;
     chatAnchorRef.current = null;
     chatProgrammaticScrollRef.current = null;
+    lastRoomMessageIdRef.current = null;
+    setUnreadRoomMessages(0);
   }, [activeRoom?.id]);
 
   useLayoutEffect(() => {
@@ -1470,6 +1483,7 @@ export const VoiceRoomModal: React.FC = () => {
                     chatProgrammaticScrollRef.current = null;
                     if (programmed !== null && Math.abs(element.scrollTop - programmed) < 2) return;
                     chatNearBottomRef.current = element.scrollHeight - element.scrollTop - element.clientHeight < 48;
+                    if (chatNearBottomRef.current) setUnreadRoomMessages(0);
                     chatScrollPositionRef.current = element.scrollTop;
                     const firstVisible = Array.from(element.querySelectorAll<HTMLElement>('[data-room-message-id]'))
                       .find(message => message.offsetTop + message.offsetHeight > element.scrollTop + element.offsetTop);
@@ -1514,6 +1528,25 @@ export const VoiceRoomModal: React.FC = () => {
                   ))}
 
                 </div>
+                {unreadRoomMessages > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const container = chatScrollRef.current;
+                      if (container) {
+                        container.scrollTop = container.scrollHeight;
+                        chatScrollPositionRef.current = container.scrollTop;
+                      }
+                      chatNearBottomRef.current = true;
+                      chatAnchorRef.current = null;
+                      setUnreadRoomMessages(0);
+                    }}
+                    className="self-center rounded-full border border-emerald-300/50 bg-emerald-950/90 px-3 py-1 text-[11px] font-bold text-emerald-100"
+                    aria-label="الانتقال إلى الرسائل الجديدة"
+                  >
+                    رسائل جديدة ({unreadRoomMessages}) ↓
+                  </button>
+                )}
               </div>
             </div>
           </>
