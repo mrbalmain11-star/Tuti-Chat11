@@ -1095,6 +1095,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       } finally { loading = false; }
     };
     const client = stagingBackend;
+    let recoveryTimer: number | undefined;
+    const stopRecovery = () => {
+      if (recoveryTimer !== undefined) window.clearInterval(recoveryTimer);
+      recoveryTimer = undefined;
+    };
+    const startRecovery = () => {
+      if (recoveryTimer !== undefined || !alive) return;
+      void refreshRoster();
+      recoveryTimer = window.setInterval(() => {
+        if (document.visibilityState === 'visible' && navigator.onLine) void refreshRoster();
+      }, 15000);
+    };
     const channel = client.channel('room-roster-' + roomId)
       .on('postgres_changes', {
         event: '*', schema: 'public', table: 'room_members',
@@ -1105,9 +1117,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       .on('postgres_changes', { event: '*', schema: 'public', table: 'vip_entitlements' },
         () => { void refreshRoster(); })
       .subscribe(status => {
-        if (status === 'SUBSCRIBED') void refreshRoster();
-        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT')
+        if (status === 'SUBSCRIBED') {
+          stopRecovery();
+          void refreshRoster();
+        }
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
           console.error('Room roster realtime subscription:', status);
+          startRecovery();
+        }
       });
     const refreshOnForeground = () => {
       if (document.visibilityState === 'visible') void refreshRoster();
@@ -1118,6 +1135,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     document.addEventListener('visibilitychange', refreshOnForeground);
     return () => {
       alive = false;
+      stopRecovery();
       window.removeEventListener('focus', refreshOnForeground);
       window.removeEventListener('online', refreshOnReconnect);
       document.removeEventListener('visibilitychange', refreshOnForeground);
