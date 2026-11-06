@@ -77,7 +77,9 @@ export const OffersPopup: React.FC = () => {
       const active=merged.filter(b=>(!b.starts_at||(Number.isFinite(Date.parse(b.starts_at))&&Date.parse(b.starts_at)<=now))&&(!b.ends_at||(Number.isFinite(Date.parse(b.ends_at))&&Date.parse(b.ends_at)>now)));
       if(alive){setItems(active);setIndex(0);if(!disabled&&!sessionStorage.getItem('totichat:offers:seen')){setOpen(true);sessionStorage.setItem('totichat:offers:seen','yes');}}
     };
-    void refresh();
+    void refresh().catch(error => {
+      if (alive) console.error('Recharge offers refresh failed', error);
+    });
     return ()=>{alive=false;};
   },[disabled]);
   const selected=items[Math.min(index,Math.max(0,items.length-1))];
