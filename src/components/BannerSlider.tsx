@@ -34,7 +34,9 @@ export const BannerSlider: React.FC = () => {
   }, []);
   useEffect(() => {
     if (items.length < 2) return;
-    const timer = window.setInterval(() => setIndex(i => (i + 1) % items.length), 5000);
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === 'visible') setIndex(i => (i + 1) % items.length);
+    }, 5000);
     return () => window.clearInterval(timer);
   }, [items.length]);
   useEffect(() => { if (index >= items.length) setIndex(0); }, [index,items.length]);
