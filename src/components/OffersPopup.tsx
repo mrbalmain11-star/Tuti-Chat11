@@ -20,6 +20,7 @@ export const OffersPopup: React.FC = () => {
   const [dailyLoading,setDailyLoading]=useState(false);
   const [dailyLoaded,setDailyLoaded]=useState(false);
   const dailyRequestInFlight=useRef(false);
+  const claimRequestInFlight=useRef(false);
   const [notice,setNotice]=useState('');
   const loadDaily=async()=>{
     if(dailyRequestInFlight.current)return null;
@@ -49,7 +50,8 @@ export const OffersPopup: React.FC = () => {
     }
   };
   const claim=async()=>{
-    if(!stagingBackend||claiming||dailyLoading||!daily||daily.claimed)return;
+    if(!stagingBackend||claimRequestInFlight.current||claiming||dailyLoading||!daily||daily.claimed)return;
+    claimRequestInFlight.current=true;
     const previousDaily = daily;
     setClaiming(true);
     setNotice('');
@@ -78,6 +80,7 @@ export const OffersPopup: React.FC = () => {
       await loadDaily();
       setNotice('تعذر تأكيد استلام المكافأة. تحقق من الحالة قبل المحاولة مجدداً.');
     }finally{
+      claimRequestInFlight.current=false;
       setClaiming(false);
     }
   };
