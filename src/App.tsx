@@ -84,7 +84,7 @@ class ErrorBoundary extends React.Component<
 }
 
 const AppContent: React.FC = () => {
-  const { activeTab, isLoggedIn, isRtl, rooms, enterRoom } = useApp();
+  const { activeTab, isLoggedIn, isRtl, rooms, enterRoom, activeRoom } = useApp();
   const [otpState, setOtpState] = React.useState<'checking' | 'pending' | 'verified' | 'error'>('checking');
   const [otpEmail, setOtpEmail] = React.useState('');
   const [otpRetry, setOtpRetry] = React.useState(0);
@@ -152,6 +152,8 @@ const AppContent: React.FC = () => {
   // Open a shared room only after authentication, OTP and onboarding are complete.
   React.useEffect(() => {
     if (!isLoggedIn || (GOOGLE_EMAIL_OTP_ENFORCED && otpState !== 'verified') || onboardingState !== 'complete') return;
+    // Do not interrupt an existing voice room when a share link is processed.
+    if (activeRoom) return;
     const url = new URL(window.location.href);
     const roomId = url.searchParams.get('room');
     if (!roomId) return;
@@ -199,7 +201,7 @@ const AppContent: React.FC = () => {
       alert('تعذر التحقق من رابط الغرفة بسبب الاتصال بالخادم. حاول فتح الرابط مجدداً.');
     })
       .finally(() => { if (sharedRoomLookupRef.current === roomId) sharedRoomLookupRef.current = null; });
-  }, [isLoggedIn, otpState, onboardingState, rooms, enterRoom]);
+  }, [isLoggedIn, otpState, onboardingState, rooms, enterRoom, activeRoom]);
 
   if (!isLoggedIn) {
     return (
