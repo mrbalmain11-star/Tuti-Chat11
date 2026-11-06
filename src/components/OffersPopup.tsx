@@ -8,6 +8,8 @@ const hiddenKey = 'totichat:offers:hidden';
 export const OffersPopup: React.FC = () => {
   const [items,setItems] = useState<Offer[]>([]);
   const [offersError,setOffersError] = useState(false);
+  const [offersRetry,setOffersRetry] = useState(0);
+  const [offersLoading,setOffersLoading] = useState(false);
   const [open,setOpen] = useState(false);
   const [index,setIndex] = useState(0);
   const [disabled,setDisabled] = useState(() => localStorage.getItem(hiddenKey)==='yes');
@@ -71,18 +73,19 @@ export const OffersPopup: React.FC = () => {
     if(!stagingBackend)return;
     let alive=true;
     const refresh=async()=>{
+      setOffersLoading(true);
       const offers=await stagingBackend!.from('recharge_offers').select('id,title,description,image_url,price_iqd,coins,bonus_coins,starts_at,ends_at').eq('status','published').order('created_at',{ascending:false}).limit(10);
-      if(offers.error){if(alive)setOffersError(true);console.error('Recharge offers load failed',offers.error);return;}
+      if(offers.error){if(alive){setOffersError(true);setOffersLoading(false);}console.error('Recharge offers load failed',offers.error);return;}
       const now=Date.now();
       const merged:Offer[]=(offers.data??[]).map(o=>({...o,link_kind:'offer',link_target:null}));
       const active=merged.filter(b=>(!b.starts_at||(Number.isFinite(Date.parse(b.starts_at))&&Date.parse(b.starts_at)<=now))&&(!b.ends_at||(Number.isFinite(Date.parse(b.ends_at))&&Date.parse(b.ends_at)>now)));
-      if(alive){setOffersError(false);setItems(active);setIndex(0);if(!disabled&&!sessionStorage.getItem('totichat:offers:seen')){setOpen(true);sessionStorage.setItem('totichat:offers:seen','yes');}}
+      if(alive){setOffersError(false);setOffersLoading(false);setItems(active);setIndex(0);if(!disabled&&!sessionStorage.getItem('totichat:offers:seen')){setOpen(true);sessionStorage.setItem('totichat:offers:seen','yes');}}
     };
     void refresh().catch(error => {
-      if (alive) {setOffersError(true);console.error('Recharge offers refresh failed', error);}
+      if (alive) {setOffersError(true);setOffersLoading(false);console.error('Recharge offers refresh failed', error);}
     });
     return ()=>{alive=false;};
-  },[disabled]);
+  },[disabled,offersRetry]);
   const selected=items[Math.min(index,Math.max(0,items.length-1))];
   return <>
     {open&&<div className="fixed inset-0 z-[110] bg-black/75 flex items-center justify-center p-3" dir="rtl" role="dialog" aria-modal="true" aria-label="المكافآت والعروض">
@@ -114,7 +117,7 @@ export const OffersPopup: React.FC = () => {
             <button type="button" disabled={claiming||dailyLoading} onClick={()=>{setNotice('');void loadDaily();}} className="w-full mt-2 flex items-center justify-center gap-2 rounded-xl border border-emerald-300 bg-white/80 px-3 py-2 text-sm font-bold text-emerald-900 disabled:opacity-50"><RefreshCw size={16} className={dailyLoading?'animate-spin':''}/> تحديث حالة المكافأة</button>
             <button type="button" disabled={!daily||daily.claimed||claiming||dailyLoading} onClick={()=>void claim()} className="w-full mt-3 rounded-2xl bg-gradient-to-b from-[#ffe57a] to-[#f6b500] text-[#6b4200] font-black text-lg py-3 border-2 border-[#f0b22a] disabled:opacity-60">{claiming?'جاري الاستلام...':dailyLoading?'جارٍ التحقق...':daily?.claimed?'تم الاستلام اليوم':'استلام المكافأة'}</button>
           </>:<>
-            {offersError?<p role="status" className="text-center text-rose-800 py-8">تعذر تحميل عروض الشحن من الخادم. تحقق من الاتصال وحاول لاحقاً.</p>:items.length===0?<p className="text-center text-emerald-900 py-8">لا توجد عروض شحن خاصة حالياً</p>:selected&&<div className="rounded-xl bg-white border border-emerald-200 overflow-hidden">
+            {offersError?<div role="status" className="py-6 text-center"><p className="text-rose-800">تعذر تحميل عروض الشحن من الخادم. تحقق من الاتصال وحاول مجدداً.</p><button type="button" disabled={offersLoading} onClick={()=>setOffersRetry(n=>n+1)} className="mt-3 rounded-xl border border-emerald-300 bg-white px-4 py-2 text-sm font-bold text-emerald-900 disabled:opacity-50"><RefreshCw size={16} className="ml-2 inline" aria-hidden="true"/>إعادة المحاولة</button></div>:offersLoading && items.length===0?<p role="status" className="py-8 text-center text-emerald-900">جارٍ تحميل العروض...</p>:items.length===0?<p className="text-center text-emerald-900 py-8">لا توجد عروض شحن خاصة حالياً</p>:selected&&<div className="rounded-xl bg-white border border-emerald-200 overflow-hidden">
               {selected.image_url?<img src={selected.image_url} alt={selected.title} className="w-full aspect-[2/1] object-contain"/>:<div className="h-32 bg-gradient-to-br from-emerald-800 to-amber-500 flex items-center justify-center text-white"><Gift size={54}/></div>}
               <div className="p-3 text-center"><strong className="text-[#075b45]">{selected.title}</strong><p className="text-sm font-bold text-amber-700 mt-1">{selected.price_iqd != null && Number.isFinite(Number(selected.price_iqd)) && Number(selected.price_iqd) >= 0 ? Number(selected.price_iqd).toLocaleString('ar-IQ') + ' د.ع' : 'السعر غير محدد'} مقابل {Number.isFinite(Number(selected.coins)) && Number.isFinite(Number(selected.bonus_coins)) && Number(selected.coins) >= 0 && Number(selected.bonus_coins) >= 0 ? (Number(selected.coins) + Number(selected.bonus_coins)).toLocaleString('ar-IQ') + ' عملة' : 'رصيد غير محدد'}</p>{selected.description&&<p className="text-xs mt-1 text-slate-600">{selected.description}</p>}{selected.ends_at && !Number.isNaN(Date.parse(selected.ends_at)) && <p className="mt-2 text-xs font-bold text-emerald-800">ينتهي العرض: {new Date(selected.ends_at).toLocaleString('ar-IQ')}</p>}</div>
               {items.length>1&&<div className="flex justify-between items-center px-3 pb-2"><button onClick={()=>setIndex(i=>(i-1+items.length)%items.length)} aria-label="السابق"><ChevronRight/></button><span>{index+1} / {items.length}</span><button onClick={()=>setIndex(i=>(i+1)%items.length)} aria-label="التالي"><ChevronLeft/></button></div>}
