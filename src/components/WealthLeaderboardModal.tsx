@@ -734,9 +734,13 @@ export const WealthLeaderboardModal: React.FC = () => {
     if(!openWealthLeaderboardModal||!stagingBackend)return;
     let alive=true;
     let requestId=0;
+    let inFlight=false;
     // Never show results from the previously selected tab or period.
     setRankingState(null);
     const refresh=async()=>{
+      // Avoid piling up network requests when the server takes over 30 seconds.
+      if(!alive||inFlight)return;
+      inFlight=true;
       const currentRequest=++requestId;
       try {
         const {data,error}=await stagingBackend!.rpc('live_rankings',{p_period:period,p_kind:leaderboardTab});
@@ -747,6 +751,8 @@ export const WealthLeaderboardModal: React.FC = () => {
         if(!alive||currentRequest!==requestId)return;
         console.error('Rankings load failed',error);
         setRankingState({period,tab:leaderboardTab,rows:[]});
+      } finally {
+        inFlight=false;
       }
     };
     void refresh();
