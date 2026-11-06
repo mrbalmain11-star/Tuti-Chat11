@@ -1049,6 +1049,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if ((event as CustomEvent<string>).detail === roomId) void refresh();
     };
     window.addEventListener('totichat:room-message-sent', refreshAfterSend);
+    window.addEventListener('totichat:room-message-refresh', refreshAfterSend);
     window.addEventListener('focus', refreshOnForeground);
     window.addEventListener('online', refreshOnReconnect);
     document.addEventListener('visibilitychange', refreshOnForeground);
@@ -1056,6 +1057,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       active = false;
       stopRecovery();
       window.removeEventListener('totichat:room-message-sent', refreshAfterSend);
+      window.removeEventListener('totichat:room-message-refresh', refreshAfterSend);
       window.removeEventListener('focus', refreshOnForeground);
       window.removeEventListener('online', refreshOnReconnect);
       document.removeEventListener('visibilitychange', refreshOnForeground);
