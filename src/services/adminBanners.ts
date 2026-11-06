@@ -42,8 +42,6 @@ export async function createAdminBanner(file: File, title: string, options: { li
   if (endTime !== null && endTime <= Date.now()) throw new Error('يجب أن تكون نهاية النشر في المستقبل');
   const cleanTitle = title.trim();
   if (!cleanTitle || cleanTitle.length > 120) throw new Error('أدخل عنواناً للبنر');
-  const existing = await listAdminBanners();
-  if (existing.filter(item => item.status === 'published').length >= 10) throw new Error('الحد الأقصى 10 بنرات منشورة. أوقف أحدها أولاً.');
   const image = await toWebp(file);
   const path = `${user.id}/${crypto.randomUUID()}.webp`;
   const { error: uploadError } = await api.storage.from('totichat-admin-banners').upload(path, image, { contentType: 'image/webp', upsert: false });
