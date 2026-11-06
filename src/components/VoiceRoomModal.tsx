@@ -330,6 +330,7 @@ export const VoiceRoomModal: React.FC = () => {
       const { data, error } = await stagingBackend.rpc('phase2_dm_block', { p_other_user: targetId, p_block: block });
       if (error || data !== true) throw error ?? new Error('لم يؤكد الخادم الحظر');
       await refreshBanLists();
+      window.dispatchEvent(new CustomEvent('totichat:room-bans-changed', { detail: activeRoom?.id }));
       showToast(block ? 'تم الحظر الشخصي' : 'تم فك الحظر الشخصي');
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'تعذر تغيير الحظر الشخصي');
