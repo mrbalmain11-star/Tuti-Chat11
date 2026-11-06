@@ -40,7 +40,7 @@ export const GlobalGiftBanner: React.FC = () => {
         const next = fresh.find(row => row.total_coins >= 7000 && !!row.room_id);
         if (next) {
           fresh.forEach(row => seen.current.add(row.id));
-          if (seen.current.size > 100) seen.current.clear();
+          if (seen.current.size > 100) seen.current = new Set([next.id]);
           displayedId.current = next.id;
           setAnnouncement(next);
           setAvatars({ sender: '', recipient: '' });
