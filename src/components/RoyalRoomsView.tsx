@@ -337,7 +337,11 @@ export const RoyalRoomsView: React.FC = () => {
         </div>
 
         {/* Followed Rooms Grid */}
-        {followedRooms.length > 0 ? (
+        {followsLoading ? (
+          <p role="status" className="rounded-xl border border-emerald-200 bg-white p-4 text-center text-xs font-bold text-emerald-800">جاري تحميل الغرف المتابَعة...</p>
+        ) : followsError ? (
+          <p role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-center text-xs font-bold text-amber-900">تعذر تحميل الغرف المتابَعة من الخادم. تحقق من الاتصال وأعد فتح القسم.</p>
+        ) : followedRooms.length > 0 ? (
           <div className="grid grid-cols-2 gap-3.5">
             {followedRooms.map((room) => {
               return (
