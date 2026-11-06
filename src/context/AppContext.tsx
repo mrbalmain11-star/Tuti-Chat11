@@ -1688,21 +1688,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
     const title = (updates.title ?? existing.title).trim();
     const welcome = updates.announcement ?? existing.announcement ?? '';
-    if (title.length < 2 || title.length > 60 || welcome.length > 500) {
+    const tag = (updates.tag ?? existing.tag ?? '').trim();
+    if (title.length < 2 || title.length > 60 || welcome.length > 500 || tag.length > 80) {
       throw new Error('اسم الغرفة يجب أن يكون من حرفين إلى 60 حرفاً، والإعلان بحد أقصى 500 حرف.');
     }
     return (async () => {
       const { data, error } = await stagingBackend.rpc('staging_update_my_room', {
-        p_room_id: roomId, p_title: title, p_welcome_message: welcome,
+        p_room_id: roomId, p_title: title, p_welcome_message: welcome, p_tag: tag,
       });
       if (error || data !== true) throw error ?? new Error('Room update not confirmed');
       const rows = await fetchRealRooms();
       const saved = rows.find(room => room.id === roomId);
-      if (!saved || saved.title !== title) throw new Error('Saved room title did not match requested title');
+      if (!saved || saved.title !== title || saved.welcome_message !== welcome || saved.tag !== tag) {
+        throw new Error('Saved room information did not match requested changes');
+      }
       const mapped = rows.map(mapRoomToUi);
       setRooms(mapped);
       setActiveRoom(prev => prev?.id === roomId ? {
-        ...prev, title: saved.title, announcement: saved.welcome_message ?? '',
+        ...prev, title: saved.title, announcement: saved.welcome_message ?? '', tag: saved.tag ?? '',
       } : prev);
 
     })();
