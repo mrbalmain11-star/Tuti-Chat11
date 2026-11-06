@@ -524,6 +524,7 @@ export const VoiceRoomModal: React.FC = () => {
 
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const chatNearBottomRef = useRef(true);
+  const chatScrollPositionRef = useRef(0);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -919,14 +920,18 @@ export const VoiceRoomModal: React.FC = () => {
 
   useEffect(() => {
     chatNearBottomRef.current = true;
+    chatScrollPositionRef.current = 0;
   }, [activeRoom?.id]);
 
   useEffect(() => {
     const container = chatScrollRef.current;
-    if (container && chatNearBottomRef.current) {
+    if (!container) return;
+    if (chatNearBottomRef.current) {
       container.scrollTop = container.scrollHeight;
+    } else {
+      container.scrollTop = chatScrollPositionRef.current;
     }
-  }, [activeRoom?.id, currentMessages.length, showChatInput]);
+  }, [activeRoom?.id, isRoomMinimized, currentMessages.length, showChatInput]);
 
   useEffect(()=>{const backend=stagingBackend;if(!activeRoom||!backend)return;let alive=true;const load=async()=>{const {data,error}=await backend.rpc('totichat_room_seat_layout',{p_room_id:activeRoom.id});if(alive&&!error&&['grid','classic','circle','stage'].includes(data))setSeatLayout(data);};void load();const timer=window.setInterval(()=>void load(),15000);return()=>{alive=false;window.clearInterval(timer);};},[activeRoom?.id]);
 
@@ -1442,6 +1447,7 @@ export const VoiceRoomModal: React.FC = () => {
                   onScroll={(event) => {
                     const element = event.currentTarget;
                     chatNearBottomRef.current = element.scrollHeight - element.scrollTop - element.clientHeight < 48;
+                    chatScrollPositionRef.current = element.scrollTop;
                   }}
                   className="flex-1 space-y-1.5 overflow-y-auto max-h-48 no-scrollbar pr-1"
                 >
