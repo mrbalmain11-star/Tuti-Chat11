@@ -80,7 +80,7 @@ export const OffersPopup: React.FC = () => {
       const now=Date.now();
       const merged:Offer[]=(offers.data??[]).map(o=>({...o,link_kind:'offer',link_target:null}));
       const active=merged.filter(b=>(!b.starts_at||(Number.isFinite(Date.parse(b.starts_at))&&Date.parse(b.starts_at)<=now))&&(!b.ends_at||(Number.isFinite(Date.parse(b.ends_at))&&Date.parse(b.ends_at)>now)));
-      if(alive){setOffersError(false);setOffersLoading(false);setOffersLoaded(true);setItems(active);setIndex(0);if(!disabled&&!sessionStorage.getItem('totichat:offers:seen')){setOpen(true);sessionStorage.setItem('totichat:offers:seen','yes');}}
+      if(alive){setOffersError(false);setOffersLoading(false);setOffersLoaded(true);setItems(active);setIndex(0);if(active.length>0&&!disabled&&!sessionStorage.getItem('totichat:offers:seen')){setOpen(true);setTab('offers');sessionStorage.setItem('totichat:offers:seen','yes');}}
     };
     void refresh().catch(error => {
       if (alive) {setOffersError(true);setOffersLoading(false);setOffersLoaded(true);console.error('Recharge offers refresh failed', error);}
