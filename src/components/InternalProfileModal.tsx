@@ -411,7 +411,7 @@ export const InternalProfileModal: React.FC = () => {
               (isSelf && savedCover) ||
               visitorCover ||
               user.cover ||
-              '/royal-profile-cover.svg'
+              '/placeholder-cover.svg'
             }
             alt="Cover"
             className="w-full h-full object-cover"
