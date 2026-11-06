@@ -17,7 +17,7 @@ export const GlobalGiftBanner: React.FC = () => {
   const displayedId = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!isLoggedIn || !stagingBackend) { cursor.current = null; seen.current.clear(); setAnnouncement(null); return; }
+    if (!isLoggedIn || !stagingBackend) { cursor.current = null; displayedId.current = null; seen.current.clear(); setAnnouncement(null); return; }
     let active = true;
     let busy = false;
     let hideTimer: ReturnType<typeof setTimeout> | undefined;
@@ -64,7 +64,7 @@ export const GlobalGiftBanner: React.FC = () => {
     };
     void poll();
     const timer = setInterval(() => { if (document.visibilityState === 'visible') void poll(); }, 6000);
-    return () => { active = false; clearInterval(timer); if (hideTimer) clearTimeout(hideTimer); };
+    return () => { active = false; displayedId.current = null; clearInterval(timer); if (hideTimer) clearTimeout(hideTimer); };
   }, [isLoggedIn]);
 
   if (!announcement) return null;
