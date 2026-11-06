@@ -88,7 +88,7 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
         <h1 className="font-black text-xl flex items-center gap-2"><ShieldCheck className="text-amber-700" /> مركز الإدارة</h1>
         <button type="button" onClick={onClose} className="rounded-xl border border-amber-200 px-3 py-2 flex items-center gap-2"><ArrowRight size={18}/> رجوع</button>
       </header>
-      <main className="p-5 max-w-3xl mx-auto pb-20">
+      <main className="p-3 sm:p-5 max-w-3xl mx-auto pb-20">
         {loading && <p className="text-slate-500">جاري التحقق من صلاحياتك وقراءة البيانات...</p>}
         {error && <div role="alert" className="bg-red-50 border border-red-200 p-4 rounded-xl text-red-700">{error}</div>}
         {!loading && access && <>
