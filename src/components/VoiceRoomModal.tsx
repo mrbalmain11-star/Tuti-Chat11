@@ -849,12 +849,23 @@ export const VoiceRoomModal: React.FC = () => {
 
   const handleAllowMic = async (userId: string) => {
     if (!activeRoom || (!isOwner && !isModerator) || !stagingBackend) return;
+    const roomId = activeRoom.id;
+    if (userId === currentUser.id || userId === activeRoom.hostId) return;
     try {
+      if (!isOwner) {
+        const { data: latestModeratorIds, error: roleError } = await stagingBackend.rpc('totichat_room_moderator_ids', { p_room_id: roomId });
+        if (roleError || !Array.isArray(latestModeratorIds) || !latestModeratorIds.includes(currentUser.id)) {
+          window.dispatchEvent(new CustomEvent('totichat:room-moderators-changed', { detail: roomId }));
+          showToast('تم سحب صلاحية الإشراف أو تعذر التحقق منها. تم إلغاء رفع الكتم.');
+          return;
+        }
+      }
       const { data, error } = await stagingBackend.rpc('phase2_room_moderate', {
         p_room_id: activeRoom.id, p_target: userId,
         p_action: 'allow_mic', p_request_id: crypto.randomUUID(),
       });
       if (error || !data?.success) throw error ?? new Error('Permission not confirmed');
+      window.dispatchEvent(new CustomEvent('totichat:room-moderators-changed', { detail: roomId }));
       showToast('تم رفع حظر المايك من الخادم. العضو يفتح مايكه بنفسه.');
     } catch (error) {
       console.error('Allow microphone failed:', error);
