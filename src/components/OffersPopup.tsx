@@ -77,8 +77,11 @@ export const OffersPopup: React.FC = () => {
 
     }catch(error){
       console.error('Daily reward claim failed',error);
-      await loadDaily();
-      setNotice('تعذر تأكيد استلام المكافأة. تحقق من الحالة قبل المحاولة مجدداً.');
+      const verified=await loadDaily();
+      setNotice(verified?.claimed
+        ? 'المكافأة مسجلة كمستلمة اليوم في الخادم. لا حاجة لإعادة الطلب.'
+        : verified ? 'لم يتم تأكيد الاستلام. راجع حالة المكافأة قبل إعادة المحاولة.'
+        : 'تعذر التحقق من نتيجة الاستلام. لا تعاود الطلب حتى تتأكد من حالة المكافأة.');
     }finally{
       claimRequestInFlight.current=false;
       setClaiming(false);
