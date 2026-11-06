@@ -23,7 +23,13 @@ export const HomeView: React.FC = () => {
     };
     void refresh();
     const timer = window.setInterval(() => { if (document.visibilityState === 'visible') void refresh(); }, 60000);
-    return () => { active = false; window.clearInterval(timer); };
+    const onForeground = () => { if (document.visibilityState === 'visible') void refresh(); };
+    document.addEventListener('visibilitychange', onForeground);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', onForeground);
+    };
   }, []);
 
   // 1. Royal Sub-Tab: ملكي (غرفتي والغرف الذي أتابعها)
