@@ -14,6 +14,38 @@ import { AdminTesterBadgesPanel } from './AdminTesterBadgesPanel';
 import { ArrowRight, RefreshCw, ShieldCheck, Users, Building2, Radio, Gift } from 'lucide-react';
 import { fetchMyAdminAccess, fetchOwnerDashboardCounts, fetchOwnerDashboardRecent, type OwnerDashboardRecent, type AdminAccess, type OwnerDashboardCounts } from '../services/stagingBackend';
 
+const AdminDailyRewardsReadOnly: React.FC = () => {
+  const [schedule, setSchedule] = useState<number[] | null>(null);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const refresh = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const { stagingBackend } = await import('../services/stagingBackend');
+      if (!stagingBackend) throw new Error('الخادم غير متاح');
+      const { data, error: rpcError } = await stagingBackend.rpc('daily_reward_status');
+      if (rpcError) throw rpcError;
+      const value = data as { schedule?: number[]; day?: number; coins?: number } | null;
+      if (!value || !Array.isArray(value.schedule) || value.schedule.length !== 7 ||
+          !value.schedule.every(n => Number.isSafeInteger(n) && n >= 0) ||
+          !Number.isInteger(value.day) || value.day! < 1 || value.day! > 7 ||
+          value.schedule[value.day! - 1] !== value.coins) throw new Error('بيانات المكافآت غير صالحة');
+      setSchedule(value.schedule);
+    } catch (cause) {
+      setSchedule(null);
+      setError(cause instanceof Error ? cause.message : 'تعذر تحميل المكافآت');
+    } finally { setLoading(false); }
+  };
+  useEffect(() => { void refresh(); }, []);
+  return <section className="space-y-3">
+    <p className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm">القيم الفعلية من الخادم، للعرض فقط. تعديل المكافآت غير مفعّل.</p>
+    <button type="button" disabled={loading} onClick={() => void refresh()} className="rounded-xl bg-emerald-800 px-4 py-2 text-white disabled:opacity-50">{loading ? 'جارٍ التحميل...' : 'تحديث القيم'}</button>
+    {error && <p role="alert" className="text-red-700">{error}</p>}
+    {schedule && <div className="grid grid-cols-2 gap-3">{schedule.map((coins, i) => <div key={i} className="rounded-xl border border-amber-200 bg-white p-3 text-center"><strong className="block text-emerald-900">اليوم {i + 1}</strong><span className="font-bold text-amber-800">{coins.toLocaleString('ar-IQ')} عملة</span></div>)}</div>}
+  </section>;
+};
+
 type Props = { onClose: () => void };
 export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
   const [adminPage, setAdminPage] = useState<string | null>(null);
