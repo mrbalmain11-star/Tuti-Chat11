@@ -32,7 +32,6 @@ export const OffersPopup: React.FC = () => {
     return ()=>{alive=false;};
   },[disabled]);
   const selected=items[Math.min(index,Math.max(0,items.length-1))];
-  const amounts=[500,800,5,1000,1500,2000,3000];
   return <>
     {open&&<div className="fixed inset-0 z-[110] bg-black/75 flex items-center justify-center p-3" dir="rtl" role="dialog" aria-modal="true" aria-label="المكافآت والعروض">
       <div className="w-full max-w-sm max-h-[88dvh] overflow-y-auto rounded-[28px] bg-[#e6fff3] border-[3px] border-[#a4e8c9] shadow-[0_0_30px_rgba(246,210,86,.25)]">
@@ -49,16 +48,16 @@ export const OffersPopup: React.FC = () => {
           </div>
           {tab==='daily'?<>
             <div className="grid grid-cols-3 gap-2">
-              {amounts.slice(0,6).map((amount,i)=><div key={i} className={`relative rounded-xl border-2 p-2 text-center min-h-[98px] flex flex-col items-center justify-between ${daily?.day===i+1?'bg-gradient-to-b from-[#fff5a3] to-[#f5bd42] border-[#d6a230]':'bg-gradient-to-b from-white to-[#9ee8d0] border-[#71cbb0]'}`}>
+              {Array.from({length:6},(_,i)=>i).map(i=><div key={i} className={`relative rounded-xl border-2 p-2 text-center min-h-[98px] flex flex-col items-center justify-between ${daily?.day===i+1?'bg-gradient-to-b from-[#fff5a3] to-[#f5bd42] border-[#d6a230]':'bg-gradient-to-b from-white to-[#9ee8d0] border-[#71cbb0]'}`}>
                 <strong className="text-[#0b735a] text-sm">اليوم {i+1}</strong>
                 <Coins className="text-[#e8a51d]" size={26}/>
-                <span className="text-[#075b45] font-black text-sm">{amount} 🪙</span>
+                <span className="text-[#075b45] font-black text-sm">{daily?.day===i+1 ? Number(daily.coins).toLocaleString('ar-IQ') + ' 🪙' : 'حسب الخادم'}</span>
               </div>)}
             </div>
             <div className={`mt-2 rounded-xl border-2 border-[#71cbb0] bg-gradient-to-b from-[#e8fff5] to-[#73d8b4] p-3 text-center ${daily?.day===7?'ring-2 ring-amber-400':''}`}>
               <strong className="text-[#096d53]">اليوم السابع · صندوق الكنز</strong>
               <div className="text-5xl my-1">🎁</div>
-              <span className="text-[#075b45] font-black">3,000 🪙</span>
+              <span className="text-[#075b45] font-black">{daily?.day===7 ? Number(daily.coins).toLocaleString('ar-IQ') + ' 🪙' : 'حسب الخادم'}</span>
             </div>
             <button disabled={!daily||daily.claimed||claiming} onClick={()=>void claim()} className="w-full mt-3 rounded-2xl bg-gradient-to-b from-[#ffe57a] to-[#f6b500] text-[#6b4200] font-black text-lg py-3 border-2 border-[#f0b22a] disabled:opacity-60">{daily?.claimed?'تم الاستلام اليوم':claiming?'جاري الاستلام...':'استلام المكافأة'}</button>
           </>:<>
