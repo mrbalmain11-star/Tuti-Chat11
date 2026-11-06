@@ -21,7 +21,11 @@ export const AdminOffersPanel:React.FC=()=>{
  if((form.starts_at && !Number.isFinite(Date.parse(form.starts_at))) || (form.ends_at && !Number.isFinite(Date.parse(form.ends_at))) || (form.starts_at && form.ends_at && Date.parse(form.ends_at)<=Date.parse(form.starts_at))) {setMessage('تاريخ نهاية العرض يجب أن يكون بعد تاريخ البداية.');return;}
  setBusy(true);setMessage('');try{
  const {error}=await stagingBackend.rpc('manage_recharge_offer',{p_id:editId,p_title:form.title.trim(),p_description:form.description,p_price_iqd:price,p_coins:coins,p_bonus_coins:bonus,p_image_url:form.image_url.trim(),p_status:form.status,p_starts_at:form.starts_at?new Date(form.starts_at).toISOString():null,p_ends_at:form.ends_at?new Date(form.ends_at).toISOString():null});
- if(error)throw error;await load();setEditId(null);setForm({...empty});setMessage('تم حفظ العرض');}catch(e){setMessage(e instanceof Error?e.message:String(e));}finally{setBusy(false);}};
+ if(error)throw error;
+ setEditId(null);setForm({...empty});
+ try{await load();setMessage('تم حفظ العرض');}
+ catch(refreshError){console.error('Offer saved but list refresh failed',refreshError);setMessage('تم حفظ العرض في الخادم، لكن تعذر تحديث القائمة. أعد فتح لوحة العروض للتحقق من البيانات.');}
+ }catch(e){setMessage(e instanceof Error?e.message:String(e));}finally{setBusy(false);}};
  const field=(key:keyof typeof empty,label:string,type='text')=><label className="block text-sm font-bold text-slate-700">{label}<input type={type} value={form[key]} onChange={e=>setForm(p=>({...p,[key]:e.target.value}))} className="block mt-1 w-full p-3 border border-slate-200 rounded-xl bg-white" dir={type==='number'?'ltr':undefined}/></label>;
  return <section className="space-y-4" dir="rtl">
  <div className="rounded-2xl bg-gradient-to-l from-emerald-900 to-emerald-700 text-white p-4"><h3 className="text-lg font-black">إدارة عروض الشحن</h3><p className="text-sm mt-1">إنشاء عروض حقيقية تظهر في نافذة العروض. نشر العرض لا يفعّل الدفع أو يمنح العملات تلقائياً.</p></div>
