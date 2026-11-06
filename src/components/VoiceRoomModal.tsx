@@ -1700,7 +1700,7 @@ export const VoiceRoomModal: React.FC = () => {
                   )}
                   {/* 3. Real-time User Sent Messages */}
                   {currentMessages.map((msg) => (
-                    <div key={msg.id} data-room-message-id={msg.id} className="flex justify-end">
+                    <div key={msg.id} data-room-message-id={msg.id} className="flex min-w-0 items-start justify-end gap-1.5">
                       <VipMessageFrame level={msg.senderId === currentUser.id ? currentUser.vipLevel : (msg.vipLevel ?? 0)}>
                         <span className="text-amber-300 font-bold ml-1">{msg.senderName}:</span>
                         {(msg.senderId === currentUser.id ? currentUser.vipLevel : (msg.vipLevel ?? 0)) >= 1 && (
@@ -1710,6 +1710,11 @@ export const VoiceRoomModal: React.FC = () => {
                         )}
                         <span>{msg.text}</span>
                       </VipMessageFrame>
+                      <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full border border-amber-300/70 bg-emerald-950 shadow-sm" aria-label={`صورة ${msg.senderName}`}>
+                        {(msg.senderId === currentUser.id ? currentUser.avatar : msg.senderAvatar) ? (
+                          <img src={msg.senderId === currentUser.id ? currentUser.avatar : msg.senderAvatar} alt={msg.senderName} className="h-full w-full object-cover" loading="lazy" />
+                        ) : <span className="flex h-full w-full items-center justify-center text-xs font-bold text-white">{msg.senderName.trim().charAt(0) || '؟'}</span>}
+                      </div>
                     </div>
                   ))}
 
