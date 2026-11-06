@@ -165,9 +165,12 @@ const AppContent: React.FC = () => {
     // Avoid duplicate network lookups while the room list and context rerender.
     if (sharedRoomLookupRef.current === roomId) return;
     sharedRoomLookupRef.current = roomId;
-    void fetchRealRooms().then(rows => {
+    void fetchRealRooms().then(async rows => {
       const target = rows.find(room => room.id === roomId);
       if (!target) return;
+      // The user may have signed out while the shared-room lookup was pending.
+      const { data: auth, error: authError } = await stagingBackend!.auth.getUser();
+      if (authError || !auth.user) return;
       const currentUrl = new URL(window.location.href);
       if (currentUrl.searchParams.get('room') !== roomId) return;
       currentUrl.searchParams.delete('room');
