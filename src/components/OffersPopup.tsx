@@ -17,8 +17,9 @@ export const OffersPopup: React.FC = () => {
   const loadDaily=async()=>{
     if(!stagingBackend)return;
     const {data,error}=await stagingBackend.rpc('daily_reward_status');
-    if(error){setNotice('تعذر تحميل المكافأة اليومية. حاول لاحقاً.');return;}
+    if(error){setDaily(null);setNotice('تعذر تحميل المكافأة اليومية. حاول لاحقاً.');return;}
     if(data)setDaily(data as {day:number;claimed:boolean;coins:number});
+    else{setDaily(null);setNotice('لم يتم تأكيد حالة المكافأة من الخادم.');}
   };
   const claim=async()=>{
     if(!stagingBackend||claiming||!daily||daily.claimed)return;
