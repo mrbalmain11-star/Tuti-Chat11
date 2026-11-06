@@ -1444,7 +1444,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         // Do not report a failed reservation or clear the server-confirmed seat.
         console.error('Seat reserved but microphone could not be enabled:', error);
         setMyMicMuted(true);
-        alert('تم حجز المقعد، لكن تعذر فتح المايك. حاول تشغيله مجدداً.');
+        const moderatorMuted = error instanceof Error && error.message.includes('ROOM_MODERATOR_MUTED');
+        alert(moderatorMuted
+          ? 'تم حجز المقعد، لكن المايك مكتوم من إدارة الغرفة حتى يرفع المشرف الكتم.'
+          : 'تم حجز المقعد، لكن تعذر فتح المايك. حاول تشغيله مجدداً.');
         return;
       }
       console.error('Seat reservation failed:', error);
