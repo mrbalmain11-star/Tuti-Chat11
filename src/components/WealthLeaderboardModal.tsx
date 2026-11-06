@@ -750,7 +750,13 @@ export const WealthLeaderboardModal: React.FC = () => {
       } catch(error) {
         if(!alive||currentRequest!==requestId)return;
         console.error('Rankings load failed',error);
-        setRankingState({period,tab:leaderboardTab,rows:[]});
+        // Preserve the last valid ranking for this tab/period during a transient outage.
+        // On initial load (or after switching tabs), no stale results are displayed.
+        setRankingState(previous =>
+          previous?.period===period && previous?.tab===leaderboardTab
+            ? previous
+            : {period,tab:leaderboardTab,rows:[]}
+        );
       } finally {
         inFlight=false;
       }
