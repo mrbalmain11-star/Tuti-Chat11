@@ -1048,12 +1048,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (document.visibilityState === 'visible') void refresh();
     };
     const refreshOnReconnect = () => { void refresh(); };
+    const refreshAfterSend = (event: Event) => {
+      if ((event as CustomEvent<string>).detail === roomId) void refresh();
+    };
+    window.addEventListener('totichat:room-message-sent', refreshAfterSend);
     window.addEventListener('focus', refreshOnForeground);
     window.addEventListener('online', refreshOnReconnect);
     document.addEventListener('visibilitychange', refreshOnForeground);
     return () => {
       active = false;
       stopRecovery();
+      window.removeEventListener('totichat:room-message-sent', refreshAfterSend);
       window.removeEventListener('focus', refreshOnForeground);
       window.removeEventListener('online', refreshOnReconnect);
       document.removeEventListener('visibilitychange', refreshOnForeground);
@@ -1430,14 +1435,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const sendRoomMessage = (roomId: string, text: string): void => {
     if (!text.trim() || !activeRoom || activeRoom.id !== roomId) return;
-    void sendRealRoomMessage(roomId, text).then(async () => {
-      try {
-        const messages = await fetchRealRoomMessages(roomId, chatSessionRef.current?.roomId === roomId ? chatSessionRef.current.since : new Date().toISOString());
-        setRoomMessages(prev => prev[roomId] === undefined ? prev : ({ ...prev, [roomId]: messages }));
-      } catch (error) {
-        console.error('Message sent but refresh failed:', error);
-        alert('تم قبول الرسالة من الخادم لكن تعذر تحديث عرض المحادثة.');
-      }
+    void sendRealRoomMessage(roomId, text).then(() => {
+      window.dispatchEvent(new CustomEvent('totichat:room-message-sent', { detail: roomId }));
     }).catch(error => {
       console.error('Room message rejected:', error);
       alert('تعذر إرسال الرسالة من الخادم.');
