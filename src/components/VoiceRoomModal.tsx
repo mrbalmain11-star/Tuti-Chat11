@@ -528,7 +528,7 @@ export const VoiceRoomModal: React.FC = () => {
   const chatScrollPositionRef = useRef(0);
   const chatAnchorRef = useRef<{ id: string; offset: number } | null>(null);
   const chatProgrammaticScrollRef = useRef<number | null>(null);
-  const lastRoomMessageIdRef = useRef<string | null>(null);
+  const seenRoomMessagesRef = useRef<{ roomId: string; ids: string[] } | null>(null);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -927,22 +927,27 @@ export const VoiceRoomModal: React.FC = () => {
 
   // Get current messages
   const currentMessages = activeRoom ? roomMessages[activeRoom.id] || [] : [];
-  const latestRoomMessageId = currentMessages[currentMessages.length - 1]?.id ?? null;
-
   useEffect(() => {
-    const previousId = lastRoomMessageIdRef.current;
-    if (previousId && latestRoomMessageId && previousId !== latestRoomMessageId && !chatNearBottomRef.current) {
-      setUnreadRoomMessages(count => Math.min(99, count + 1));
+    if (!activeRoom?.id) {
+      seenRoomMessagesRef.current = null;
+      return;
     }
-    lastRoomMessageIdRef.current = latestRoomMessageId;
-  }, [latestRoomMessageId]);
+    const nextIds = currentMessages.map(message => message.id);
+    const previous = seenRoomMessagesRef.current;
+    if (previous?.roomId === activeRoom.id && previous.ids.length && !chatNearBottomRef.current) {
+      const previousIds = new Set(previous.ids);
+      const newCount = nextIds.filter(id => !previousIds.has(id)).length;
+      if (newCount) setUnreadRoomMessages(count => Math.min(99, count + newCount));
+    }
+    seenRoomMessagesRef.current = { roomId: activeRoom.id, ids: nextIds };
+  }, [activeRoom?.id, currentMessages]);
 
   useEffect(() => {
     chatNearBottomRef.current = true;
     chatScrollPositionRef.current = 0;
     chatAnchorRef.current = null;
     chatProgrammaticScrollRef.current = null;
-    lastRoomMessageIdRef.current = null;
+    seenRoomMessagesRef.current = null;
     setUnreadRoomMessages(0);
   }, [activeRoom?.id]);
 
