@@ -672,11 +672,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     window.addEventListener('focus', refreshOnReturn);
     window.addEventListener('online', refreshOnReturn);
     document.addEventListener('visibilitychange', refreshOnReturn);
+    window.addEventListener('totichat:personal-blocks-changed', refreshOnReturn);
     return () => {
       active = false;
       window.removeEventListener('focus', refreshOnReturn);
       window.removeEventListener('online', refreshOnReturn);
       document.removeEventListener('visibilitychange', refreshOnReturn);
+      window.removeEventListener('totichat:personal-blocks-changed', refreshOnReturn);
       void client.removeChannel(channel);
     };
   }, [isLoggedIn, currentUser.id]);
