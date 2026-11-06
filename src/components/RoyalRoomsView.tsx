@@ -342,9 +342,9 @@ export const RoyalRoomsView: React.FC = () => {
                         if (!stagingBackend || unfollowing.has(room.id)) return;
                         setUnfollowing(previous => new Set(previous).add(room.id));
                         void stagingBackend.from('room_follows').delete()
-                          .eq('follower_id', currentUser.id).eq('room_id', room.id)
-                          .then(({ error }) => {
-                            if (error) { showToast('تعذر إلغاء متابعة الغرفة'); return; }
+                          .eq('follower_id', currentUser.id).eq('room_id', room.id).select('room_id')
+                          .then(({ data, error }) => {
+                            if (error || !data?.length) { showToast('تعذر تأكيد إلغاء متابعة الغرفة'); return; }
                             setFollowedRoomIds(previous => { const next = new Set(previous); next.delete(room.id); return next; });
                             window.dispatchEvent(new Event('totichat:room-follows-changed'));
                             showToast('تم إلغاء متابعة الغرفة');
