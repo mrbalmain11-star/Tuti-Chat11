@@ -23,6 +23,9 @@ export const AdminOffersPanel:React.FC=()=>{
  if(!form.title.trim() || !Number.isSafeInteger(price) || price<=0 || !Number.isSafeInteger(coins) || coins<=0 || !Number.isSafeInteger(bonus) || bonus<0 || !Number.isSafeInteger(coins+bonus)) {setMessage('تحقق من العنوان والسعر والعملات: يجب إدخال أعداد صحيحة وموجبة، والمكافأة الإضافية لا تقل عن صفر.');return;}
  if((form.starts_at && !Number.isFinite(Date.parse(form.starts_at))) || (form.ends_at && !Number.isFinite(Date.parse(form.ends_at))) || (form.starts_at && form.ends_at && Date.parse(form.ends_at)<=Date.parse(form.starts_at))) {setMessage('تاريخ نهاية العرض يجب أن يكون بعد تاريخ البداية.');return;}
  if(form.status==='published' && form.ends_at && Date.parse(form.ends_at)<=Date.now()){setMessage('لا يمكن نشر عرض منتهي الصلاحية. عدّل تاريخ النهاية أولاً.');return;}
+ if(form.status==='published' && (!editId || items.find(o=>o.id===editId)?.status!=='published')){
+  if(!window.confirm('نشر العرض «'+form.title.trim()+'» للمستخدمين؟'))return;
+ }
  setBusy(true);setMessage('');try{
  const {error}=await stagingBackend.rpc('manage_recharge_offer',{p_id:editId,p_title:form.title.trim(),p_description:form.description,p_price_iqd:price,p_coins:coins,p_bonus_coins:bonus,p_image_url:form.image_url.trim(),p_status:form.status,p_starts_at:form.starts_at?new Date(form.starts_at).toISOString():null,p_ends_at:form.ends_at?new Date(form.ends_at).toISOString():null});
  if(error)throw error;
