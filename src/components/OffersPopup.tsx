@@ -19,7 +19,7 @@ export const OffersPopup: React.FC = () => {
   const [dailyLoading,setDailyLoading]=useState(false);
   const [notice,setNotice]=useState('');
   const loadDaily=async()=>{
-    if(!stagingBackend)return;
+    if(!stagingBackend){setDaily(null);setNotice('خدمة المكافآت غير متاحة حالياً. حاول لاحقاً.');return null;}
     setDailyLoading(true);
     setDaily(null);
     try{
@@ -70,11 +70,11 @@ export const OffersPopup: React.FC = () => {
   };
   useEffect(()=>{void loadDaily();},[]);
   useEffect(()=>{
-    if(!stagingBackend)return;
+    if(!stagingBackend){setOffersError(true);setOffersLoading(false);return;}
     let alive=true;
     const refresh=async()=>{
       setOffersLoading(true);
-      const offers=await stagingBackend!.from('recharge_offers').select('id,title,description,image_url,price_iqd,coins,bonus_coins,starts_at,ends_at').eq('status','published').order('created_at',{ascending:false}).limit(10);
+      const offers=await stagingBackend.from('recharge_offers').select('id,title,description,image_url,price_iqd,coins,bonus_coins,starts_at,ends_at').eq('status','published').order('created_at',{ascending:false}).limit(10);
       if(offers.error){if(alive){setOffersError(true);setOffersLoading(false);}console.error('Recharge offers load failed',offers.error);return;}
       const now=Date.now();
       const merged:Offer[]=(offers.data??[]).map(o=>({...o,link_kind:'offer',link_target:null}));
