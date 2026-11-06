@@ -154,10 +154,13 @@ export const InternalProfileModal: React.FC = () => {
       if (error) throw error;
       if (!active) return;
       // The public ID lookup must not delay the visitor's real profile details.
-      const resolveProfileImage = (value: string) =>
-        /^(https?:\/\/|data:image\/)/i.test(value)
-          ? value
-          : client.storage.from('profile-avatars').getPublicUrl(value).data.publicUrl;
+      const resolveProfileImage = (value: string) => {
+        const path = value.trim();
+        if (!path) return '';
+        return /^(https?:\/\/|data:image\/)/i.test(path)
+          ? path
+          : client.storage.from('profile-avatars').getPublicUrl(path).data.publicUrl;
+      };
       const baseAssets = {
         userId: user.id,
         publicId: String(profile?.public_id || ''),
