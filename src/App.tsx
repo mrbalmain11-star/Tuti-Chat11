@@ -184,7 +184,14 @@ const AppContent: React.FC = () => {
       currentUrl.searchParams.delete('room');
       window.history.replaceState(window.history.state, '', currentUrl.toString());
       enterRoom(roomId, mapRoomToUi(target));
-    }).catch(error => console.error('Shared room lookup failed:', error))
+    }).catch(error => {
+      console.error('Shared room lookup failed:', error);
+      const currentUrl = new URL(window.location.href);
+      if (currentUrl.searchParams.get('room') !== roomId) return;
+      currentUrl.searchParams.delete('room');
+      window.history.replaceState(window.history.state, '', currentUrl.toString());
+      alert('تعذر التحقق من رابط الغرفة بسبب الاتصال بالخادم. حاول فتح الرابط مجدداً.');
+    })
       .finally(() => { if (sharedRoomLookupRef.current === roomId) sharedRoomLookupRef.current = null; });
   }, [isLoggedIn, otpState, onboardingState, rooms, enterRoom]);
 
