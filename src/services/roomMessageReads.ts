@@ -20,9 +20,16 @@ export async function fetchRealRoomMessages(roomId: string, since?: string): Pro
   if (since) query = query.gte('created_at', since);
   const { data, error } = await query
     .order('created_at', { ascending: false })
+    .order('id', { ascending: false })
     .limit(100);
   if (error) throw error;
-  const rows = (data ?? []) as MessageRow[];
+  const seenMessageIds = new Set<string>();
+  const rows = ((data ?? []) as MessageRow[]).filter(row => {
+    const id = String(row.id);
+    if (seenMessageIds.has(id)) return false;
+    seenMessageIds.add(id);
+    return true;
+  });
   const senderIds = [...new Set(rows.map(row => row.sender_id))];
   const { data: profiles, error: profileError } = senderIds.length
     ? await stagingBackend.from('profiles').select('id,display_name,avatar_url').in('id', senderIds)
