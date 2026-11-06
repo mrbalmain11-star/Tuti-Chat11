@@ -1446,6 +1446,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const toggleLockSeat = (seatNumber: number): void => {
     if (!activeRoom || !stagingBackend || !Number.isInteger(seatNumber) || seatNumber < 1 || seatNumber > 15) return;
     const roomId = activeRoom.id;
+    if (activeRoom.hostId !== currentUser.id && !activeRoom.moderatorIds?.includes(currentUser.id)) {
+      alert('قفل المقاعد متاح لمالك الغرفة والمشرف فقط.');
+      return;
+    }
     const requestKey = roomId + ':' + seatNumber;
     if (pendingSeatLocksRef.current.has(requestKey)) return;
     pendingSeatLocksRef.current.add(requestKey);
