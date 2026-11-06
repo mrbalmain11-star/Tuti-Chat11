@@ -22,7 +22,7 @@ export const AdminBannersPanel: React.FC = () => {
     setBusy(true); setError(''); setNotice('');
     try {
       await createAdminBanner(file, title, { link_kind: target === 'none' ? 'none' : 'screen', link_target: target === 'none' ? null : target, starts_at: start ? new Date(start).toISOString() : null, ends_at: end ? new Date(end).toISOString() : null });
-      setTitle(''); setFile(null); setNotice('تم رفع البنر كمسودة. يمكنك نشره الآن.');
+      setTitle(''); setFile(null); setFileSizeValid(false); setTarget('none'); setStart(''); setEnd(''); setNotice('تم رفع البنر كمسودة. يمكنك نشره الآن.');
       await refresh();
     } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
     finally { setBusy(false); }
