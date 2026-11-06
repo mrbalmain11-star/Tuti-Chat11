@@ -119,7 +119,7 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
                 {tiles.map(({id,label,Icon}) => <button key={id} type="button" onClick={() => setAdminPage(id)}
                   className="rounded-2xl bg-white border border-amber-200 p-3 sm:p-4 min-h-24 sm:min-h-28 min-w-0 shadow-sm flex flex-col items-center justify-center gap-2 sm:gap-3 active:bg-amber-50">
                   <Icon size={28} className="text-amber-700" />
-                  <span className="text-sm font-bold">{label}</span>
+                  <span className="text-xs sm:text-sm font-bold text-center leading-snug break-words max-w-full">{label}</span>
                 </button>)}
               </div> : <>
                 <button type="button" onClick={() => setAdminPage(null)} className="rounded-xl bg-white border border-amber-200 px-4 py-2 text-amber-800 font-bold">رجوع للأقسام</button>
