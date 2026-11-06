@@ -1,6 +1,8 @@
 package com.totichat.app
 
 import android.Manifest
+import android.app.PendingIntent
+import android.content.Intent
 import android.app.NotificationManager
 import android.content.pm.PackageManager
 import android.os.Build
@@ -27,12 +29,21 @@ class TotiFirebaseMessagingService : FirebaseMessagingService() {
             ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
         ) return
 
+        val openMessages = Intent(this, MainActivity::class.java).apply {
+            action = "com.totichat.app.OPEN_MESSAGES"
+            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            this, 0, openMessages,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
         val notification = NotificationCompat.Builder(this, "totichat_direct_messages")
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle("TotiChat")
             .setContentText("وصلتك رسالة خاصة جديدة")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+            .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .build()
         val manager = getSystemService(NotificationManager::class.java)
