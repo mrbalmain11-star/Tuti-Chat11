@@ -72,6 +72,11 @@ export const OffersPopup: React.FC = () => {
     }
   };
   useEffect(()=>{void loadDaily();},[]);
+  useEffect(()=>{
+    const onOpenRewards=()=>{setTab('daily');setOpen(true);void loadDaily();};
+    window.addEventListener('totichat:open-rewards',onOpenRewards);
+    return ()=>window.removeEventListener('totichat:open-rewards',onOpenRewards);
+  },[]);
   // Resolve automatic popup priority only after both server-backed states are known.
   useEffect(()=>{
     if(!dailyLoaded || !offersLoaded || disabled || sessionStorage.getItem('totichat:offers:seen'))return;
