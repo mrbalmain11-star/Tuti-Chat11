@@ -50,6 +50,7 @@ export const OffersPopup: React.FC = () => {
   };
   const claim=async()=>{
     if(!stagingBackend||claiming||dailyLoading||!daily||daily.claimed)return;
+    const previousDaily = daily;
     setClaiming(true);
     setNotice('');
     try{
@@ -67,7 +68,7 @@ export const OffersPopup: React.FC = () => {
       }else if(refreshed){
         setNotice('تم تنفيذ طلب الاستلام، لكن الحالة تحتاج تحديثاً.');
       }else{
-        setDaily(previous=>previous ? {...previous,claimed:true} : previous);
+        setDaily(previous=>({...previousDaily,...previous,claimed:true}));
         setNotice('نجح استلام المكافأة، وتعذر تحديث الحالة حالياً.');
       }
 
