@@ -85,6 +85,14 @@ class ErrorBoundary extends React.Component<
 
 const AppContent: React.FC = () => {
   const { activeTab, isLoggedIn, isRtl, rooms, enterRoom, activeRoom } = useApp();
+  const [dmNotice, setDmNotice] = React.useState(false);
+  React.useEffect(() => {
+    const onMessage = () => {
+      if (!document.hidden) setDmNotice(true);
+    };
+    window.addEventListener('totichat:dm-received', onMessage);
+    return () => window.removeEventListener('totichat:dm-received', onMessage);
+  }, []);
   const [otpState, setOtpState] = React.useState<'checking' | 'pending' | 'verified' | 'error'>('checking');
   const [otpEmail, setOtpEmail] = React.useState('');
   const [otpRetry, setOtpRetry] = React.useState(0);
@@ -268,6 +276,12 @@ const AppContent: React.FC = () => {
           <div style={{ display: activeTab === 'profile' ? 'block' : 'none' }}><ProfileView /></div>
         </main>
 
+        {dmNotice && activeTab !== 'messages' && (
+          <div role="status" className="fixed top-16 left-1/2 z-[90] w-[min(90vw,24rem)] -translate-x-1/2 rounded-xl border border-emerald-300 bg-white p-3 text-right shadow-xl" dir="rtl">
+            <p className="text-sm font-bold text-emerald-900">وصلتك رسالة خاصة جديدة</p>
+            <button type="button" onClick={() => setDmNotice(false)} className="mt-2 text-xs font-bold text-emerald-700">إغلاق التنبيه</button>
+          </div>
+        )}
         {/* Bottom Navigation */}
         <BottomNav />
 
