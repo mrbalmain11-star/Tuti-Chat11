@@ -26,7 +26,7 @@ Deno.serve(async (request) => {
     const body = await request.json();
     messageId = String(body?.messageId ?? '');
   } catch { return json({ error: 'Invalid JSON' }, 400); }
-  if (!/^\\d{1,18}$/.test(messageId)) return json({ error: 'Invalid message ID' }, 400);
+  if (!/^\d{1,18}$/.test(messageId)) return json({ error: 'Invalid message ID' }, 400);
 
   // A sender may only request notification for a message they actually sent.
   const { data: message, error: messageError } = await admin.from('direct_messages')
