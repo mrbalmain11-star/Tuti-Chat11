@@ -35,6 +35,11 @@ export async function createAdminBanner(file: File, title: string, options: { li
   const { data: { user }, error: authError } = await api.auth.getUser();
   if (authError) throw authError;
   if (!user) throw new Error('يجب تسجيل الدخول');
+  const startTime = options.starts_at ? Date.parse(options.starts_at) : null;
+  const endTime = options.ends_at ? Date.parse(options.ends_at) : null;
+  if ((startTime !== null && !Number.isFinite(startTime)) || (endTime !== null && !Number.isFinite(endTime))) throw new Error('تاريخ نشر البنر غير صالح');
+  if (startTime !== null && endTime !== null && endTime <= startTime) throw new Error('يجب أن تكون نهاية النشر بعد البداية');
+  if (endTime !== null && endTime <= Date.now()) throw new Error('يجب أن تكون نهاية النشر في المستقبل');
   const cleanTitle = title.trim();
   if (!cleanTitle || cleanTitle.length > 120) throw new Error('أدخل عنواناً للبنر');
   const existing = await listAdminBanners();
