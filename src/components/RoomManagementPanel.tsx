@@ -13,24 +13,27 @@ export const RoomManagementPanel:React.FC<{roomId:string;section:Section;canMana
  const [error,setError]=useState('');
  const [notice,setNotice]=useState('');
  const load=async()=>{
-  if(!stagingBackend)return;
-  setBusy(true);setError('');
+  if(!stagingBackend){setError('الخادم غير متاح حالياً');return;}
+  setBusy(true);setError('');setNotice('');
   try{
    if(section==='history'){
     const {data,error}=await stagingBackend.rpc('totichat_room_management_history',{p_room_id:roomId});
     if(error)throw error;
-    setAudit(Array.isArray(data)?data:[]);
+    if(!Array.isArray(data))throw new Error('استجابة سجل الإدارة غير صالحة');
+    setAudit(data);
    }else{
     const {data,error}=await stagingBackend.rpc('totichat_room_management_state',{p_room_id:roomId});
     if(error)throw error;
-    setState({rules:data?.rules||'',autoMessage:data?.autoMessage||'',announcement:data?.announcement||''});
+    if(!data || typeof data!=='object')throw new Error('تعذر قراءة إعدادات الغرفة');
+    setState({rules:data.rules||'',autoMessage:data.autoMessage||'',announcement:data.announcement||''});
    }
   }catch(e){setError(e instanceof Error?e.message:'تعذر تحميل البيانات');}
   finally{setBusy(false);}
  };
  useEffect(()=>{void load();},[roomId,section]);
  const save=async()=>{
-  if(!stagingBackend||section==='history'||!canManage)return;
+  if(section==='history'||!canManage)return;
+  if(!stagingBackend){setError('الخادم غير متاح حالياً');return;}
   setBusy(true);setError('');setNotice('');
   try{
    const {data,error}=await stagingBackend.rpc('totichat_room_management_state',{p_room_id:roomId,p_field:section,p_value:state[fieldKey[section]]});
