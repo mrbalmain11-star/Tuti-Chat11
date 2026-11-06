@@ -42,13 +42,15 @@ export const OffersPopup: React.FC = () => {
       const {data,error}=await stagingBackend.rpc('claim_daily_reward');
       if(error)throw error;
       const rawCoins=(data as {coins?:number}|null)?.coins;
-      const confirmedCoins=typeof rawCoins==='number' ? rawCoins : null;
-      setNotice(confirmedCoins!==null && Number.isFinite(confirmedCoins) && confirmedCoins>0 ? 'تم استلام '+confirmedCoins.toLocaleString('ar-IQ')+' عملة بنجاح' : 'تم إرسال الطلب، جارٍ تحديث حالة المكافأة');
+      const confirmedCoins=typeof rawCoins==='number' && Number.isFinite(rawCoins) && rawCoins>0 ? rawCoins : null;
       await loadDaily();
+      setNotice(confirmedCoins!==null
+        ? 'تم إرسال طلب الاستلام بقيمة '+confirmedCoins.toLocaleString('ar-IQ')+' عملة. راجع حالة المكافأة للتأكد.'
+        : 'تم إرسال الطلب. راجع حالة المكافأة للتأكد من الاستلام.');
     }catch(error){
       console.error('Daily reward claim failed',error);
-      setNotice('تعذر تأكيد استلام المكافأة. تحقق من الحالة قبل المحاولة مجدداً.');
       await loadDaily();
+      setNotice('تعذر تأكيد استلام المكافأة. تحقق من الحالة قبل المحاولة مجدداً.');
     }finally{
       setClaiming(false);
     }
