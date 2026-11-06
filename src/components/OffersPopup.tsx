@@ -76,6 +76,13 @@ export const OffersPopup: React.FC = () => {
     }
   };
   useEffect(()=>{void loadDaily();},[]);
+  // Recheck the Baghdad-calendar reward state after the app resumes or a new day begins.
+  // The server remains authoritative for eligibility and the claimed flag.
+  useEffect(()=>{
+    const onResume=()=>{if(document.visibilityState==='visible')void loadDaily();};
+    document.addEventListener('visibilitychange',onResume);
+    return ()=>document.removeEventListener('visibilitychange',onResume);
+  },[]);
   useEffect(()=>{
     const onOpenRewards=()=>{sessionStorage.setItem('totichat:offers:seen','yes');setNotice('');setTab('daily');setOpen(true);void loadDaily();};
     window.addEventListener('totichat:open-rewards',onOpenRewards);
