@@ -14,12 +14,18 @@ export const GiftLottieAnimation: React.FC<{
       return;
     }
     let disposed = false;
+    let failed = false;
+    const failOnce = () => {
+      if (disposed || failed) return;
+      failed = true;
+      onFailure();
+    };
     const controller = new AbortController();
     let animation: ReturnType<typeof lottie.loadAnimation> | undefined;
     const timeout = window.setTimeout(() => {
       if (!disposed) {
         controller.abort();
-        onFailure();
+        failOnce();
       }
     }, 8000);
     setReady(false);
@@ -74,11 +80,11 @@ export const GiftLottieAnimation: React.FC<{
           window.clearTimeout(timeout);
           if (!disposed) setReady(true);
         });
-        animation.addEventListener('data_failed', () => { if (!disposed) onFailure(); });
+        animation.addEventListener('data_failed', failOnce);
       } catch (error) {
         if (!disposed && !controller.signal.aborted) {
           console.error('Gift Lottie asset unavailable:', error);
-          onFailure();
+          failOnce();
         }
       }
     })();
