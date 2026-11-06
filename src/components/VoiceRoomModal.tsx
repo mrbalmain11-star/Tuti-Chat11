@@ -297,11 +297,13 @@ export const VoiceRoomModal: React.FC = () => {
   const [showRoomStatsModal, setShowRoomStatsModal] = useState(false);
   const [roomGiftStats, setRoomGiftStats] = useState<{ today: number; week: number; month: number } | null>(null);
   const [roomGiftStatsError, setRoomGiftStatsError] = useState('');
+  const [roomGiftRank, setRoomGiftRank] = useState<{ rank: number; roomCount: number } | null>(null);
   useEffect(() => {
     if (!activeRoom?.id || !stagingBackend) return;
     let active = true;
     const statsRoomId = activeRoom.id;
     setRoomGiftStats(null);
+    setRoomGiftRank(null);
     setRoomGiftStatsError('');
     let pending = false;
     let refreshAgain = false;
@@ -328,9 +330,18 @@ export const VoiceRoomModal: React.FC = () => {
             const totals = { today: Number(data.today), week: Number(data.week), month: Number(data.month) };
             setRoomGiftStats(totals);
             setRoomGiftStatsError('');
+            const { data: rankData, error: rankError } = await stagingBackend!.rpc('totichat_room_gift_rank', { p_room_id: statsRoomId });
+            if (!active) return;
+            if (!rankError && rankData && Number.isSafeInteger(Number(rankData.rank)) && Number(rankData.rank) >= 1 &&
+                Number.isSafeInteger(Number(rankData.room_count)) && Number(rankData.room_count) >= Number(rankData.rank)) {
+              setRoomGiftRank({ rank: Number(rankData.rank), roomCount: Number(rankData.room_count) });
+            } else {
+              setRoomGiftRank(null);
+            }
           } catch (error) {
             if (active) {
               setRoomGiftStats(null);
+              setRoomGiftRank(null);
               setRoomGiftStatsError(error instanceof Error ? error.message : 'تعذر جلب إحصائيات الهدايا');
             }
           }
@@ -3389,8 +3400,8 @@ export const VoiceRoomModal: React.FC = () => {
               <div className="grid grid-cols-2 gap-2.5">
                 <div className="p-3 bg-purple-950/40 rounded-2xl border border-purple-400/30 text-center">
                   <span className="text-[10px] text-slate-400 block mb-1">كأس الغرفة والترتيب:</span>
-                  <span className="text-base font-black text-amber-300 font-mono">—</span>
-                  <span className="text-[9px] text-amber-200 block">بانتظار بيانات ترتيب موثوقة</span>
+                  <span className="text-base font-black text-amber-300 font-mono">{roomGiftRank ? `#${roomGiftRank.rank}` : '—'}</span>
+                  <span className="text-[9px] text-amber-200 block">{roomGiftRank ? `من أصل ${roomGiftRank.roomCount} غرفة · الترتيب الشهري` : 'الترتيب غير متاح حالياً'}</span>
                 </div>
                 <div className="p-3 bg-purple-950/40 rounded-2xl border border-purple-400/30 text-center">
                   <span className="text-[10px] text-slate-400 block mb-1">المساهمات اليومية:</span>
