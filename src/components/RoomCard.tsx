@@ -4,6 +4,7 @@ import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
 import { RoyalRoomRankFrame } from './RoyalRoomRankFrame';
 import { RoyalRoomFollowIcon } from './RoyalRoomFollowIcon';
+import { stagingBackend } from '../services/stagingBackend';
 
 interface RoomCardProps {
   room: VoiceRoom;
@@ -12,7 +13,16 @@ interface RoomCardProps {
 export const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
   const { enterRoom, currentUser, followedRoomHosts, toggleFollowHost } = useApp();
   const isOwnRoom = room.hostId === currentUser.id;
-  const isFollowed = followedRoomHosts.has(room.hostId);
+  const [isFollowed, setIsFollowed] = useState(false);
+  const [followPending, setFollowPending] = useState(false);
+  useEffect(() => {
+    if (!stagingBackend || !currentUser.id) { setIsFollowed(false); return; }
+    let active = true;
+    void stagingBackend.from('room_follows').select('room_id').eq('follower_id', currentUser.id).eq('room_id', room.id).maybeSingle().then(({ data, error }) => {
+      if (active && !error) setIsFollowed(!!data);
+    });
+    return () => { active = false; };
+  }, [currentUser.id, room.id]);
   const [coverFailed, setCoverFailed] = useState(false);
   const [hostAvatarFailed, setHostAvatarFailed] = useState(false);
   useEffect(() => { setCoverFailed(false); }, [room.coverImage]);
@@ -54,12 +64,21 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
             type="button"
             onClick={(event) => {
               event.stopPropagation();
-              toggleFollowHost(room.hostId);
+              if (!stagingBackend || followPending) return;
+              setFollowPending(true);
+              const query = isFollowed
+                ? stagingBackend.from('room_follows').delete().eq('follower_id', currentUser.id).eq('room_id', room.id)
+                : stagingBackend.from('room_follows').insert({ follower_id: currentUser.id, room_id: room.id });
+              void query.then(({ error }) => {
+                if (!error) { setIsFollowed(!isFollowed); window.dispatchEvent(new Event('totichat:room-follows-changed')); }
+                else console.error('Room follow failed:', error);
+              }).finally(() => setFollowPending(false));
             }}
             className="absolute top-1.5 left-1.5 z-20 min-w-11 min-h-11 flex items-center justify-center rounded-full bg-slate-950/60 backdrop-blur-sm border border-emerald-300/40 active:scale-90 transition-transform"
+            disabled={followPending}
             aria-pressed={isFollowed}
-            aria-label={isFollowed ? 'إلغاء متابعة صاحب الغرفة' : 'متابعة صاحب الغرفة'}
-            title={isFollowed ? 'إلغاء متابعة صاحب الغرفة' : 'متابعة صاحب الغرفة'}
+            aria-label={isFollowed ? 'إلغاء متابعة الغرفة' : 'متابعة الغرفة'}
+            title={isFollowed ? 'إلغاء متابعة الغرفة' : 'متابعة الغرفة'}
           >
             <RoyalRoomFollowIcon followed={isFollowed} className="w-7 h-7" />
           </button>
