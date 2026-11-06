@@ -58,7 +58,7 @@ export const BannerSlider: React.FC = () => {
       }}>
       {banner ? <>
         <button type="button" onClick={open} disabled={banner.link_kind !== 'screen' || !banner.link_target || !supportedTargets.has(banner.link_target)} className="absolute inset-0 w-full h-full disabled:cursor-default" aria-label={banner.title}>
-          <img src={banner.image_url} alt={banner.title} className="w-full h-full object-cover"
+          <img key={banner.id} src={banner.image_url} alt={banner.title} className="w-full h-full object-cover"
             onError={e => { e.currentTarget.style.display='none'; }} />
         </button>
         {items.length > 1 && <div className="absolute bottom-2 left-3 z-10 flex gap-1 rounded-full bg-black/40 px-2 py-1">
