@@ -76,13 +76,25 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
               event.stopPropagation();
               if (!stagingBackend || !followLoaded || followPending) return;
               setFollowPending(true);
-              const query = isFollowed
-                ? stagingBackend.from('room_follows').delete().eq('follower_id', currentUser.id).eq('room_id', room.id).select('room_id')
-                : stagingBackend.from('room_follows').insert({ follower_id: currentUser.id, room_id: room.id }).select('room_id');
-              void query.then(({ data, error }) => {
-                if (!error && data?.length) { setIsFollowed(!isFollowed); window.dispatchEvent(new Event('totichat:room-follows-changed')); }
-                else console.error('Room follow not confirmed:', error);
-              }).finally(() => setFollowPending(false));
+              void (async () => {
+                try {
+                  const { data, error } = isFollowed
+                    ? await stagingBackend.from('room_follows').delete()
+                        .eq('follower_id', currentUser.id).eq('room_id', room.id).select('room_id')
+                    : await stagingBackend.from('room_follows')
+                        .insert({ follower_id: currentUser.id, room_id: room.id }).select('room_id');
+                  if (error || !data?.length) {
+                    console.error('Room follow not confirmed:', error);
+                    return;
+                  }
+                  setIsFollowed(!isFollowed);
+                  window.dispatchEvent(new Event('totichat:room-follows-changed'));
+                } catch (error) {
+                  console.error('Room follow request failed:', error);
+                } finally {
+                  setFollowPending(false);
+                }
+              })();
             }}
             className="absolute top-1.5 left-1.5 z-20 min-w-11 min-h-11 flex items-center justify-center rounded-full bg-slate-950/60 backdrop-blur-sm border border-emerald-300/40 active:scale-90 transition-transform"
             disabled={!followLoaded || followPending}
