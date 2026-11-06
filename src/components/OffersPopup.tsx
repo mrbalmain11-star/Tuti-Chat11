@@ -28,7 +28,6 @@ export const OffersPopup: React.FC = () => {
     if(!stagingBackend){setDaily(null);setDailyLoaded(true);setNotice('خدمة المكافآت غير متاحة حالياً. حاول لاحقاً.');return null;}
     dailyRequestInFlight.current=true;
     setDailyLoading(true);
-    setDaily(null);
     try{
       const {data,error}=await stagingBackend.rpc('daily_reward_status');
       if(error)throw error;
