@@ -145,6 +145,8 @@ jobs:
           PY
       - name: Sync Capacitor assets
         run: npx cap sync android
+      - name: Configure Firebase Messaging in generated Capacitor Android project
+        run: python3 scripts/configure-staging-fcm.py
       - name: Install approved TotiChat icon in regenerated Android project
         run: |
           set -euo pipefail
