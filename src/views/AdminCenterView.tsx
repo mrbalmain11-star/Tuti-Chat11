@@ -88,6 +88,7 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
                 {adminPage === 'staff' && <AdminStaffPanel />}
                 {adminPage === 'banners' && <AdminBannersPanel />}
                 {adminPage === 'offers' && <AdminOffersPanel />}
+                {adminPage === 'dailyRewards' && access.role === 'owner' && <AdminDailyRewardsReadOnly />}
                 {adminPage === 'testerBadges' && access.role === 'owner' && <AdminTesterBadgesPanel />}
               </>}
             </div>;
