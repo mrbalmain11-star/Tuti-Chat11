@@ -1113,8 +1113,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           if (moderatorsError) console.error('Room moderator roster refresh failed:', moderatorsError);
           const mine = members.find(m => m.user_id === currentUser.id);
           if (!mine && confirmedMember) {
-            // Server has removed this participant (kick/ban). Close the local
-            // room and voice session; never leave a stale room visible.
+            // The server removed this participant (kick/ban), including while
+            // the room is minimized. Invalidate any pending room transition so
+            // an older join response cannot reopen the removed room.
+            ++roomTransitionVersion.current;
+            pendingGiftAnimations.current = [];
+            activeGiftAnimationRef.current = null;
+            setActiveGiftAnimation(null);
             setActiveRoom(prev => prev?.id === roomId ? null : prev);
             setIsRoomMinimized(false);
             setMyMicMuted(false);
