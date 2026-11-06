@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { imageUrl } from '../services/imageUrl';
+import { startAuthenticatedPushRegistration } from '../services/nativePushBridge';
 import {
   UserProfile,
   VoiceRoom,
@@ -245,6 +246,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }).catch(error => console.error('Native auth callback listener failed:', error));
     return () => { cancelled = true; dispose?.(); };
   }, []);
+
+  // Push registration is tied to the verified auth state, never UI login flags.
+  // On logout the listener is disposed and the device token is removed where
+  // an authenticated session is still available. The native bridge is inert
+  // until the matching Capacitor plugin is installed in the staging APK.
+  useEffect(() => {
+    if (!isLoggedIn || !stagingBackend) return;
+    let disposed = false;
+    let stop: (() => Promise<void>) | undefined;
+    void startAuthenticatedPushRegistration().then(cleanup => {
+      if (disposed) {
+        void cleanup().catch(() => console.warn('Push cleanup unavailable'));
+      } else {
+        stop = cleanup;
+      }
+    }).catch(() => console.warn('Push registration unavailable'));
+    return () => {
+      disposed = true;
+      if (stop) void stop().catch(() => console.warn('Push cleanup unavailable'));
+    };
+  }, [isLoggedIn]);
 
   // Keep the authenticated profile synchronized without requiring app restart.
   useEffect(() => {
