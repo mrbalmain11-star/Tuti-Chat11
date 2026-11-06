@@ -12,33 +12,35 @@ export const RoomManagementPanel:React.FC<{roomId:string;section:Section;canMana
  const [busy,setBusy]=useState(false);
  const [error,setError]=useState('');
  const [notice,setNotice]=useState('');
+ const [loaded,setLoaded]=useState(false);
  const load=async()=>{
   if(!stagingBackend){setError('الخادم غير متاح حالياً');return;}
-  setBusy(true);setError('');setNotice('');
+  setBusy(true);setError('');setNotice('');setLoaded(false);
   try{
    if(section==='history'){
     const {data,error}=await stagingBackend.rpc('totichat_room_management_history',{p_room_id:roomId});
     if(error)throw error;
     if(!Array.isArray(data))throw new Error('استجابة سجل الإدارة غير صالحة');
-    setAudit(data);
+    setAudit(data);setLoaded(true);
    }else{
     const {data,error}=await stagingBackend.rpc('totichat_room_management_state',{p_room_id:roomId});
     if(error)throw error;
     if(!data || typeof data!=='object')throw new Error('تعذر قراءة إعدادات الغرفة');
-    setState({rules:data.rules||'',autoMessage:data.autoMessage||'',announcement:data.announcement||''});
+    setState({rules:data.rules||'',autoMessage:data.autoMessage||'',announcement:data.announcement||''});setLoaded(true);
    }
   }catch(e){setError(e instanceof Error?e.message:'تعذر تحميل البيانات');}
   finally{setBusy(false);}
  };
  useEffect(()=>{void load();},[roomId,section]);
  const save=async()=>{
-  if(section==='history'||!canManage)return;
+  if(section==='history'||!canManage||busy||!loaded)return;
   if(!stagingBackend){setError('الخادم غير متاح حالياً');return;}
   setBusy(true);setError('');setNotice('');
   try{
    const {data,error}=await stagingBackend.rpc('totichat_room_management_state',{p_room_id:roomId,p_field:section,p_value:state[fieldKey[section]]});
    if(error)throw error;
-   setState({rules:data?.rules||'',autoMessage:data?.autoMessage||'',announcement:data?.announcement||''});
+   if(!data || typeof data!=='object')throw new Error('لم يؤكد الخادم حفظ إعدادات الغرفة');
+   setState({rules:data.rules||'',autoMessage:data.autoMessage||'',announcement:data.announcement||''});
    setNotice('تم الحفظ على الخادم');
   }catch(e){setError(e instanceof Error?e.message:'تعذر الحفظ');}
   finally{setBusy(false);}
@@ -50,12 +52,12 @@ export const RoomManagementPanel:React.FC<{roomId:string;section:Section;canMana
    {error&&<p role="alert" className="mt-3 rounded-xl bg-rose-50 p-3 text-xs text-rose-700">{error}</p>}
    {notice&&<p role="status" className="mt-3 text-xs text-emerald-700">{notice}</p>}
    {section==='history'?
-    <div className="mt-4 space-y-2">{audit.length===0&&<p className="text-sm text-slate-500">لا توجد إجراءات مسجلة حتى الآن.</p>}{audit.map((a,i)=><div key={i} className="rounded-xl border border-amber-200 bg-white p-3"><p className="text-sm font-bold">{actions[a.action]||a.action}</p><p className="mt-1 text-xs text-slate-500">ID: {a.actorId??'—'} · {new Date(a.createdAt).toLocaleString('ar-IQ')}</p></div>)}</div>
+    <div className="mt-4 space-y-2">{loaded&&audit.length===0&&<p className="text-sm text-slate-500">لا توجد إجراءات مسجلة حتى الآن.</p>}{audit.map((a,i)=><div key={i} className="rounded-xl border border-amber-200 bg-white p-3"><p className="text-sm font-bold">{actions[a.action]||a.action}</p><p className="mt-1 text-xs text-slate-500">ID: {a.actorId??'—'} · {new Date(a.createdAt).toLocaleString('ar-IQ')}</p></div>)}</div>
    :<div className="mt-4 space-y-3">
      <p className="text-xs text-slate-500">{section==='auto_message'?'نص الرسالة المحفوظة. لا يتم إرسالها دورياً حتى تفعيل نظام الإرسال التلقائي.':section==='announcement'?'إعلان خاص بالغرفة محفوظ على الخادم.':'القواعد التي يضعها مالك الغرفة.'}</p>
-     <textarea rows={7} maxLength={1000} disabled={!canManage||busy} value={state[fieldKey[section]]} onChange={e=>setState(p=>({...p,[fieldKey[section]]:e.target.value}))} className="w-full resize-none rounded-2xl border border-amber-200 bg-white p-3 text-sm disabled:opacity-75" placeholder="اكتب النص هنا..."/>
+     <textarea rows={7} maxLength={1000} disabled={!canManage||busy||!loaded} value={state[fieldKey[section]]} onChange={e=>setState(p=>({...p,[fieldKey[section]]:e.target.value}))} className="w-full resize-none rounded-2xl border border-amber-200 bg-white p-3 text-sm disabled:opacity-75" placeholder="اكتب النص هنا..."/>
      <p className="text-left text-xs text-slate-500">{state[fieldKey[section]].length}/1000</p>
-     {canManage&&<button type="button" disabled={busy} onClick={()=>void save()} className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-900 p-3 text-sm font-black text-white disabled:opacity-50"><Save size={17}/> حفظ التعديلات</button>}
+     {canManage&&<button type="button" disabled={busy||!loaded} onClick={()=>void save()} className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-900 p-3 text-sm font-black text-white disabled:opacity-50"><Save size={17}/> حفظ التعديلات</button>}
    </div>}
   </div>
  </div>;
