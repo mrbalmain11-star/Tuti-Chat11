@@ -2592,10 +2592,13 @@ export const VoiceRoomModal: React.FC = () => {
                   sounds.playClick();
                   const copyId = selectedMicPublicId !== '—' ? selectedMicPublicId : undefined;
                   if (!copyId) return;
-                  if (navigator.clipboard) {
-                    navigator.clipboard.writeText(copyId);
+                  if (!navigator.clipboard?.writeText) {
+                    showToast('نسخ المعرف غير متاح على هذا الجهاز');
+                    return;
                   }
-                  showToast(`تم نسخ المعرف: ${copyId} بنجاح 📋`);
+                  void navigator.clipboard.writeText(copyId)
+                    .then(() => showToast(`تم نسخ المعرف: ${copyId} بنجاح 📋`))
+                    .catch(() => showToast('تعذر نسخ المعرف، حاول مجدداً'));
                 }}
                 className="flex items-center justify-center gap-1.5 text-slate-300 text-xs mt-2 cursor-pointer hover:text-white transition active:scale-95"
                 title="انقر لنسخ المعرف"
