@@ -77,7 +77,8 @@ export const RoyalRoomsView: React.FC = () => {
     e.stopPropagation();
     sounds.playClick();
     if (!myRoom) { showToast('أنشئ غرفتك أولاً حتى تتمكن من مشاركتها'); return; }
-    const shareUrl = new URL(window.location.href);
+    // Never include login callback parameters or fragments in shared links.
+    const shareUrl = new URL(window.location.pathname, window.location.origin);
     shareUrl.searchParams.set('room', myRoom.id);
     const shareData = { title: myRoom.title || 'غرفتي في TotiChat', url: shareUrl.toString() };
     try {
