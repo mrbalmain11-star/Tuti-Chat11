@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { stagingBackend } from '../services/stagingBackend';
 import { BannerSlider } from '../components/BannerSlider';
 import { Gift } from 'lucide-react';
 import { CategoryCards } from '../components/CategoryCards';
@@ -11,6 +12,19 @@ import { useApp } from '../context/AppContext';
 
 export const HomeView: React.FC = () => {
   const { rooms, selectedCountry, homeSubTab, isRtl } = useApp();
+  const [monthlyTopIds, setMonthlyTopIds] = useState<string[]>([]);
+  useEffect(() => {
+    if (!stagingBackend) return;
+    let active = true;
+    const refresh = async () => {
+      const { data, error } = await stagingBackend!.rpc('live_rankings', { p_period: 'monthly', p_kind: 'room' });
+      if (error) { console.error('Monthly room rankings unavailable:', error); return; }
+      if (active) setMonthlyTopIds((data || []).slice(0, 3).map((item: { entity_id: string }) => item.entity_id));
+    };
+    void refresh();
+    const timer = window.setInterval(() => { if (document.visibilityState === 'visible') void refresh(); }, 60000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, []);
 
   // 1. Royal Sub-Tab: ملكي (غرفتي والغرف الذي أتابعها)
   if (homeSubTab === 'royal') {
@@ -29,7 +43,7 @@ export const HomeView: React.FC = () => {
   });
 
   const isGlobalView = selectedCountry === 'الكل' || selectedCountry === 'شائع 🔥';
-  const topRooms = isGlobalView ? rooms.filter(room => room.rank === 1 || room.rank === 2 || room.rank === 3) : [];
+  const topRooms = isGlobalView ? monthlyTopIds.map((id, index) => { const room = rooms.find(room => room.id === id); return room ? { ...room, rank: index + 1 } : null; }).filter((room): room is typeof rooms[number] => room !== null) : [];
   const regularRooms = isGlobalView && topRooms.length > 0
     ? filteredRooms.filter(room => !topRooms.some(top => top.id === room.id))
     : filteredRooms;
