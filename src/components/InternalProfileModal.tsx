@@ -130,7 +130,7 @@ export const InternalProfileModal: React.FC = () => {
           userId: user.id,
           wealthLevel: getLevelFromExp(Number(data.wealth_exp) || 0, 260),
           charmLevel: getLevelFromExp(Number(data.charm_exp) || 0, 260),
-          vipLevel: Math.max(0, Number(data.vip_tier) || 0),
+          vipLevel: Number.isFinite(Number(data.vip_tier)) ? Math.max(0, Math.trunc(Number(data.vip_tier))) : 0,
         });
       }).catch(error => console.error('Visitor levels load failed:', error));
     return () => { active = false; };
