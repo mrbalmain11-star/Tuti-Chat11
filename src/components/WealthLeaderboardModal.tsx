@@ -737,10 +737,16 @@ export const WealthLeaderboardModal: React.FC = () => {
     setRanking([]);
     const refresh=async()=>{
       const currentRequest=++requestId;
-      const {data,error}=await stagingBackend!.rpc('live_rankings',{p_period:period,p_kind:leaderboardTab});
-      if(!alive||currentRequest!==requestId)return;
-      if(error){console.error('Rankings load failed',error);setRanking([]);return;}
-      setRanking((data??[]) as RankingRow[]);
+      try {
+        const {data,error}=await stagingBackend!.rpc('live_rankings',{p_period:period,p_kind:leaderboardTab});
+        if(!alive||currentRequest!==requestId)return;
+        if(error)throw error;
+        setRanking((data??[]) as RankingRow[]);
+      } catch(error) {
+        if(!alive||currentRequest!==requestId)return;
+        console.error('Rankings load failed',error);
+        setRanking([]);
+      }
     };
     void refresh();
     const interval=setInterval(()=>void refresh(),30000);
