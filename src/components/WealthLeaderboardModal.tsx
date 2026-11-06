@@ -754,7 +754,7 @@ export const WealthLeaderboardModal: React.FC = () => {
     return()=>{alive=false;clearInterval(interval);};
   },[openWealthLeaderboardModal,period,leaderboardTab]);
   // Ranking RPC does not return VIP, role or level metadata: never copy the viewer's badges or privileges to another user.
-  const profileFor=(r:RankingRow):UserProfile=>({...currentUser,id:r.entity_id,name:r.display_name,nickname:r.display_name,avatar:imageUrl(r.avatar_url) || rankingImageFallback,vipLevel:0,vipExpiry:'',wealthLevel:0,wealthExp:0,charmLevel:0,charmExp:0,coins:0,diamonds:0,agencyName:undefined,agencyRole:undefined,isHost:false,isSuperAdmin:false,isSpecialId:false,specialIdBadge:undefined,hasWelcomeBanner:false,isRechargeAgent:false,permissions:[]});
+  const profileFor=(r:RankingRow):UserProfile=>({...currentUser,id:r.entity_id,name:r.display_name,nickname:r.display_name,avatar:imageUrl(r.avatar_url) || rankingImageFallback,vipLevel:0,vipExpiry:'',wealthLevel:0,wealthExp:0,charmLevel:0,charmExp:0,coins:0,diamonds:0,hearts:0,friendsCount:0,followersCount:0,followingCount:0,fansCount:0,visitorsCount:0,country:'',countryCode:'',countryFlag:'',gender:'ذكر',birthdate:'',bio:'',album:[],cover:undefined,agencyName:undefined,agencyRole:undefined,isHost:false,isSuperAdmin:false,isSpecialId:false,specialIdBadge:undefined,hasWelcomeBanner:false,isRechargeAgent:false,permissions:[]});
 
 
   if (!openWealthLeaderboardModal) return null;
