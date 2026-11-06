@@ -42,7 +42,6 @@ export const AdminBannersPanel: React.FC = () => {
       <option value="wallet">المحفظة</option>
       <option value="agency">الوكالات</option>
       <option value="me">الملف الشخصي</option>
-      <option value="ranks">التصنيفات</option>
       <option value="home">الرئيسية</option>
     </select>
     <label className="block text-sm mb-2">بداية الظهور (اختياري)</label>
