@@ -41,8 +41,8 @@ export const OffersPopup: React.FC = () => {
       return verified;
     }catch(error){
       console.error('Daily reward status failed',error);
-      setDaily(null);
-      setNotice('تعذر تأكيد حالة المكافأة من الخادم. حاول لاحقاً.');
+      setClaimOutcomeUnknown(true);
+      setNotice('تعذر التحقق من حالة المكافأة. أعد التحديث قبل الاستلام.');
       return null;
     }finally{
       dailyRequestInFlight.current=false;
