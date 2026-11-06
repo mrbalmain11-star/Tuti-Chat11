@@ -78,6 +78,10 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
       });
       if (actionError) throw actionError;
       if (activeProfileIdRef.current !== userId) return;
+      // The server confirmed unlinking. Never keep showing this relationship if the reload fails.
+      const remaining = links.filter(item => !(item.partnerId === link.partnerId && item.typeId === link.typeId));
+      setLinks(remaining);
+      onLinksChangeRef.current?.(remaining);
       // Refresh events are blocked during unlink; older responses were invalidated before the mutation.
       const { data, error: reloadError } = await stagingBackend.rpc('totichat_profile_cp', { p_user_id: userId });
       if (activeProfileIdRef.current !== userId) return;
