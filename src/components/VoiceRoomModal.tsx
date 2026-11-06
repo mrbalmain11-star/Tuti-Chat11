@@ -251,6 +251,8 @@ export const VoiceRoomModal: React.FC = () => {
   const [personalBlocks, setPersonalBlocks] = useState<Array<{ userId: string; name?: string; publicId?: number; avatar?: string }>>([]);
   const [banListError, setBanListError] = useState('');
   const [banActionBusy, setBanActionBusy] = useState(false);
+  const moderationPendingRef = useRef(new Set<string>());
+  const [moderationBusy, setModerationBusy] = useState(false);
   const refreshBanLists = async () => {
     if (!activeRoom || !stagingBackend) return;
     setBanListError('');
@@ -757,6 +759,9 @@ export const VoiceRoomModal: React.FC = () => {
       return;
     }
     const roomId = activeRoom.id;
+    if (userId === currentUser.id || userId === activeRoom.hostId || moderationPendingRef.current.has(userId)) return;
+    moderationPendingRef.current.add(userId);
+    setModerationBusy(true);
     const isMod = (activeRoom.moderatorIds || []).includes(userId);
     try {
       const { data, error } = await stagingBackend.rpc('phase2_room_moderate', {
@@ -770,6 +775,9 @@ export const VoiceRoomModal: React.FC = () => {
     } catch (error) {
       console.error('Moderator update failed:', error);
       showToast('رفض الخادم تغيير الصلاحية. تحقق من عضوية المستخدم وصلاحية المالك.');
+    } finally {
+      moderationPendingRef.current.delete(userId);
+      setModerationBusy(moderationPendingRef.current.size > 0);
     }
   };
 
@@ -799,6 +807,9 @@ export const VoiceRoomModal: React.FC = () => {
     }
     const reason = action === 'ban' ? window.prompt('سبب الحظر (5 أحرف على الأقل):', 'مخالفة قواعد الغرفة') : null;
     if (action === 'ban' && (!reason || reason.trim().length < 5 || reason.length > 300)) return;
+    if (moderationPendingRef.current.has(userId)) return;
+    moderationPendingRef.current.add(userId);
+    setModerationBusy(true);
     const requestId = crypto.randomUUID();
     try {
       const { data, error } = await stagingBackend.functions.invoke('phase2-voice-moderate', {
@@ -816,6 +827,9 @@ export const VoiceRoomModal: React.FC = () => {
     } catch (error) {
       console.error('Voice moderation failed:', error);
       showToast('فشل أمر الإدارة، لم يتم تأكيد النتيجة.');
+    } finally {
+      moderationPendingRef.current.delete(userId);
+      setModerationBusy(moderationPendingRef.current.size > 0);
     }
   };
 
@@ -3015,6 +3029,7 @@ export const VoiceRoomModal: React.FC = () => {
                         {(isOwner || isModerator) && user.id !== currentUser.id && user.id !== activeRoom.hostId && (
                           <div className="flex items-center gap-1.5">
                             {isOwner && <button
+                              disabled={moderationBusy}
                               onClick={() => handleToggleModerator(user.id, user.name)}
                               className={`p-1.5 rounded-lg text-[10px] font-bold transition active:scale-95 ${
                                 isMod
@@ -3026,13 +3041,14 @@ export const VoiceRoomModal: React.FC = () => {
                               {isMod ? <UserMinus className="w-3.5 h-3.5" /> : <UserPlus className="w-3.5 h-3.5" />}
                             </button>}
                             <button
+                              disabled={moderationBusy}
                               onClick={() => handleKickMember(user.id, user.name)}
                               className="p-1.5 rounded-lg bg-rose-900/30 hover:bg-rose-900/50 text-rose-400 text-[10px] font-bold transition active:scale-95"
                               title="طرد من الغرفة"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
-                            {(isOwner || isModerator) && <button type="button" onClick={() => void handleVoiceModeration(user.id, 'ban')} className="rounded-lg bg-red-800/50 px-2 py-1.5 text-[10px] font-bold text-red-200" title="حظر وطرد دائم من الغرفة">حظر الغرفة</button>}
+                            {(isOwner || isModerator) && <button type="button" disabled={moderationBusy} onClick={() => void handleVoiceModeration(user.id, 'ban')} className="rounded-lg bg-red-800/50 px-2 py-1.5 text-[10px] font-bold text-red-200" title="حظر وطرد دائم من الغرفة">حظر الغرفة</button>}
                             <button type="button" onClick={() => void setPersonalBlock(user.id, !personalBlocks.some(item => item.userId === user.id))} className="rounded-lg bg-slate-700 px-2 py-1.5 text-[10px] text-white">{personalBlocks.some(item => item.userId === user.id) ? 'فك الحظر الشخصي' : 'حظر شخصي'}</button>
                           </div>
                         )}
