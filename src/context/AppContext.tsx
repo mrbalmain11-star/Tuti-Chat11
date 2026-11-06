@@ -1442,9 +1442,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
+  const pendingSeatLocksRef = useRef<Set<string>>(new Set());
   const toggleLockSeat = (seatNumber: number): void => {
-    if (!activeRoom || !stagingBackend || !Number.isInteger(seatNumber)) return;
+    if (!activeRoom || !stagingBackend || !Number.isInteger(seatNumber) || seatNumber < 1 || seatNumber > 15) return;
     const roomId = activeRoom.id;
+    const requestKey = roomId + ':' + seatNumber;
+    if (pendingSeatLocksRef.current.has(requestKey)) return;
+    pendingSeatLocksRef.current.add(requestKey);
     void Promise.resolve(stagingBackend.rpc('phase2_room_toggle_seat_lock', {
       p_room_id: roomId, p_seat: seatNumber,
     })).then(({ data, error }) => {
@@ -1458,6 +1462,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }).catch(error => {
       console.error('Seat lock failed:', error);
       alert('تعذر تغيير قفل المقعد. تحقق من صلاحية المالك أو المشرف.');
+    }).finally(() => {
+      pendingSeatLocksRef.current.delete(requestKey);
     });
   };
 
