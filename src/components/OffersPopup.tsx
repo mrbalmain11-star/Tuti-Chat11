@@ -81,19 +81,19 @@ export const OffersPopup: React.FC = () => {
     sessionStorage.setItem('totichat:offers:seen','yes');
   },[daily,dailyLoaded,offersLoaded,offersError,items,disabled]);
   useEffect(()=>{
-    if(!stagingBackend){setOffersError(true);setOffersLoading(false);setOffersLoaded(true);return;}
+    if(!stagingBackend){setOffersError(true);setOffersLoading(false);setOffersLoaded(true);setItems([]);return;}
     let alive=true;
     const refresh=async()=>{
       setOffersLoading(true);
       const offers=await stagingBackend.from('recharge_offers').select('id,title,description,image_url,price_iqd,coins,bonus_coins,starts_at,ends_at').eq('status','published').order('created_at',{ascending:false}).limit(10);
-      if(offers.error){if(alive){setOffersError(true);setOffersLoading(false);setOffersLoaded(true);}console.error('Recharge offers load failed',offers.error);return;}
+      if(offers.error){if(alive){setOffersError(true);setOffersLoading(false);setOffersLoaded(true);setItems([]);}console.error('Recharge offers load failed',offers.error);return;}
       const now=Date.now();
       const merged:Offer[]=(offers.data??[]).map(o=>({...o,link_kind:'offer',link_target:null}));
       const active=merged.filter(b=>(!b.starts_at||(Number.isFinite(Date.parse(b.starts_at))&&Date.parse(b.starts_at)<=now))&&(!b.ends_at||(Number.isFinite(Date.parse(b.ends_at))&&Date.parse(b.ends_at)>now)));
       if(alive){setOffersError(false);setOffersLoading(false);setOffersLoaded(true);setItems(active);setIndex(0);}
     };
     void refresh().catch(error => {
-      if (alive) {setOffersError(true);setOffersLoading(false);setOffersLoaded(true);console.error('Recharge offers refresh failed', error);}
+      if (alive) {setOffersError(true);setOffersLoading(false);setOffersLoaded(true);setItems([]);console.error('Recharge offers refresh failed', error);}
     });
     return ()=>{alive=false;};
   },[disabled,offersRetry]);
