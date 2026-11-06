@@ -733,7 +733,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     void refreshFollows();
     const onVisible = () => { if (document.visibilityState === 'visible') void refreshFollows(); };
     document.addEventListener('visibilitychange', onVisible);
-    return () => { active = false; document.removeEventListener('visibilitychange', onVisible); };
+    window.addEventListener('totichat:follows-changed', refreshFollows);
+    return () => { active = false; document.removeEventListener('visibilitychange', onVisible); window.removeEventListener('totichat:follows-changed', refreshFollows); };
   }, [isLoggedIn, currentUser.id]);
   // Financial history must originate from the server ledger, not localStorage.
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -1492,7 +1493,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }).catch(error => {
         console.error('Follow update rejected:', error);
         alert('تعذر تحديث المتابعة من الخادم.');
-      }).finally(() => { followPendingRef.current.delete(hostId); });
+      }).finally(() => { followPendingRef.current.delete(hostId); window.dispatchEvent(new Event('totichat:follows-changed')); });
   };
 
   const joinAgency = (agencyId: string): void => {
