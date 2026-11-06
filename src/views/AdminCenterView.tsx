@@ -18,7 +18,10 @@ const AdminDailyRewardsReadOnly: React.FC = () => {
   const [schedule, setSchedule] = useState<number[] | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const refreshInFlight = React.useRef(false);
   const refresh = async () => {
+    if (refreshInFlight.current) return;
+    refreshInFlight.current = true;
     setLoading(true);
     setError('');
     try {
@@ -35,7 +38,7 @@ const AdminDailyRewardsReadOnly: React.FC = () => {
     } catch (cause) {
       setSchedule(null);
       setError(cause instanceof Error ? cause.message : 'تعذر تحميل المكافآت');
-    } finally { setLoading(false); }
+    } finally { refreshInFlight.current = false; setLoading(false); }
   };
   useEffect(() => { void refresh(); }, []);
   useEffect(() => {
