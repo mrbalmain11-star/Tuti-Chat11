@@ -1334,7 +1334,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }).catch(error => {
       if (transition !== roomTransitionVersion.current) return;
       console.error('Room join or membership fetch failed:', error);
-      alert('تعذر تأكيد دخول الغرفة من الخادم.');
+      const joinError = error as { code?: string; message?: string } | null;
+      const banned = joinError?.message?.includes('ROOM_BANNED') === true;
+      alert(banned
+        ? 'أنت محظور من هذه الغرفة. لا يمكنك الدخول إلا بعد أن ترفع الإدارة الحظر.'
+        : 'تعذر تأكيد دخول الغرفة من الخادم.');
     });
   };
 
