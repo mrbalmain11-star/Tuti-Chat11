@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AdminBannersPanel } from './AdminBannersPanel';
 import { AdminOffersPanel } from './AdminOffersPanel';
-import { AdminDailyRewardsPanel } from './AdminDailyRewardsPanel';
 import { AdminOperationsPanel } from './AdminOperationsPanel';
 import { AdminSpecialIdPanel } from './AdminSpecialIdPanel';
 import { AdminRoomModerationPanel } from './AdminRoomModerationPanel';
@@ -63,7 +62,7 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
               {id:'staff',label:'الصلاحيات',Icon:ShieldCheck},
               {id:'banners',label:'البنرات',Icon:Radio},
               {id:'offers',label:'العروض',Icon:Gift},
-              ...(access.role === 'owner' ? [{id:'dailyRewards',label:'المكافآت اليومية',Icon:Gift},{id:'testerBadges',label:'شارات المختبرين',Icon:ShieldCheck}] : []),
+              ...(access.role === 'owner' ? [{id:'testerBadges',label:'شارات المختبرين',Icon:ShieldCheck}] : []),
             ];
             return <div className="space-y-5">
               {!adminPage ? <div className="grid grid-cols-3 gap-3">
@@ -88,7 +87,6 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
                 {adminPage === 'staff' && <AdminStaffPanel />}
                 {adminPage === 'banners' && <AdminBannersPanel />}
                 {adminPage === 'offers' && <AdminOffersPanel />}
-                {adminPage === 'dailyRewards' && access.role === 'owner' && <AdminDailyRewardsPanel />}
                 {adminPage === 'testerBadges' && access.role === 'owner' && <AdminTesterBadgesPanel />}
               </>}
             </div>;
