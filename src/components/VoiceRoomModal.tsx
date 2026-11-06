@@ -291,11 +291,12 @@ export const VoiceRoomModal: React.FC = () => {
     let active = true;
     let pending = false;
     const roomId = activeRoom.id;
+    const banClient = stagingBackend;
     const refresh = async () => {
       if (pending || !active) return;
       pending = true;
       try {
-        const { data, error } = await stagingBackend.rpc('totichat_blocked_profiles', {
+        const { data, error } = await banClient.rpc('totichat_blocked_profiles', {
           p_room_id: isOwner || isModerator ? roomId : null,
         });
         if (error) throw error;
