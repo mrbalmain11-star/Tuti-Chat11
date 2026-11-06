@@ -1525,7 +1525,7 @@ export const VoiceRoomModal: React.FC = () => {
                           onError={e => { e.currentTarget.style.display = 'none'; }}
                         /> : null}
                         {seat.isSpeaking && !seat.isMuted && (
-                          <div aria-label="يتحدث الآن" className="absolute -inset-1 rounded-full border-[3px] border-emerald-400/90 shadow-[0_0_12px_rgba(52,211,153,0.75)] pointer-events-none" />
+                          <div role="status" aria-label="يتحدث الآن" className="absolute -inset-1 z-20 rounded-full border-[3px] border-emerald-400/90 shadow-[0_0_12px_rgba(52,211,153,0.75)] pointer-events-none motion-safe:animate-pulse" />
                         )}
                         {seat.isMuted && (
                           <div className="absolute bottom-1 right-1 z-20 w-5 h-5 rounded-full bg-rose-700/90 border border-white/60 flex items-center justify-center shadow-md pointer-events-none">
