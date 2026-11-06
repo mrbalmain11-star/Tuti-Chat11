@@ -304,27 +304,37 @@ export const VoiceRoomModal: React.FC = () => {
     setRoomGiftStats(null);
     setRoomGiftStatsError('');
     let pending = false;
+    let refreshAgain = false;
     const refreshGiftTotals = async () => {
-      if (pending || document.hidden) return;
+      if (!active || document.hidden) return;
+      if (pending) {
+        refreshAgain = true;
+        return;
+      }
       pending = true;
       try {
-        const { data, error } = await stagingBackend!.rpc('totichat_room_gift_totals', { p_room_id: statsRoomId });
-        if (error) throw error;
-        if (!active) return;
-        if (!data || ['today', 'week', 'month'].some(key =>
-          data[key] === null || data[key] === undefined || data[key] === '' ||
-          !Number.isFinite(Number(data[key])) || Number(data[key]) < 0
-        )) {
-          throw new Error('استجابة إحصائيات الغرفة غير صالحة');
-        }
-        const totals = { today: Number(data.today), week: Number(data.week), month: Number(data.month) };
-        setRoomGiftStats(totals);
-        setRoomGiftStatsError('');
-      } catch (error) {
-        if (active) {
-          setRoomGiftStats(null);
-          setRoomGiftStatsError(error instanceof Error ? error.message : 'تعذر جلب إحصائيات الهدايا');
-        }
+        do {
+          refreshAgain = false;
+          try {
+            const { data, error } = await stagingBackend!.rpc('totichat_room_gift_totals', { p_room_id: statsRoomId });
+            if (error) throw error;
+            if (!active) return;
+            if (!data || ['today', 'week', 'month'].some(key =>
+              data[key] === null || data[key] === undefined || data[key] === '' ||
+              !Number.isFinite(Number(data[key])) || Number(data[key]) < 0
+            )) {
+              throw new Error('استجابة إحصائيات الغرفة غير صالحة');
+            }
+            const totals = { today: Number(data.today), week: Number(data.week), month: Number(data.month) };
+            setRoomGiftStats(totals);
+            setRoomGiftStatsError('');
+          } catch (error) {
+            if (active) {
+              setRoomGiftStats(null);
+              setRoomGiftStatsError(error instanceof Error ? error.message : 'تعذر جلب إحصائيات الهدايا');
+            }
+          }
+        } while (active && refreshAgain && !document.hidden);
       } finally {
         pending = false;
       }
