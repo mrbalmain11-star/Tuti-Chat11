@@ -4,6 +4,8 @@ import { stagingBackend } from '../services/stagingBackend';
 type Section='rules'|'auto_message'|'announcement'|'history';
 type State={rules:string;autoMessage:string;announcement:string};
 type Audit={action:string;actorId:number|null;createdAt:string};
+const validState=(value:unknown):value is State=>{if(!value||typeof value!=='object'||Array.isArray(value))return false;const v=value as Record<string,unknown>;return ['rules','autoMessage','announcement'].every(k=>typeof v[k]==='string'&&v[k].length<=1000);};
+const validAudit=(value:unknown):value is Audit[]=>Array.isArray(value)&&value.every(item=>item&&typeof item==='object'&&typeof item.action==='string'&&typeof item.createdAt==='string'&&(item.actorId===null||typeof item.actorId==='number'));
 const labels:Record<Section,string>={rules:'قواعد الغرفة',auto_message:'الرسائل التلقائية',announcement:'إعلانات الغرفة',history:'سجل الإدارة'};
 const fieldKey:Record<Exclude<Section,'history'>,keyof State>={rules:'rules',auto_message:'autoMessage',announcement:'announcement'};
 export const RoomManagementPanel:React.FC<{roomId:string;section:Section;canManage:boolean;onClose:()=>void}>=({roomId,section,canManage,onClose})=>{
@@ -24,13 +26,13 @@ export const RoomManagementPanel:React.FC<{roomId:string;section:Section;canMana
    if(section==='history'){
     const {data,error}=await stagingBackend.rpc('totichat_room_management_history',{p_room_id:roomId});
     if(error)throw error;
-    if(!Array.isArray(data))throw new Error('استجابة سجل الإدارة غير صالحة');
+    if(!validAudit(data))throw new Error('استجابة سجل الإدارة غير صالحة');
     if(version!==requestVersion.current)return;
     setAudit(data);setLoaded(true);
    }else{
     const {data,error}=await stagingBackend.rpc('totichat_room_management_state',{p_room_id:roomId});
     if(error)throw error;
-    if(!data || typeof data!=='object')throw new Error('تعذر قراءة إعدادات الغرفة');
+    if(!validState(data))throw new Error('تعذر قراءة إعدادات الغرفة');
     if(version!==requestVersion.current)return;
     setState({rules:data.rules||'',autoMessage:data.autoMessage||'',announcement:data.announcement||''});setLoaded(true);
    }
@@ -47,9 +49,10 @@ export const RoomManagementPanel:React.FC<{roomId:string;section:Section;canMana
   try{
    const {data,error}=await stagingBackend.rpc('totichat_room_management_state',{p_room_id:roomId,p_field:section,p_value:state[fieldKey[section]]});
    if(error)throw error;
-   if(!data || typeof data!=='object')throw new Error('لم يؤكد الخادم حفظ إعدادات الغرفة');
+   if(!validState(data))throw new Error('لم يؤكد الخادم حفظ إعدادات الغرفة');
    if(version!==requestVersion.current)return;
    setState({rules:data.rules||'',autoMessage:data.autoMessage||'',announcement:data.announcement||''});
+   if(data[fieldKey[section]]!==state[fieldKey[section]])throw new Error('الخادم لم يرجع النص المحفوظ؛ يرجى إعادة التحميل');
    setNotice('تم الحفظ على الخادم');
   }catch(e){if(version===requestVersion.current)setError(e instanceof Error?e.message:'تعذر الحفظ');}
   finally{savingRef.current=false;if(version===requestVersion.current)setBusy(false);}
