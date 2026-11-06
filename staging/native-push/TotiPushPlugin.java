@@ -1,6 +1,7 @@
 package com.numyar.totichat.staging;
 
 import androidx.annotation.NonNull;
+import android.content.Intent;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
@@ -17,6 +18,20 @@ import com.google.firebase.messaging.FirebaseMessaging;
  */
 @CapacitorPlugin(name = "TotiPush")
 public final class TotiPushPlugin extends Plugin {
+    @PluginMethod
+    public void consumeOpenMessagesIntent(PluginCall call) {
+        Intent intent = getActivity().getIntent();
+        boolean openMessages = intent != null
+            && "com.numyar.totichat.staging.OPEN_MESSAGES".equals(intent.getAction());
+        if (openMessages) {
+            intent.setAction(Intent.ACTION_MAIN);
+            getActivity().setIntent(intent);
+        }
+        JSObject result = new JSObject();
+        result.put("openMessages", openMessages);
+        call.resolve(result);
+    }
+
     @PluginMethod
     public void getToken(PluginCall call) {
         if (FirebaseApp.getApps(getContext()).isEmpty()) {
