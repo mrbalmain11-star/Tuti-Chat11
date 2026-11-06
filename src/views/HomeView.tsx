@@ -19,7 +19,7 @@ export const HomeView: React.FC = () => {
     const refresh = async () => {
       const { data, error } = await stagingBackend!.rpc('live_rankings', { p_period: 'monthly', p_kind: 'room' });
       if (error) { console.error('Monthly room rankings unavailable:', error); return; }
-      if (active) setMonthlyTopIds((data || []).slice(0, 3).map((item: { entity_id: string }) => item.entity_id));
+      if (active) setMonthlyTopIds(Array.from(new Set((Array.isArray(data) ? data : []).map((item: { entity_id?: unknown }) => item.entity_id).filter((id): id is string => typeof id === 'string' && id.length > 0))).slice(0, 3));
     };
     void refresh();
     const timer = window.setInterval(() => { if (document.visibilityState === 'visible') void refresh(); }, 60000);
