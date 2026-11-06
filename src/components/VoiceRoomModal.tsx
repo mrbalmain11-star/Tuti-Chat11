@@ -5,6 +5,7 @@ import { App as CapacitorApp } from '@capacitor/app';
 import { playRoomMusic, pauseRoomMusic, resumeRoomMusic, stopRoomMusic, getRoomMusicProgress, seekRoomMusic, setRoomMusicVolume } from '../services/isolatedRoomMusic';
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { RoyalGiftIcon } from './RoyalGiftIcon';
+import { RoyalSeatIcon } from './RoyalSeatIcon';
 import { RoyalGamepadIcon } from './RoyalGamepadIcon';
 import {
   Mic,
@@ -1526,10 +1527,10 @@ export const VoiceRoomModal: React.FC = () => {
                       </div>
                     ) : seat.isLocked ? (
                       /* Locked mic */
-                      <Lock className="w-5 h-5 text-amber-400/90 stroke-[2.2]" />
+                      <RoyalSeatIcon locked className="w-10 h-10" />
                     ) : (
                       /* White plus icon matching Screenshots */
-                      <Plus className="w-6 h-6 sm:w-7 sm:h-7 text-white/90 stroke-[2.5]" />
+                      <RoyalSeatIcon className="w-10 h-10" />
                     )}
                   </div>
 
