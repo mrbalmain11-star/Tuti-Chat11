@@ -27,17 +27,23 @@ export async function startAuthenticatedPushRegistration(): Promise<() => Promis
     if (stopped || !token?.trim()) return;
     const { data: { user }, error } = await client.auth.getUser();
     if (stopped || error || !user) return;
-    if (ownerId && ownerId !== user.id && registeredToken) {
-      // Do not reuse a previous user's token registration.
-      await unregisterAndroidPushToken(registeredToken);
-      registeredToken = null;
+    if (ownerId && ownerId !== user.id) {
+      // Never attempt to delete a former user's token using the new user's JWT.
+      // RLS prevents that deletion; registration must fail closed until logout
+      // has explicitly removed the old association.
+      console.warn('Push registration skipped: account changed without token cleanup');
+      return;
     }
     if (stopped) return;
     await registerAndroidPushToken(token);
-    if (!stopped) {
-      registeredToken = token;
-      ownerId = user.id;
+    if (stopped) {
+      // A logout may have started during the network request. Remove the
+      // just-created association while the authenticated session still exists.
+      await unregisterAndroidPushToken(token);
+      return;
     }
+    registeredToken = token;
+    ownerId = user.id;
   };
   const listener = await NativePush.addListener('tokenChanged', event => {
     void register(event).catch(() => console.warn('Push token registration unavailable'));
