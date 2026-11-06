@@ -48,6 +48,7 @@ export const OffersPopup: React.FC = () => {
       const confirmedCoins=typeof rawCoins==='number' && Number.isFinite(rawCoins) && rawCoins>0 ? rawCoins : null;
       const refreshed=await loadDaily();
       if(refreshed?.claimed){
+        window.dispatchEvent(new Event('totichat:wallet-changed'));
         setNotice(confirmedCoins!==null
           ? 'تم تأكيد استلام المكافأة اليومية بقيمة '+confirmedCoins.toLocaleString('ar-IQ')+' عملة.'
           : 'تم تأكيد استلام المكافأة اليومية من الخادم.');
