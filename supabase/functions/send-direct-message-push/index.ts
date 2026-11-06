@@ -93,6 +93,24 @@ Deno.serve(async (request) => {
         sent++;
       } else {
         failed++;
+        // Remove only permanently invalid registrations. Transient failures
+        // must not cause device tokens to be deleted.
+        if (response.status === 404 || response.status === 400) {
+          try {
+            const errorBody = await response.json();
+            const details = errorBody?.error?.details;
+            const unregistered = Array.isArray(details) && details.some(
+              (detail: { errorCode?: string }) =>
+                detail?.errorCode === 'UNREGISTERED',
+            );
+            if (unregistered) {
+              await admin.from('push_device_tokens')
+                .delete().eq('user_id', message.recipient_id).eq('token', device.token);
+            }
+          } catch {
+            // Malformed provider errors must not interrupt remaining devices.
+          }
+        }
         // No token, private message or server response details in logs.
         console.error('FCM delivery rejected; status:', response.status);
       }
