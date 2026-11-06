@@ -1015,6 +1015,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     };
     const client = stagingBackend;
+    let recoveryTimer: number | undefined;
+    const stopRecovery = () => {
+      if (recoveryTimer !== undefined) window.clearInterval(recoveryTimer);
+      recoveryTimer = undefined;
+    };
+    const startRecovery = () => {
+      if (!active || recoveryTimer !== undefined) return;
+      void refresh();
+      recoveryTimer = window.setInterval(() => {
+        if (document.visibilityState === 'visible' && navigator.onLine) void refresh();
+      }, 15000);
+    };
     const channel = client.channel('room-messages-' + roomId)
       .on('postgres_changes', {
         event: 'INSERT',
@@ -1023,13 +1035,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         filter: 'room_id=eq.' + roomId,
       }, () => { void refresh(); })
       .subscribe(status => {
-        if (status === 'SUBSCRIBED') void refresh();
-        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        if (status === 'SUBSCRIBED') {
+          stopRecovery();
+          void refresh();
+        }
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
           console.error('Room message realtime subscription:', status);
+          startRecovery();
         }
       });
+    const refreshOnForeground = () => {
+      if (document.visibilityState === 'visible') void refresh();
+    };
+    const refreshOnReconnect = () => { void refresh(); };
+    window.addEventListener('focus', refreshOnForeground);
+    window.addEventListener('online', refreshOnReconnect);
+    document.addEventListener('visibilitychange', refreshOnForeground);
     return () => {
       active = false;
+      stopRecovery();
+      window.removeEventListener('focus', refreshOnForeground);
+      window.removeEventListener('online', refreshOnReconnect);
+      document.removeEventListener('visibilitychange', refreshOnForeground);
       void client.removeChannel(channel);
     };
   }, [isLoggedIn, activeRoom?.id]);
