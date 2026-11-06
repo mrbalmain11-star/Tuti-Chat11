@@ -753,7 +753,8 @@ export const WealthLeaderboardModal: React.FC = () => {
     const interval=setInterval(()=>void refresh(),30000);
     return()=>{alive=false;clearInterval(interval);};
   },[openWealthLeaderboardModal,period,leaderboardTab]);
-  const profileFor=(r:RankingRow):UserProfile=>({...currentUser,id:r.entity_id,name:r.display_name,nickname:r.display_name,avatar:imageUrl(r.avatar_url) || rankingImageFallback,wealthExp:0,charmExp:0,coins:0,diamonds:0});
+  // Ranking RPC does not return VIP, role or level metadata: never copy the viewer's badges or privileges to another user.
+  const profileFor=(r:RankingRow):UserProfile=>({...currentUser,id:r.entity_id,name:r.display_name,nickname:r.display_name,avatar:imageUrl(r.avatar_url) || rankingImageFallback,vipLevel:0,vipExpiry:'',wealthLevel:0,wealthExp:0,charmLevel:0,charmExp:0,coins:0,diamonds:0,agencyName:undefined,agencyRole:undefined,isHost:false,isSuperAdmin:false,isSpecialId:false,specialIdBadge:undefined,hasWelcomeBanner:false,isRechargeAgent:false,permissions:[]});
 
 
   if (!openWealthLeaderboardModal) return null;
