@@ -2,7 +2,7 @@ import { stagingBackend } from '../services/stagingBackend';
 import { RoomManagementPanel } from './RoomManagementPanel';
 import { App as CapacitorApp } from '@capacitor/app';
 import { playRoomMusic, pauseRoomMusic, resumeRoomMusic, stopRoomMusic, getRoomMusicProgress, seekRoomMusic, setRoomMusicVolume } from '../services/isolatedRoomMusic';
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { RoyalGiftIcon } from './RoyalGiftIcon';
 import { RoyalGamepadIcon } from './RoyalGamepadIcon';
 import {
@@ -525,6 +525,7 @@ export const VoiceRoomModal: React.FC = () => {
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const chatNearBottomRef = useRef(true);
   const chatScrollPositionRef = useRef(0);
+  const chatAnchorRef = useRef<{ id: string; offset: number } | null>(null);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -927,17 +928,27 @@ export const VoiceRoomModal: React.FC = () => {
   useEffect(() => {
     chatNearBottomRef.current = true;
     chatScrollPositionRef.current = 0;
+    chatAnchorRef.current = null;
   }, [activeRoom?.id]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const container = chatScrollRef.current;
     if (!container) return;
     if (chatNearBottomRef.current) {
       container.scrollTop = container.scrollHeight;
     } else {
-      container.scrollTop = chatScrollPositionRef.current;
+      const anchor = chatAnchorRef.current;
+      const anchorElement = anchor
+        ? Array.from(container.querySelectorAll<HTMLElement>('[data-room-message-id]'))
+            .find(element => element.dataset.roomMessageId === anchor.id)
+        : null;
+      if (anchorElement && anchor) {
+        container.scrollTop = anchorElement.offsetTop - container.offsetTop - anchor.offset;
+      } else {
+        container.scrollTop = chatScrollPositionRef.current;
+      }
     }
-  }, [activeRoom?.id, isRoomMinimized, currentMessages.length, showChatInput]);
+  }, [activeRoom?.id, isRoomMinimized, currentMessages, showChatInput]);
 
   useEffect(()=>{const backend=stagingBackend;if(!activeRoom||!backend)return;let alive=true;const load=async()=>{const {data,error}=await backend.rpc('totichat_room_seat_layout',{p_room_id:activeRoom.id});if(alive&&!error&&['grid','classic','circle','stage'].includes(data))setSeatLayout(data);};void load();const timer=window.setInterval(()=>void load(),15000);return()=>{alive=false;window.clearInterval(timer);};},[activeRoom?.id]);
 
@@ -1454,6 +1465,11 @@ export const VoiceRoomModal: React.FC = () => {
                     const element = event.currentTarget;
                     chatNearBottomRef.current = element.scrollHeight - element.scrollTop - element.clientHeight < 48;
                     chatScrollPositionRef.current = element.scrollTop;
+                    const firstVisible = Array.from(element.querySelectorAll<HTMLElement>('[data-room-message-id]'))
+                      .find(message => message.offsetTop + message.offsetHeight > element.scrollTop + element.offsetTop);
+                    chatAnchorRef.current = firstVisible?.dataset.roomMessageId
+                      ? { id: firstVisible.dataset.roomMessageId, offset: firstVisible.offsetTop - element.offsetTop - element.scrollTop }
+                      : null;
                   }}
                   className="flex-1 space-y-1.5 overflow-y-auto max-h-48 no-scrollbar pr-1"
                 >
@@ -1478,7 +1494,7 @@ export const VoiceRoomModal: React.FC = () => {
                   )}
                   {/* 3. Real-time User Sent Messages */}
                   {currentMessages.map((msg) => (
-                    <div key={msg.id} className="flex justify-end">
+                    <div key={msg.id} data-room-message-id={msg.id} className="flex justify-end">
                       <div className={`toti-chat-bubble rounded-2xl rounded-tr-sm py-1.5 px-2.5 border text-[11px] text-white shadow-sm max-w-[85%] break-words ${(msg.senderId === currentUser.id ? currentUser.vipLevel : (msg.vipLevel ?? 0)) >= 1 ? ["","bg-emerald-950/90 border-emerald-400/70","bg-sky-950/90 border-sky-400/70","bg-indigo-950/90 border-indigo-400/70","bg-violet-950/90 border-violet-400/70","bg-amber-950/90 border-amber-400/70","bg-teal-950/90 border-teal-300/70","bg-blue-950/90 border-blue-300/70","bg-yellow-950/90 border-yellow-300/70"][Math.min(8, Math.floor((msg.senderId === currentUser.id ? currentUser.vipLevel : (msg.vipLevel ?? 0))))] : 'bg-[#1c123d]/88 border-amber-300/25'}`}>
                         <span className="text-amber-300 font-bold ml-1">{msg.senderName}:</span>
                         {(msg.senderId === currentUser.id ? currentUser.vipLevel : (msg.vipLevel ?? 0)) >= 1 && (
