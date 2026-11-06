@@ -1383,8 +1383,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             // this account on its previous seat after the confirmed move.
             user: seat.seatNumber === seatNumber ? currentUser :
               seat.user?.id === currentUser.id ? null : seat.user,
-            isMuted: seat.seatNumber === seatNumber ? true : seat.isMuted,
-            isModeratorMuted: seat.seatNumber === seatNumber ? false : seat.isModeratorMuted,
+            isMuted: seat.seatNumber === seatNumber || seat.user?.id === currentUser.id
+              ? true : seat.isMuted,
+            // A move does not remove an administrative mute. The roster refresh
+            // remains authoritative for moderation restrictions.
+            isModeratorMuted: seat.seatNumber === seatNumber
+              ? prev.seats.some(previous => previous.user?.id === currentUser.id && previous.isModeratorMuted)
+              : seat.user?.id === currentUser.id ? false : seat.isModeratorMuted,
             isSpeaking: false,
           })),
         };
