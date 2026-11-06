@@ -23,7 +23,7 @@ import com.totichat.app.ui.screens.VoiceRoomScreen
 import com.totichat.app.ui.theme.BackgroundDark
 
 @Composable
-fun TotiChatApp() {
+fun TotiChatApp(openMessagesOnLaunch: Boolean = false) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -61,7 +61,7 @@ fun TotiChatApp() {
         ) {
             NavHost(
                 navController = navController,
-                startDestination = Screen.Home.route
+                startDestination = if (openMessagesOnLaunch) Screen.Messages.route else Screen.Home.route
             ) {
                 composable(Screen.Home.route) {
                     HomeScreen(
