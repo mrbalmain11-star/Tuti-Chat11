@@ -728,24 +728,25 @@ export const WealthLeaderboardModal: React.FC = () => {
   const [period, setPeriod] = useState<TimePeriod>('daily');
   const [showResetRulesModal, setShowResetRulesModal] = useState(false);
   type RankingRow={entity_id:string;public_id:number;display_name:string;avatar_url:string|null;score:number};
-  const [ranking,setRanking]=useState<RankingRow[]>([]);
+  const [rankingState,setRankingState]=useState<{period:TimePeriod;tab:string;rows:RankingRow[]}|null>(null);
+  const ranking=rankingState?.period===period && rankingState?.tab===leaderboardTab ? rankingState.rows : [];
   useEffect(()=>{
     if(!openWealthLeaderboardModal||!stagingBackend)return;
     let alive=true;
     let requestId=0;
     // Never show results from the previously selected tab or period.
-    setRanking([]);
+    setRankingState(null);
     const refresh=async()=>{
       const currentRequest=++requestId;
       try {
         const {data,error}=await stagingBackend!.rpc('live_rankings',{p_period:period,p_kind:leaderboardTab});
         if(!alive||currentRequest!==requestId)return;
         if(error)throw error;
-        setRanking((data??[]) as RankingRow[]);
+        setRankingState({period,tab:leaderboardTab,rows:(data??[]) as RankingRow[]});
       } catch(error) {
         if(!alive||currentRequest!==requestId)return;
         console.error('Rankings load failed',error);
-        setRanking([]);
+        setRankingState({period,tab:leaderboardTab,rows:[]});
       }
     };
     void refresh();
