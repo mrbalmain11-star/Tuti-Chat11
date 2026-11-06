@@ -6,6 +6,7 @@ type PushToken = { token: string };
 type PushTokenListener = { remove: () => Promise<void> };
 interface NativePushPlugin {
   getToken(): Promise<PushToken>;
+  consumeOpenMessagesIntent(): Promise<{ openMessages: boolean }>;
   addListener(eventName: 'tokenChanged', listener: (event: PushToken) => void): Promise<PushTokenListener>;
 }
 const NativePush = registerPlugin<NativePushPlugin>('TotiPush');
@@ -67,4 +68,15 @@ export async function startAuthenticatedPushRegistration(): Promise<() => Promis
     await inFlight.catch(() => {});
     if (registeredToken) await unregisterAndroidPushToken(registeredToken);
   };
+}
+
+/** Returns true only when Android launched the app from a DM notification. */
+export async function consumeNativeOpenMessagesIntent(): Promise<boolean> {
+  if (!Capacitor.isNativePlatform() || !Capacitor.isPluginAvailable('TotiPush')) return false;
+  try {
+    const result = await NativePush.consumeOpenMessagesIntent();
+    return result.openMessages === true;
+  } catch {
+    return false;
+  }
 }
