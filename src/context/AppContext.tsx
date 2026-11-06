@@ -1663,6 +1663,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       alert('المستلم غير صالح.');
       return;
     }
+    if (!navigator.onLine) {
+      window.dispatchEvent(new CustomEvent('totichat:dm-send-failed', { detail: { recipientId, text: body } }));
+      alert('لا يوجد اتصال بالإنترنت. احتفظنا بالنص لإعادة المحاولة.');
+      return;
+    }
     const requestId = crypto.randomUUID();
     void Promise.resolve(stagingBackend.rpc('staging_send_dm', {
       p_to: recipientId, p_text: body, p_nonce: requestId,
@@ -1698,6 +1703,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
     }).catch(error => {
       console.error('Direct message send failed:', error);
+      window.dispatchEvent(new CustomEvent('totichat:dm-send-failed', { detail: { recipientId, text: body } }));
       const message = error instanceof Error ? error.message : String(error ?? '');
       alert(/blocked|dm_block/i.test(message)
         ? 'لا يمكن إرسال رسالة خاصة بسبب وجود حظر بين الحسابين.'
