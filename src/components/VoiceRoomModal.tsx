@@ -148,6 +148,8 @@ export const VoiceRoomModal: React.FC = () => {
       setShowSeatLayouts(false);
       setRoomManagementSection(null);
       showToast('تم سحب صلاحية الإشراف. أُغلقت أدوات الإدارة.');
+    } else if (previous?.roomId === roomId && !previous.wasModerator && isModerator && !isOwner) {
+      showToast('تم منحك صلاحية الإشراف. أدوات الإدارة متاحة الآن.');
     }
     previousModeratorRoleRef.current = { roomId, wasModerator: isModerator };
   }, [activeRoom?.id, isModerator, isOwner]);
