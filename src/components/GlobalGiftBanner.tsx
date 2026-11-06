@@ -41,6 +41,18 @@ export const GlobalGiftBanner: React.FC = () => {
           fresh.forEach(row => seen.current.add(row.id));
           if (seen.current.size > 100) seen.current.clear();
           setAnnouncement(next);
+          setAvatars({ sender: '', recipient: '' });
+          void stagingBackend!.from('profiles').select('id,avatar_url')
+            .in('id', [next.sender_id, next.recipient_id])
+            .then(({ data: profiles, error: profileError }) => {
+              if (!active || profileError) return;
+              const avatarFor = (id: string) => {
+                const path = profiles?.find(profile => profile.id === id)?.avatar_url;
+                if (!path) return '';
+                return /^https?:\\/\\//i.test(path) ? path : stagingBackend!.storage.from('profile-avatars').getPublicUrl(path).data.publicUrl;
+              };
+              setAvatars({ sender: avatarFor(next.sender_id), recipient: avatarFor(next.recipient_id) });
+            });
           if (hideTimer) clearTimeout(hideTimer);
           hideTimer = setTimeout(() => { if (active) setAnnouncement(null); }, 6500);
         }
