@@ -546,13 +546,17 @@ export const VoiceRoomModal: React.FC = () => {
     setTimeout(() => setCopiedId(false), 2000);
   };
 
+  const chatSubmitLockedRef = useRef(false);
   const handleSendChat = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!chatMessage.trim() || !activeRoom) return;
+    if (chatSubmitLockedRef.current || !chatMessage.trim() || !activeRoom) return;
+    chatSubmitLockedRef.current = true;
     sendRoomMessage(activeRoom.id, chatMessage.trim());
     setChatMessage('');
     setShowChatInput(false);
     sounds.playClick();
+    // Prevent duplicate submissions in the same event burst without blocking later messages.
+    window.setTimeout(() => { chatSubmitLockedRef.current = false; }, 500);
   };
 
   const triggerFloatingEmoji = (emoji: string) => {
