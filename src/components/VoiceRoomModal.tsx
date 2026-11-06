@@ -827,6 +827,9 @@ export const VoiceRoomModal: React.FC = () => {
         // The database has changed even if the voice disconnect acknowledgement fails.
         // Reconcile seats from the server; do not optimistically remove a member.
         window.dispatchEvent(new CustomEvent('totichat:room-moderators-changed', { detail: activeRoom.id }));
+        if (action === 'release_seat') {
+          window.dispatchEvent(new CustomEvent('totichat:room-seat-changed', { detail: activeRoom.id }));
+        }
       }
       if (error || data?.success !== true || data?.sfuDisconnected !== true) {
         console.error('Voice moderation not confirmed:', error, data);
@@ -837,6 +840,9 @@ export const VoiceRoomModal: React.FC = () => {
       }
       if (data?.databaseCommitted !== true) {
         window.dispatchEvent(new CustomEvent('totichat:room-moderators-changed', { detail: activeRoom.id }));
+        if (action === 'release_seat') {
+          window.dispatchEvent(new CustomEvent('totichat:room-seat-changed', { detail: activeRoom.id }));
+        }
       }
       showToast(action === 'ban' ? 'تم حظر العضو وطرده؛ لن يستطيع العودة إلا بعد فك الحظر' : action === 'kick' ? 'تم طرد العضو من الغرفة' : action === 'mute'
         ? 'تم كتم مايك العضو من الخادم' : 'تم إنزال العضو من المقعد');
