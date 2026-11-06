@@ -764,7 +764,7 @@ export const WealthLeaderboardModal: React.FC = () => {
   const topWealth1=rankedSupporters[0],topWealth2=rankedSupporters[1],topWealth3=rankedSupporters[2],restWealth7=rankedSupporters.slice(3,10);
   const rankedCharmList:CharmLeaderboardItem[]=leaderboardTab==='charm'?ranking.map((r,i)=>({rank:i+1,charmReceived:Number(r.score),user:profileFor(r)})):[];
   const topCharm1=rankedCharmList[0],topCharm2=rankedCharmList[1],topCharm3=rankedCharmList[2],restCharm7=rankedCharmList.slice(3,10);
-  const rankedRoomList:RoomLeaderboardItem[]=leaderboardTab==='room'?ranking.map((r,i)=>({id:r.entity_id,rank:i+1,title:r.display_name,coverImage:rankingImageFallback,hostName:'',hostAvatar:rankingImageFallback,roomCups:0,roomGiftsAmount:Number(r.score),activeListeners:0})):[];
+  const rankedRoomList:RoomLeaderboardItem[]=leaderboardTab==='room'?ranking.map((r,i)=>({id:r.entity_id,rank:i+1,title:r.display_name,coverImage:imageUrl(r.avatar_url) || rankingImageFallback,hostName:'',hostAvatar:rankingImageFallback,roomCups:0,roomGiftsAmount:Number(r.score),activeListeners:0})):[];
   const topRoom1=rankedRoomList[0],topRoom2=rankedRoomList[1],topRoom3=rankedRoomList[2],restRoom7=rankedRoomList.slice(3,10);
 
   const handleOpenUser = (u: UserProfile) => {
