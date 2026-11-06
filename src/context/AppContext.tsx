@@ -1529,13 +1529,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const seat = activeRoom.seats.find(item => item.seatNumber === seatNumber);
     const target = seat?.user?.id;
     if (!target || target === currentUser.id) return;
+    if (activeRoom.hostId !== currentUser.id && !activeRoom.moderatorIds?.includes(currentUser.id)) {
+      alert('تم سحب صلاحية الإشراف أو لا تملك صلاحية إدارة المايك.');
+      return;
+    }
     const action = seat.isModeratorMuted ? 'allow_mic' : 'mute';
-    void Promise.resolve(stagingBackend.rpc('staging_moderate_room_microphone', {
+    void (async () => {
+      if (activeRoom.hostId !== currentUser.id) {
+        const { data: moderators, error: roleError } = await stagingBackend.rpc('totichat_room_moderator_ids', { p_room_id: roomId });
+        if (roleError || !Array.isArray(moderators) || !moderators.includes(currentUser.id)) {
+          window.dispatchEvent(new CustomEvent('totichat:room-moderators-changed', { detail: roomId }));
+          throw new Error('ROOM_MODERATOR_PERMISSION_REVOKED');
+        }
+      }
+      return stagingBackend.rpc('staging_moderate_room_microphone', {
       p_room_id: roomId,
       p_target: target,
       p_action: action,
       p_request_id: crypto.randomUUID(),
-    })).then(({ data, error }) => {
+      });
+    })().then(({ data, error }) => {
       if (error || !data || (typeof data === 'object' && 'success' in data && data.success !== true)) {
         throw error ?? new Error('Moderation not confirmed');
       }
@@ -1549,7 +1562,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.error('Room microphone moderation failed:', error);
       const reason = error instanceof Error ? error.message : '';
       const ownerMute = reason.includes('Owner mute') || reason.includes('owner-enforced mute');
-      alert(ownerMute
+      const revoked = reason.includes('ROOM_MODERATOR_PERMISSION_REVOKED') || reason.includes('permission required');
+      alert(revoked ? 'تم سحب صلاحية الإشراف. لم يُنفّذ أمر المايك.' : ownerMute
         ? 'هذا المستخدم مكتوم بقرار مالك الغرفة، ولا يستطيع المشرف تغيير الكتم.'
         : 'تعذر تنفيذ أمر المايك. تأكد من صلاحية المشرف ووجود العضو في الغرفة.');
     });
