@@ -947,7 +947,6 @@ export const VoiceRoomModal: React.FC = () => {
     chatScrollPositionRef.current = 0;
     chatAnchorRef.current = null;
     chatProgrammaticScrollRef.current = null;
-    seenRoomMessagesRef.current = null;
     setUnreadRoomMessages(0);
   }, [activeRoom?.id]);
 
