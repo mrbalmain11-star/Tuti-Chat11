@@ -115,7 +115,7 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
               ...(access.role === 'owner' ? [{id:'testerBadges',label:'شارات المختبرين',Icon:ShieldCheck}] : []),
             ];
             return <div className="space-y-5">
-              {!adminPage || !tiles.some(tile => tile.id === adminPage) ? <div className="grid grid-cols-3 gap-3">
+              {!adminPage || !tiles.some(tile => tile.id === adminPage) ? <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {tiles.map(({id,label,Icon}) => <button key={id} type="button" onClick={() => setAdminPage(id)}
                   className="rounded-2xl bg-white border border-amber-200 p-4 min-h-28 shadow-sm flex flex-col items-center justify-center gap-3 active:bg-amber-50">
                   <Icon size={28} className="text-amber-700" />
