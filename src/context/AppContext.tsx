@@ -213,10 +213,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Only a verified Supabase auth session may unlock the app.
   const [isLoggedIn, setIsLoggedInState] = useState(false);
+  const pushCleanupRef = useRef<Promise<() => Promise<void>> | null>(null);
+  const pushSignOutPendingRef = useRef(false);
   const setIsLoggedIn = (logged: boolean) => {
-    if (!logged) {
-      setIsLoggedInState(false);
-      void stagingBackend?.auth.signOut();
+    if (!logged && !pushSignOutPendingRef.current) {
+      pushSignOutPendingRef.current = true;
+      void (async () => {
+        try {
+          // Unregister before Supabase revokes the JWT, otherwise RLS blocks deletion.
+          const cleanup = await pushCleanupRef.current;
+          await cleanup?.();
+        } catch (error) {
+          console.warn('Push token cleanup failed before sign-out', error);
+        } finally {
+          pushCleanupRef.current = null;
+          try {
+            await stagingBackend?.auth.signOut();
+          } finally {
+            setIsLoggedInState(false);
+            pushSignOutPendingRef.current = false;
+          }
+        }
+      })().catch(error => console.warn('Sign-out unavailable', error));
     }
     // Ignore client-side attempts to mark a user authenticated.
   };
@@ -255,7 +273,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!isLoggedIn || !stagingBackend) return;
     let disposed = false;
     let stop: (() => Promise<void>) | undefined;
-    void startAuthenticatedPushRegistration().then(cleanup => {
+    const pending = startAuthenticatedPushRegistration();
+    pushCleanupRef.current = pending;
+    void pending.then(cleanup => {
       if (disposed) {
         void cleanup().catch(() => console.warn('Push cleanup unavailable'));
       } else {
