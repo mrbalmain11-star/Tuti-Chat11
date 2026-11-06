@@ -18,8 +18,8 @@ import com.google.firebase.messaging.RemoteMessage
 class TotiFirebaseMessagingService : FirebaseMessagingService() {
     override fun onNewToken(token: String) {
         super.onNewToken(token)
-        // Native-to-authenticated-backend token registration remains pending.
-        // Do not persist or transmit tokens without a verified user session.
+        PendingPushTokenStore.save(this, token)
+        // Do not send to Supabase until the signed-in user is verified.
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
