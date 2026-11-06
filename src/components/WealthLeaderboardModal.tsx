@@ -749,7 +749,7 @@ export const WealthLeaderboardModal: React.FC = () => {
         if (!Array.isArray(data)) throw new Error('Invalid leaderboard response');
         const rows = data.filter((item):item is RankingRow =>
               item !== null && typeof item === 'object' &&
-              typeof item.entity_id === 'string' && item.entity_id.length > 0 &&
+              typeof item.entity_id === 'string' && item.entity_id.trim().length > 0 &&
               typeof item.display_name === 'string' &&
               item.display_name.trim().length > 0 &&
               (item.avatar_url === null || typeof item.avatar_url === 'string')
