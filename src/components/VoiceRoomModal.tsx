@@ -522,7 +522,8 @@ export const VoiceRoomModal: React.FC = () => {
   // Floating animated emojis
   const [floatingEmojis, setFloatingEmojis] = useState<{ id: number; char: string; left: number }[]>([]);
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+  const chatNearBottomRef = useRef(true);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -891,8 +892,15 @@ export const VoiceRoomModal: React.FC = () => {
   const currentMessages = activeRoom ? roomMessages[activeRoom.id] || [] : [];
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [currentMessages.length, showChatInput]);
+    chatNearBottomRef.current = true;
+  }, [activeRoom?.id]);
+
+  useEffect(() => {
+    const container = chatScrollRef.current;
+    if (container && chatNearBottomRef.current) {
+      container.scrollTop = container.scrollHeight;
+    }
+  }, [activeRoom?.id, currentMessages.length, showChatInput]);
 
   useEffect(()=>{const backend=stagingBackend;if(!activeRoom||!backend)return;let alive=true;const load=async()=>{const {data,error}=await backend.rpc('totichat_room_seat_layout',{p_room_id:activeRoom.id});if(alive&&!error&&['grid','classic','circle','stage'].includes(data))setSeatLayout(data);};void load();const timer=window.setInterval(()=>void load(),15000);return()=>{alive=false;window.clearInterval(timer);};},[activeRoom?.id]);
 
@@ -1403,7 +1411,14 @@ export const VoiceRoomModal: React.FC = () => {
                 </div>
 
                 {/* Chat Messages Column */}
-                <div className="flex-1 space-y-1.5 overflow-y-auto max-h-48 no-scrollbar pr-1">
+                <div
+                  ref={chatScrollRef}
+                  onScroll={(event) => {
+                    const element = event.currentTarget;
+                    chatNearBottomRef.current = element.scrollHeight - element.scrollTop - element.clientHeight < 48;
+                  }}
+                  className="flex-1 space-y-1.5 overflow-y-auto max-h-48 no-scrollbar pr-1"
+                >
                   {/* Room rules and real host welcome, never demo accounts or stock avatars. */}
                   <div className="bg-[#180f33]/85 backdrop-blur-md rounded-2xl p-3 border border-purple-500/20 text-xs text-slate-200 leading-relaxed shadow-lg">
                     أهلاً بك في TotiChat. يرجى احترام الآخرين والالتزام بقواعد الغرفة.
@@ -1437,7 +1452,7 @@ export const VoiceRoomModal: React.FC = () => {
                       </div>
                     </div>
                   ))}
-                  <div ref={messagesEndRef} />
+
                 </div>
               </div>
             </div>
