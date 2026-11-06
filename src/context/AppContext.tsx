@@ -1505,9 +1505,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const requestKey = roomId + ':' + seatNumber;
     if (pendingSeatLocksRef.current.has(requestKey)) return;
     pendingSeatLocksRef.current.add(requestKey);
-    void Promise.resolve(stagingBackend.rpc('phase2_room_toggle_seat_lock', {
-      p_room_id: roomId, p_seat: seatNumber,
-    })).then(({ data, error }) => {
+    void (async () => {
+      if (activeRoom.hostId !== currentUser.id) {
+        const { data: moderators, error: roleError } = await stagingBackend.rpc('totichat_room_moderator_ids', { p_room_id: roomId });
+        if (roleError || !Array.isArray(moderators) || !moderators.includes(currentUser.id)) {
+          window.dispatchEvent(new CustomEvent('totichat:room-moderators-changed', { detail: roomId }));
+          throw new Error('ROOM_MODERATOR_PERMISSION_REVOKED');
+        }
+      }
+      return stagingBackend.rpc('phase2_room_toggle_seat_lock', {
+        p_room_id: roomId, p_seat: seatNumber,
+      });
+    })().then(({ data, error }) => {
       if (error || typeof data !== 'boolean') throw error ?? new Error('Lock not confirmed');
       window.dispatchEvent(new CustomEvent('totichat:room-seat-changed', { detail: roomId }));
       setActiveRoom(prev => prev?.id !== roomId ? prev : ({
@@ -1517,7 +1526,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }));
     }).catch(error => {
       console.error('Seat lock failed:', error);
-      alert('تعذر تغيير قفل المقعد. تحقق من صلاحية المالك أو المشرف.');
+      const reason = error instanceof Error ? error.message : '';
+      alert(reason.includes('ROOM_MODERATOR_PERMISSION_REVOKED') || reason.includes('permission required')
+        ? 'تم سحب صلاحية الإشراف. لم يتم تغيير قفل المقعد.'
+        : 'تعذر تغيير قفل المقعد. تحقق من صلاحية المالك أو المشرف.');
     }).finally(() => {
       pendingSeatLocksRef.current.delete(requestKey);
     });
