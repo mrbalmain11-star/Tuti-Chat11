@@ -34,6 +34,14 @@ export async function verifyGoogleEmailOtp(code: string): Promise<VerifyResponse
     method: 'POST',
     body: { code },
   });
-  if (error || !data) throw error ?? new Error('OTP verification unavailable');
-  return data;
+  if (data?.status) return data;
+  // Supabase Functions may return a structured OTP status with a non-2xx HTTP response.
+  // Preserve it so the UI can distinguish expired, locked and unauthorized codes.
+  if (error && 'context' in error && error.context instanceof Response) {
+    try {
+      const response = await error.context.clone().json() as Partial<VerifyResponse>;
+      if (response?.status) return response as VerifyResponse;
+    } catch { /* The server returned a non-JSON error. */ }
+  }
+  throw error ?? new Error('OTP verification unavailable');
 }
