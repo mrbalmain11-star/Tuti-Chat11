@@ -166,7 +166,7 @@ export const OffersPopup: React.FC = () => {
               </div>)}
             </div>
             <div aria-label={`اليوم السابع: ${daily?.day===7 ? (daily.claimed ? 'تم الاستلام' : 'متاح للاستلام') : daily ? (daily.day>7 ? 'يوم سابق' : 'غير متاح حالياً') : 'الحالة غير معروفة'}`} className={`mt-2 rounded-xl border-2 border-[#71cbb0] bg-gradient-to-b from-[#e8fff5] to-[#73d8b4] p-3 text-center ${daily?.day===7?'ring-2 ring-amber-400':''}`}>
-              <strong className="text-[#096d53]">اليوم السابع · صندوق الكنز</strong>{daily?.day===7 && <span className={`mx-auto mt-2 block w-fit rounded-full px-3 py-1 text-xs font-black ${daily.claimed ? 'bg-emerald-700 text-white' : 'bg-amber-100 text-amber-900'}`}>{daily.claimed ? 'تم استلام صندوق الكنز' : 'صندوق الكنز متاح اليوم'}</span>}
+              <strong className="text-[#096d53]">اليوم السابع · المكافأة الملكية</strong>{daily?.day===7 && <span className={`mx-auto mt-2 block w-fit rounded-full px-3 py-1 text-xs font-black ${daily.claimed ? 'bg-emerald-700 text-white' : 'bg-amber-100 text-amber-900'}`}>{daily.claimed ? 'تم استلام مكافأة اليوم السابع' : 'مكافأة اليوم السابع متاحة'}</span>}
               <div className="mx-auto my-2 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-200 to-amber-500 shadow-lg"><Gift size={36} className="text-amber-900" aria-hidden="true" /></div>
               <span className="text-[#075b45] font-black">{daily?.day===7 ? Number(daily.coins).toLocaleString('ar-IQ') + ' عملة' : 'حسب الخادم'}</span>
             </div>
