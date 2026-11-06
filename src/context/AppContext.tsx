@@ -1572,7 +1572,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }).catch(error => {
       console.error('Server mic mute update failed:', error);
       if (transitionAtStart === roomTransitionVersion.current) {
-        alert('تعذر تأكيد حالة المايك. ستتم مزامنتها من الخادم.');
+        const moderatorMuted = error instanceof Error && error.message.includes('ROOM_MODERATOR_MUTED');
+        alert(moderatorMuted
+          ? 'المايك مكتوم من إدارة الغرفة. لا يمكنك تشغيله حتى يرفع المشرف الكتم.'
+          : 'تعذر تأكيد حالة المايك. ستتم مزامنتها من الخادم.');
       }
     }).finally(() => {
       micUpdatePendingRef.current = false;
