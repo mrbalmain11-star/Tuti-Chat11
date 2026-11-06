@@ -26,7 +26,7 @@ export const AdminOffersPanel:React.FC=()=>{
  if(error)throw error;
  setEditId(null);setForm({...empty});
  try{await load();setMessage('تم حفظ العرض');}
- catch(refreshError){console.error('Offer saved but list refresh failed',refreshError);setMessage('تم حفظ العرض في الخادم، لكن تعذر تحديث القائمة. أعد فتح لوحة العروض للتحقق من البيانات.');}
+ catch(refreshError){console.error('Offer saved but list refresh failed',refreshError);setLoadError(true);setMessage('تم حفظ العرض في الخادم، لكن تعذر تحديث القائمة. اضغط «تحديث القائمة» للتحقق من البيانات.');}
  }catch(e){setMessage(e instanceof Error?e.message:String(e));}finally{setBusy(false);}};
  const field=(key:keyof typeof empty,label:string,type='text')=><label className="block text-sm font-bold text-slate-700">{label}<input type={type} value={form[key]} onChange={e=>setForm(p=>({...p,[key]:e.target.value}))} className="block mt-1 w-full p-3 border border-slate-200 rounded-xl bg-white" dir={type==='number'?'ltr':undefined}/></label>;
  return <section className="space-y-4" dir="rtl">
