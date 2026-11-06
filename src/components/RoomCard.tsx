@@ -56,9 +56,10 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
               event.stopPropagation();
               toggleFollowHost(room.hostId);
             }}
-            className="absolute top-1.5 left-1.5 z-20 w-9 h-9 flex items-center justify-center rounded-full bg-slate-950/60 backdrop-blur-sm border border-emerald-300/40 active:scale-90 transition-transform"
-            aria-label={isFollowed ? 'إلغاء متابعة الغرفة' : 'متابعة الغرفة'}
-            title={isFollowed ? 'إلغاء المتابعة' : 'متابعة الغرفة'}
+            className="absolute top-1.5 left-1.5 z-20 min-w-11 min-h-11 flex items-center justify-center rounded-full bg-slate-950/60 backdrop-blur-sm border border-emerald-300/40 active:scale-90 transition-transform"
+            aria-pressed={isFollowed}
+            aria-label={isFollowed ? 'إلغاء متابعة صاحب الغرفة' : 'متابعة صاحب الغرفة'}
+            title={isFollowed ? 'إلغاء متابعة صاحب الغرفة' : 'متابعة صاحب الغرفة'}
           >
             <RoyalRoomFollowIcon followed={isFollowed} className="w-7 h-7" />
           </button>
