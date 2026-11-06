@@ -30,7 +30,7 @@ export async function fetchMyLedger(): Promise<Transaction[]> {
     return [{
       id: row.id,
       type,
-      title: row.kind + ' (' + row.currency + ')',
+      title: kind === 'daily_reward' ? 'المكافأة اليومية (عملات)' : row.kind + ' (' + row.currency + ')',
       amount,
       timestamp: row.created_at,
       status: 'نجاح' as const,
