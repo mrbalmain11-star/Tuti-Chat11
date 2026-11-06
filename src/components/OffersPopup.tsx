@@ -17,6 +17,7 @@ export const OffersPopup: React.FC = () => {
   const [tab,setTab]=useState<'daily'|'offers'>('daily');
   const [daily,setDaily]=useState<{day:number;claimed:boolean;coins:number;schedule:number[]}|null>(null);
   const [claiming,setClaiming]=useState(false);
+  const [claimOutcomeUnknown,setClaimOutcomeUnknown]=useState(false);
   const [dailyLoading,setDailyLoading]=useState(false);
   const [dailyLoaded,setDailyLoaded]=useState(false);
   const dailyRequestInFlight=useRef(false);
@@ -37,6 +38,7 @@ export const OffersPopup: React.FC = () => {
       if(!Array.isArray(status.schedule) || status.schedule.length!==7 || !status.schedule.every(coins=>Number.isSafeInteger(coins) && coins>=0) || status.schedule[status.day!-1]!==status.coins)throw new Error('Invalid reward schedule');
       const verified={day:status.day!,claimed:status.claimed,coins:status.coins,schedule:status.schedule};
       setDaily(verified);
+      setClaimOutcomeUnknown(false);
       return verified;
     }catch(error){
       console.error('Daily reward status failed',error);
