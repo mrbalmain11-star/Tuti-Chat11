@@ -80,7 +80,7 @@ export const RoyalRoomsView: React.FC = () => {
     // Native Capacitor uses a local origin; it is not a shareable public URL.
     const publicBase = import.meta.env.VITE_PUBLIC_APP_URL || window.location.origin;
     const publicUrl = new URL(publicBase);
-    if (publicUrl.protocol !== 'https:' || /^(localhost|127\\.0\\.0\\.1|10\\.0\\.2\\.2)$/i.test(publicUrl.hostname)) {
+    if (publicUrl.protocol !== 'https:' || ['localhost', '127.0.0.1', '10.0.2.2'].includes(publicUrl.hostname)) {
       showToast('رابط المشاركة العام غير مهيأ لهذا الإصدار.');
       return;
     }
