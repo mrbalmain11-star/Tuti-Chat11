@@ -1484,8 +1484,17 @@ export const VoiceRoomModal: React.FC = () => {
               return (
                 <div
                   key={seatNum}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`المقعد ${seatNum}: ${isOccupied ? `مشغول بواسطة ${seat.user?.nickname || seat.user?.name || 'مستخدم'}` : seat.isLocked ? 'مقفل' : 'متاح'}`}
                   onClick={() => handleSeatClick(seatNum)}
-                  className="flex flex-col items-center cursor-pointer group active:scale-95 transition"
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      handleSeatClick(seatNum);
+                    }
+                  }}
+                  className="flex flex-col items-center cursor-pointer group active:scale-95 transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300"
                   style={getSeatPosition(seatNum)}
                 >
                   {/* Seat Translucent Circle: Medium size w-14 h-14 sm:w-16 sm:h-16 */}
