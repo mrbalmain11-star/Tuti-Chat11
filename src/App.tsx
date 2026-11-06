@@ -84,7 +84,7 @@ class ErrorBoundary extends React.Component<
 
 const AppContent: React.FC = () => {
   const { activeTab, isLoggedIn, isRtl } = useApp();
-  const [otpState, setOtpState] = React.useState<'checking' | 'pending' | 'verified'>('checking');
+  const [otpState, setOtpState] = React.useState<'checking' | 'pending' | 'verified' | 'error'>('checking');
   const [otpEmail, setOtpEmail] = React.useState('');
   const [onboardingState, setOnboardingState] = React.useState<'checking' | 'required' | 'complete' | 'error'>('checking');
   const [onboardingRetry, setOnboardingRetry] = React.useState(0);
@@ -115,13 +115,19 @@ const AppContent: React.FC = () => {
     const check = async () => {
       // Supabase may emit SIGNED_IN again when Android returns from the file picker.
       // Never unmount the active room by switching an already verified session to 'checking'.
-      const { data: session } = await stagingBackend!.auth.getSession();
-      if (!mounted) return;
-      if (!session.session) { setOtpState('checking'); return; }
-      setOtpEmail(session.session.user.email ?? '');
-      const { data, error } = await stagingBackend!.rpc('otp_session_verified');
-      if (!mounted) return;
-      setOtpState(!error && data === true ? 'verified' : 'pending');
+      try {
+        const { data: session, error: sessionError } = await stagingBackend!.auth.getSession();
+        if (!mounted) return;
+        if (sessionError) { setOtpState('error'); return; }
+        if (!session.session) { setOtpState('checking'); return; }
+        setOtpEmail(session.session.user.email ?? '');
+        const { data, error } = await stagingBackend!.rpc('otp_session_verified');
+        if (!mounted) return;
+        setOtpState(error ? 'error' : data === true ? 'verified' : 'pending');
+      } catch (error) {
+        console.error('OTP session check failed:', error);
+        if (mounted) setOtpState('error');
+      }
     };
     void check();
     // Supabase auth callbacks run under an internal auth lock. Defer client calls
@@ -154,6 +160,13 @@ const AppContent: React.FC = () => {
     if (otpState === 'checking') {
       return <div dir="rtl" className="flex min-h-screen items-center justify-center bg-[#001d18] text-amber-300 font-['Cairo',sans-serif]">جارٍ فحص أمان الجلسة...</div>;
     }
+    if (otpState === 'error') return (
+      <div dir="rtl" className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#001d18] px-6 text-center text-white">
+        <p className="text-lg font-bold">تعذر فحص التحقق الأمني</p>
+        <p className="text-sm text-slate-300">تحقق من الاتصال ثم حاول مجدداً. لن يتم تجاوز التحقق من OTP.</p>
+        <button type="button" onClick={() => { setOtpState('checking'); void stagingBackend?.auth.refreshSession(); }} className="rounded-xl bg-emerald-600 px-6 py-3 font-bold">إعادة المحاولة</button>
+      </div>
+    );
     return <GoogleEmailOtpScreen email={otpEmail}
       onVerified={() => { void stagingBackend?.rpc('otp_session_verified').then(({ data, error }) => {
         if (!error && data === true) setOtpState('verified');
