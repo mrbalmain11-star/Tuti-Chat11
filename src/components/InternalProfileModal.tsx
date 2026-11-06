@@ -34,7 +34,7 @@ import { UserProfile } from '../types';
 import { getLevelFromExp } from '../utils/levelUtils';
 import { CharmBadge, WealthBadge, GameBadge } from './LevelBadgeIcons';
 import { processImageFile } from '../utils/imageUpload';
-import { fetchMyProfile, saveMyProfile, uploadMyAvatar, uploadMyCover, getMyAvatarUrl, stagingBackend } from '../services/stagingBackend';
+import { fetchMyProfile, saveMyProfile, uploadMyAvatar, uploadMyCover, getMyAvatarUrl, stagingBackend, fetchMyAdminAccess } from '../services/stagingBackend';
 import { VipName } from './VipName';
 import { VipBadge, VIP_BEAST_METADATA } from './VipBadge';
 import { AgencyProfileCard } from './AgencyProfileCard';
@@ -117,6 +117,18 @@ export const InternalProfileModal: React.FC = () => {
   const [myPublicId, setMyPublicId] = useState<number | null>(null);
   const [displaySpecialId, setDisplaySpecialId] = useState<string | null>(null);
   const [visitorSpecialIdUser, setVisitorSpecialIdUser] = useState<string | null>(null);
+  const [verifiedAdminIdentity, setVerifiedAdminIdentity] = useState<{ userId: string; role: string } | null>(null);
+  useEffect(() => {
+    let active = true;
+    setVerifiedAdminIdentity(null);
+    if (!openInternalProfileModal || !isSelf || !stagingBackend) return;
+    void fetchMyAdminAccess().then(access => {
+      if (active && access && ['owner', 'super_admin', 'admin'].includes(access.role)) {
+        setVerifiedAdminIdentity({ userId: currentUser.id, role: access.role });
+      }
+    }).catch(error => console.error('Verified admin badge unavailable:', error));
+    return () => { active = false; };
+  }, [openInternalProfileModal, isSelf, currentUser.id]);
   const [savedCover, setSavedCover] = useState<string>('');
   const [visitorStatus, setVisitorStatus] = useState<{ userId: string; wealthLevel: number; charmLevel: number; vipLevel: number } | null>(null);
   useEffect(() => {
@@ -631,7 +643,7 @@ export const InternalProfileModal: React.FC = () => {
           {/* ID Line: ❐ ID: 313 */}
           <button
             onClick={handleCopyId}
-            className={`flex items-center gap-1.5 mt-2 rounded-full border px-2.5 py-1 text-xs font-mono transition active:scale-95 cursor-pointer ${isSelf ? (displaySpecialId ? "border-pink-300 bg-gradient-to-r from-pink-50 to-amber-100 text-pink-800" : "border-sky-200 bg-sky-50 text-sky-800") : (visitorSpecialIdUser === user.id ? "border-pink-300 bg-gradient-to-r from-pink-50 to-amber-100 text-pink-800" : "border-sky-200 bg-sky-50 text-sky-800")}`}
+            className={`flex items-center gap-1.5 mt-2 rounded-full border px-2.5 py-1 text-xs font-mono transition active:scale-95 cursor-pointer ${isSelf ? (verifiedAdminIdentity?.userId === user.id ? "border-red-400 bg-gradient-to-r from-red-50 via-amber-50 to-amber-100 text-red-900" : displaySpecialId ? "border-pink-300 bg-gradient-to-r from-pink-50 to-amber-100 text-pink-800" : "border-sky-200 bg-sky-50 text-sky-800") : (visitorSpecialIdUser === user.id ? "border-pink-300 bg-gradient-to-r from-pink-50 to-amber-100 text-pink-800" : "border-sky-200 bg-sky-50 text-sky-800")}`}
             title="نسخ المعرف"
           >
             {copiedId ? (
@@ -639,7 +651,7 @@ export const InternalProfileModal: React.FC = () => {
             ) : (
               <Copy className="w-3.5 h-3.5 text-slate-500" />
             )}
-            {(isSelf ? !!displaySpecialId : visitorSpecialIdUser === user.id) && <Crown className="h-3.5 w-3.5 text-amber-600" aria-hidden="true" />}
+            {isSelf && verifiedAdminIdentity?.userId === user.id ? <Shield className="h-3.5 w-3.5 text-red-700" aria-label="إدارة موثقة" /> : (isSelf ? !!displaySpecialId : visitorSpecialIdUser === user.id) && <Crown className="h-3.5 w-3.5 text-amber-600" aria-hidden="true" />}
             <span className="font-semibold tracking-wider">
               ID: {isSelf ? (displaySpecialId || myPublicId || '—') : (visitorPublicId || '—')}
             </span>
