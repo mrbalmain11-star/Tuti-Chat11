@@ -746,7 +746,14 @@ export const WealthLeaderboardModal: React.FC = () => {
         const {data,error}=await stagingBackend!.rpc('live_rankings',{p_period:period,p_kind:leaderboardTab});
         if(!alive||currentRequest!==requestId)return;
         if(error)throw error;
-        setRankingState({period,tab:leaderboardTab,rows:(data??[]) as RankingRow[]});
+        const rows = Array.isArray(data)
+          ? data.filter((item):item is RankingRow =>
+              item !== null && typeof item === 'object' &&
+              typeof item.entity_id === 'string' && item.entity_id.length > 0 &&
+              typeof item.display_name === 'string'
+            )
+          : [];
+        setRankingState({period,tab:leaderboardTab,rows});
       } catch(error) {
         if(!alive||currentRequest!==requestId)return;
         console.error('Rankings load failed',error);
