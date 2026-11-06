@@ -769,8 +769,12 @@ export const VoiceRoomModal: React.FC = () => {
     if (userId === currentUser.id || userId === activeRoom.hostId || moderationPendingRef.current.has(userId)) return;
     moderationPendingRef.current.add(userId);
     setModerationBusy(true);
-    const isMod = (activeRoom.moderatorIds || []).includes(userId);
     try {
+      // Read the current server role before deciding whether this is a grant or revoke.
+      // The local moderator list may lag behind a change made on another device.
+      const { data: serverModeratorIds, error: rosterError } = await stagingBackend.rpc('totichat_room_moderator_ids', { p_room_id: roomId });
+      if (rosterError || !Array.isArray(serverModeratorIds)) throw rosterError ?? new Error('Moderator roster unavailable');
+      const isMod = serverModeratorIds.includes(userId);
       const { data, error } = await stagingBackend.rpc('phase2_room_moderate', {
         p_room_id: roomId, p_target: userId,
         p_action: isMod ? 'revoke_moderator' : 'grant_moderator',
