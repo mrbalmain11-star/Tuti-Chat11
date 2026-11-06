@@ -43,6 +43,10 @@ export async function startAuthenticatedPushRegistration(): Promise<() => Promis
       return;
     }
     if (stopped) return;
+    if (registeredToken && registeredToken !== token) {
+      await unregisterAndroidPushToken(registeredToken);
+      registeredToken = null;
+    }
     await registerAndroidPushToken(token);
     if (stopped) {
       // Cleanup awaits this registration before the auth token is revoked.
