@@ -14,7 +14,9 @@ export const RoomManagementPanel:React.FC<{roomId:string;section:Section;canMana
  const [notice,setNotice]=useState('');
  const [loaded,setLoaded]=useState(false);
  const requestVersion=useRef(0);
+ const savingRef=useRef(false);
  const load=async()=>{
+  if(savingRef.current)return;
   const version=++requestVersion.current;
   if(!stagingBackend){setError('الخادم غير متاح حالياً');return;}
   setBusy(true);setError('');setNotice('');setLoaded(false);
@@ -37,26 +39,29 @@ export const RoomManagementPanel:React.FC<{roomId:string;section:Section;canMana
  };
  useEffect(()=>{void load();return()=>{requestVersion.current++;};},[roomId,section]);
  const save=async()=>{
-  if(section==='history'||!canManage||busy||!loaded)return;
+  if(section==='history'||!canManage||busy||!loaded||savingRef.current)return;
   if(!stagingBackend){setError('الخادم غير متاح حالياً');return;}
+  savingRef.current=true;
+  const version=++requestVersion.current;
   setBusy(true);setError('');setNotice('');
   try{
    const {data,error}=await stagingBackend.rpc('totichat_room_management_state',{p_room_id:roomId,p_field:section,p_value:state[fieldKey[section]]});
    if(error)throw error;
    if(!data || typeof data!=='object')throw new Error('لم يؤكد الخادم حفظ إعدادات الغرفة');
+   if(version!==requestVersion.current)return;
    setState({rules:data.rules||'',autoMessage:data.autoMessage||'',announcement:data.announcement||''});
    setNotice('تم الحفظ على الخادم');
-  }catch(e){setError(e instanceof Error?e.message:'تعذر الحفظ');}
-  finally{setBusy(false);}
+  }catch(e){if(version===requestVersion.current)setError(e instanceof Error?e.message:'تعذر الحفظ');}
+  finally{savingRef.current=false;if(version===requestVersion.current)setBusy(false);}
  };
  const actions:Record<string,string>={updated_rules:'تعديل قواعد الغرفة',updated_auto_message:'تعديل الرسائل التلقائية',updated_announcement:'تعديل إعلان الغرفة',ban_user:'حظر مستخدم',unban_user:'رفع الحظر عن مستخدم',add_moderator:'تعيين مشرف',remove_moderator:'إزالة مشرف'};
  return <div className="fixed inset-0 z-[115] flex items-center justify-center bg-black/80 p-3" dir="rtl" onClick={onClose}>
   <div className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-3xl border-2 border-amber-400 bg-[#fffefa] p-5 text-slate-900 shadow-2xl" onClick={e=>e.stopPropagation()}>
-   <header className="flex items-center justify-between gap-3"><h3 className="text-lg font-black text-emerald-900">{labels[section]}</h3><div className="flex gap-2"><button type="button" onClick={()=>void load()} aria-label="تحديث"><RefreshCw size={18}/></button><button type="button" onClick={onClose} aria-label="إغلاق"><X size={20}/></button></div></header>
+   <header className="flex items-center justify-between gap-3"><h3 className="text-lg font-black text-emerald-900">{labels[section]}</h3><div className="flex gap-2"><button type="button" onClick={()=>void load()} disabled={busy} aria-label="تحديث"><RefreshCw size={18}/></button><button type="button" onClick={onClose} aria-label="إغلاق"><X size={20}/></button></div></header>
    {error&&<p role="alert" className="mt-3 rounded-xl bg-rose-50 p-3 text-xs text-rose-700">{error}</p>}
    {notice&&<p role="status" className="mt-3 text-xs text-emerald-700">{notice}</p>}
    {section==='history'?
-    <div className="mt-4 space-y-2">{loaded&&audit.length===0&&<p className="text-sm text-slate-500">لا توجد إجراءات مسجلة حتى الآن.</p>}{audit.map((a,i)=><div key={i} className="rounded-xl border border-amber-200 bg-white p-3"><p className="text-sm font-bold">{actions[a.action]||a.action}</p><p className="mt-1 text-xs text-slate-500">ID: {a.actorId??'—'} · {new Date(a.createdAt).toLocaleString('ar-IQ')}</p></div>)}</div>
+    <div className="mt-4 space-y-2">{loaded&&audit.length===0&&<p className="text-sm text-slate-500">لا توجد إجراءات مسجلة حتى الآن.</p>}{loaded&&audit.map((a,i)=><div key={i} className="rounded-xl border border-amber-200 bg-white p-3"><p className="text-sm font-bold">{actions[a.action]||a.action}</p><p className="mt-1 text-xs text-slate-500">ID: {a.actorId??'—'} · {new Date(a.createdAt).toLocaleString('ar-IQ')}</p></div>)}</div>
    :<div className="mt-4 space-y-3">
      <p className="text-xs text-slate-500">{section==='auto_message'?'نص الرسالة المحفوظة. لا يتم إرسالها دورياً حتى تفعيل نظام الإرسال التلقائي.':section==='announcement'?'إعلان خاص بالغرفة محفوظ على الخادم.':'القواعد التي يضعها مالك الغرفة.'}</p>
      <textarea rows={7} maxLength={1000} disabled={!canManage||busy||!loaded} value={state[fieldKey[section]]} onChange={e=>setState(p=>({...p,[fieldKey[section]]:e.target.value}))} className="w-full resize-none rounded-2xl border border-amber-200 bg-white p-3 text-sm disabled:opacity-75" placeholder="اكتب النص هنا..."/>
