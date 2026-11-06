@@ -167,7 +167,15 @@ const AppContent: React.FC = () => {
     sharedRoomLookupRef.current = roomId;
     void fetchRealRooms().then(async rows => {
       const target = rows.find(room => room.id === roomId);
-      if (!target) return;
+      if (!target) {
+        const currentUrl = new URL(window.location.href);
+        if (currentUrl.searchParams.get('room') === roomId) {
+          currentUrl.searchParams.delete('room');
+          window.history.replaceState(window.history.state, '', currentUrl.toString());
+          alert('الغرفة غير متاحة حالياً أو لا تملك صلاحية الوصول إليها.');
+        }
+        return;
+      }
       // The user may have signed out while the shared-room lookup was pending.
       const { data: auth, error: authError } = await stagingBackend!.auth.getUser();
       if (authError || !auth.user) return;
