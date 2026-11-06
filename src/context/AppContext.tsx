@@ -663,6 +663,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const channel = client.channel('staging-my-direct-messages')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'direct_messages' }, () => {
         void loadDirectMessages().catch(error => console.error('DM refresh failed:', error));
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'direct_messages' }, () => {
+        void loadDirectMessages().catch(error => console.error('DM read-status refresh failed:', error));
       }).subscribe();
     const refreshOnReturn = () => {
       if (!document.hidden && navigator.onLine) {
