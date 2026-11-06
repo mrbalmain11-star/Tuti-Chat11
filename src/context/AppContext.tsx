@@ -1555,6 +1555,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const roomId = activeRoom.id;
     const transitionAtStart = roomTransitionVersion.current;
     const nextMuted = !myMicMuted;
+    const mySeat = activeRoom.seats.find(seat => seat.user?.id === currentUser.id);
+    if (!nextMuted && mySeat?.isModeratorMuted) {
+      alert('المايك مكتوم من إدارة الغرفة. لا يمكنك تشغيله حتى يرفع المشرف الكتم.');
+      return;
+    }
     micUpdatePendingRef.current = true;
     void setMyRoomMute(roomId, nextMuted).then(confirmed => {
       if (transitionAtStart !== roomTransitionVersion.current) return;
