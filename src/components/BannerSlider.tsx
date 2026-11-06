@@ -15,14 +15,16 @@ export const BannerSlider: React.FC = () => {
     if (!stagingBackend) return;
     let alive = true;
     const refresh = async () => {
+      const now = new Date().toISOString();
       const { data, error } = await stagingBackend!.from('home_banners')
         .select('id,title,image_url,link_kind,link_target,sort_order,starts_at,ends_at')
-        .eq('status','published').order('sort_order',{ascending:true}).limit(60);
-      if (error) { console.error('Banner loading failed:',error); return; }
-      const now = Date.now();
-      if (alive) setItems((data ?? []).filter(b =>
-        (!b.starts_at || Date.parse(b.starts_at) <= now) &&
-        (!b.ends_at || Date.parse(b.ends_at) > now)).slice(0, 10));
+        .eq('status', 'published')
+        .or(`starts_at.is.null,starts_at.lte.${now}`)
+        .or(`ends_at.is.null,ends_at.gt.${now}`)
+        .order('sort_order', { ascending: true })
+        .limit(10);
+      if (error) { console.error('Banner loading failed:', error); return; }
+      if (alive) setItems(data ?? []);
     };
     void refresh();
     const refreshTimer = window.setInterval(() => void refresh(), 60000);
