@@ -101,7 +101,7 @@ export const OffersPopup: React.FC = () => {
       if(offers.error){if(alive){setOffersError(true);setOffersLoading(false);setOffersLoaded(true);setItems([]);}console.error('Recharge offers load failed',offers.error);return;}
       const now=Date.now();
       const merged:Offer[]=(offers.data??[]).map(o=>({...o,link_kind:'offer',link_target:null}));
-      const active=merged.filter(b=>(!b.starts_at||(Number.isFinite(Date.parse(b.starts_at))&&Date.parse(b.starts_at)<=now))&&(!b.ends_at||(Number.isFinite(Date.parse(b.ends_at))&&Date.parse(b.ends_at)>now)) && typeof b.title==='string' && b.title.trim().length>0 && b.price_iqd!=null && Number.isFinite(Number(b.price_iqd)) && Number(b.price_iqd)>0 && b.coins!=null && Number.isFinite(Number(b.coins)) && Number(b.coins)>0 && (b.bonus_coins==null || (Number.isFinite(Number(b.bonus_coins)) && Number(b.bonus_coins)>=0)));
+      const active=merged.filter(b=>(!b.starts_at||(Number.isFinite(Date.parse(b.starts_at))&&Date.parse(b.starts_at)<=now))&&(!b.ends_at||(Number.isFinite(Date.parse(b.ends_at))&&Date.parse(b.ends_at)>now)) && typeof b.title==='string' && b.title.trim().length>0 && b.price_iqd!=null && Number.isFinite(Number(b.price_iqd)) && Number(b.price_iqd)>0 && b.coins!=null && Number.isSafeInteger(Number(b.coins)) && Number(b.coins)>0 && (b.bonus_coins==null || (Number.isSafeInteger(Number(b.bonus_coins)) && Number(b.bonus_coins)>=0)) && Number.isSafeInteger(Number(b.coins)+Number(b.bonus_coins??0)));
       if(alive){setOffersError(false);setOffersLoading(false);setOffersLoaded(true);setItems(active);setIndex(0);}
     };
     void refresh().catch(error => {
