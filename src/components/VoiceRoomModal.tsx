@@ -136,6 +136,21 @@ export const VoiceRoomModal: React.FC = () => {
   // Global super-admin status alone does not grant the room-moderation RPC permission.
   const isModerator = Boolean(activeRoom && (activeRoom.moderatorIds || []).includes(currentUser.id));
   const isVisitor = !isOwner && !isModerator;
+  const previousModeratorRoleRef = useRef<{ roomId: string; wasModerator: boolean } | null>(null);
+  useEffect(() => {
+    const roomId = activeRoom?.id;
+    if (!roomId) {
+      previousModeratorRoleRef.current = null;
+      return;
+    }
+    const previous = previousModeratorRoleRef.current;
+    if (previous?.roomId === roomId && previous.wasModerator && !isModerator && !isOwner) {
+      setShowSeatLayouts(false);
+      setRoomManagementSection(null);
+      showToast('تم سحب صلاحية الإشراف. أُغلقت أدوات الإدارة.');
+    }
+    previousModeratorRoleRef.current = { roomId, wasModerator: isModerator };
+  }, [activeRoom?.id, isModerator, isOwner]);
 
   // Local interactive states
   const [showChatInput, setShowChatInput] = useState(false);
