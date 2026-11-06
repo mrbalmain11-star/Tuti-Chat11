@@ -15,7 +15,7 @@ export function mapRoomToUi(room: BackendRoom): VoiceRoom {
     countryFlag: '',
     listenersCount: 0,
     activeMicCount: 0,
-    tag: '',
+    tag: room.tag ?? '',
     agencyName: '',
     frameType: 'gold',
     memberAvatars: [],
