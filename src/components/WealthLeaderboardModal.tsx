@@ -729,7 +729,7 @@ export const WealthLeaderboardModal: React.FC = () => {
   const [showResetRulesModal, setShowResetRulesModal] = useState(false);
   type RankingRow={entity_id:string;public_id:number;display_name:string;avatar_url:string|null;score:number};
   const [rankingState,setRankingState]=useState<{period:TimePeriod;tab:string;rows:RankingRow[]}|null>(null);
-  const ranking=rankingState?.period===period && rankingState?.tab===leaderboardTab ? rankingState.rows : [];
+  const ranking=openWealthLeaderboardModal && rankingState?.period===period && rankingState?.tab===leaderboardTab ? rankingState.rows : [];
   useEffect(()=>{
     if(!openWealthLeaderboardModal||!stagingBackend)return;
     let alive=true;
