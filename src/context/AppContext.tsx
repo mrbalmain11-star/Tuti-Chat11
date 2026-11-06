@@ -1082,6 +1082,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     void refresh();
     // Seat locks are stored separately from room_members. Read a server-authoritative
     // snapshot so every participant sees the same lock state, including after reconnect.
+    let alive = true;
+    const roomClient = stagingBackend;
     let lockRefreshInFlight = false;
     const refreshSeatLocks = async () => {
       if (!alive || lockRefreshInFlight) return;
@@ -1722,7 +1724,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return;
     }
     const requestId = crypto.randomUUID();
-    void Promise.resolve(stagingBackend.rpc('staging_send_dm', {
+    const dmClient = stagingBackend;
+    void Promise.resolve(dmClient.rpc('staging_send_dm', {
       p_to: recipientId, p_text: body, p_nonce: requestId,
     })).then(async ({ data, error }) => {
       if (error || !data) throw error ?? new Error('Message not confirmed');
@@ -1731,7 +1734,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // are ever present in the client. The endpoint remains disabled until
       // its server-side credentials and deployment are verified.
       if (import.meta.env.VITE_ENABLE_DM_PUSH === 'true') {
-        void stagingBackend.functions.invoke('send-direct-message-push', {
+        void dmClient.functions.invoke('send-direct-message-push', {
           body: { messageId: String(data) },
         }).then(({ error: pushError }) => {
           if (pushError) console.warn('DM push delivery unavailable');
