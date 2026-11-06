@@ -37,7 +37,7 @@ export const GlobalGiftBanner: React.FC = () => {
         }
         const fresh = rows.filter(row => row.created_at > cursor.current! && !seen.current.has(row.id));
         if (rows[0]?.created_at && rows[0].created_at > cursor.current) cursor.current = rows[0].created_at;
-        const next = fresh.reverse().find(row => row.total_coins >= 7000 && !!row.room_id);
+        const next = fresh.find(row => row.total_coins >= 7000 && !!row.room_id);
         if (next) {
           fresh.forEach(row => seen.current.add(row.id));
           if (seen.current.size > 100) seen.current.clear();
