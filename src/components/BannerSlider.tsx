@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { stagingBackend } from '../services/stagingBackend';
 
+const supportedTargets = new Set(['home', 'room', 'me', 'vip', 'wallet', 'agency']);
+
 type Banner = { id: string; title: string; image_url: string; link_kind: string; link_target: string | null; sort_order: number; starts_at: string | null; ends_at: string | null };
 
 export const BannerSlider: React.FC = () => {
@@ -55,7 +57,7 @@ export const BannerSlider: React.FC = () => {
         if (Math.abs(diff) > 35) setIndex(i => (i + (diff > 0 ? -1 : 1) + items.length) % items.length);
       }}>
       {banner ? <>
-        <button type="button" onClick={open} disabled={banner.link_kind !== 'screen' || !banner.link_target} className="absolute inset-0 w-full h-full disabled:cursor-default" aria-label={banner.title}>
+        <button type="button" onClick={open} disabled={banner.link_kind !== 'screen' || !banner.link_target || !supportedTargets.has(banner.link_target)} className="absolute inset-0 w-full h-full disabled:cursor-default" aria-label={banner.title}>
           <img src={banner.image_url} alt={banner.title} className="w-full h-full object-cover"
             onError={e => { e.currentTarget.style.display='none'; }} />
         </button>
