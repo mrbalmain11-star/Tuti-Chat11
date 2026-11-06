@@ -1175,12 +1175,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       let members: Awaited<ReturnType<typeof resolveRoomAvatars>>;
       try {
         members = await resolveRoomAvatars(await fetchRoomVisualMembers(roomId));
-      } catch (error) {
-        if (transition === roomTransitionVersion.current) {
-          console.error('Room membership visuals unavailable after joining:', error);
-          alert('تم دخول الغرفة، لكن تعذر تحديث المقاعد والأعضاء. حاول تحديث الغرفة.');
+      } catch (firstError) {
+        if (transition !== roomTransitionVersion.current) return;
+        console.warn('Retrying room member visuals after transient failure:', firstError);
+        try {
+          members = await resolveRoomAvatars(await fetchRoomVisualMembers(roomId));
+        } catch (error) {
+          if (transition === roomTransitionVersion.current) {
+            console.error('Room membership visuals unavailable after retry:', error);
+            alert('تم دخول الغرفة، لكن تعذر تحديث المقاعد والأعضاء. حاول تحديث الغرفة.');
+          }
+          return;
         }
-        return;
       }
       if (transition !== roomTransitionVersion.current) return;
       const mine = members.find(m => m.user_id === currentUser.id);
