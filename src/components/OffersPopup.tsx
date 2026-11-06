@@ -112,6 +112,7 @@ export const OffersPopup: React.FC = () => {
   },[daily,dailyLoaded,offersLoaded,offersError,items,disabled]);
   useEffect(()=>{
     if(!stagingBackend){setOffersError(true);setOffersLoading(false);setOffersLoaded(true);setItems([]);return;}
+    const backend = stagingBackend;
     let alive=true;
     const refresh=async()=>{
       setOffersLoading(true);
@@ -119,7 +120,7 @@ export const OffersPopup: React.FC = () => {
       setItems([]);
       setOffersLoaded(false);
       const nowIso=new Date().toISOString();
-      const offers=await stagingBackend.from('recharge_offers').select('id,title,description,image_url,price_iqd,coins,bonus_coins,starts_at,ends_at').eq('status','published').or(`starts_at.is.null,starts_at.lte.${nowIso}`).or(`ends_at.is.null,ends_at.gt.${nowIso}`).order('created_at',{ascending:false}).limit(100);
+      const offers=await backend.from('recharge_offers').select('id,title,description,image_url,price_iqd,coins,bonus_coins,starts_at,ends_at').eq('status','published').or(`starts_at.is.null,starts_at.lte.${nowIso}`).or(`ends_at.is.null,ends_at.gt.${nowIso}`).order('created_at',{ascending:false}).limit(100);
       if(offers.error){if(alive){setOffersError(true);setOffersLoading(false);setOffersLoaded(true);setItems([]);}console.error('Recharge offers load failed',offers.error);return;}
       const now=Date.now();
       const merged:Offer[]=(offers.data??[]).map(o=>({...o,link_kind:'offer',link_target:null}));
