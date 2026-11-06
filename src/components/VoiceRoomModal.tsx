@@ -701,6 +701,13 @@ export const VoiceRoomModal: React.FC = () => {
 
   const [coverSaving,setCoverSaving]=useState(false);
   const [coverPreview,setCoverPreview]=useState<string|null>(null);
+  useEffect(() => { setCoverPreview(null); }, [activeRoom?.id]);
+  useEffect(() => {
+    if (!showRoomInfoModal || !activeRoom) return;
+    setEditTitleInput(activeRoom.title || '');
+    setEditAnnouncementInput(activeRoom.announcement || '');
+    setEditTagInput(activeRoom.tag || '');
+  }, [showRoomInfoModal, activeRoom?.id]);
   const handleRoomCoverFile=async(e:React.ChangeEvent<HTMLInputElement>)=>{
     const file=e.target.files?.[0];e.target.value='';
     if(!file||!activeRoom||!stagingBackend)return;
@@ -2888,7 +2895,7 @@ export const VoiceRoomModal: React.FC = () => {
                   <input value={editTagInput} readOnly title="وسم الغرفة للعرض فقط إلى حين تفعيل حفظ الوسوم على الخادم" maxLength={80} className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm font-bold shadow-sm disabled:opacity-70"/>
                 </label>
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="rounded-xl border border-amber-200 bg-white p-3"><p className="text-[11px] font-bold">نوع الغرفة</p><p className="mt-1 text-sm font-black text-emerald-800">{activeRoom.micsLocked ? 'المقاعد مقفلة 🔒' : 'عامة 🔓'}</p></div>
+                  <div className="rounded-xl border border-amber-200 bg-white p-3"><p className="text-[11px] font-bold">حالة المقاعد</p><p className="mt-1 text-sm font-black text-emerald-800">{activeRoom.micsLocked ? 'المقاعد مقفلة 🔒' : 'المقاعد مفتوحة 🔓'}</p></div>
                   <div className="rounded-xl border border-amber-200 bg-white p-3"><p className="text-[11px] font-bold">التصنيف الحالي</p><p className="mt-1 truncate text-sm font-black text-emerald-800">{activeRoom.tag || 'غير محدد'}</p></div>
                 </div>
                 <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3">
