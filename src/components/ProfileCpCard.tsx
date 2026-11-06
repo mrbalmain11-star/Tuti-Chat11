@@ -113,7 +113,7 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
   return <section className={compact ? 'relative isolate mx-2 mt-3 min-h-[180px] overflow-hidden rounded-[26px] border border-amber-400/70 bg-gradient-to-b from-[#4b173c] via-[#7d2c54] to-[#301327] p-4 shadow-[0_12px_36px_rgba(0,0,0,.35)]' : 'relative isolate mx-3 my-3.5 min-h-[180px] overflow-hidden rounded-[26px] border border-amber-500/70 bg-gradient-to-b from-[#4b173c] via-[#7d2c54] to-[#301327] p-4 shadow-[0_12px_36px_rgba(0,0,0,.35)]'} dir="rtl">
     <RoyalCpOrnament />
     <div className="relative z-10">
-    <div className="flex items-center gap-2 text-amber-100"><span className="text-sm font-black">علاقات CP</span></div>
+    <div className="flex items-center justify-center gap-2 rounded-xl border border-pink-200/40 bg-gradient-to-l from-[#6b1f4d]/90 via-[#b33d78]/85 to-[#6b1f4d]/90 px-3 py-1.5 text-amber-100"><span className="text-sm font-black">علاقات CP</span></div>
     {error && <div role="status" className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-rose-200"><span>{links.length > 0 ? 'تعذر تحديث العلاقات، تُعرض آخر بيانات مؤكدة.' : 'تعذر تحميل العلاقات. تحقق من الاتصال وحاول مجدداً.'}</span><button type="button" disabled={loading || endingPartner !== null} onClick={() => setRetryNonce(n => n + 1)} className="rounded-lg border border-amber-300/70 px-3 py-1 font-bold text-amber-100 disabled:opacity-50">إعادة المحاولة</button></div>}
     {loading && <p role="status" className="mt-2 text-xs text-amber-100/70">جارٍ تحديث العلاقات...</p>}
     {links.length > 0 && <div className="mt-3 space-y-3">{links.map(link => (
