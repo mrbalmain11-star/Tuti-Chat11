@@ -84,7 +84,8 @@ export const GiftAnimationOverlay: React.FC = () => {
   if (!epic || !style) {
     return (
       <div className="fixed inset-0 z-[80] pointer-events-none flex items-center justify-center font-['Cairo',sans-serif]">
-        <div className="rounded-3xl border border-amber-400/60 bg-[#1c1327]/95 px-8 py-6 text-center shadow-2xl">
+        <div className="relative rounded-3xl border border-amber-400/60 bg-[#1c1327]/95 px-8 py-6 text-center shadow-2xl">
+          <button type="button" onClick={clearGiftAnimation} aria-label="إغلاق تأثير الهدية" className="pointer-events-auto absolute -right-2 -top-2 flex h-9 w-9 items-center justify-center rounded-full border border-amber-300/60 bg-[#24182b] text-white"><X size={18}/></button>
           <div className="text-6xl mb-3">{gift.icon}</div>
           <div className="text-amber-200 font-black">{gift.name} ×{count}</div>
           <div className="text-white text-xs mt-2">{sender} أهدى إلى {receiver}</div>
