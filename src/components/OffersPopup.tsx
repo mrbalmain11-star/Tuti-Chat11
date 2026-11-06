@@ -66,7 +66,8 @@ export const OffersPopup: React.FC = () => {
           ? 'تم تأكيد استلام المكافأة اليومية بقيمة '+confirmedCoins.toLocaleString('ar-IQ')+' عملة.'
           : 'تم تأكيد استلام المكافأة اليومية من الخادم.');
       }else if(refreshed){
-        setNotice('تم تنفيذ طلب الاستلام، لكن الحالة تحتاج تحديثاً.');
+        setDaily({...refreshed,claimed:true});
+        setNotice('نجح طلب الاستلام، لكن حالة الخادم تحتاج إعادة تحقق.');
       }else{
         setDaily(previous=>({...previousDaily,...previous,claimed:true}));
         setNotice('نجح استلام المكافأة، وتعذر تحديث الحالة حالياً.');
