@@ -148,6 +148,7 @@ const AppContent: React.FC = () => {
     };
   }, [otpRetry]);
 
+  const sharedRoomLookupRef = React.useRef<string | null>(null);
   // Open a shared room only after authentication, OTP and onboarding are complete.
   React.useEffect(() => {
     if (!isLoggedIn || (GOOGLE_EMAIL_OTP_ENFORCED && otpState !== 'verified') || onboardingState !== 'complete') return;
@@ -161,7 +162,9 @@ const AppContent: React.FC = () => {
       enterRoom(roomId);
       return;
     }
-    // Room lists may still be loading when an external share link opens.
+    // Avoid duplicate network lookups while the room list and context rerender.
+    if (sharedRoomLookupRef.current === roomId) return;
+    sharedRoomLookupRef.current = roomId;
     void fetchRealRooms().then(rows => {
       const target = rows.find(room => room.id === roomId);
       if (!target) return;
@@ -170,7 +173,8 @@ const AppContent: React.FC = () => {
       currentUrl.searchParams.delete('room');
       window.history.replaceState(window.history.state, '', currentUrl.toString());
       enterRoom(roomId, mapRoomToUi(target));
-    }).catch(error => console.error('Shared room lookup failed:', error));
+    }).catch(error => console.error('Shared room lookup failed:', error))
+      .finally(() => { if (sharedRoomLookupRef.current === roomId) sharedRoomLookupRef.current = null; });
   }, [isLoggedIn, otpState, onboardingState, rooms, enterRoom]);
 
   if (!isLoggedIn) {
