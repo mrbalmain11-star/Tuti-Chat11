@@ -60,7 +60,7 @@ export async function fetchRealRooms(): Promise<BackendRoom[]> {
   const { data: auth, error: authError } = await client.auth.getUser();
   if (authError) throw authError;
   if (!auth.user) return [];
-  const fields = 'id,public_id,owner_id,title,is_private,welcome_message,cover_path,background_path';
+  const fields = 'id,public_id,owner_id,title,is_private,welcome_message,tag,cover_path,background_path';
   const [publicRooms, ownedRooms] = await Promise.all([
     client.from('rooms').select(fields).eq('is_private', false).order('created_at', { ascending: false }),
     client.from('rooms').select(fields).eq('owner_id', auth.user.id).order('created_at', { ascending: false }),
