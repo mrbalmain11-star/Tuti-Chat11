@@ -123,7 +123,7 @@ export const OffersPopup: React.FC = () => {
         <div className="p-3">
           <div className="grid grid-cols-2 gap-2 mb-3">
             <button type="button" onClick={()=>setTab('daily')} className={`flex items-center justify-center gap-1.5 rounded-xl py-2.5 font-black text-sm ${tab==='daily'?'bg-[#0a9d72] text-white':'bg-white text-[#137b60]'}`}><Gift size={17} aria-hidden="true" /> المكافآت اليومية</button>
-            <button type="button" onClick={()=>setTab('offers')} className={`flex items-center justify-center gap-1.5 rounded-xl py-2.5 font-black text-sm ${tab==='offers'?'bg-[#0a9d72] text-white':'bg-white text-[#137b60]'}`}><Coins size={17} aria-hidden="true" /> عروض الشحن</button>
+            <button type="button" onClick={()=>{setTab('offers');setOffersRetry(previous=>previous+1);}} className={`flex items-center justify-center gap-1.5 rounded-xl py-2.5 font-black text-sm ${tab==='offers'?'bg-[#0a9d72] text-white':'bg-white text-[#137b60]'}`}><Coins size={17} aria-hidden="true" /> عروض الشحن</button>
           </div>
           {tab==='daily'?<>
             <div className="grid grid-cols-3 gap-2" aria-label="جدول المكافآت للأيام السبعة">
