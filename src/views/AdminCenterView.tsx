@@ -38,6 +38,11 @@ const AdminDailyRewardsReadOnly: React.FC = () => {
     } finally { setLoading(false); }
   };
   useEffect(() => { void refresh(); }, []);
+  useEffect(() => {
+    const onReturn = () => { if (document.visibilityState === 'visible') void refresh(); };
+    document.addEventListener('visibilitychange', onReturn);
+    return () => document.removeEventListener('visibilitychange', onReturn);
+  }, []);
   return <section className="space-y-3">
     <p className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm">القيم الفعلية من الخادم، للعرض فقط. تعديل المكافآت غير مفعّل.</p>
     <button type="button" disabled={loading} onClick={() => void refresh()} className="rounded-xl bg-emerald-800 px-4 py-2 text-white disabled:opacity-50">{loading ? 'جارٍ التحميل...' : 'تحديث القيم'}</button>
