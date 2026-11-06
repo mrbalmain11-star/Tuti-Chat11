@@ -661,7 +661,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
     void loadDirectMessages().catch(error => console.error('DM history load failed:', error));
     const channel = client.channel('staging-my-direct-messages')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'direct_messages' }, () => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'direct_messages' }, payload => {
+        const incoming = payload.new as { sender_id?: string; recipient_id?: string; id?: number };
+        if (incoming.recipient_id === currentUser.id && incoming.sender_id !== currentUser.id) {
+          window.dispatchEvent(new CustomEvent('totichat:dm-received', {
+            detail: { senderId: incoming.sender_id, messageId: incoming.id },
+          }));
+        }
         void loadDirectMessages().catch(error => console.error('DM refresh failed:', error));
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'direct_messages' }, () => {
