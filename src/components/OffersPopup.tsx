@@ -13,13 +13,25 @@ export const OffersPopup: React.FC = () => {
   const [tab,setTab]=useState<'daily'|'offers'>('daily');
   const [daily,setDaily]=useState<{day:number;claimed:boolean;coins:number}|null>(null);
   const [claiming,setClaiming]=useState(false);
+  const [dailyLoading,setDailyLoading]=useState(false);
   const [notice,setNotice]=useState('');
   const loadDaily=async()=>{
     if(!stagingBackend)return;
-    const {data,error}=await stagingBackend.rpc('daily_reward_status');
-    if(error){setDaily(null);setNotice('تعذر تحميل المكافأة اليومية. حاول لاحقاً.');return;}
-    if(data)setDaily(data as {day:number;claimed:boolean;coins:number});
-    else{setDaily(null);setNotice('لم يتم تأكيد حالة المكافأة من الخادم.');}
+    setDailyLoading(true);
+    try{
+      const {data,error}=await stagingBackend.rpc('daily_reward_status');
+      if(error)throw error;
+      if(!data || typeof data!=='object')throw new Error('Missing reward status');
+      const status=data as {day?:number;claimed?:boolean;coins?:number};
+      if(!Number.isInteger(status.day) || status.day!<1 || status.day!>7 || typeof status.claimed!=='boolean' || typeof status.coins!=='number' || !Number.isFinite(status.coins) || status.coins!<0)throw new Error('Invalid reward status');
+      setDaily({day:status.day!,claimed:status.claimed,coins:status.coins});
+    }catch(error){
+      console.error('Daily reward status failed',error);
+      setDaily(null);
+      setNotice('تعذر تأكيد حالة المكافأة من الخادم. حاول لاحقاً.');
+    }finally{
+      setDailyLoading(false);
+    }
   };
   const claim=async()=>{
     if(!stagingBackend||claiming||!daily||daily.claimed)return;
@@ -83,7 +95,7 @@ export const OffersPopup: React.FC = () => {
               <div className="text-5xl my-1">🎁</div>
               <span className="text-[#075b45] font-black">{daily?.day===7 ? Number(daily.coins).toLocaleString('ar-IQ') + ' 🪙' : 'حسب الخادم'}</span>
             </div>
-            <button disabled={!daily||daily.claimed||claiming} onClick={()=>void claim()} className="w-full mt-3 rounded-2xl bg-gradient-to-b from-[#ffe57a] to-[#f6b500] text-[#6b4200] font-black text-lg py-3 border-2 border-[#f0b22a] disabled:opacity-60">{daily?.claimed?'تم الاستلام اليوم':claiming?'جاري الاستلام...':'استلام المكافأة'}</button>
+            <button disabled={!daily||daily.claimed||claiming||dailyLoading} onClick={()=>void claim()} className="w-full mt-3 rounded-2xl bg-gradient-to-b from-[#ffe57a] to-[#f6b500] text-[#6b4200] font-black text-lg py-3 border-2 border-[#f0b22a] disabled:opacity-60">{dailyLoading?'جارٍ التحقق...':daily?.claimed?'تم الاستلام اليوم':claiming?'جاري الاستلام...':'استلام المكافأة'}</button>
           </>:<>
             {items.length===0?<p className="text-center text-emerald-900 py-8">لا توجد عروض شحن خاصة حالياً</p>:selected&&<div className="rounded-xl bg-white border border-emerald-200 overflow-hidden">
               {selected.image_url?<img src={selected.image_url} alt={selected.title} className="w-full aspect-[2/1] object-contain"/>:<div className="h-32 bg-gradient-to-br from-emerald-800 to-amber-500 flex items-center justify-center text-white"><Gift size={54}/></div>}
