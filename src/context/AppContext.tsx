@@ -1011,6 +1011,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
     // Use the same serialized refresh path for initial load and live updates.
     void refresh();
+    // Seat locks are stored separately from room_members. Read a server-authoritative
+    // snapshot so every participant sees the same lock state, including after reconnect.
+    let lockRefreshInFlight = false;
+    const refreshSeatLocks = async () => {
+      if (!alive || lockRefreshInFlight) return;
+      lockRefreshInFlight = true;
+      try {
+        const { data, error } = await roomClient.rpc('totichat_room_locked_seats', { p_room_id: roomId });
+        if (error) throw error;
+        if (!alive || !Array.isArray(data)) return;
+        const locked = new Set<number>(data.filter((value: unknown): value is number =>
+          typeof value === 'number' && Number.isInteger(value) && value >= 1 && value <= 15));
+        setActiveRoom(prev => prev?.id !== roomId ? prev : {
+          ...prev,
+          seats: prev.seats.map(seat => ({ ...seat, isLocked: locked.has(seat.seatNumber) })),
+        });
+      } catch (error) {
+        console.error('Room seat locks refresh failed:', error);
+      } finally { lockRefreshInFlight = false; }
+    };
+    void refreshSeatLocks();
+    const seatLockTimer = window.setInterval(() => {
+      if (document.visibilityState === 'visible' && navigator.onLine) void refreshSeatLocks();
+    }, 5000);
     const client = stagingBackend;
     let recoveryTimer: number | undefined;
     const stopRecovery = () => {
@@ -1147,6 +1171,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         event: '*', schema: 'public', table: 'room_members',
         filter: 'room_id=eq.' + roomId,
       }, () => { void refreshRoster(); })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'room_seat_locks', filter: 'room_id=eq.' + roomId }, () => { void refreshSeatLocks(); })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' },
         () => { void refreshRoster(); })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'vip_entitlements' },
@@ -1154,7 +1179,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       .subscribe(status => {
         if (status === 'SUBSCRIBED') {
           stopRecovery();
+      window.clearInterval(seatLockTimer);
           void refreshRoster();
+          void refreshSeatLocks();
         }
         if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
           console.error('Room roster realtime subscription:', status);
@@ -1162,9 +1189,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
       });
     const refreshOnForeground = () => {
-      if (document.visibilityState === 'visible') void refreshRoster();
+      if (document.visibilityState === 'visible') { void refreshRoster(); void refreshSeatLocks(); }
     };
-    const refreshOnReconnect = () => { void refreshRoster(); };
+    const refreshOnReconnect = () => { void refreshRoster(); void refreshSeatLocks(); };
     // Moderator role changes may not be part of the published realtime tables.
     const roleRefreshTimer = window.setInterval(() => {
       if (document.visibilityState === 'visible' && navigator.onLine) void refreshRoster();
