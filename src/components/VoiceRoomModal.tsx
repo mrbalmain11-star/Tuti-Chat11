@@ -298,7 +298,7 @@ export const VoiceRoomModal: React.FC = () => {
   const [roomGiftStats, setRoomGiftStats] = useState<{ today: number; week: number; month: number } | null>(null);
   const [roomGiftStatsError, setRoomGiftStatsError] = useState('');
   useEffect(() => {
-    if (!showRoomStatsModal || !activeRoom?.id || !stagingBackend) return;
+    if (!activeRoom?.id || !stagingBackend) return;
     let active = true;
     const statsRoomId = activeRoom.id;
     setRoomGiftStats(null);
@@ -340,7 +340,7 @@ export const VoiceRoomModal: React.FC = () => {
       window.removeEventListener('focus', refreshOnReturn);
       document.removeEventListener('visibilitychange', refreshOnReturn);
     };
-  }, [showRoomStatsModal, activeRoom?.id]);
+  }, [activeRoom?.id]);
 
   const [showDecorationsModal, setShowDecorationsModal] = useState<'mic' | 'frame' | 'title' | null>(null);
 
