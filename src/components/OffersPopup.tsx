@@ -76,10 +76,10 @@ export const OffersPopup: React.FC = () => {
   useEffect(()=>{
     if(!dailyLoaded || !offersLoaded || disabled || sessionStorage.getItem('totichat:offers:seen'))return;
     if(daily && !daily.claimed){setTab('daily');setOpen(true);}
-    else if(items.length>0){setTab('offers');setOpen(true);}
+    else if(!offersError && items.length>0){setTab('offers');setOpen(true);}
     else return;
     sessionStorage.setItem('totichat:offers:seen','yes');
-  },[daily,dailyLoaded,offersLoaded,items,disabled]);
+  },[daily,dailyLoaded,offersLoaded,offersError,items,disabled]);
   useEffect(()=>{
     if(!stagingBackend){setOffersError(true);setOffersLoading(false);setOffersLoaded(true);return;}
     let alive=true;
