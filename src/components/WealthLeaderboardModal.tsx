@@ -993,7 +993,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                   {topWealth1 && (
                     <div
                       onClick={() => handleOpenUser(topWealth1.user)}
-                      className="flex-1.1 flex flex-col items-center cursor-pointer group active:scale-95 transition -mt-3"
+                      className="flex-1.1 flex flex-col items-center cursor-pointer group active:scale-95 transition -translate-y-3"
                     >
                       <div className="relative mb-1">
                         <div className="w-20 h-20 rounded-full p-1.5 bg-gradient-to-b from-amber-300 via-yellow-200 to-amber-500 border-2 border-amber-400 shadow-xl ring-3 ring-amber-300/40">
@@ -1206,7 +1206,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                   {topCharm1 && (
                     <div
                       onClick={() => handleOpenUser(topCharm1.user)}
-                      className="flex-1.1 flex flex-col items-center cursor-pointer group active:scale-95 transition -mt-3"
+                      className="flex-1.1 flex flex-col items-center cursor-pointer group active:scale-95 transition -translate-y-3"
                     >
                       <div className="relative mb-1">
                         <div className="w-20 h-20 rounded-full p-1.5 bg-gradient-to-b from-amber-300 via-yellow-200 to-amber-500 border-2 border-amber-400 shadow-xl ring-3 ring-amber-300/40">
@@ -1420,7 +1420,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                   {topRoom1 && (
                     <div
                       onClick={() => handleEnterRoom(topRoom1.id)}
-                      className="flex-1.1 flex flex-col items-center cursor-pointer group active:scale-95 transition -mt-3"
+                      className="flex-1.1 flex flex-col items-center cursor-pointer group active:scale-95 transition -translate-y-3"
                     >
                       <div className="relative mb-1">
                         {/* صورة الروم المركز الأول */}
