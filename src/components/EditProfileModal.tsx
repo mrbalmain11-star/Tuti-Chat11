@@ -52,7 +52,7 @@ export const EditProfileModal: React.FC = () => {
       setName(currentUser.name || '');
       setBio(currentUser.bio || '');
       setAvatar(currentUser.avatar || '');
-      setCover(currentUser.cover || 'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?w=800&auto=format&fit=crop&q=80');
+      setCover(currentUser.cover || '');
     }
   }, [openEditProfileModal]);
 
@@ -92,6 +92,7 @@ export const EditProfileModal: React.FC = () => {
       sounds.playCoin();
     } catch (err) {
       console.error(err);
+      setSaveError(err instanceof Error ? err.message : 'تعذر تجهيز صورة الغلاف');
     } finally {
       setUploadingCover(false);
       if (coverInputRef.current) coverInputRef.current.value = '';
@@ -149,6 +150,9 @@ export const EditProfileModal: React.FC = () => {
               غلاف الملف الشخصي:
             </label>
             <div
+              role="button"
+              tabIndex={0}
+              onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); coverInputRef.current?.click(); } }}
               onClick={() => coverInputRef.current?.click()}
               className="relative w-full h-24 rounded-2xl border-2 border-dashed border-amber-300 hover:border-amber-400 overflow-hidden shadow-xs cursor-pointer group bg-slate-900 active:scale-98 transition flex items-center justify-center"
               title="اضغط لتغيير الغلاف من المعرض"
@@ -185,6 +189,9 @@ export const EditProfileModal: React.FC = () => {
             />
 
             <div
+              role="button"
+              tabIndex={0}
+              onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); fileInputRef.current?.click(); } }}
               onClick={() => fileInputRef.current?.click()}
               className="relative w-22 h-22 rounded-full border-2 border-emerald-500 overflow-hidden shadow-md cursor-pointer group bg-slate-100 active:scale-95 transition"
               title="اضغط لتغيير الصورة من المعرض"
