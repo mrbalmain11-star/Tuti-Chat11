@@ -718,10 +718,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setFollowedRoomHosts(new Set());
       return;
     }
+    const backend = stagingBackend;
     let active = true;
     const refreshFollows = async () => {
       try {
-        const { data, error } = await stagingBackend.rpc('staging_my_followed_ids');
+        const { data, error } = await backend.rpc('staging_my_followed_ids');
         if (error) throw error;
         if (!Array.isArray(data) || !data.every(id => typeof id === 'string')) throw new Error('Invalid follow list');
         // Do not overwrite a follow toggle still being confirmed by the server.
