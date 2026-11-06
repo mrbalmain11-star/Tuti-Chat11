@@ -10,6 +10,7 @@ import { ProfileView } from './views/ProfileView';
 import { VoiceRoomModal } from './components/VoiceRoomModal';
 import { GiftStoreModal } from './components/GiftStoreModal';
 import { GiftAnimationOverlay } from './components/GiftAnimationOverlay';
+import { GlobalGiftBanner } from './components/GlobalGiftBanner';
 import { RechargeModal } from './components/RechargeModal';
 import { LevelsModal } from './components/LevelsModal';
 import { VipModal } from './components/VipModal';
@@ -316,6 +317,7 @@ const AppContent: React.FC = () => {
         <VoiceRoomModal />
         <GiftStoreModal />
         <GiftAnimationOverlay />
+        <GlobalGiftBanner />
         <RechargeModal />
         <LevelsModal />
         <VipModal />
