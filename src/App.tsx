@@ -86,6 +86,7 @@ const AppContent: React.FC = () => {
   const { activeTab, isLoggedIn, isRtl } = useApp();
   const [otpState, setOtpState] = React.useState<'checking' | 'pending' | 'verified' | 'error'>('checking');
   const [otpEmail, setOtpEmail] = React.useState('');
+  const [otpRetry, setOtpRetry] = React.useState(0);
   const [onboardingState, setOnboardingState] = React.useState<'checking' | 'required' | 'complete' | 'error'>('checking');
   const [onboardingRetry, setOnboardingRetry] = React.useState(0);
   React.useEffect(() => {
@@ -144,7 +145,7 @@ const AppContent: React.FC = () => {
       if (scheduled !== undefined) clearTimeout(scheduled);
       subscription.unsubscribe();
     };
-  }, []);
+  }, [otpRetry]);
 
   if (!isLoggedIn) {
     return (
@@ -164,7 +165,7 @@ const AppContent: React.FC = () => {
       <div dir="rtl" className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#001d18] px-6 text-center text-white">
         <p className="text-lg font-bold">تعذر فحص التحقق الأمني</p>
         <p className="text-sm text-slate-300">تحقق من الاتصال ثم حاول مجدداً. لن يتم تجاوز التحقق من OTP.</p>
-        <button type="button" onClick={() => { setOtpState('checking'); void stagingBackend?.auth.refreshSession(); }} className="rounded-xl bg-emerald-600 px-6 py-3 font-bold">إعادة المحاولة</button>
+        <button type="button" onClick={() => { setOtpState('checking'); setOtpRetry(value => value + 1); }} className="rounded-xl bg-emerald-600 px-6 py-3 font-bold">إعادة المحاولة</button>
       </div>
     );
     return <GoogleEmailOtpScreen email={otpEmail}
