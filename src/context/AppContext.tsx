@@ -979,15 +979,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setRoomMessages({});
       return;
     }
-    const roomId = activeRoom.id;
-    let active = true;
-    void fetchRealRoomMessages(roomId, chatSessionRef.current?.roomId === roomId ? chatSessionRef.current.since : new Date().toISOString()).then(messages => {
-      if (active) setRoomMessages({ [roomId]: messages });
-    }).catch(error => {
-      console.error('Failed to read room messages:', error);
-      if (active) setRoomMessages({});
-    });
-    return () => { active = false; };
+    // Clear the previous room immediately; the subscription effect owns all reads.
+    setRoomMessages({ [activeRoom.id]: [] });
   }, [isLoggedIn, activeRoom?.id]);
 
   useEffect(() => {
@@ -1014,6 +1007,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         refreshing = false;
       }
     };
+    // Use the same serialized refresh path for initial load and live updates.
+    void refresh();
     const client = stagingBackend;
     let recoveryTimer: number | undefined;
     const stopRecovery = () => {
