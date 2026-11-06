@@ -62,6 +62,7 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
               {id:'staff',label:'الصلاحيات',Icon:ShieldCheck},
               {id:'banners',label:'البنرات',Icon:Radio},
               {id:'offers',label:'العروض',Icon:Gift},
+              ...(access.role === 'owner' ? [{id:'dailyRewards',label:'المكافآت اليومية',Icon:Gift}] : []),
               ...(access.role === 'owner' ? [{id:'testerBadges',label:'شارات المختبرين',Icon:ShieldCheck}] : []),
             ];
             return <div className="space-y-5">
