@@ -964,6 +964,7 @@ export const WealthLeaderboardModal: React.FC = () => {
 
                 <div className="relative z-10 flex items-end justify-center gap-2 pt-2 pb-1">
                   {/* TOP 2 (Silver Podium) */}
+                  {!topWealth2 && <div className="flex-1" aria-hidden="true" />}
                   {topWealth2 && (
                     <div
                       onClick={() => handleOpenUser(topWealth2.user)}
@@ -1174,6 +1175,7 @@ export const WealthLeaderboardModal: React.FC = () => {
 
                 <div className="relative z-10 flex items-end justify-center gap-2 pt-2 pb-1">
                   {/* TOP 2 (Silver Podium) */}
+                  {!topCharm2 && <div className="flex-1" aria-hidden="true" />}
                   {topCharm2 && (
                     <div
                       onClick={() => handleOpenUser(topCharm2.user)}
@@ -1259,6 +1261,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                   )}
 
                   {/* TOP 3 (Bronze Podium) */}
+                  {!topCharm3 && <div className="flex-1" aria-hidden="true" />}
                   {topCharm3 && (
                     <div
                       onClick={() => handleOpenUser(topCharm3.user)}
@@ -1394,6 +1397,7 @@ export const WealthLeaderboardModal: React.FC = () => {
 
                 <div className="relative z-10 flex items-end justify-center gap-2 pt-2 pb-1">
                   {/* TOP 2 Room (Silver Podium) */}
+                  {!topRoom2 && <div className="flex-1" aria-hidden="true" />}
                   {topRoom2 && (
                     <div
                       onClick={() => handleEnterRoom(topRoom2.id)}
@@ -1466,6 +1470,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                   )}
 
                   {/* TOP 3 Room (Bronze Podium) */}
+                  {!topRoom3 && <div className="flex-1" aria-hidden="true" />}
                   {topRoom3 && (
                     <div
                       onClick={() => handleEnterRoom(topRoom3.id)}
