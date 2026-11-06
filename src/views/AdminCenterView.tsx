@@ -77,6 +77,11 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
     } finally { setLoading(false); }
   };
   useEffect(() => { void reload(); }, []);
+  useEffect(() => {
+    const recheck = () => { if (document.visibilityState === 'visible') void reload(); };
+    document.addEventListener('visibilitychange', recheck);
+    return () => document.removeEventListener('visibilitychange', recheck);
+  }, []);
   return (
     <div className="fixed inset-0 z-[100] bg-[#FDFBF7] text-slate-900 overflow-y-auto font-['Cairo',sans-serif]" dir="rtl">
       <header className="sticky top-0 bg-white/95 border-b border-amber-200 px-5 py-4 flex items-center justify-between z-10">
