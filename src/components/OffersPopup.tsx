@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Gift, Coins, RefreshCw, X } from 'lucide-react';
 import { stagingBackend } from '../services/stagingBackend';
 
@@ -19,9 +19,12 @@ export const OffersPopup: React.FC = () => {
   const [claiming,setClaiming]=useState(false);
   const [dailyLoading,setDailyLoading]=useState(false);
   const [dailyLoaded,setDailyLoaded]=useState(false);
+  const dailyRequestInFlight=useRef(false);
   const [notice,setNotice]=useState('');
   const loadDaily=async()=>{
+    if(dailyRequestInFlight.current)return null;
     if(!stagingBackend){setDaily(null);setDailyLoaded(true);setNotice('خدمة المكافآت غير متاحة حالياً. حاول لاحقاً.');return null;}
+    dailyRequestInFlight.current=true;
     setDailyLoading(true);
     setDaily(null);
     try{
@@ -39,6 +42,7 @@ export const OffersPopup: React.FC = () => {
       setNotice('تعذر تأكيد حالة المكافأة من الخادم. حاول لاحقاً.');
       return null;
     }finally{
+      dailyRequestInFlight.current=false;
       setDailyLoaded(true);
       setDailyLoading(false);
     }
@@ -73,7 +77,7 @@ export const OffersPopup: React.FC = () => {
   };
   useEffect(()=>{void loadDaily();},[]);
   useEffect(()=>{
-    const onOpenRewards=()=>{sessionStorage.setItem('totichat:offers:seen','yes');setNotice('');setTab('daily');setOpen(true);if(!dailyLoading)void loadDaily();};
+    const onOpenRewards=()=>{sessionStorage.setItem('totichat:offers:seen','yes');setNotice('');setTab('daily');setOpen(true);void loadDaily();};
     window.addEventListener('totichat:open-rewards',onOpenRewards);
     return ()=>window.removeEventListener('totichat:open-rewards',onOpenRewards);
   },[]);
