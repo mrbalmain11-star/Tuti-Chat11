@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, Check, Camera, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { X, Camera, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
 import { processImageFile } from '../utils/imageUpload';
@@ -34,7 +34,7 @@ export const EditProfileModal: React.FC = () => {
   const [name, setName] = useState(currentUser.name);
   const [bio, setBio] = useState(currentUser.bio || '');
   const [avatar, setAvatar] = useState(currentUser.avatar);
-  const [cover, setCover] = useState(currentUser.cover || 'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?w=800&auto=format&fit=crop&q=80');
+  const [cover, setCover] = useState(currentUser.cover || '');
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
@@ -54,7 +54,7 @@ export const EditProfileModal: React.FC = () => {
       setAvatar(currentUser.avatar || '');
       setCover(currentUser.cover || 'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?w=800&auto=format&fit=crop&q=80');
     }
-  }, [openEditProfileModal, currentUser]);
+  }, [openEditProfileModal]);
 
   if (!openEditProfileModal) return null;
 
@@ -65,11 +65,13 @@ export const EditProfileModal: React.FC = () => {
     try {
       setUploading(true);
       const dataUrl = await processImageFile(file);
+      const blob = await toWebpBlob(dataUrl);
+      setAvatarBlob(blob);
       setAvatar(dataUrl);
-      setAvatarBlob(await toWebpBlob(dataUrl));
       sounds.playCoin();
     } catch (err) {
       console.error(err);
+      setSaveError(err instanceof Error ? err.message : 'تعذر تجهيز الصورة');
     } finally {
       setUploading(false);
       // reset file input
@@ -84,8 +86,9 @@ export const EditProfileModal: React.FC = () => {
     try {
       setUploadingCover(true);
       const dataUrl = await processImageFile(file);
+      const blob = await toWebpBlob(dataUrl);
+      setCoverBlob(blob);
       setCover(dataUrl);
-      setCoverBlob(await toWebpBlob(dataUrl));
       sounds.playCoin();
     } catch (err) {
       console.error(err);
@@ -123,6 +126,7 @@ export const EditProfileModal: React.FC = () => {
         <div className="flex items-center justify-between pb-3 border-b border-amber-400/30">
           <h3 className="text-base font-black text-amber-200">تعديل الملف الشخصي</h3>
           <button
+            disabled={saving}
             onClick={() => setOpenEditProfileModal(false)}
             className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-amber-100"
           >
@@ -149,7 +153,7 @@ export const EditProfileModal: React.FC = () => {
               className="relative w-full h-24 rounded-2xl border-2 border-dashed border-amber-300 hover:border-amber-400 overflow-hidden shadow-xs cursor-pointer group bg-slate-900 active:scale-98 transition flex items-center justify-center"
               title="اضغط لتغيير الغلاف من المعرض"
             >
-              <img src={cover} alt="Cover" className="w-full h-full object-cover" />
+              {cover ? <img src={cover} alt="غلاف الملف الشخصي" className="w-full h-full object-cover" /> : <span className="text-sm text-amber-200/80">اختر غلافاً من معرض الهاتف</span>}
               {uploadingCover && (
                 <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white z-10">
                   <Loader2 className="w-6 h-6 animate-spin text-amber-300" />
@@ -185,7 +189,7 @@ export const EditProfileModal: React.FC = () => {
               className="relative w-22 h-22 rounded-full border-2 border-emerald-500 overflow-hidden shadow-md cursor-pointer group bg-slate-100 active:scale-95 transition"
               title="اضغط لتغيير الصورة من المعرض"
             >
-              <img src={avatar} alt="Avatar" className="w-full h-full object-cover" />
+              {avatar ? <img src={avatar} alt="الصورة الشخصية" className="w-full h-full object-cover" /> : <Camera className="m-auto mt-7 h-8 w-8 text-emerald-800" />}
               {uploading && (
                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white">
                   <Loader2 className="w-6 h-6 animate-spin" />
@@ -224,6 +228,7 @@ export const EditProfileModal: React.FC = () => {
               rows={2}
               value={bio}
               onChange={(e) => setBio(e.target.value)}
+              maxLength={160}
               className="w-full p-2.5 rounded-xl border border-amber-400/50 bg-emerald-950/80 text-xs text-white text-right focus:outline-none focus:border-amber-400"
             />
           </div>
