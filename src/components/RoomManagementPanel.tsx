@@ -1,4 +1,4 @@
-import React,{useEffect,useState} from 'react';
+import React,{useEffect,useRef,useState} from 'react';
 import { X,Save,RefreshCw } from 'lucide-react';
 import { stagingBackend } from '../services/stagingBackend';
 type Section='rules'|'auto_message'|'announcement'|'history';
@@ -13,7 +13,9 @@ export const RoomManagementPanel:React.FC<{roomId:string;section:Section;canMana
  const [error,setError]=useState('');
  const [notice,setNotice]=useState('');
  const [loaded,setLoaded]=useState(false);
+ const requestVersion=useRef(0);
  const load=async()=>{
+  const version=++requestVersion.current;
   if(!stagingBackend){setError('الخادم غير متاح حالياً');return;}
   setBusy(true);setError('');setNotice('');setLoaded(false);
   try{
@@ -21,17 +23,19 @@ export const RoomManagementPanel:React.FC<{roomId:string;section:Section;canMana
     const {data,error}=await stagingBackend.rpc('totichat_room_management_history',{p_room_id:roomId});
     if(error)throw error;
     if(!Array.isArray(data))throw new Error('استجابة سجل الإدارة غير صالحة');
+    if(version!==requestVersion.current)return;
     setAudit(data);setLoaded(true);
    }else{
     const {data,error}=await stagingBackend.rpc('totichat_room_management_state',{p_room_id:roomId});
     if(error)throw error;
     if(!data || typeof data!=='object')throw new Error('تعذر قراءة إعدادات الغرفة');
+    if(version!==requestVersion.current)return;
     setState({rules:data.rules||'',autoMessage:data.autoMessage||'',announcement:data.announcement||''});setLoaded(true);
    }
-  }catch(e){setError(e instanceof Error?e.message:'تعذر تحميل البيانات');}
-  finally{setBusy(false);}
+  }catch(e){if(version===requestVersion.current)setError(e instanceof Error?e.message:'تعذر تحميل البيانات');}
+  finally{if(version===requestVersion.current)setBusy(false);}
  };
- useEffect(()=>{void load();},[roomId,section]);
+ useEffect(()=>{void load();return()=>{requestVersion.current++;};},[roomId,section]);
  const save=async()=>{
   if(section==='history'||!canManage||busy||!loaded)return;
   if(!stagingBackend){setError('الخادم غير متاح حالياً');return;}
