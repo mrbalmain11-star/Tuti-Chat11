@@ -120,7 +120,7 @@ const AppContent: React.FC = () => {
         const { data: session, error: sessionError } = await stagingBackend!.auth.getSession();
         if (!mounted) return;
         if (sessionError) { setOtpState('error'); return; }
-        if (!session.session) { setOtpState('checking'); return; }
+        if (!session.session) { setOtpState('error'); return; }
         setOtpEmail(session.session.user.email ?? '');
         const { data, error } = await stagingBackend!.rpc('otp_session_verified');
         if (!mounted) return;
