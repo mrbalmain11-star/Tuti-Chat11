@@ -726,30 +726,30 @@ export const VoiceRoomModal: React.FC = () => {
     }catch(error){showToast(error instanceof Error?error.message:'فشل تغيير صورة الغرفة');}
     finally{setCoverSaving(false);}
   };
-  const handleSaveRoomInfo = (e: React.FormEvent) => {
+  const [roomInfoSaving, setRoomInfoSaving] = useState(false);
+  const handleSaveRoomInfo = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!activeRoom) return;
-    if (!isOwner && !currentUser.isSuperAdmin) {
-      sounds.playError();
-      showToast('🔒 لا يمكنك تعديل معلومات الغرفة، الصلاحية لمالك الغرفة فقط');
+    if (!activeRoom || roomInfoSaving) return;
+    if (!isOwner) {
+      showToast('تعديل معلومات الغرفة متاح لمالكها فقط.');
       return;
     }
+    const title = editTitleInput.trim();
+    const welcome = editAnnouncementInput.trim();
+    if (title.length < 2 || title.length > 60 || welcome.length > 500) {
+      showToast('اسم الغرفة من حرفين إلى 60 حرفاً ورسالة الترحيب حتى 500 حرف.');
+      return;
+    }
+    setRoomInfoSaving(true);
     try {
-      const result = updateRoom(activeRoom.id, {
-        title: editTitleInput.trim() || activeRoom.title,
-        announcement: editAnnouncementInput.trim() || activeRoom.announcement,
-        tag: editTagInput.trim() || activeRoom.tag,
-      });
-      void Promise.resolve(result).then(() => {
-        showToast('تم حفظ معلومات الغرفة على الخادم.');
-        setShowRoomInfoModal(false);
-      }).catch((error) => {
-        console.error('Room info save failed:', error);
-        showToast('تعذر حفظ معلومات الغرفة. حاول مجدداً.');
-      });
+      await updateRoom(activeRoom.id, { title, announcement: welcome });
+      showToast('تم حفظ اسم الغرفة ورسالة الترحيب على الخادم.');
+      setShowRoomInfoModal(false);
     } catch (error) {
       console.error('Room info save failed:', error);
-      showToast('تعذر حفظ معلومات الغرفة. حاول مجدداً.');
+      showToast(error instanceof Error ? error.message : 'تعذر حفظ معلومات الغرفة.');
+    } finally {
+      setRoomInfoSaving(false);
     }
   };
 
@@ -2879,13 +2879,13 @@ export const VoiceRoomModal: React.FC = () => {
               {isOwner&&<label className="mb-4 flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs font-bold text-emerald-900">{coverSaving?'جاري رفع الصورة...':'📷 تغيير صورة الغرفة (مربعة)'}<input type="file" accept="image/png,image/jpeg,image/webp" disabled={coverSaving} className="hidden" onChange={e=>void handleRoomCoverFile(e)}/></label>}
               <form onSubmit={handleSaveRoomInfo} className="space-y-3">
                 <label className="block text-xs font-black">اسم الغرفة:
-                  <input value={editTitleInput} onChange={e=>setEditTitleInput(e.target.value)} disabled={!isOwner&&!currentUser.isSuperAdmin} maxLength={80} className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm font-bold shadow-sm disabled:opacity-70"/>
+                  <input value={editTitleInput} onChange={e=>setEditTitleInput(e.target.value)} disabled={!isOwner||roomInfoSaving} minLength={2} maxLength={60} className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm font-bold shadow-sm disabled:opacity-70"/>
                 </label>
                 <label className="block text-xs font-black text-emerald-900">رسالة الترحيب عند الدخول:
-                  <textarea value={editAnnouncementInput} onChange={e=>setEditAnnouncementInput(e.target.value)} disabled={!isOwner&&!currentUser.isSuperAdmin} maxLength={500} rows={3} className="mt-1 w-full resize-none rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-sm disabled:opacity-70"/>
+                  <textarea value={editAnnouncementInput} onChange={e=>setEditAnnouncementInput(e.target.value)} disabled={!isOwner||roomInfoSaving} maxLength={500} rows={3} className="mt-1 w-full resize-none rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-sm disabled:opacity-70"/>
                 </label>
                 <label className="block text-xs font-black">وسم وتصنيف الغرفة:
-                  <input value={editTagInput} onChange={e=>setEditTagInput(e.target.value)} disabled={!isOwner&&!currentUser.isSuperAdmin} maxLength={80} className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm font-bold shadow-sm disabled:opacity-70"/>
+                  <input value={editTagInput} readOnly title="وسم الغرفة للعرض فقط إلى حين تفعيل حفظ الوسوم على الخادم" maxLength={80} className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm font-bold shadow-sm disabled:opacity-70"/>
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="rounded-xl border border-amber-200 bg-white p-3"><p className="text-[11px] font-bold">نوع الغرفة</p><p className="mt-1 text-sm font-black text-emerald-800">{activeRoom.micsLocked ? 'المقاعد مقفلة 🔒' : 'عامة 🔓'}</p></div>
@@ -2910,7 +2910,7 @@ export const VoiceRoomModal: React.FC = () => {
                 </div>
                 <div className="rounded-xl border border-amber-200 bg-amber-50 p-3"><p className="text-xs font-black">رسالة الترحيب الحالية</p><p className="mt-1 whitespace-pre-wrap text-xs text-slate-700">{activeRoom.announcement || 'لم يضف مالك الغرفة رسالة بعد'}</p></div>
                 <div className="flex gap-2 pt-1">
-                  {(isOwner||currentUser.isSuperAdmin)&&<button type="submit" className="flex-1 rounded-xl bg-emerald-900 p-3 text-sm font-black text-white shadow-md">👑 حفظ التعديلات</button>}
+                  {isOwner&&<button type="submit" disabled={roomInfoSaving} className="flex-1 rounded-xl bg-emerald-900 p-3 text-sm font-black text-white shadow-md">{roomInfoSaving ? 'جاري الحفظ...' : '👑 حفظ التعديلات'}</button>}
                   <button type="button" onClick={()=>setShowRoomInfoModal(false)} className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-black">إلغاء</button>
                 </div>
               </form>
