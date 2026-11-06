@@ -14,7 +14,7 @@ export const AdminOffersPanel:React.FC=()=>{
  const [message,setMessage]=useState('');
  const load=async()=>{if(!stagingBackend)throw new Error('خدمة العروض غير متاحة حالياً');const {data,error}=await stagingBackend.from('recharge_offers').select('*').order('created_at',{ascending:false});if(error)throw error;setItems((data??[]) as Offer[]);setLoadError(false);};
  useEffect(()=>{let active=true;setLoading(true);void load().catch(e=>{if(active){setLoadError(true);setMessage(e instanceof Error?e.message:String(e));}}).finally(()=>{if(active)setLoading(false);});return ()=>{active=false;};},[]);
- const edit=(o:Offer)=>{setEditId(o.id);setForm({title:o.title,description:o.description,price_iqd:String(o.price_iqd),coins:String(o.coins),bonus_coins:String(o.bonus_coins??0),image_url:o.image_url??'',status:o.status,starts_at:toLocalDateTime(o.starts_at),ends_at:toLocalDateTime(o.ends_at)});};
+ const edit=(o:Offer)=>{if(loading||loadError||busy)return;setEditId(o.id);setForm({title:o.title,description:o.description,price_iqd:String(o.price_iqd),coins:String(o.coins),bonus_coins:String(o.bonus_coins??0),image_url:o.image_url??'',status:o.status,starts_at:toLocalDateTime(o.starts_at),ends_at:toLocalDateTime(o.ends_at)});};
  const save=async()=>{if(!stagingBackend||busy)return;
  if(loading||loadError){setMessage('حدّث قائمة العروض بنجاح قبل حفظ أي تغييرات.');return;}
  if(!['draft','published','paused'].includes(form.status)){setMessage('حالة العرض غير صالحة.');return;}
@@ -32,6 +32,7 @@ export const AdminOffersPanel:React.FC=()=>{
  }catch(e){setMessage(e instanceof Error?e.message:String(e));}finally{setBusy(false);}};
  const changeStatus=async(o:Offer,status:'paused'|'published')=>{
  if(!stagingBackend||busy||o.status===status)return;
+ if(loading||loadError){setMessage('حدّث قائمة العروض بنجاح قبل تغيير حالة العرض.');return;}
  if(status==='published'){
   const start=o.starts_at?Date.parse(o.starts_at):null;
   const end=o.ends_at?Date.parse(o.ends_at):null;
