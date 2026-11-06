@@ -128,8 +128,8 @@ export const InternalProfileModal: React.FC = () => {
         if (!active || !data) return;
         setVisitorStatus({
           userId: user.id,
-          wealthLevel: getLevelFromExp(Number(data.wealth_exp) || 0, 260),
-          charmLevel: getLevelFromExp(Number(data.charm_exp) || 0, 260),
+          wealthLevel: getLevelFromExp(Number.isFinite(Number(data.wealth_exp)) ? Math.max(0, Number(data.wealth_exp)) : 0, 260),
+          charmLevel: getLevelFromExp(Number.isFinite(Number(data.charm_exp)) ? Math.max(0, Number(data.charm_exp)) : 0, 260),
           vipLevel: Number.isFinite(Number(data.vip_tier)) ? Math.max(0, Math.trunc(Number(data.vip_tier))) : 0,
         });
       }).catch(error => console.error('Visitor levels load failed:', error));
