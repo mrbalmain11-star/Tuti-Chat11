@@ -1382,8 +1382,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Seat reservations and moderation require authenticated server operations.
   const seatReservationPendingRef = useRef(false);
+  const seatReleasePendingRef = useRef(false);
   const takeSeat = (seatNumber: number): void => {
-    if (!activeRoom || seatReservationPendingRef.current) return;
+    if (!activeRoom || seatReservationPendingRef.current || seatReleasePendingRef.current) return;
     seatReservationPendingRef.current = true;
     const roomId = activeRoom.id;
     const transitionAtStart = roomTransitionVersion.current;
@@ -1458,7 +1459,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const leaveSeat = (_seatNumber: number): void => {
-    if (!activeRoom) return;
+    if (!activeRoom || seatReservationPendingRef.current || seatReleasePendingRef.current) return;
+    seatReleasePendingRef.current = true;
     const roomId = activeRoom.id;
     const transitionAtStart = roomTransitionVersion.current;
     void releaseMySeat(roomId).then(() => {
@@ -1474,6 +1476,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (roomTransitionVersion.current !== transitionAtStart) return;
       console.error('Seat release failed:', error);
       alert('تعذر مغادرة المقعد. حاول مجدداً.');
+    }).finally(() => {
+      seatReleasePendingRef.current = false;
     });
   };
 
