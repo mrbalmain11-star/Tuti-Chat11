@@ -1682,6 +1682,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       p_to: recipientId, p_text: body, p_nonce: requestId,
     })).then(async ({ data, error }) => {
       if (error || !data) throw error ?? new Error('Message not confirmed');
+      // Push is best-effort and must never delay or roll back a confirmed DM.
+      // The server revalidates the sender and message; no Firebase secrets
+      // are ever present in the client. The endpoint remains disabled until
+      // its server-side credentials and deployment are verified.
+      if (import.meta.env.VITE_ENABLE_DM_PUSH === 'true') {
+        void stagingBackend.functions.invoke('send-direct-message-push', {
+          body: { messageId: String(data) },
+        }).then(({ error: pushError }) => {
+          if (pushError) console.warn('DM push delivery unavailable');
+        }).catch(() => console.warn('DM push delivery unavailable'));
+      }
+
       const sentAt = new Date().toISOString();
       setOpenChatThreadState((prev: DirectConversation | null) => prev?.userId === recipientId ? {
         ...prev,
