@@ -1,5 +1,12 @@
 package com.totichat.app.ui.screens
 
+import android.Manifest
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -30,6 +37,17 @@ import com.totichat.app.ui.theme.*
 @Composable
 fun MessagesScreen() {
     val conversations by TotiRepository.conversations.collectAsState()
+    val context = LocalContext.current
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { /* The user can change permission later in Android settings. */ }
+    val requestNotifications = {
+        if (Build.VERSION.SDK_INT >= 33 &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -51,11 +69,13 @@ fun MessagesScreen() {
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold
             )
-            Icon(
-                imageVector = Icons.Default.Notifications,
-                contentDescription = "Notifications",
-                tint = GoldPrimary
-            )
+            IconButton(onClick = requestNotifications) {
+                Icon(
+                    imageVector = Icons.Default.Notifications,
+                    contentDescription = "السماح بإشعارات الرسائل",
+                    tint = GoldPrimary
+                )
+            }
         }
 
         // Quick shortcuts: System notice & Friends
