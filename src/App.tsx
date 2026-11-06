@@ -154,7 +154,13 @@ const AppContent: React.FC = () => {
     if (!isLoggedIn || (GOOGLE_EMAIL_OTP_ENFORCED && otpState !== 'verified') || onboardingState !== 'complete') return;
     const url = new URL(window.location.href);
     const roomId = url.searchParams.get('room');
-    if (!roomId || !/^[a-zA-Z0-9_-]{1,80}$/.test(roomId)) return;
+    if (!roomId) return;
+    if (!/^[a-zA-Z0-9_-]{1,80}$/.test(roomId)) {
+      url.searchParams.delete('room');
+      window.history.replaceState(window.history.state, '', url.toString());
+      alert('رابط الغرفة غير صالح.');
+      return;
+    }
     const available = rooms.find(room => room.id === roomId);
     if (available) {
       url.searchParams.delete('room');
