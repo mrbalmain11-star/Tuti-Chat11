@@ -749,8 +749,8 @@ export const VoiceRoomModal: React.FC = () => {
     }
     setRoomInfoSaving(true);
     try {
-      await updateRoom(activeRoom.id, { title, announcement: welcome });
-      showToast('تم حفظ اسم الغرفة ورسالة الترحيب على الخادم.');
+      await updateRoom(activeRoom.id, { title, announcement: welcome, tag: editTagInput.trim() });
+      showToast('تم حفظ اسم الغرفة ورسالة الترحيب والوسم على الخادم.');
       setShowRoomInfoModal(false);
     } catch (error) {
       console.error('Room info save failed:', error);
@@ -2892,7 +2892,7 @@ export const VoiceRoomModal: React.FC = () => {
                   <textarea value={editAnnouncementInput} onChange={e=>setEditAnnouncementInput(e.target.value)} disabled={!isOwner||roomInfoSaving} maxLength={500} rows={3} className="mt-1 w-full resize-none rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-sm disabled:opacity-70"/>
                 </label>
                 <label className="block text-xs font-black">وسم وتصنيف الغرفة:
-                  <input value={editTagInput} readOnly title="وسم الغرفة للعرض فقط إلى حين تفعيل حفظ الوسوم على الخادم" maxLength={80} className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm font-bold shadow-sm disabled:opacity-70"/>
+                  <input value={editTagInput} onChange={e=>setEditTagInput(e.target.value)} disabled={!isOwner||roomInfoSaving} maxLength={80} className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm font-bold shadow-sm disabled:opacity-70"/>
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="rounded-xl border border-amber-200 bg-white p-3"><p className="text-[11px] font-bold">حالة المقاعد</p><p className="mt-1 text-sm font-black text-emerald-800">{activeRoom.micsLocked ? 'المقاعد مقفلة 🔒' : 'المقاعد مفتوحة 🔓'}</p></div>
