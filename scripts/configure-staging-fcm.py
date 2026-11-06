@@ -6,6 +6,7 @@ audio engine, or the checked-in Kotlin demo app.
 """
 from pathlib import Path
 import shutil
+import json
 
 root = Path("android")
 app = root / "app"
@@ -16,7 +17,14 @@ app_gradle = app / "build.gradle"
 source = Path("staging/native-push")
 assert main.is_file() and manifest.is_file()
 assert project_gradle.is_file() and app_gradle.is_file()
-assert (app / "google-services.json").is_file(), "Matching Firebase config must be restored first"
+config = app / "google-services.json"
+assert config.is_file(), "Matching Firebase config must be restored first"
+firebase = json.loads(config.read_text())
+assert firebase["project_info"]["project_id"] == "totichatpro", "Unexpected Firebase project"
+assert any(
+    client["client_info"]["android_client_info"]["package_name"] == "com.numyar.totichat.staging"
+    for client in firebase["client"]
+), "Missing exact staging Android package in Firebase config"
 
 for name in ("TotiPushPlugin.java", "TotiPushMessagingService.java"):
     shutil.copyfile(source / name, main.parent / name)
@@ -52,6 +60,7 @@ project_gradle.write_text(text)
 
 text = app_gradle.read_text()
 assert "dependencies {" in text, "Unexpected app Gradle format"
+assert "com.android.application" in text, "Unexpected generated Android app Gradle configuration"
 assert "com.google.firebase:firebase-messaging" not in text
 text = text.replace("dependencies {", "dependencies {\n    implementation 'com.google.firebase:firebase-messaging:24.1.2'", 1)
 text += "\napply plugin: 'com.google.gms.google-services'\n"
