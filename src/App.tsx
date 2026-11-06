@@ -170,9 +170,21 @@ const AppContent: React.FC = () => {
       </div>
     );
     return <GoogleEmailOtpScreen email={otpEmail}
-      onVerified={() => { void stagingBackend?.rpc('otp_session_verified').then(({ data, error }) => {
-        if (!error && data === true) setOtpState('verified');
-      }); }}
+      onVerified={() => {
+        void (async () => {
+          try {
+            const { data, error } = await stagingBackend!.rpc('otp_session_verified');
+            if (error || data !== true) {
+              setOtpState('error');
+              return;
+            }
+            setOtpState('verified');
+          } catch (error) {
+            console.error('OTP confirmation check failed:', error);
+            setOtpState('error');
+          }
+        })();
+      }}
       onBack={() => { void stagingBackend?.auth.signOut(); }} />;
   }
 
