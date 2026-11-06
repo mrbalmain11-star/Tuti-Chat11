@@ -6,8 +6,9 @@ type PushToken = { token: string };
 type PushTokenListener = { remove: () => Promise<void> };
 interface NativePushPlugin {
   getToken(): Promise<PushToken>;
+  requestNotificationPermission(): Promise<void>;
   consumeOpenMessagesIntent(): Promise<{ openMessages: boolean }>;
-  addListener(eventName: 'tokenChanged', listener: (event: PushToken) => void): Promise<PushTokenListener>;
+  addListener(eventName: 'tokenChanged' | 'openMessages', listener: (event: PushToken) => void): Promise<PushTokenListener>;
 }
 const NativePush = registerPlugin<NativePushPlugin>('TotiPush');
 
@@ -42,7 +43,6 @@ export async function startAuthenticatedPushRegistration(): Promise<() => Promis
       return;
     }
     if (stopped) return;
-    if (stopped) return;
     await registerAndroidPushToken(token);
     if (stopped) {
       // Cleanup awaits this registration before the auth token is revoked.
@@ -52,6 +52,7 @@ export async function startAuthenticatedPushRegistration(): Promise<() => Promis
     registeredToken = token;
     ownerId = user.id;
   };
+  await NativePush.requestNotificationPermission();
   const listener = await NativePush.addListener('tokenChanged', event => {
     void enqueue(event).catch(() => console.warn('Push token registration unavailable'));
   });
@@ -79,4 +80,11 @@ export async function consumeNativeOpenMessagesIntent(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/** Handles notifications tapped while the app is already running. */
+export async function listenForNativeOpenMessages(onOpen: () => void): Promise<() => Promise<void>> {
+  if (!Capacitor.isNativePlatform() || !Capacitor.isPluginAvailable('TotiPush')) return async () => {};
+  const listener = await NativePush.addListener('openMessages', () => onOpen());
+  return () => listener.remove();
 }
