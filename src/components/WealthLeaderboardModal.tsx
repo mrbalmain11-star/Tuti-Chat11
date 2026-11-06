@@ -762,7 +762,8 @@ export const WealthLeaderboardModal: React.FC = () => {
           seenEntities.add(row.entity_id);
           return true;
         });
-        setRankingState({period,tab:leaderboardTab,rows:uniqueRows});
+        // Ranking rows are already ordered by the backend; render at most ten.
+        setRankingState({period,tab:leaderboardTab,rows:uniqueRows.slice(0,10)});
       } catch(error) {
         if(!alive||currentRequest!==requestId)return;
         console.error('Rankings load failed',error);
