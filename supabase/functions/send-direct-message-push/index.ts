@@ -46,6 +46,13 @@ Deno.serve(async (request) => {
   try { account = JSON.parse(serviceAccountRaw); } catch { return json({ error: 'Invalid server configuration' }, 503); }
   if (account.project_id !== 'totichatpro') return json({ error: 'Firebase project mismatch' }, 503);
 
+  // Atomically claim the message before sending. Unique primary key rejects
+  // concurrent and repeated requests, including attempts from multiple devices.
+  const { error: claimError } = await admin.from('direct_message_push_claims')
+    .insert({ message_id: message.id });
+  if (claimError?.code === '23505') return json({ sent: 0, duplicate: true });
+  if (claimError) return json({ error: 'Push claim failed' }, 500);
+
   const key = await importPKCS8(account.private_key, 'RS256');
   const assertion = await new SignJWT({ scope: 'https://www.googleapis.com/auth/firebase.messaging' })
     .setProtectedHeader({ alg: 'RS256', typ: 'JWT' })
