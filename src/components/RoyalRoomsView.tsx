@@ -30,16 +30,41 @@ export const RoyalRoomsView: React.FC = () => {
 
   const [followedRoomIds, setFollowedRoomIds] = useState<Set<string>>(new Set());
   const [unfollowing, setUnfollowing] = useState<Set<string>>(new Set());
+  const [followsLoading, setFollowsLoading] = useState(true);
+  const [followsError, setFollowsError] = useState(false);
   useEffect(() => {
-    if (!currentUser.id || !stagingBackend) { setFollowedRoomIds(new Set()); return; }
+    setFollowedRoomIds(new Set());
+    setFollowsLoading(true);
+    setFollowsError(false);
+    if (!currentUser.id || !stagingBackend) {
+      setFollowsLoading(false);
+      setFollowsError(true);
+      return;
+    }
     let active = true;
     const refresh = async () => {
-      const { data, error } = await stagingBackend!.from('room_follows').select('room_id').eq('follower_id', currentUser.id);
-      if (active && !error) setFollowedRoomIds(new Set((data || []).map(row => row.room_id)));
+      try {
+        const { data, error } = await stagingBackend!.from('room_follows')
+          .select('room_id').eq('follower_id', currentUser.id);
+        if (!active) return;
+        if (error) throw error;
+        setFollowedRoomIds(new Set((data || []).map(row => row.room_id)));
+        setFollowsError(false);
+      } catch (error) {
+        if (active) { setFollowsError(true); console.error('Unable to load followed rooms:', error); }
+      } finally {
+        if (active) setFollowsLoading(false);
+      }
     };
     void refresh();
+    const onVisible = () => { if (document.visibilityState === 'visible') void refresh(); };
     window.addEventListener('totichat:room-follows-changed', refresh);
-    return () => { active = false; window.removeEventListener('totichat:room-follows-changed', refresh); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      active = false;
+      window.removeEventListener('totichat:room-follows-changed', refresh);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, [currentUser.id]);
 
   const [publicId, setPublicId] = useState<number | null>(null);
