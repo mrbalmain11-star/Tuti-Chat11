@@ -824,6 +824,15 @@ export const VoiceRoomModal: React.FC = () => {
     setModerationBusy(true);
     const requestId = crypto.randomUUID();
     try {
+      if (!isOwner) {
+        // A moderator may have been demoted on another device while this room stayed open.
+        const { data: latestModeratorIds, error: roleError } = await stagingBackend.rpc('totichat_room_moderator_ids', { p_room_id: activeRoom.id });
+        if (roleError || !Array.isArray(latestModeratorIds) || !latestModeratorIds.includes(currentUser.id)) {
+          window.dispatchEvent(new CustomEvent('totichat:room-moderators-changed', { detail: activeRoom.id }));
+          showToast('تم سحب صلاحية الإشراف أو تعذر التحقق منها. تم إلغاء الأمر.');
+          return;
+        }
+      }
       const { data, error } = await stagingBackend.functions.invoke('phase2-voice-moderate', {
         body: { roomId: activeRoom.id, targetId: userId, action, requestId, ...(reason ? { reason: reason.trim() } : {}) },
       });
