@@ -12,6 +12,21 @@ const formatTime = (value: string) => {
 export const DirectChatModal: React.FC = () => {
   const { openChatThread, setOpenChatThread, sendDirectMessage, currentUser, setInternalProfileUser, setOpenInternalProfileModal } = useApp();
   const [inputText, setInputText] = useState('');
+  const openPeerIdRef = useRef<string | null>(null);
+  openPeerIdRef.current = openChatThread?.userId ?? null;
+  useEffect(() => {
+    const restoreFailedMessage = (event: Event) => {
+      const detail = (event as CustomEvent<{ recipientId: string; text: string }>).detail;
+      if (!detail?.text || detail.recipientId !== openPeerIdRef.current) return;
+      queueMicrotask(() => {
+        if (detail.recipientId === openPeerIdRef.current) {
+          setInputText(previous => previous.trim() ? previous : detail.text);
+        }
+      });
+    };
+    window.addEventListener('totichat:dm-send-failed', restoreFailedMessage);
+    return () => window.removeEventListener('totichat:dm-send-failed', restoreFailedMessage);
+  }, []);
   const [cpRequest,setCpRequest] = useState<{partnerId:string;typeId:string;typeLabel:string;requestedBy:string;accepted:boolean;relationshipId:string}|null>(null);
   const [cpBusy,setCpBusy] = useState(false);
   const [cpError,setCpError] = useState('');
