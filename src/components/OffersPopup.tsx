@@ -110,6 +110,20 @@ export const OffersPopup: React.FC = () => {
     });
     return ()=>{alive=false;};
   },[disabled,offersRetry]);
+  // Refresh published offers when the user returns to the app while viewing offers.
+  // This keeps admin edits, publishing and stopping offers visible without reopening the popup.
+  useEffect(()=>{
+    if(!open || tab!=='offers')return;
+    const refreshOnReturn=()=>{
+      if(document.visibilityState==='visible')setOffersRetry(previous=>previous+1);
+    };
+    window.addEventListener('focus',refreshOnReturn);
+    document.addEventListener('visibilitychange',refreshOnReturn);
+    return ()=>{
+      window.removeEventListener('focus',refreshOnReturn);
+      document.removeEventListener('visibilitychange',refreshOnReturn);
+    };
+  },[open,tab]);
   const selected=items[Math.min(index,Math.max(0,items.length-1))];
   return <>
     {open&&<div className="fixed inset-0 z-[110] bg-black/75 flex items-center justify-center p-3" dir="rtl" role="dialog" aria-modal="true" aria-label="المكافآت والعروض">
