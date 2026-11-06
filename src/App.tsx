@@ -83,7 +83,7 @@ class ErrorBoundary extends React.Component<
 }
 
 const AppContent: React.FC = () => {
-  const { activeTab, isLoggedIn, isRtl } = useApp();
+  const { activeTab, isLoggedIn, isRtl, rooms, enterRoom } = useApp();
   const [otpState, setOtpState] = React.useState<'checking' | 'pending' | 'verified' | 'error'>('checking');
   const [otpEmail, setOtpEmail] = React.useState('');
   const [otpRetry, setOtpRetry] = React.useState(0);
@@ -146,6 +146,18 @@ const AppContent: React.FC = () => {
       subscription.unsubscribe();
     };
   }, [otpRetry]);
+
+  // Open a shared room only after authentication, OTP and onboarding are complete.
+  React.useEffect(() => {
+    if (!isLoggedIn || (GOOGLE_EMAIL_OTP_ENFORCED && otpState !== 'verified') || onboardingState !== 'complete') return;
+    const url = new URL(window.location.href);
+    const roomId = url.searchParams.get('room');
+    if (!roomId || !/^[a-zA-Z0-9_-]{1,80}$/.test(roomId)) return;
+    if (!rooms.some(room => room.id === roomId)) return;
+    url.searchParams.delete('room');
+    window.history.replaceState(window.history.state, '', url.toString());
+    enterRoom(roomId);
+  }, [isLoggedIn, otpState, onboardingState, rooms, enterRoom]);
 
   if (!isLoggedIn) {
     return (
