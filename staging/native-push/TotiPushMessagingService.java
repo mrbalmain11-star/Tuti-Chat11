@@ -20,8 +20,8 @@ import com.google.firebase.messaging.RemoteMessage;
  * Displays only a generic private-message notification: no message body,
  * sender identity or personal data is exposed on the lock screen.
  *
- * This file is not yet included in the APK build; the native Firebase plugin,
- * manifest entry and Android dependency must be wired together first.
+ * The disposable Capacitor Android project receives this file from the
+ * guarded staging CI integration script. Runtime delivery remains unverified.
  */
 public final class TotiPushMessagingService extends FirebaseMessagingService {
     private static final String CHANNEL_ID = "totichat_direct_messages";
