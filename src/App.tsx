@@ -12,6 +12,7 @@ import { GiftStoreModal } from './components/GiftStoreModal';
 import { GiftAnimationOverlay } from './components/GiftAnimationOverlay';
 import { GlobalGiftBanner } from './components/GlobalGiftBanner';
 import { UserLevelUpBanner } from './components/UserLevelUpBanner';
+import { VipActivationBanner } from './components/VipActivationBanner';
 import { RechargeModal } from './components/RechargeModal';
 import { LevelsModal } from './components/LevelsModal';
 import { VipModal } from './components/VipModal';
