@@ -1194,6 +1194,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (document.visibilityState === 'visible') { void refreshRoster(); void refreshSeatLocks(); }
     };
     const refreshOnReconnect = () => { void refreshRoster(); void refreshSeatLocks(); };
+    const refreshAfterSeatChange = (event: Event) => {
+      if ((event as CustomEvent<string>).detail !== roomId) return;
+      void refreshRoster();
+      void refreshSeatLocks();
+    };
     // Moderator role changes may not be part of the published realtime tables.
     const roleRefreshTimer = window.setInterval(() => {
       if (document.visibilityState === 'visible' && navigator.onLine) void refreshRoster();
@@ -1202,6 +1207,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if ((event as CustomEvent<string>).detail === roomId) void refreshRoster();
     };
     window.addEventListener('totichat:room-moderators-changed', refreshAfterModeration);
+    window.addEventListener('totichat:room-seat-changed', refreshAfterSeatChange);
     window.addEventListener('focus', refreshOnForeground);
     window.addEventListener('online', refreshOnReconnect);
     document.addEventListener('visibilitychange', refreshOnForeground);
@@ -1211,6 +1217,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       window.clearInterval(seatLockTimer);
       window.clearInterval(roleRefreshTimer);
       window.removeEventListener('totichat:room-moderators-changed', refreshAfterModeration);
+      window.removeEventListener('totichat:room-seat-changed', refreshAfterSeatChange);
       window.removeEventListener('focus', refreshOnForeground);
       window.removeEventListener('online', refreshOnReconnect);
       document.removeEventListener('visibilitychange', refreshOnForeground);
@@ -1365,6 +1372,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return reserveSeat(roomId, seatNumber);
     }).then(() => {
       reservationConfirmed = true;
+      window.dispatchEvent(new CustomEvent('totichat:room-seat-changed', { detail: roomId }));
       setActiveRoom(prev => {
         if (prev?.id !== roomId) return prev;
         return {
@@ -1412,6 +1420,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!activeRoom) return;
     const roomId = activeRoom.id;
     void releaseMySeat(roomId).then(() => {
+      window.dispatchEvent(new CustomEvent('totichat:room-seat-changed', { detail: roomId }));
       setActiveRoom(prev => prev?.id === roomId ? {
         ...prev,
         seats: prev.seats.map(seat => seat.user?.id === currentUser.id
@@ -1431,6 +1440,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       p_room_id: roomId, p_seat: seatNumber,
     })).then(({ data, error }) => {
       if (error || typeof data !== 'boolean') throw error ?? new Error('Lock not confirmed');
+      window.dispatchEvent(new CustomEvent('totichat:room-seat-changed', { detail: roomId }));
       setActiveRoom(prev => prev?.id !== roomId ? prev : ({
         ...prev,
         seats: prev.seats.map(seat => seat.seatNumber === seatNumber
