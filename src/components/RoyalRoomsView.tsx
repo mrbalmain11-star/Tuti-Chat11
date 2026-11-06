@@ -77,8 +77,15 @@ export const RoyalRoomsView: React.FC = () => {
     e.stopPropagation();
     sounds.playClick();
     if (!myRoom) { showToast('أنشئ غرفتك أولاً حتى تتمكن من مشاركتها'); return; }
+    // Native Capacitor uses a local origin; it is not a shareable public URL.
+    const publicBase = import.meta.env.VITE_PUBLIC_APP_URL || window.location.origin;
+    const publicUrl = new URL(publicBase);
+    if (publicUrl.protocol !== 'https:' || /^(localhost|127\\.0\\.0\\.1|10\\.0\\.2\\.2)$/i.test(publicUrl.hostname)) {
+      showToast('رابط المشاركة العام غير مهيأ لهذا الإصدار.');
+      return;
+    }
     // Never include login callback parameters or fragments in shared links.
-    const shareUrl = new URL(window.location.pathname, window.location.origin);
+    const shareUrl = new URL(publicUrl.pathname, publicUrl.origin);
     shareUrl.searchParams.set('room', myRoom.id);
     const shareData = { title: myRoom.title || 'غرفتي في TotiChat', url: shareUrl.toString() };
     try {
