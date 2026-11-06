@@ -482,6 +482,7 @@ export const RechargeModal: React.FC = () => {
           <button
             onClick={() => {
               sounds.playClick();
+              window.dispatchEvent(new Event('totichat:wallet-changed'));
               setShowHistoryModal(true);
             }}
             className="w-9 h-9 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-700 active:scale-95 transition"
