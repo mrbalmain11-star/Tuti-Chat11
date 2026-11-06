@@ -85,6 +85,7 @@ export const OffersPopup: React.FC = () => {
     let alive=true;
     const refresh=async()=>{
       setOffersLoading(true);
+      setOffersError(false);
       const offers=await stagingBackend.from('recharge_offers').select('id,title,description,image_url,price_iqd,coins,bonus_coins,starts_at,ends_at').eq('status','published').order('created_at',{ascending:false}).limit(10);
       if(offers.error){if(alive){setOffersError(true);setOffersLoading(false);setOffersLoaded(true);setItems([]);}console.error('Recharge offers load failed',offers.error);return;}
       const now=Date.now();
