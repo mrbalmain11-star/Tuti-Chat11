@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { stagingBackend } from '../services/stagingBackend';
 type Offer={id:string;title:string;description:string;price_iqd:number;coins:number;bonus_coins:number;image_url:string|null;status:string;starts_at:string|null;ends_at:string|null};
 const empty={title:'',description:'',price_iqd:'',coins:'',bonus_coins:'0',image_url:'',status:'draft',starts_at:'',ends_at:''};
+const toLocalDateTime=(value:string|null)=>{if(!value)return '';const date=new Date(value);if(!Number.isFinite(date.getTime()))return '';const local=new Date(date.getTime()-date.getTimezoneOffset()*60000);return local.toISOString().slice(0,16);};
 export const AdminOffersPanel:React.FC=()=>{
  const [items,setItems]=useState<Offer[]>([]);
  const [form,setForm]=useState({...empty});
@@ -11,7 +12,7 @@ export const AdminOffersPanel:React.FC=()=>{
  const [message,setMessage]=useState('');
  const load=async()=>{if(!stagingBackend)throw new Error('خدمة العروض غير متاحة حالياً');const {data,error}=await stagingBackend.from('recharge_offers').select('*').order('created_at',{ascending:false});if(error)throw error;setItems((data??[]) as Offer[]);};
  useEffect(()=>{let active=true;setLoading(true);void load().catch(e=>{if(active)setMessage(e instanceof Error?e.message:String(e));}).finally(()=>{if(active)setLoading(false);});return ()=>{active=false;};},[]);
- const edit=(o:Offer)=>{setEditId(o.id);setForm({title:o.title,description:o.description,price_iqd:String(o.price_iqd),coins:String(o.coins),bonus_coins:String(o.bonus_coins??0),image_url:o.image_url??'',status:o.status,starts_at:o.starts_at?.slice(0,16)??'',ends_at:o.ends_at?.slice(0,16)??''});};
+ const edit=(o:Offer)=>{setEditId(o.id);setForm({title:o.title,description:o.description,price_iqd:String(o.price_iqd),coins:String(o.coins),bonus_coins:String(o.bonus_coins??0),image_url:o.image_url??'',status:o.status,starts_at:toLocalDateTime(o.starts_at),ends_at:toLocalDateTime(o.ends_at)});};
  const save=async()=>{if(!stagingBackend||busy)return;
  if(!['draft','published','paused'].includes(form.status)){setMessage('حالة العرض غير صالحة.');return;}
  if(form.title.trim().length<3 || form.title.trim().length>100){setMessage('عنوان العرض يجب أن يحتوي من 3 إلى 100 حرف.');return;}
