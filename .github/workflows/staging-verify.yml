@@ -1,8 +1,6 @@
 name: TotiChat Clean Staging APK Build
+# APK builds require an explicit manual workflow dispatch.
 on:
-  push:
-    branches:
-      - integration/legacy-backend-staging
   workflow_dispatch:
 concurrency:
   group: totichat-staging-clean-apk
