@@ -59,22 +59,28 @@ class ErrorBoundary extends React.Component<
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-[#070216] text-white flex flex-col items-center justify-center p-6 text-center" dir="rtl">
-          <div className="w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-3xl mb-4">
-            👑
+        <div className="min-h-screen bg-gradient-to-b from-[#042d27] via-[#07533f] to-[#031f1c] text-white flex flex-col items-center justify-center p-6 text-center" dir="rtl" role="alert">
+          <div className="mb-5 flex h-24 w-24 items-center justify-center rounded-[28px] border-2 border-amber-300/80 bg-gradient-to-br from-emerald-700 to-emerald-950 shadow-[0_8px_30px_rgba(0,0,0,.35)]">
+            <svg viewBox="0 0 80 80" className="h-16 w-16" aria-hidden="true" focusable="false">
+              <path d="M12 57 L18 22 L31 37 L40 13 L49 37 L62 22 L68 57 Z" fill="#d6a640" stroke="#fff0a8" strokeWidth="2.5" strokeLinejoin="round"/>
+              <path d="M19 54 L23 33 L33 45 L40 26 L47 45 L57 33 L61 54 Z" fill="#087354" stroke="#fff0a8" strokeWidth="1.5"/>
+              <path d="M12 60 H68 V67 H12 Z" fill="#f3cf6c" stroke="#fff0a8" strokeWidth="2"/>
+              <circle cx="40" cy="42" r="4" fill="#e6fff0"/>
+            </svg>
           </div>
-          <h2 className="text-xl font-bold text-emerald-400 mb-2 font-['Cairo',sans-serif]">توتي شات الملكي</h2>
-          <p className="text-sm text-slate-300 mb-6 max-w-xs">
-            حدث تحديث في البيانات، اضغط على الزر أدناه لإعادة تشغيل الواجهة بسلاسة.
+          <h2 className="text-xl font-black text-amber-200 mb-2 font-['Cairo',sans-serif]">تعذر عرض التطبيق</h2>
+          <p className="text-sm text-emerald-50/90 mb-6 max-w-xs leading-7">
+            حدث خطأ غير متوقع أثناء عرض الواجهة. يمكنك إعادة تشغيلها والمحاولة مجدداً.
           </p>
           <button
+            type="button"
             onClick={() => {
               // Preserve cached profile data when recovering from a UI crash.
               window.location.reload();
             }}
-            className="px-6 py-2.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold text-sm shadow-lg shadow-emerald-500/30 active:scale-95 transition"
+            className="min-h-11 rounded-xl border border-amber-200 bg-gradient-to-b from-[#f9e4a0] to-[#d5a13a] px-7 py-2.5 text-sm font-black text-[#254a35] shadow-[0_4px_14px_rgba(0,0,0,.22)] active:scale-95 transition"
           >
-            إعادة تشغيل التطبيق 🔄
+            إعادة تشغيل الواجهة
           </button>
         </div>
       );
