@@ -1,5 +1,6 @@
 import React from 'react';
 import { BannerSlider } from '../components/BannerSlider';
+import { Gift } from 'lucide-react';
 import { CategoryCards } from '../components/CategoryCards';
 import { CountryFilter } from '../components/CountryFilter';
 import { RoomCard } from '../components/RoomCard';
@@ -37,6 +38,11 @@ export const HomeView: React.FC = () => {
     <div className="pb-24 space-y-1 font-['Cairo',sans-serif] bg-gradient-to-b from-[#FDFBF7] via-[#FAF6ED] to-[#F5EFE0] min-h-screen text-slate-800 select-none" dir={isRtl ? 'rtl' : 'ltr'}>
       {/* 1. Hero Event Banner: DANA نشاط فتاح الوكالات (Screenshot 1:1) */}
       <BannerSlider />
+      <div className="px-4 pt-2">
+        <button type="button" onClick={() => window.dispatchEvent(new Event('totichat:open-rewards'))} className="flex w-full items-center justify-center gap-2 rounded-xl border border-amber-300 bg-gradient-to-r from-emerald-900 to-emerald-700 px-4 py-3 text-sm font-bold text-amber-100 shadow-sm" aria-label="فتح المكافآت اليومية">
+          <Gift size={19} aria-hidden="true" /> المكافآت اليومية
+        </button>
+      </div>
 
       {/* 2. Top 3 Islamic Ranking Cards: غرفة | الجاذبية | ثروة (Screenshot 1:1) */}
       <CategoryCards />
