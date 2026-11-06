@@ -91,7 +91,13 @@ export const RoyalRoomsView: React.FC = () => {
       showToast('تم نسخ رابط الغرفة 🔗');
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') return;
-      showToast('تعذرت المشاركة. حاول مجدداً.');
+      try {
+        if (!navigator.clipboard?.writeText) throw error;
+        await navigator.clipboard.writeText(shareData.url);
+        showToast('تعذرت المشاركة المباشرة، تم نسخ رابط الغرفة 🔗');
+      } catch {
+        showToast('تعذرت المشاركة ونسخ الرابط. حاول مجدداً.');
+      }
     }
   };
 
