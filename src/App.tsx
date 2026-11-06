@@ -321,6 +321,7 @@ const AppContent: React.FC = () => {
         <GiftAnimationOverlay />
         <GlobalGiftBanner />
         <UserLevelUpBanner />
+        <VipActivationBanner />
         <RechargeModal />
         <LevelsModal />
         <VipModal />
