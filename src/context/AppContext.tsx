@@ -1436,7 +1436,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       window.dispatchEvent(new CustomEvent('totichat:room-message-sent', { detail: roomId }));
     }).catch(error => {
       console.error('Room message rejected:', error);
-      alert('تعذر إرسال الرسالة من الخادم.');
+      window.dispatchEvent(new CustomEvent('totichat:room-message-failed', {
+        detail: { roomId, text },
+      }));
+      alert('تعذر إرسال الرسالة من الخادم. تم الاحتفاظ بالنص لإعادة المحاولة.');
     });
   };
 
