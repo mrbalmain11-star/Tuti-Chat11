@@ -1265,17 +1265,17 @@ export const VoiceRoomModal: React.FC = () => {
             aria-modal="true"
             aria-label="خيارات الغرفة"
           >
-            <div className="mx-auto mb-3 h-1 w-12 rounded-full bg-white/25" />
+            <div className="mx-auto mb-3 h-1 w-12 rounded-full bg-amber-200/40" />
             <h3 className="mb-5 text-center text-lg font-black text-[#f8df9a]">خيارات الغرفة</h3>
             <div className="flex flex-col gap-3">
-              <button type="button" onClick={() => setShowExitOptions(false)} className="flex w-full items-center justify-center gap-2 rounded-2xl border border-white/25 bg-white/10 py-3.5 font-bold text-white transition active:scale-[0.98]">
-                <Maximize2 className="h-5 w-5 text-emerald-200" /> للأمام — العودة إلى الغرفة
+              <button type="button" onClick={() => setShowExitOptions(false)} className="flex w-full min-h-12 items-center justify-center gap-2 rounded-2xl border border-emerald-300/35 bg-emerald-500/15 py-3 font-bold text-white transition active:scale-[0.98]">
+                <Maximize2 className="h-5 w-5 text-emerald-200" aria-hidden="true" /> العودة إلى الغرفة
               </button>
-              <button type="button" onClick={() => { setShowExitOptions(false); setIsRoomMinimized(true); }} className="flex w-full items-center justify-center gap-2 rounded-2xl border border-amber-300/35 bg-amber-300/10 py-3.5 font-bold text-amber-100 transition active:scale-[0.98]">
-                <Maximize2 className="h-5 w-5" /> تصغير الغرفة
+              <button type="button" onClick={() => { setShowExitOptions(false); setIsRoomMinimized(true); }} className="flex w-full min-h-12 items-center justify-center gap-2 rounded-2xl border border-amber-300/50 bg-amber-300/10 py-3 font-bold text-amber-100 transition active:scale-[0.98]">
+                <span className="flex h-5 w-5 items-center justify-center rounded border border-amber-200/70 text-xs font-black" aria-hidden="true">−</span> تصغير الغرفة
               </button>
-              <button type="button" onClick={() => { setShowExitOptions(false); leaveRoom(); }} className="flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-300/35 bg-rose-500/15 py-3.5 font-bold text-rose-100 transition active:scale-[0.98]">
-                <LogOut className="h-5 w-5" /> الخروج من الغرفة
+              <button type="button" onClick={() => { setShowExitOptions(false); leaveRoom(); }} className="flex w-full min-h-12 items-center justify-center gap-2 rounded-2xl border border-rose-300/35 bg-rose-500/15 py-3 font-bold text-rose-100 transition active:scale-[0.98]">
+                <LogOut className="h-5 w-5" aria-hidden="true" /> الخروج من الغرفة
               </button>
             </div>
           </div>
