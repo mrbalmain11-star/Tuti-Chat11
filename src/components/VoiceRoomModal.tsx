@@ -132,9 +132,9 @@ export const VoiceRoomModal: React.FC = () => {
 
   // Role detection: Owner vs Moderator vs Visitor
   const isOwner = Boolean(activeRoom && activeRoom.hostId === currentUser.id);
-  const isModerator = Boolean(
-    activeRoom && ((activeRoom.moderatorIds || []).includes(currentUser.id) || currentUser.isSuperAdmin)
-  );
+  // Room moderation is authorized by room ownership or room_moderators on the server.
+  // Global super-admin status alone does not grant the room-moderation RPC permission.
+  const isModerator = Boolean(activeRoom && (activeRoom.moderatorIds || []).includes(currentUser.id));
   const isVisitor = !isOwner && !isModerator;
 
   // Local interactive states
