@@ -55,7 +55,7 @@ export const BannerSlider: React.FC = () => {
         if (Math.abs(diff) > 35) setIndex(i => (i + (diff > 0 ? -1 : 1) + items.length) % items.length);
       }}>
       {banner ? <>
-        <button type="button" onClick={open} className="absolute inset-0 w-full h-full" aria-label={banner.title}>
+        <button type="button" onClick={open} disabled={banner.link_kind !== 'screen' || !banner.link_target} className="absolute inset-0 w-full h-full disabled:cursor-default" aria-label={banner.title}>
           <img src={banner.image_url} alt={banner.title} className="w-full h-full object-cover"
             onError={e => { e.currentTarget.style.display='none'; }} />
         </button>
