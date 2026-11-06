@@ -11,7 +11,11 @@ export const AdminOffersPanel:React.FC=()=>{
  const load=async()=>{if(!stagingBackend)return;const {data,error}=await stagingBackend.from('recharge_offers').select('*').order('created_at',{ascending:false});if(error)throw error;setItems((data??[]) as Offer[]);};
  useEffect(()=>{void load().catch(e=>setMessage(String(e)));},[]);
  const edit=(o:Offer)=>{setEditId(o.id);setForm({title:o.title,description:o.description,price_iqd:String(o.price_iqd),coins:String(o.coins),bonus_coins:String(o.bonus_coins),image_url:o.image_url??'',status:o.status,starts_at:o.starts_at?.slice(0,16)??'',ends_at:o.ends_at?.slice(0,16)??''});};
- const save=async()=>{if(!stagingBackend||busy)return;setBusy(true);setMessage('');try{
+ const save=async()=>{if(!stagingBackend||busy)return;
+ const price=Number(form.price_iqd),coins=Number(form.coins),bonus=Number(form.bonus_coins);
+ if(!form.title.trim() || !Number.isSafeInteger(price) || price<=0 || !Number.isSafeInteger(coins) || coins<=0 || !Number.isSafeInteger(bonus) || bonus<0 || !Number.isSafeInteger(coins+bonus)) {setMessage('تحقق من العنوان والسعر والعملات: يجب إدخال أعداد صحيحة وموجبة، والمكافأة الإضافية لا تقل عن صفر.');return;}
+ if((form.starts_at && !Number.isFinite(Date.parse(form.starts_at))) || (form.ends_at && !Number.isFinite(Date.parse(form.ends_at))) || (form.starts_at && form.ends_at && Date.parse(form.ends_at)<=Date.parse(form.starts_at))) {setMessage('تاريخ نهاية العرض يجب أن يكون بعد تاريخ البداية.');return;}
+ setBusy(true);setMessage('');try{
  const {error}=await stagingBackend.rpc('manage_recharge_offer',{p_id:editId,p_title:form.title,p_description:form.description,p_price_iqd:Number(form.price_iqd),p_coins:Number(form.coins),p_bonus_coins:Number(form.bonus_coins),p_image_url:form.image_url,p_status:form.status,p_starts_at:form.starts_at?new Date(form.starts_at).toISOString():null,p_ends_at:form.ends_at?new Date(form.ends_at).toISOString():null});
  if(error)throw error;await load();setEditId(null);setForm({...empty});setMessage('تم حفظ العرض');}catch(e){setMessage(e instanceof Error?e.message:String(e));}finally{setBusy(false);}};
  const field=(key:keyof typeof empty,label:string,type='text')=><label className="block text-sm font-bold text-slate-700">{label}<input type={type} value={form[key]} onChange={e=>setForm(p=>({...p,[key]:e.target.value}))} className="block mt-1 w-full p-3 border border-slate-200 rounded-xl bg-white" dir={type==='number'?'ltr':undefined}/></label>;
