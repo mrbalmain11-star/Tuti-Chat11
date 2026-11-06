@@ -54,9 +54,9 @@ export const GiftLottieAnimation: React.FC<{
           }
           data = JSON.parse(new TextDecoder().decode(bytes));
         } else {
-          const body = await response.text();
-          if (body.length > maxBytes) throw new Error('Gift animation exceeds size limit');
-          data = JSON.parse(body);
+          const bytes = await response.arrayBuffer();
+          if (bytes.byteLength > maxBytes) throw new Error('Gift animation exceeds size limit');
+          data = JSON.parse(new TextDecoder().decode(bytes));
         }
         if (disposed) return;
         if (!data || typeof data !== 'object' || !('layers' in data) || !Array.isArray(data.layers)) {
