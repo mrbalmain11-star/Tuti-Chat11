@@ -746,15 +746,14 @@ export const WealthLeaderboardModal: React.FC = () => {
         const {data,error}=await stagingBackend!.rpc('live_rankings',{p_period:period,p_kind:leaderboardTab});
         if(!alive||currentRequest!==requestId)return;
         if(error)throw error;
-        const rows = Array.isArray(data)
-          ? data.filter((item):item is RankingRow =>
+        if (!Array.isArray(data)) throw new Error('Invalid leaderboard response');
+        const rows = data.filter((item):item is RankingRow =>
               item !== null && typeof item === 'object' &&
               typeof item.entity_id === 'string' && item.entity_id.length > 0 &&
               typeof item.display_name === 'string' &&
               item.display_name.trim().length > 0 &&
               (item.avatar_url === null || typeof item.avatar_url === 'string')
-            )
-          : [];
+            );
         // One account or room can occupy only one position in a ranking.
         const seenEntities = new Set<string>();
         const uniqueRows = rows.filter(row => {
