@@ -710,21 +710,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return () => { active = false; document.removeEventListener('visibilitychange', onFocus); };
   }, [isLoggedIn]);
   const [followedRoomHosts, setFollowedRoomHosts] = useState<Set<string>>(new Set());
+  const followPendingRef = useRef<Set<string>>(new Set());
   useEffect(() => {
     safeStorage.removeItem('toti_followed_room_hosts_v2');
+    followPendingRef.current.clear();
     if (!isLoggedIn || !stagingBackend) {
       setFollowedRoomHosts(new Set());
       return;
     }
     let active = true;
-    void Promise.resolve(stagingBackend.rpc('staging_my_followed_ids')).then(({ data, error }) => {
-      if (error) throw error;
-      if (active) setFollowedRoomHosts(new Set((data ?? []) as string[]));
-    }).catch(error => {
-      console.error('Failed to load follows:', error);
-    });
-    return () => { active = false; };
-  }, [isLoggedIn]);
+    const refreshFollows = async () => {
+      try {
+        const { data, error } = await stagingBackend.rpc('staging_my_followed_ids');
+        if (error) throw error;
+        if (!Array.isArray(data) || !data.every(id => typeof id === 'string')) throw new Error('Invalid follow list');
+        // Do not overwrite a follow toggle still being confirmed by the server.
+        if (active && followPendingRef.current.size === 0) setFollowedRoomHosts(new Set(data));
+      } catch (error) {
+        console.error('Failed to load follows:', error);
+      }
+    };
+    void refreshFollows();
+    const onVisible = () => { if (document.visibilityState === 'visible') void refreshFollows(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => { active = false; document.removeEventListener('visibilitychange', onVisible); };
+  }, [isLoggedIn, currentUser.id]);
   // Financial history must originate from the server ledger, not localStorage.
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   useEffect(() => {
@@ -1467,7 +1477,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const toggleFollowHost = (hostId: string): void => {
-    if (!stagingBackend || !hostId || hostId === currentUser.id) return;
+    if (!stagingBackend || !hostId || hostId === currentUser.id || followPendingRef.current.has(hostId)) return;
+    followPendingRef.current.add(hostId);
     void Promise.resolve(stagingBackend.rpc('staging_toggle_follow', { p_followed_id: hostId }))
       .then(({ data, error }) => {
         if (error || typeof data !== 'boolean') throw error ?? new Error('Follow not confirmed');
@@ -1481,7 +1492,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }).catch(error => {
         console.error('Follow update rejected:', error);
         alert('تعذر تحديث المتابعة من الخادم.');
-      });
+      }).finally(() => { followPendingRef.current.delete(hostId); });
   };
 
   const joinAgency = (agencyId: string): void => {
