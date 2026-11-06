@@ -30,7 +30,8 @@ import { InviteModal } from './components/InviteModal';
 import { AuthScreen } from './components/AuthScreen';
 import { GoogleEmailOtpScreen } from './components/GoogleEmailOtpScreen';
 import { CompleteAccountScreen } from './components/CompleteAccountScreen';
-import { stagingBackend } from './services/stagingBackend';
+import { stagingBackend, fetchRealRooms } from './services/stagingBackend';
+import { mapRoomToUi } from './services/mapRoomToUi';
 
 // Staging APK OTP UI test: enabled by default; VITE_GOOGLE_EMAIL_OTP_ENFORCED=false disables it.
 // Server enforcement remains separately disabled until end-to-end email/session tests pass.
@@ -153,10 +154,23 @@ const AppContent: React.FC = () => {
     const url = new URL(window.location.href);
     const roomId = url.searchParams.get('room');
     if (!roomId || !/^[a-zA-Z0-9_-]{1,80}$/.test(roomId)) return;
-    if (!rooms.some(room => room.id === roomId)) return;
-    url.searchParams.delete('room');
-    window.history.replaceState(window.history.state, '', url.toString());
-    enterRoom(roomId);
+    const available = rooms.find(room => room.id === roomId);
+    if (available) {
+      url.searchParams.delete('room');
+      window.history.replaceState(window.history.state, '', url.toString());
+      enterRoom(roomId);
+      return;
+    }
+    // Room lists may still be loading when an external share link opens.
+    void fetchRealRooms().then(rows => {
+      const target = rows.find(room => room.id === roomId);
+      if (!target) return;
+      const currentUrl = new URL(window.location.href);
+      if (currentUrl.searchParams.get('room') !== roomId) return;
+      currentUrl.searchParams.delete('room');
+      window.history.replaceState(window.history.state, '', currentUrl.toString());
+      enterRoom(roomId, mapRoomToUi(target));
+    }).catch(error => console.error('Shared room lookup failed:', error));
   }, [isLoggedIn, otpState, onboardingState, rooms, enterRoom]);
 
   if (!isLoggedIn) {
