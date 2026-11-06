@@ -561,6 +561,10 @@ export const VoiceRoomModal: React.FC = () => {
   const handleSendChat = (e: React.FormEvent) => {
     e.preventDefault();
     if (chatSubmitLockedRef.current || !chatMessage.trim() || !activeRoom) return;
+    if (chatMessage.trim().length > 1000) {
+      showToast('الرسالة طويلة جداً. الحد الأقصى 1000 حرف.');
+      return;
+    }
     chatSubmitLockedRef.current = true;
     sendRoomMessage(activeRoom.id, chatMessage.trim());
     setChatMessage('');
@@ -1485,6 +1489,8 @@ export const VoiceRoomModal: React.FC = () => {
               placeholder="اكتب رسالة في الروم..."
               value={chatMessage}
               onChange={(e) => setChatMessage(e.target.value)}
+              aria-invalid={chatMessage.trim().length > 1000}
+              aria-describedby="room-chat-length"
               className="flex-1 p-2 rounded-xl bg-white/10 border border-white/20 text-white text-xs focus:outline-none focus:border-cyan-400"
               autoFocus
             />
@@ -1495,9 +1501,13 @@ export const VoiceRoomModal: React.FC = () => {
             >
               <Smile className="w-4 h-4" />
             </button>
+            <span id="room-chat-length" className={`text-[10px] tabular-nums ${chatMessage.trim().length > 1000 ? 'text-red-300' : 'text-slate-300'}`} aria-live="polite">
+              {chatMessage.trim().length}/1000
+            </span>
             <button
               type="submit"
-              className="p-2 rounded-xl bg-[#26d0b2] hover:bg-[#20b89d] text-slate-950 font-bold transition active:scale-95 cursor-pointer"
+              disabled={!chatMessage.trim() || chatMessage.trim().length > 1000}
+              className="p-2 rounded-xl bg-[#26d0b2] hover:bg-[#20b89d] text-slate-950 font-bold transition active:scale-95 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Send className="w-4 h-4" />
             </button>
