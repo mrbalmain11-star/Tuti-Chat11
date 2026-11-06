@@ -29,6 +29,7 @@ export type BackendRoom = {
   title: string;
   is_private: boolean;
   welcome_message: string;
+  tag: string;
   cover_path: string | null;
   background_path: string | null;
   background_url?: string;
