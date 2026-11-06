@@ -1179,7 +1179,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       .subscribe(status => {
         if (status === 'SUBSCRIBED') {
           stopRecovery();
-      window.clearInterval(seatLockTimer);
           void refreshRoster();
           void refreshSeatLocks();
         }
@@ -1206,6 +1205,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return () => {
       alive = false;
       stopRecovery();
+      window.clearInterval(seatLockTimer);
       window.clearInterval(roleRefreshTimer);
       window.removeEventListener('totichat:room-moderators-changed', refreshAfterModeration);
       window.removeEventListener('focus', refreshOnForeground);
