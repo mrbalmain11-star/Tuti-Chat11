@@ -32,6 +32,7 @@ import { GoogleEmailOtpScreen } from './components/GoogleEmailOtpScreen';
 import { CompleteAccountScreen } from './components/CompleteAccountScreen';
 import { stagingBackend, fetchRealRooms } from './services/stagingBackend';
 import { mapRoomToUi } from './services/mapRoomToUi';
+import { consumeNativeOpenMessagesIntent } from './services/nativePushBridge';
 
 // Staging APK OTP UI test: enabled by default; VITE_GOOGLE_EMAIL_OTP_ENFORCED=false disables it.
 // Server enforcement remains separately disabled until end-to-end email/session tests pass.
@@ -84,7 +85,7 @@ class ErrorBoundary extends React.Component<
 }
 
 const AppContent: React.FC = () => {
-  const { activeTab, isLoggedIn, isRtl, rooms, enterRoom, activeRoom } = useApp();
+  const { activeTab, setActiveTab, isLoggedIn, isRtl, rooms, enterRoom, activeRoom } = useApp();
   const [dmNotice, setDmNotice] = React.useState(false);
   React.useEffect(() => {
     const onMessage = () => {
@@ -157,6 +158,16 @@ const AppContent: React.FC = () => {
   }, [otpRetry]);
 
   const sharedRoomLookupRef = React.useRef<string | null>(null);
+  // Respect account verification before routing a notification to private messages.
+  React.useEffect(() => {
+    if (!isLoggedIn || (GOOGLE_EMAIL_OTP_ENFORCED && otpState !== 'verified') || onboardingState !== 'complete') return;
+    let mounted = true;
+    void consumeNativeOpenMessagesIntent().then(openMessages => {
+      if (mounted && openMessages) setActiveTab('messages');
+    });
+    return () => { mounted = false; };
+  }, [isLoggedIn, otpState, onboardingState, setActiveTab]);
+
   // Open a shared room only after authentication, OTP and onboarding are complete.
   React.useEffect(() => {
     if (!isLoggedIn || (GOOGLE_EMAIL_OTP_ENFORCED && otpState !== 'verified') || onboardingState !== 'complete') return;
