@@ -10,9 +10,10 @@ export const AdminOffersPanel:React.FC=()=>{
  const [editId,setEditId]=useState<string|null>(null);
  const [busy,setBusy]=useState(false);
  const [loading,setLoading]=useState(true);
+ const [loadError,setLoadError]=useState(false);
  const [message,setMessage]=useState('');
- const load=async()=>{if(!stagingBackend)throw new Error('خدمة العروض غير متاحة حالياً');const {data,error}=await stagingBackend.from('recharge_offers').select('*').order('created_at',{ascending:false});if(error)throw error;setItems((data??[]) as Offer[]);};
- useEffect(()=>{let active=true;setLoading(true);void load().catch(e=>{if(active)setMessage(e instanceof Error?e.message:String(e));}).finally(()=>{if(active)setLoading(false);});return ()=>{active=false;};},[]);
+ const load=async()=>{if(!stagingBackend)throw new Error('خدمة العروض غير متاحة حالياً');const {data,error}=await stagingBackend.from('recharge_offers').select('*').order('created_at',{ascending:false});if(error)throw error;setItems((data??[]) as Offer[]);setLoadError(false);};
+ useEffect(()=>{let active=true;setLoading(true);void load().catch(e=>{if(active){setLoadError(true);setMessage(e instanceof Error?e.message:String(e));}}).finally(()=>{if(active)setLoading(false);});return ()=>{active=false;};},[]);
  const edit=(o:Offer)=>{setEditId(o.id);setForm({title:o.title,description:o.description,price_iqd:String(o.price_iqd),coins:String(o.coins),bonus_coins:String(o.bonus_coins??0),image_url:o.image_url??'',status:o.status,starts_at:toLocalDateTime(o.starts_at),ends_at:toLocalDateTime(o.ends_at)});};
  const save=async()=>{if(!stagingBackend||busy)return;
  if(!['draft','published','paused'].includes(form.status)){setMessage('حالة العرض غير صالحة.');return;}
@@ -46,7 +47,7 @@ export const AdminOffersPanel:React.FC=()=>{
  {message&&<p role="status" className="text-sm text-slate-700">{message}</p>}
  <div className="flex items-center justify-between gap-3"><h4 className="font-black">العروض المسجلة ({items.length})</h4><button type="button" disabled={loading||busy} onClick={()=>{setLoading(true);setMessage('');void load().catch(e=>setMessage(e instanceof Error?e.message:String(e))).finally(()=>setLoading(false));}} className="rounded-lg border border-emerald-300 bg-white px-3 py-2 text-sm font-bold text-emerald-800 disabled:opacity-50">تحديث القائمة</button></div>
  {loading&&<p role="status" className="text-sm text-slate-600">جارِ تحميل العروض...</p>}
- {!loading&&items.length===0&&<p className="rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-600">لا توجد عروض محمّلة حالياً. إذا ظهر خطأ أعلاه، تحقق من الاتصال قبل إنشاء عرض جديد.</p>}
+ {!loading&&!loadError&&items.length===0&&<p className="rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-600">لا توجد عروض محمّلة حالياً. إذا ظهر خطأ أعلاه، تحقق من الاتصال قبل إنشاء عرض جديد.</p>}
  {items.map(o=><div key={o.id} className="rounded-xl bg-white border border-slate-200 p-3 flex justify-between items-center gap-3"><div><strong>{o.title}</strong><div className="text-xs text-slate-600">{Number(o.price_iqd).toLocaleString('ar-IQ')} د.ع — {(Number(o.coins)+Number(o.bonus_coins??0)).toLocaleString('ar-IQ')} عملة</div><div className="text-xs text-emerald-700">{offerDisplayStatus(o)}</div></div><button onClick={()=>edit(o)} className="rounded-lg bg-emerald-50 text-emerald-800 px-3 py-2">تعديل</button></div>)}
  </section>;
 };
