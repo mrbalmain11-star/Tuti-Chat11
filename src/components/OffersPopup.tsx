@@ -70,6 +70,13 @@ export const OffersPopup: React.FC = () => {
     }
   };
   useEffect(()=>{void loadDaily();},[]);
+  // Daily rewards must remain discoverable even when no recharge offer is published.
+  useEffect(()=>{
+    if(!daily || daily.claimed || disabled || sessionStorage.getItem('totichat:offers:seen'))return;
+    setOpen(true);
+    setTab('daily');
+    sessionStorage.setItem('totichat:offers:seen','yes');
+  },[daily,disabled]);
   useEffect(()=>{
     if(!stagingBackend){setOffersError(true);setOffersLoading(false);setOffersLoaded(true);return;}
     let alive=true;
