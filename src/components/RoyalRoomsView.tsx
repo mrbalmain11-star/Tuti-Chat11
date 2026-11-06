@@ -16,7 +16,7 @@ import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
 import { VipName } from './VipName';
 import { RoyalRoomFollowIcon } from './RoyalRoomFollowIcon';
-import { fetchMyProfile } from '../services/stagingBackend';
+import { fetchMyProfile, stagingBackend } from '../services/stagingBackend';
 
 export const RoyalRoomsView: React.FC = () => {
   const {
@@ -24,11 +24,23 @@ export const RoyalRoomsView: React.FC = () => {
     rooms,
     enterRoom,
     createVoiceRoom,
-    followedRoomHosts,
-    toggleFollowHost,
     setOpenCreateRoomModal,
     setHomeSubTab,
   } = useApp();
+
+  const [followedRoomIds, setFollowedRoomIds] = useState<Set<string>>(new Set());
+  const [unfollowing, setUnfollowing] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    if (!currentUser.id || !stagingBackend) { setFollowedRoomIds(new Set()); return; }
+    let active = true;
+    const refresh = async () => {
+      const { data, error } = await stagingBackend!.from('room_follows').select('room_id').eq('follower_id', currentUser.id);
+      if (active && !error) setFollowedRoomIds(new Set((data || []).map(row => row.room_id)));
+    };
+    void refresh();
+    window.addEventListener('totichat:room-follows-changed', refresh);
+    return () => { active = false; window.removeEventListener('totichat:room-follows-changed', refresh); };
+  }, [currentUser.id]);
 
   const [publicId, setPublicId] = useState<number | null>(null);
   useEffect(() => {
@@ -115,9 +127,7 @@ export const RoyalRoomsView: React.FC = () => {
   };
 
   // 2. Followed Rooms (الغرف الذي اتابعها)
-  const followedRooms = rooms.filter(
-    (r) => r.hostId !== currentUser.id && (followedRoomHosts.has(r.hostId) || followedRoomHosts.has(r.id))
-  );
+  const followedRooms = rooms.filter((r) => r.hostId !== currentUser.id && followedRoomIds.has(r.id));
 
   return (
     <div
@@ -329,11 +339,19 @@ export const RoyalRoomsView: React.FC = () => {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        toggleFollowHost(room.hostId);
-                        showToast(`تم تحديث متابعة ${room.hostName}`);
+                        if (!stagingBackend || unfollowing.has(room.id)) return;
+                        setUnfollowing(previous => new Set(previous).add(room.id));
+                        void stagingBackend.from('room_follows').delete()
+                          .eq('follower_id', currentUser.id).eq('room_id', room.id)
+                          .then(({ error }) => {
+                            if (error) { showToast('تعذر إلغاء متابعة الغرفة'); return; }
+                            setFollowedRoomIds(previous => { const next = new Set(previous); next.delete(room.id); return next; });
+                            window.dispatchEvent(new Event('totichat:room-follows-changed'));
+                            showToast('تم إلغاء متابعة الغرفة');
+                          }).finally(() => setUnfollowing(previous => { const next = new Set(previous); next.delete(room.id); return next; }));
                       }}
                       className="absolute top-1.5 left-1.5 z-10 p-1.5 rounded-full bg-black/50 hover:bg-black/70 text-rose-400 hover:text-rose-300 backdrop-blur-xs transition active:scale-90"
-                      title="إلغاء أو تعديل المتابعة"
+                      title="إلغاء متابعة الغرفة"
                     >
                       <RoyalRoomFollowIcon followed={true} className="w-5 h-5" />
                     </button>
