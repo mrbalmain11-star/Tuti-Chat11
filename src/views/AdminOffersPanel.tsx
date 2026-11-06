@@ -12,6 +12,8 @@ export const AdminOffersPanel:React.FC=()=>{
  useEffect(()=>{void load().catch(e=>setMessage(String(e)));},[]);
  const edit=(o:Offer)=>{setEditId(o.id);setForm({title:o.title,description:o.description,price_iqd:String(o.price_iqd),coins:String(o.coins),bonus_coins:String(o.bonus_coins??0),image_url:o.image_url??'',status:o.status,starts_at:o.starts_at?.slice(0,16)??'',ends_at:o.ends_at?.slice(0,16)??''});};
  const save=async()=>{if(!stagingBackend||busy)return;
+ if(!['draft','published','paused'].includes(form.status)){setMessage('حالة العرض غير صالحة.');return;}
+ if(form.title.trim().length<3 || form.title.trim().length>100){setMessage('عنوان العرض يجب أن يحتوي من 3 إلى 100 حرف.');return;}
  const price=Number(form.price_iqd),coins=Number(form.coins),bonus=Number(form.bonus_coins);
  if(!form.title.trim() || !Number.isSafeInteger(price) || price<=0 || !Number.isSafeInteger(coins) || coins<=0 || !Number.isSafeInteger(bonus) || bonus<0 || !Number.isSafeInteger(coins+bonus)) {setMessage('تحقق من العنوان والسعر والعملات: يجب إدخال أعداد صحيحة وموجبة، والمكافأة الإضافية لا تقل عن صفر.');return;}
  if((form.starts_at && !Number.isFinite(Date.parse(form.starts_at))) || (form.ends_at && !Number.isFinite(Date.parse(form.ends_at))) || (form.starts_at && form.ends_at && Date.parse(form.ends_at)<=Date.parse(form.starts_at))) {setMessage('تاريخ نهاية العرض يجب أن يكون بعد تاريخ البداية.');return;}
