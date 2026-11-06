@@ -998,11 +998,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       try {
         do {
           refreshAgain = false;
-          const messages = await fetchRealRoomMessages(roomId, chatSessionRef.current?.roomId === roomId ? chatSessionRef.current.since : new Date().toISOString());
-          if (active) setRoomMessages(prev => ({ ...prev, [roomId]: messages }));
+          try {
+            const messages = await fetchRealRoomMessages(roomId, chatSessionRef.current?.roomId === roomId ? chatSessionRef.current.since : new Date().toISOString());
+            if (active) setRoomMessages(prev => ({ ...prev, [roomId]: messages }));
+          } catch (error) {
+            if (active) console.error('Room message refresh failed:', error);
+          }
         } while (active && refreshAgain);
-      } catch (error) {
-        console.error('Room message refresh failed:', error);
       } finally {
         refreshing = false;
       }
