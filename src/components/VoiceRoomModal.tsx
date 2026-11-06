@@ -526,6 +526,7 @@ export const VoiceRoomModal: React.FC = () => {
   const chatNearBottomRef = useRef(true);
   const chatScrollPositionRef = useRef(0);
   const chatAnchorRef = useRef<{ id: string; offset: number } | null>(null);
+  const chatProgrammaticScrollRef = useRef<number | null>(null);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -929,6 +930,7 @@ export const VoiceRoomModal: React.FC = () => {
     chatNearBottomRef.current = true;
     chatScrollPositionRef.current = 0;
     chatAnchorRef.current = null;
+    chatProgrammaticScrollRef.current = null;
   }, [activeRoom?.id]);
 
   useLayoutEffect(() => {
@@ -948,6 +950,7 @@ export const VoiceRoomModal: React.FC = () => {
         container.scrollTop = chatScrollPositionRef.current;
       }
     }
+    chatProgrammaticScrollRef.current = container.scrollTop;
   }, [activeRoom?.id, isRoomMinimized, currentMessages, showChatInput]);
 
   useEffect(()=>{const backend=stagingBackend;if(!activeRoom||!backend)return;let alive=true;const load=async()=>{const {data,error}=await backend.rpc('totichat_room_seat_layout',{p_room_id:activeRoom.id});if(alive&&!error&&['grid','classic','circle','stage'].includes(data))setSeatLayout(data);};void load();const timer=window.setInterval(()=>void load(),15000);return()=>{alive=false;window.clearInterval(timer);};},[activeRoom?.id]);
@@ -1463,6 +1466,9 @@ export const VoiceRoomModal: React.FC = () => {
                   ref={chatScrollRef}
                   onScroll={(event) => {
                     const element = event.currentTarget;
+                    const programmed = chatProgrammaticScrollRef.current;
+                    chatProgrammaticScrollRef.current = null;
+                    if (programmed !== null && Math.abs(element.scrollTop - programmed) < 2) return;
                     chatNearBottomRef.current = element.scrollHeight - element.scrollTop - element.clientHeight < 48;
                     chatScrollPositionRef.current = element.scrollTop;
                     const firstVisible = Array.from(element.querySelectorAll<HTMLElement>('[data-room-message-id]'))
