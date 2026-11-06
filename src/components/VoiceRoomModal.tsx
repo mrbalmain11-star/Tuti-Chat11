@@ -358,6 +358,7 @@ export const VoiceRoomModal: React.FC = () => {
         p_room_id: activeRoom.id, p_target: targetId, p_action: 'unban', p_request_id: crypto.randomUUID(),
       });
       if (error || data?.success !== true) throw error ?? new Error('لم يؤكد الخادم فك الحظر');
+      window.dispatchEvent(new CustomEvent('totichat:room-bans-changed', { detail: activeRoom.id }));
       await refreshBanLists();
       showToast('تم فك حظر الغرفة؛ يستطيع المستخدم الدخول مجدداً');
     } catch (error) {
