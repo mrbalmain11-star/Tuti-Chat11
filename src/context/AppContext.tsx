@@ -1109,8 +1109,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT')
           console.error('Room roster realtime subscription:', status);
       });
+    const refreshOnForeground = () => {
+      if (document.visibilityState === 'visible') void refreshRoster();
+    };
+    window.addEventListener('focus', refreshOnForeground);
+    document.addEventListener('visibilitychange', refreshOnForeground);
     return () => {
       alive = false;
+      window.removeEventListener('focus', refreshOnForeground);
+      document.removeEventListener('visibilitychange', refreshOnForeground);
       void client.removeChannel(channel);
     };
   }, [isLoggedIn, activeRoom?.id, currentUser.id]);
