@@ -823,12 +823,20 @@ export const VoiceRoomModal: React.FC = () => {
       const { data, error } = await stagingBackend.functions.invoke('phase2-voice-moderate', {
         body: { roomId: activeRoom.id, targetId: userId, action, requestId, ...(reason ? { reason: reason.trim() } : {}) },
       });
+      if (data?.databaseCommitted === true) {
+        // The database has changed even if the voice disconnect acknowledgement fails.
+        // Reconcile seats from the server; do not optimistically remove a member.
+        window.dispatchEvent(new CustomEvent('totichat:room-moderators-changed', { detail: activeRoom.id }));
+      }
       if (error || data?.success !== true || data?.sfuDisconnected !== true) {
         console.error('Voice moderation not confirmed:', error, data);
         showToast(data?.databaseCommitted
           ? 'تم تحديث الخادم لكن فصل الصوت غير مؤكد. تحقق من حالة العضو.'
           : 'تعذر تنفيذ الأمر. تحقق من الصلاحيات واتصال الصوت.');
         return;
+      }
+      if (data?.databaseCommitted !== true) {
+        window.dispatchEvent(new CustomEvent('totichat:room-moderators-changed', { detail: activeRoom.id }));
       }
       showToast(action === 'ban' ? 'تم حظر العضو وطرده؛ لن يستطيع العودة إلا بعد فك الحظر' : action === 'kick' ? 'تم طرد العضو من الغرفة' : action === 'mute'
         ? 'تم كتم مايك العضو من الخادم' : 'تم إنزال العضو من المقعد');
