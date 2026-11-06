@@ -89,7 +89,7 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
         {!loading && access && <>
           {(() => {
             const tiles = [
-              {id:'stats',label:'الإحصائيات',Icon:Radio},
+              ...(access.role === 'owner' ? [{id:'stats',label:'الإحصائيات',Icon:Radio}] : []),
               {id:'users',label:'المستخدمون',Icon:Users},
               {id:'agencies',label:'الوكالات',Icon:Building2},
               {id:'rooms',label:'الغرف',Icon:Radio},
