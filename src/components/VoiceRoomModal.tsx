@@ -264,9 +264,42 @@ export const VoiceRoomModal: React.FC = () => {
     setRoomBans(data?.room ?? []);
   };
   useEffect(() => {
-    if (!showBansModal) return;
-    void refreshBanLists().catch(error => setBanListError(error instanceof Error ? error.message : 'تعذر تحميل قائمة المحظورين'));
-  }, [showBansModal, activeRoom?.id]);
+    if (!showBansModal || !activeRoom?.id || !stagingBackend) return;
+    let active = true;
+    let pending = false;
+    const roomId = activeRoom.id;
+    const refresh = async () => {
+      if (pending || !active) return;
+      pending = true;
+      try {
+        const { data, error } = await stagingBackend.rpc('totichat_blocked_profiles', {
+          p_room_id: isOwner || isModerator ? roomId : null,
+        });
+        if (error) throw error;
+        if (!active) return;
+        setPersonalBlocks(data?.personal ?? []);
+        setRoomBans(data?.room ?? []);
+        setBanListError('');
+      } catch (error) {
+        if (active) setBanListError(error instanceof Error ? error.message : 'تعذر تحميل قائمة المحظورين');
+      } finally { pending = false; }
+    };
+    void refresh();
+    const refreshVisible = () => { if (!document.hidden && navigator.onLine) void refresh(); };
+    const timer = window.setInterval(refreshVisible, 5000);
+    window.addEventListener('focus', refreshVisible);
+    window.addEventListener('online', refreshVisible);
+    document.addEventListener('visibilitychange', refreshVisible);
+    window.addEventListener('totichat:room-moderators-changed', refreshVisible);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+      window.removeEventListener('focus', refreshVisible);
+      window.removeEventListener('online', refreshVisible);
+      document.removeEventListener('visibilitychange', refreshVisible);
+      window.removeEventListener('totichat:room-moderators-changed', refreshVisible);
+    };
+  }, [showBansModal, activeRoom?.id, isOwner, isModerator]);
   const setPersonalBlock = async (targetId: string, block: boolean) => {
     if (!stagingBackend || targetId === currentUser.id || banActionBusy) return;
     setBanActionBusy(true);
