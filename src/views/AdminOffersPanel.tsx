@@ -28,6 +28,18 @@ export const AdminOffersPanel:React.FC=()=>{
  try{await load();setMessage('تم حفظ العرض');}
  catch(refreshError){console.error('Offer saved but list refresh failed',refreshError);setLoadError(true);setMessage('تم حفظ العرض في الخادم، لكن تعذر تحديث القائمة. اضغط «تحديث القائمة» للتحقق من البيانات.');}
  }catch(e){setMessage(e instanceof Error?e.message:String(e));}finally{setBusy(false);}};
+ const pause=async(o:Offer)=>{
+ if(!stagingBackend||busy||o.status==='paused')return;
+ if(!window.confirm('إيقاف العرض «'+o.title+'»؟ سيختفي من قائمة عروض المستخدمين.'))return;
+ setBusy(true);setMessage('');
+ try{
+  const {error}=await stagingBackend.rpc('manage_recharge_offer',{p_id:o.id,p_title:o.title,p_description:o.description??'',p_price_iqd:o.price_iqd,p_coins:o.coins,p_bonus_coins:o.bonus_coins??0,p_image_url:o.image_url??'',p_status:'paused',p_starts_at:o.starts_at,p_ends_at:o.ends_at});
+  if(error)throw error;
+  try{await load();setMessage('تم إيقاف العرض وتحديث القائمة.');}
+  catch(refreshError){console.error('Offer paused but list refresh failed',refreshError);setLoadError(true);setMessage('تم إيقاف العرض، لكن تعذر تحديث القائمة. اضغط «تحديث القائمة» للتحقق.');}
+ }catch(e){setMessage(e instanceof Error?e.message:String(e));}
+ finally{setBusy(false);}
+ };
  const field=(key:keyof typeof empty,label:string,type='text')=><label className="block text-sm font-bold text-slate-700">{label}<input type={type} value={form[key]} onChange={e=>setForm(p=>({...p,[key]:e.target.value}))} className="block mt-1 w-full p-3 border border-slate-200 rounded-xl bg-white" dir={type==='number'?'ltr':undefined}/></label>;
  return <section className="space-y-4" dir="rtl">
  <div className="rounded-2xl bg-gradient-to-l from-emerald-900 to-emerald-700 text-white p-4"><h3 className="text-lg font-black">إدارة عروض الشحن</h3><p className="text-sm mt-1">إنشاء عروض حقيقية تظهر في نافذة العروض. نشر العرض لا يفعّل الدفع أو يمنح العملات تلقائياً.</p></div>
@@ -48,6 +60,6 @@ export const AdminOffersPanel:React.FC=()=>{
  <div className="flex items-center justify-between gap-3"><h4 className="font-black">العروض المسجلة ({items.length})</h4><button type="button" disabled={loading||busy} onClick={()=>{setLoading(true);setMessage('');void load().catch(e=>{setLoadError(true);setMessage(e instanceof Error?e.message:String(e));}).finally(()=>setLoading(false));}} className="rounded-lg border border-emerald-300 bg-white px-3 py-2 text-sm font-bold text-emerald-800 disabled:opacity-50">تحديث القائمة</button></div>
  {loading&&<p role="status" className="text-sm text-slate-600">جارِ تحميل العروض...</p>}
  {!loading&&!loadError&&items.length===0&&<p className="rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-600">لا توجد عروض محمّلة حالياً. إذا ظهر خطأ أعلاه، تحقق من الاتصال قبل إنشاء عرض جديد.</p>}
- {items.map(o=><div key={o.id} className="rounded-xl bg-white border border-slate-200 p-3 flex justify-between items-center gap-3"><div><strong>{o.title}</strong><div className="text-xs text-slate-600">{Number(o.price_iqd).toLocaleString('ar-IQ')} د.ع — {(Number(o.coins)+Number(o.bonus_coins??0)).toLocaleString('ar-IQ')} عملة</div><div className="text-xs text-emerald-700">{offerDisplayStatus(o)}</div></div><button onClick={()=>edit(o)} className="rounded-lg bg-emerald-50 text-emerald-800 px-3 py-2">تعديل</button></div>)}
+ {items.map(o=><div key={o.id} className="rounded-xl bg-white border border-slate-200 p-3 flex justify-between items-center gap-3"><div><strong>{o.title}</strong><div className="text-xs text-slate-600">{Number(o.price_iqd).toLocaleString('ar-IQ')} د.ع — {(Number(o.coins)+Number(o.bonus_coins??0)).toLocaleString('ar-IQ')} عملة</div><div className="text-xs text-emerald-700">{offerDisplayStatus(o)}</div></div><div className="flex shrink-0 gap-2"><button type="button" disabled={busy} onClick={()=>edit(o)} className="rounded-lg bg-emerald-50 text-emerald-800 px-3 py-2 disabled:opacity-50">تعديل</button>{o.status!=='paused'&&<button type="button" disabled={busy} onClick={()=>void pause(o)} className="rounded-lg bg-rose-50 text-rose-800 px-3 py-2 disabled:opacity-50">إيقاف</button>}</div></div>)}
  </section>;
 };
