@@ -52,7 +52,7 @@ export const OffersPopup: React.FC = () => {
     }
   };
   const claim=async()=>{
-    if(!stagingBackend||claimRequestInFlight.current||claiming||dailyLoading||!daily||daily.claimed)return;
+    if(!stagingBackend||claimRequestInFlight.current||claimOutcomeUnknown||claiming||dailyLoading||!daily||daily.claimed)return;
     claimRequestInFlight.current=true;
     const previousDaily = daily;
     setClaiming(true);
@@ -80,6 +80,7 @@ export const OffersPopup: React.FC = () => {
     }catch(error){
       console.error('Daily reward claim failed',error);
       const verified=await loadDaily();
+      if(!verified)setClaimOutcomeUnknown(true);
       setNotice(verified?.claimed
         ? 'المكافأة مسجلة كمستلمة اليوم في الخادم. لا حاجة لإعادة الطلب.'
         : verified ? 'لم يتم تأكيد الاستلام. راجع حالة المكافأة قبل إعادة المحاولة.'
@@ -185,7 +186,7 @@ export const OffersPopup: React.FC = () => {
               <span className="text-[#075b45] font-black">{daily ? daily.schedule[6].toLocaleString('ar-IQ') + ' عملة' : 'حسب الخادم'}</span>
             </div>
             <button type="button" disabled={claiming||dailyLoading} onClick={()=>{setNotice('');void loadDaily();}} className="w-full mt-2 flex items-center justify-center gap-2 rounded-xl border border-emerald-300 bg-white/80 px-3 py-2 text-sm font-bold text-emerald-900 disabled:opacity-50"><RefreshCw size={16} className={dailyLoading?'animate-spin':''}/> تحديث حالة المكافأة</button>
-            <button type="button" disabled={!daily||daily.claimed||claiming||dailyLoading} onClick={()=>void claim()} className="w-full mt-3 rounded-2xl bg-gradient-to-b from-[#ffe57a] to-[#f6b500] text-[#6b4200] font-black text-lg py-3 border-2 border-[#f0b22a] disabled:opacity-60">{claiming?'جاري الاستلام...':dailyLoading?'جارٍ التحقق...':daily?.claimed?'تم الاستلام اليوم':'استلام المكافأة'}</button>
+            <button type="button" disabled={!daily||daily.claimed||claimOutcomeUnknown||claiming||dailyLoading} onClick={()=>void claim()} className="w-full mt-3 rounded-2xl bg-gradient-to-b from-[#ffe57a] to-[#f6b500] text-[#6b4200] font-black text-lg py-3 border-2 border-[#f0b22a] disabled:opacity-60">{claiming?'جاري الاستلام...':dailyLoading?'جارٍ التحقق...':daily?.claimed?'تم الاستلام اليوم':claimOutcomeUnknown?'تحقق من الحالة أولاً':'استلام المكافأة'}</button>
           </>:<>
             {offersError?<div role="status" className="py-6 text-center"><p className="text-rose-800">تعذر تحميل عروض الشحن من الخادم. تحقق من الاتصال وحاول مجدداً.</p><button type="button" disabled={offersLoading} onClick={()=>setOffersRetry(n=>n+1)} className="mt-3 rounded-xl border border-emerald-300 bg-white px-4 py-2 text-sm font-bold text-emerald-900 disabled:opacity-50"><RefreshCw size={16} className="ml-2 inline" aria-hidden="true"/>إعادة المحاولة</button></div>:(!offersLoaded || offersLoading) && visibleOffers.length===0?<p role="status" className="py-8 text-center text-emerald-900">جارٍ تحميل العروض...</p>:visibleOffers.length===0?<p className="text-center text-emerald-900 py-8">لا توجد عروض شحن خاصة حالياً</p>:selected&&<div className="rounded-xl bg-white border border-emerald-200 overflow-hidden">
               {selected.image_url?<img src={selected.image_url} alt={selected.title} className="w-full aspect-[2/1] object-contain"/>:<div className="h-32 bg-gradient-to-br from-emerald-800 to-amber-500 flex items-center justify-center text-white"><Gift size={54}/></div>}
