@@ -1081,7 +1081,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         do {
           pending = false;
           const members = await resolveRoomAvatars(await fetchRoomVisualMembers(roomId));
+          const { data: moderatorIds, error: moderatorsError } = await stagingBackend.rpc('totichat_room_moderator_ids', { p_room_id: roomId });
           if (!alive) return;
+          if (moderatorsError) console.error('Room moderator roster refresh failed:', moderatorsError);
           const mine = members.find(m => m.user_id === currentUser.id);
           if (!mine && confirmedMember) {
             // Server has removed this participant (kick/ban). Close the local
@@ -1100,6 +1102,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             return {
               ...prev,
               listenersCount: members.length,
+              moderatorIds: !moderatorsError && Array.isArray(moderatorIds) ? moderatorIds : prev.moderatorIds,
               memberAvatars: members.map(m => m.resolvedAvatar || (m.user_id === currentUser.id ? currentUser.avatar : '')).filter((avatar): avatar is string => Boolean(avatar)),
               activeMicCount: members.filter(m => m.seat_no != null).length,
               seats: prev.seats.map(seat => {
@@ -1161,12 +1164,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (document.visibilityState === 'visible') void refreshRoster();
     };
     const refreshOnReconnect = () => { void refreshRoster(); };
+    const refreshAfterModeration = (event: Event) => {
+      if ((event as CustomEvent<string>).detail === roomId) void refreshRoster();
+    };
+    window.addEventListener('totichat:room-moderators-changed', refreshAfterModeration);
     window.addEventListener('focus', refreshOnForeground);
     window.addEventListener('online', refreshOnReconnect);
     document.addEventListener('visibilitychange', refreshOnForeground);
     return () => {
       alive = false;
       stopRecovery();
+      window.removeEventListener('totichat:room-moderators-changed', refreshAfterModeration);
       window.removeEventListener('focus', refreshOnForeground);
       window.removeEventListener('online', refreshOnReconnect);
       document.removeEventListener('visibilitychange', refreshOnForeground);
