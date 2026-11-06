@@ -1356,6 +1356,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!activeRoom || seatReservationPendingRef.current) return;
     seatReservationPendingRef.current = true;
     const roomId = activeRoom.id;
+    let reservationConfirmed = false;
     void reserveSeat(roomId, seatNumber).catch(async error => {
       // Membership can expire while a room remains open; rejoin once and retry.
       const reason = error instanceof Error ? error.message.toLowerCase() : '';
@@ -1363,6 +1364,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       await joinRoomMembership(roomId);
       return reserveSeat(roomId, seatNumber);
     }).then(() => {
+      reservationConfirmed = true;
       setActiveRoom(prev => {
         if (prev?.id !== roomId) return prev;
         return {
@@ -1387,6 +1389,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }));
       });
     }).catch(error => {
+      if (reservationConfirmed) {
+        // Seat assignment succeeded; only the separate microphone unmute failed.
+        // Do not report a failed reservation or clear the server-confirmed seat.
+        console.error('Seat reserved but microphone could not be enabled:', error);
+        setMyMicMuted(true);
+        alert('تم حجز المقعد، لكن تعذر فتح المايك. حاول تشغيله مجدداً.');
+        return;
+      }
       console.error('Seat reservation failed:', error);
       const reason = error instanceof Error ? error.message.toLowerCase() : '';
       alert(reason.includes('seat locked') ? 'هذا المقعد مقفول من إدارة الغرفة.' :
