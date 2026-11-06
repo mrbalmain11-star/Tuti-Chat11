@@ -73,10 +73,25 @@ export const RoyalRoomsView: React.FC = () => {
     setTimeout(() => setCopiedId(false), 2000);
   };
 
-  const handleShareRoom = (e: React.MouseEvent) => {
+  const handleShareRoom = async (e: React.MouseEvent) => {
     e.stopPropagation();
     sounds.playClick();
-    showToast('تم نسخ رابط مشاركة غرفتك 🔗');
+    if (!myRoom) { showToast('أنشئ غرفتك أولاً حتى تتمكن من مشاركتها'); return; }
+    const shareUrl = new URL(window.location.href);
+    shareUrl.searchParams.set('room', myRoom.id);
+    const shareData = { title: myRoom.title || 'غرفتي في TotiChat', url: shareUrl.toString() };
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        return;
+      }
+      if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
+      await navigator.clipboard.writeText(shareData.url);
+      showToast('تم نسخ رابط الغرفة 🔗');
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') return;
+      showToast('تعذرت المشاركة. حاول مجدداً.');
+    }
   };
 
   // 2. Followed Rooms (الغرف الذي اتابعها)
@@ -198,7 +213,7 @@ export const RoyalRoomsView: React.FC = () => {
 
                 <span className="text-[10px] text-slate-300 bg-white/5 px-2 py-0.5 rounded-full border border-white/10 flex items-center gap-1">
                   <Users className="w-3 h-3 text-purple-300" />
-                  <span>10 مقاعد صوتية</span>
+                  <span>15 مقعداً صوتياً</span>
                 </span>
               </div>
             </div>
