@@ -1212,6 +1212,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!activeRoom) return;
     const roomId = activeRoom.id;
     void leaveRoomMembership(roomId).then(() => {
+      pendingGiftAnimations.current = [];
+      activeGiftAnimationRef.current = null;
+      setActiveGiftAnimation(null);
       setActiveRoom(prev => prev?.id === roomId ? null : prev);
       setIsRoomMinimized(false);
       setMyMicMuted(false);
