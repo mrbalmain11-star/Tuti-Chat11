@@ -88,14 +88,14 @@ export const OffersPopup: React.FC = () => {
       <div className="w-full max-w-sm max-h-[88dvh] overflow-y-auto rounded-[28px] bg-[#e6fff3] border-[3px] border-[#a4e8c9] shadow-[0_0_30px_rgba(246,210,86,.25)]">
         <div className="relative bg-gradient-to-b from-[#006b51] via-[#0cb47f] to-[#61dfb2] px-4 pt-6 pb-5 text-center text-white">
           <button onClick={()=>setOpen(false)} aria-label="إغلاق" className="absolute top-3 left-3 w-9 h-9 rounded-full bg-black/25 flex items-center justify-center"><X size={22}/></button>
-          <div className="text-3xl mb-1">🌙 ✨</div>
+          <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl border border-amber-200/70 bg-gradient-to-br from-amber-100/25 to-emerald-950/20 shadow-[0_4px_18px_rgba(255,215,110,.25)]"><Gift size={34} strokeWidth={1.8} className="text-amber-100" aria-hidden="true" /></div>
           <h2 className="text-2xl font-black text-[#fff0a8] drop-shadow">{tab === 'daily' ? 'المكافأة اليومية' : 'العروض الملكية'}</h2>
           <p className="text-xs text-emerald-50">{tab === 'daily' ? 'استلم مكافأتك كل يوم واكتشف عروض الشحن الخاصة' : 'اكتشف عروض الشحن المنشورة من الإدارة'}</p>
         </div>
         <div className="p-3">
           <div className="grid grid-cols-2 gap-2 mb-3">
-            <button onClick={()=>setTab('daily')} className={`rounded-xl py-2.5 font-black text-sm ${tab==='daily'?'bg-[#0a9d72] text-white':'bg-white text-[#137b60]'}`}>🎁 المكافآت اليومية</button>
-            <button onClick={()=>setTab('offers')} className={`rounded-xl py-2.5 font-black text-sm ${tab==='offers'?'bg-[#0a9d72] text-white':'bg-white text-[#137b60]'}`}>🪙 عروض الشحن</button>
+            <button onClick={()=>setTab('daily')} className={`flex items-center justify-center gap-1.5 rounded-xl py-2.5 font-black text-sm ${tab==='daily'?'bg-[#0a9d72] text-white':'bg-white text-[#137b60]'}`}><Gift size={17} aria-hidden="true" /> المكافآت اليومية</button>
+            <button onClick={()=>setTab('offers')} className={`rounded-xl py-2.5 font-black text-sm ${tab==='offers'?'bg-[#0a9d72] text-white':'bg-white text-[#137b60]'}`}><Coins size={17} aria-hidden="true" /> عروض الشحن</button>
           </div>
           {tab==='daily'?<>
             <div className="grid grid-cols-3 gap-2">
@@ -107,7 +107,7 @@ export const OffersPopup: React.FC = () => {
             </div>
             <div aria-label={`اليوم السابع: ${daily?.day===7 ? (daily.claimed ? 'تم الاستلام' : 'متاح للاستلام') : daily ? (daily.day>7 ? 'يوم سابق' : 'غير متاح حالياً') : 'الحالة غير معروفة'}`} className={`mt-2 rounded-xl border-2 border-[#71cbb0] bg-gradient-to-b from-[#e8fff5] to-[#73d8b4] p-3 text-center ${daily?.day===7?'ring-2 ring-amber-400':''}`}>
               <strong className="text-[#096d53]">اليوم السابع · صندوق الكنز</strong>{daily?.day===7 && <span className={`mx-auto mt-2 block w-fit rounded-full px-3 py-1 text-xs font-black ${daily.claimed ? 'bg-emerald-700 text-white' : 'bg-amber-100 text-amber-900'}`}>{daily.claimed ? 'تم استلام صندوق الكنز' : 'صندوق الكنز متاح اليوم'}</span>}
-              <div className="text-5xl my-1">🎁</div>
+              <div className="mx-auto my-2 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-200 to-amber-500 shadow-lg"><Gift size={36} className="text-amber-900" aria-hidden="true" /></div>
               <span className="text-[#075b45] font-black">{daily?.day===7 ? Number(daily.coins).toLocaleString('ar-IQ') + ' 🪙' : 'حسب الخادم'}</span>
             </div>
             <button disabled={claiming||dailyLoading} onClick={()=>{setNotice('');void loadDaily();}} className="w-full mt-2 flex items-center justify-center gap-2 rounded-xl border border-emerald-300 bg-white/80 px-3 py-2 text-sm font-bold text-emerald-900 disabled:opacity-50"><RefreshCw size={16} className={dailyLoading?'animate-spin':''}/> تحديث حالة المكافأة</button>
