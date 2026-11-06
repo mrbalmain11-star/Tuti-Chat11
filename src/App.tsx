@@ -166,6 +166,7 @@ const AppContent: React.FC = () => {
         <p className="text-lg font-bold">تعذر فحص التحقق الأمني</p>
         <p className="text-sm text-slate-300">تحقق من الاتصال ثم حاول مجدداً. لن يتم تجاوز التحقق من OTP.</p>
         <button type="button" onClick={() => { setOtpState('checking'); setOtpRetry(value => value + 1); }} className="rounded-xl bg-emerald-600 px-6 py-3 font-bold">إعادة المحاولة</button>
+        <button type="button" onClick={() => { void stagingBackend?.auth.signOut(); }} className="rounded-xl border border-emerald-300/40 px-6 py-3 font-bold text-emerald-100">تسجيل الخروج والدخول مجدداً</button>
       </div>
     );
     return <GoogleEmailOtpScreen email={otpEmail}
