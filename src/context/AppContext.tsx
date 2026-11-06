@@ -1547,7 +1547,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       window.dispatchEvent(new CustomEvent('totichat:room-moderators-changed', { detail: roomId }));
     }).catch(error => {
       console.error('Room microphone moderation failed:', error);
-      alert('تعذر تنفيذ أمر المايك. تأكد من صلاحية المشرف ووجود العضو في الغرفة.');
+      const reason = error instanceof Error ? error.message : '';
+      const ownerMute = reason.includes('Owner mute') || reason.includes('owner-enforced mute');
+      alert(ownerMute
+        ? 'هذا المستخدم مكتوم بقرار مالك الغرفة، ولا يستطيع المشرف تغيير الكتم.'
+        : 'تعذر تنفيذ أمر المايك. تأكد من صلاحية المشرف ووجود العضو في الغرفة.');
     });
   };
 
