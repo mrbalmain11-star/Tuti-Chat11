@@ -107,7 +107,9 @@ export const EditProfileModal: React.FC = () => {
     try {
       const updatedName = name.trim();
       if (updatedName.length < 2 || updatedName.length > 40) throw new Error('الاسم يجب أن يكون من 2 إلى 40 حرفاً');
-      await saveProfileChanges({ display_name: updatedName, bio: bio.trim() });
+      const updatedBio = bio.trim();
+      if (updatedBio.length > 160) throw new Error('النبذة الشخصية يجب ألا تتجاوز 160 حرفاً');
+      await saveProfileChanges({ display_name: updatedName, bio: updatedBio });
       if (avatarBlob) await uploadMyAvatar(avatarBlob);
       if (coverBlob) await uploadMyCover(coverBlob);
       window.dispatchEvent(new Event('totichat:profile-changed'));
