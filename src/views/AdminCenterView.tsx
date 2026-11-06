@@ -90,9 +90,11 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
           {(() => {
             const tiles = [
               ...(access.role === 'owner' ? [{id:'stats',label:'الإحصائيات',Icon:Radio}] : []),
-              {id:'users',label:'المستخدمون',Icon:Users},
-              {id:'agencies',label:'الوكالات',Icon:Building2},
-              {id:'rooms',label:'الغرف',Icon:Radio},
+              ...(access.role === 'owner' ? [
+                {id:'users',label:'المستخدمون',Icon:Users},
+                {id:'agencies',label:'الوكالات',Icon:Building2},
+                {id:'rooms',label:'الغرف',Icon:Radio},
+              ] : []),
               {id:'operations',label:'العمليات',Icon:ShieldCheck},
               {id:'ids',label:'الآيديات',Icon:Users},
               {id:'moderation',label:'إشراف الغرف',Icon:Radio},
