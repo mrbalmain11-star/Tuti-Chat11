@@ -1197,7 +1197,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // Moderator role changes may not be part of the published realtime tables.
     const roleRefreshTimer = window.setInterval(() => {
       if (document.visibilityState === 'visible' && navigator.onLine) void refreshRoster();
-    }, 30000);
+    }, 5000);
     const refreshAfterModeration = (event: Event) => {
       if ((event as CustomEvent<string>).detail === roomId) void refreshRoster();
     };
@@ -1453,6 +1453,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         seats: prev.seats.map(item => item.user?.id === target
           ? { ...item, isMuted: true, isModeratorMuted: action === 'mute', isSpeaking: false } : item),
       }));
+      window.dispatchEvent(new CustomEvent('totichat:room-moderators-changed', { detail: roomId }));
     }).catch(error => {
       console.error('Room microphone moderation failed:', error);
       alert('تعذر تنفيذ أمر المايك. تأكد من صلاحية المشرف ووجود العضو في الغرفة.');
