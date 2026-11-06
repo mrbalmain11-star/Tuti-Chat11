@@ -73,7 +73,7 @@ export const OffersPopup: React.FC = () => {
   };
   useEffect(()=>{void loadDaily();},[]);
   useEffect(()=>{
-    const onOpenRewards=()=>{setTab('daily');setOpen(true);void loadDaily();};
+    const onOpenRewards=()=>{sessionStorage.setItem('totichat:offers:seen','yes');setNotice('');setTab('daily');setOpen(true);void loadDaily();};
     window.addEventListener('totichat:open-rewards',onOpenRewards);
     return ()=>window.removeEventListener('totichat:open-rewards',onOpenRewards);
   },[]);
