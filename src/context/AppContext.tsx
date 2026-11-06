@@ -1278,11 +1278,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const roomTransitionVersion = useRef(0);
+  // Serialize membership writes: an old join/leave must not finish after a newer
+  // room transition and silently change server membership behind the current UI.
+  const membershipTransitionQueue = useRef<Promise<void>>(Promise.resolve());
+  const queueMembershipTransition = (operation: () => Promise<void>): Promise<void> => {
+    const next = membershipTransitionQueue.current.catch(() => {}).then(operation);
+    membershipTransitionQueue.current = next.catch(() => {});
+    return next;
+  };
   const enterRoom = (roomId: string, newlyCreatedRoom?: VoiceRoom): void => {
     const room = newlyCreatedRoom?.id === roomId ? newlyCreatedRoom : rooms.find(r => r.id === roomId);
     if (!room) return;
     const transition = ++roomTransitionVersion.current;
-    void joinRoomMembership(roomId).then(async () => {
+    void queueMembershipTransition(async () => {
+      if (transition !== roomTransitionVersion.current) return;
+      await joinRoomMembership(roomId);
+    }).then(async () => {
       if (transition !== roomTransitionVersion.current) return;
       setActiveRoom(room);
       setIsRoomMinimized(false);
@@ -1351,7 +1362,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!activeRoom) return;
     const roomId = activeRoom.id;
     const transition = ++roomTransitionVersion.current;
-    void leaveRoomMembership(roomId).then(() => {
+    void queueMembershipTransition(async () => {
+      if (transition !== roomTransitionVersion.current) return;
+      await leaveRoomMembership(roomId);
+    }).then(() => {
       if (transition !== roomTransitionVersion.current) return;
       pendingGiftAnimations.current = [];
       activeGiftAnimationRef.current = null;
