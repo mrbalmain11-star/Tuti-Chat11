@@ -17,7 +17,7 @@ import { mapRoomToUi } from '../services/mapRoomToUi';
 import { saveProfileChanges } from '../services/profileWrites';
 import { fetchMyLedger } from '../services/ledgerReads';
 import { fetchRealRoomMessages } from '../services/roomMessageReads';
-import { fetchRoomVisualMembers } from '../services/roomVisualMembers';
+import { fetchRoomVisualMembers, type RoomVisualMember } from '../services/roomVisualMembers';
 import { reserveSeat, joinRoomMembership, leaveRoomMembership, sendRealRoomMessage, setMyRoomMute, releaseMySeat } from '../services/roomMembershipRpc';
 import { Language, Translations, translations } from '../i18n/translations';
 import { StorageItem, BagItem, storeFrames, storeMounts, storeBubbles, storeEntrances } from '../data/storageItems';
@@ -1172,7 +1172,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setActiveRoom(room);
       setIsRoomMinimized(false);
       setMyMicMuted(true);
-      let members: Awaited<ReturnType<typeof resolveRoomAvatars>>;
+      let members: (RoomVisualMember & { resolvedAvatar: string })[];
       try {
         members = await resolveRoomAvatars(await fetchRoomVisualMembers(roomId));
       } catch (firstError) {
