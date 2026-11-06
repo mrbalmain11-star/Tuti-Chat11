@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { stagingBackend } from '../services/stagingBackend';
 
-const supportedTargets = new Set(['home', 'room', 'me', 'vip', 'wallet', 'agency']);
+const supportedTargets = new Set(['home', 'me', 'vip', 'wallet', 'agency']);
 
 type Banner = { id: string; title: string; image_url: string; link_kind: string; link_target: string | null; sort_order: number; starts_at: string | null; ends_at: string | null };
 
@@ -39,7 +39,6 @@ export const BannerSlider: React.FC = () => {
     if (!banner || banner.link_kind !== 'screen') return;
     switch (banner.link_target) {
       case 'home': app.setActiveTab('home'); break;
-      case 'room': app.setActiveTab('home'); break;
       case 'me': app.setActiveTab('profile'); break;
       case 'vip': app.setOpenVipModal(true); break;
       case 'wallet': app.setOpenRechargeModal(true); break;
