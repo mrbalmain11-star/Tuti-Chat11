@@ -1172,7 +1172,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setActiveRoom(room);
       setIsRoomMinimized(false);
       setMyMicMuted(true);
-      let members: Awaited<ReturnType<typeof fetchRoomVisualMembers>>;
+      let members: Awaited<ReturnType<typeof resolveRoomAvatars>>;
       try {
         members = await resolveRoomAvatars(await fetchRoomVisualMembers(roomId));
       } catch (error) {
