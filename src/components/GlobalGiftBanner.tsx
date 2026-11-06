@@ -14,6 +14,7 @@ export const GlobalGiftBanner: React.FC = () => {
   const [avatars, setAvatars] = useState({ sender: '', recipient: '' });
   const cursor = useRef<string | null>(null);
   const seen = useRef(new Set<string>());
+  const displayedId = useRef<string | null>(null);
 
   useEffect(() => {
     if (!isLoggedIn || !stagingBackend) { cursor.current = null; seen.current.clear(); setAnnouncement(null); return; }
@@ -40,12 +41,13 @@ export const GlobalGiftBanner: React.FC = () => {
         if (next) {
           fresh.forEach(row => seen.current.add(row.id));
           if (seen.current.size > 100) seen.current.clear();
+          displayedId.current = next.id;
           setAnnouncement(next);
           setAvatars({ sender: '', recipient: '' });
           void stagingBackend!.from('profiles').select('id,avatar_url')
             .in('id', [next.sender_id, next.recipient_id])
             .then(({ data: profiles, error: profileError }) => {
-              if (!active || profileError) return;
+              if (!active || profileError || displayedId.current !== next.id) return;
               const avatarFor = (id: string) => {
                 const path = profiles?.find(profile => profile.id === id)?.avatar_url;
                 if (!path) return '';
@@ -54,7 +56,7 @@ export const GlobalGiftBanner: React.FC = () => {
               setAvatars({ sender: avatarFor(next.sender_id), recipient: avatarFor(next.recipient_id) });
             });
           if (hideTimer) clearTimeout(hideTimer);
-          hideTimer = setTimeout(() => { if (active) setAnnouncement(null); }, 6500);
+          hideTimer = setTimeout(() => { if (active && displayedId.current === next.id) { displayedId.current = null; setAnnouncement(null); } }, 6500);
         }
       } catch (error) {
         console.error('Global gift announcement unavailable:', error);
