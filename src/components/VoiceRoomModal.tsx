@@ -331,12 +331,17 @@ export const VoiceRoomModal: React.FC = () => {
     };
     void refreshGiftTotals();
     const refreshOnReturn = () => { if (!document.hidden) void refreshGiftTotals(); };
+    const refreshAfterGift = (event: Event) => {
+      if ((event as CustomEvent<string>).detail === statsRoomId) void refreshGiftTotals();
+    };
     const refreshInterval = window.setInterval(refreshOnReturn, 30000);
+    window.addEventListener('totichat:room-gift-confirmed', refreshAfterGift);
     window.addEventListener('focus', refreshOnReturn);
     document.addEventListener('visibilitychange', refreshOnReturn);
     return () => {
       active = false;
       window.clearInterval(refreshInterval);
+      window.removeEventListener('totichat:room-gift-confirmed', refreshAfterGift);
       window.removeEventListener('focus', refreshOnReturn);
       document.removeEventListener('visibilitychange', refreshOnReturn);
     };
