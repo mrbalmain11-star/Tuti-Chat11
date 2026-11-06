@@ -1164,6 +1164,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (document.visibilityState === 'visible') void refreshRoster();
     };
     const refreshOnReconnect = () => { void refreshRoster(); };
+    // Moderator role changes may not be part of the published realtime tables.
+    const roleRefreshTimer = window.setInterval(() => {
+      if (document.visibilityState === 'visible' && navigator.onLine) void refreshRoster();
+    }, 30000);
     const refreshAfterModeration = (event: Event) => {
       if ((event as CustomEvent<string>).detail === roomId) void refreshRoster();
     };
@@ -1174,6 +1178,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return () => {
       alive = false;
       stopRecovery();
+      window.clearInterval(roleRefreshTimer);
       window.removeEventListener('totichat:room-moderators-changed', refreshAfterModeration);
       window.removeEventListener('focus', refreshOnForeground);
       window.removeEventListener('online', refreshOnReconnect);
