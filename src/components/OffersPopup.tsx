@@ -14,8 +14,30 @@ export const OffersPopup: React.FC = () => {
   const [daily,setDaily]=useState<{day:number;claimed:boolean;coins:number}|null>(null);
   const [claiming,setClaiming]=useState(false);
   const [notice,setNotice]=useState('');
-  const loadDaily=async()=>{if(!stagingBackend)return;const {data,error}=await stagingBackend.rpc('daily_reward_status');if(!error&&data)setDaily(data as {day:number;claimed:boolean;coins:number});};
-  const claim=async()=>{if(!stagingBackend||claiming||daily?.claimed)return;setClaiming(true);setNotice('');const {data,error}=await stagingBackend.rpc('claim_daily_reward');if(error)setNotice(error.message);else{setNotice(`تم استلام ${Number((data as {coins:number}).coins).toLocaleString('ar-IQ')} عملة بنجاح`);await loadDaily();}setClaiming(false);};
+  const loadDaily=async()=>{
+    if(!stagingBackend)return;
+    const {data,error}=await stagingBackend.rpc('daily_reward_status');
+    if(error){setNotice('تعذر تحميل المكافأة اليومية. حاول لاحقاً.');return;}
+    if(data)setDaily(data as {day:number;claimed:boolean;coins:number});
+  };
+  const claim=async()=>{
+    if(!stagingBackend||claiming||!daily||daily.claimed)return;
+    setClaiming(true);
+    setNotice('');
+    try{
+      const {data,error}=await stagingBackend.rpc('claim_daily_reward');
+      if(error)throw error;
+      const confirmedCoins=Number((data as {coins?:number}|null)?.coins);
+      setNotice(Number.isFinite(confirmedCoins) ? 'تم استلام '+confirmedCoins.toLocaleString('ar-IQ')+' عملة بنجاح' : 'تم إرسال الطلب، جارٍ تحديث حالة المكافأة');
+      await loadDaily();
+    }catch(error){
+      console.error('Daily reward claim failed',error);
+      setNotice('تعذر تأكيد استلام المكافأة. تحقق من الحالة قبل المحاولة مجدداً.');
+      await loadDaily();
+    }finally{
+      setClaiming(false);
+    }
+  };
   useEffect(()=>{void loadDaily();},[]);
   useEffect(()=>{
     if(!stagingBackend)return;
