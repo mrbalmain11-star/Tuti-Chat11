@@ -1379,8 +1379,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           ...prev,
           seats: prev.seats.map(seat => ({
             ...seat,
+            // A reservation response may race with roster refresh. Never keep
+            // this account on its previous seat after the confirmed move.
             user: seat.seatNumber === seatNumber ? currentUser :
               seat.user?.id === currentUser.id ? null : seat.user,
+            isMuted: seat.seatNumber === seatNumber ? true : seat.isMuted,
+            isModeratorMuted: seat.seatNumber === seatNumber ? false : seat.isModeratorMuted,
             isSpeaking: false,
           })),
         };
@@ -1392,7 +1396,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setMyMicMuted(false);
         setActiveRoom(prev => prev?.id !== roomId ? prev : ({
           ...prev,
-          seats: prev.seats.map(seat => seat.seatNumber === seatNumber
+          seats: prev.seats.map(seat => seat.seatNumber === seatNumber && seat.user?.id === currentUser.id
             ? { ...seat, isMuted: false } : seat),
         }));
       });
