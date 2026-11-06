@@ -1162,14 +1162,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
+  const roomTransitionVersion = useRef(0);
   const enterRoom = (roomId: string, newlyCreatedRoom?: VoiceRoom): void => {
     const room = newlyCreatedRoom?.id === roomId ? newlyCreatedRoom : rooms.find(r => r.id === roomId);
     if (!room) return;
+    const transition = ++roomTransitionVersion.current;
     void joinRoomMembership(roomId).then(async () => {
+      if (transition !== roomTransitionVersion.current) return;
       setActiveRoom(room);
       setIsRoomMinimized(false);
       setMyMicMuted(true);
       const members = await resolveRoomAvatars(await fetchRoomVisualMembers(roomId));
+      if (transition !== roomTransitionVersion.current) return;
       const mine = members.find(m => m.user_id === currentUser.id);
       if (mine) setMyMicMuted(mine.is_muted);
       setActiveRoom(prev => {
@@ -1203,6 +1207,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         };
       });
     }).catch(error => {
+      if (transition !== roomTransitionVersion.current) return;
       console.error('Room join or membership fetch failed:', error);
       alert('تعذر تأكيد دخول الغرفة من الخادم.');
     });
@@ -1211,7 +1216,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const leaveRoom = (): void => {
     if (!activeRoom) return;
     const roomId = activeRoom.id;
+    const transition = ++roomTransitionVersion.current;
     void leaveRoomMembership(roomId).then(() => {
+      if (transition !== roomTransitionVersion.current) return;
       pendingGiftAnimations.current = [];
       activeGiftAnimationRef.current = null;
       setActiveGiftAnimation(null);
@@ -1219,6 +1226,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setIsRoomMinimized(false);
       setMyMicMuted(false);
     }).catch(error => {
+      if (transition !== roomTransitionVersion.current) return;
       console.error('Room leave failed:', error);
       alert('تعذر تأكيد مغادرة الغرفة.');
     });
