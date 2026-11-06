@@ -37,6 +37,15 @@ Deno.serve(async (request) => {
   if (Math.abs(Date.now() - new Date(message.created_at).getTime()) > 60_000)
     return json({ error: 'Message is too old' }, 409);
 
+  // Honor either party's DM block before looking up recipient devices.
+  // A database lookup failure must fail closed, not leak an alert.
+  const { data: blocks, error: blocksError } = await admin.from('dm_blocks')
+    .select('blocker_id')
+    .or(`and(blocker_id.eq.${message.sender_id},blocked_id.eq.${message.recipient_id}),and(blocker_id.eq.${message.recipient_id},blocked_id.eq.${message.sender_id})`)
+    .limit(1);
+  if (blocksError) return json({ error: 'Notification eligibility unavailable' }, 503);
+  if (blocks?.length) return json({ sent: 0, blocked: true });
+
   const { data: devices, error: deviceError } = await admin.from('push_device_tokens')
     .select('token').eq('user_id', message.recipient_id).limit(20);
   if (deviceError) return json({ error: 'Device lookup failed' }, 500);
