@@ -32,7 +32,7 @@ import { GoogleEmailOtpScreen } from './components/GoogleEmailOtpScreen';
 import { CompleteAccountScreen } from './components/CompleteAccountScreen';
 import { stagingBackend, fetchRealRooms } from './services/stagingBackend';
 import { mapRoomToUi } from './services/mapRoomToUi';
-import { consumeNativeOpenMessagesIntent } from './services/nativePushBridge';
+import { consumeNativeOpenMessagesIntent, listenForNativeOpenMessages } from './services/nativePushBridge';
 
 // Staging APK OTP UI test: enabled by default; VITE_GOOGLE_EMAIL_OTP_ENFORCED=false disables it.
 // Server enforcement remains separately disabled until end-to-end email/session tests pass.
@@ -162,10 +162,20 @@ const AppContent: React.FC = () => {
   React.useEffect(() => {
     if (!isLoggedIn || (GOOGLE_EMAIL_OTP_ENFORCED && otpState !== 'verified') || onboardingState !== 'complete') return;
     let mounted = true;
+    let removeListener: (() => Promise<void>) | undefined;
+    void listenForNativeOpenMessages(() => {
+      if (mounted) setActiveTab('messages');
+    }).then(remove => {
+      if (mounted) removeListener = remove;
+      else void remove();
+    }).catch(() => {});
     void consumeNativeOpenMessagesIntent().then(openMessages => {
       if (mounted && openMessages) setActiveTab('messages');
     });
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+      if (removeListener) void removeListener();
+    };
   }, [isLoggedIn, otpState, onboardingState, setActiveTab]);
 
   // Open a shared room only after authentication, OTP and onboarding are complete.
