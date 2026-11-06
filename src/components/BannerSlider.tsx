@@ -14,7 +14,9 @@ export const BannerSlider: React.FC = () => {
   useEffect(() => {
     if (!stagingBackend) return;
     let alive = true;
+    let requestVersion = 0;
     const refresh = async () => {
+      const currentRequest = ++requestVersion;
       const now = new Date().toISOString();
       const { data, error } = await stagingBackend!.from('home_banners')
         .select('id,title,image_url,link_kind,link_target,sort_order,starts_at,ends_at')
@@ -23,8 +25,9 @@ export const BannerSlider: React.FC = () => {
         .or(`ends_at.is.null,ends_at.gt.${now}`)
         .order('sort_order', { ascending: true })
         .limit(10);
+      if (!alive || currentRequest !== requestVersion) return;
       if (error) { console.error('Banner loading failed:', error); return; }
-      if (alive) setItems(data ?? []);
+      setItems(data ?? []);
     };
     void refresh();
     const refreshWhenVisible = () => { if (document.visibilityState === 'visible') void refresh(); };
