@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.os.Build
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
+import com.google.firebase.messaging.FirebaseMessaging
 
 class TotiApplication : Application() {
     override fun onCreate() {
@@ -19,6 +20,11 @@ class TotiApplication : Application() {
                 .setProjectId("totichatpro")
                 .build()
             FirebaseApp.initializeApp(this, options)
+        }
+        // Obtain a token on startup as well as during onNewToken refreshes.
+        // Keep it local until an authenticated user can register it.
+        FirebaseMessaging.getInstance().token.addOnSuccessListener { token ->
+            PendingPushTokenStore.save(this, token)
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val manager = getSystemService(NotificationManager::class.java)
