@@ -27,8 +27,10 @@ export const BannerSlider: React.FC = () => {
       if (alive) setItems(data ?? []);
     };
     void refresh();
-    const refreshTimer = window.setInterval(() => void refresh(), 60000);
-    return () => { alive = false; window.clearInterval(refreshTimer); };
+    const refreshWhenVisible = () => { if (document.visibilityState === 'visible') void refresh(); };
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    const refreshTimer = window.setInterval(() => { if (document.visibilityState === 'visible') void refresh(); }, 60000);
+    return () => { alive = false; window.clearInterval(refreshTimer); document.removeEventListener('visibilitychange', refreshWhenVisible); };
   }, []);
   useEffect(() => {
     if (items.length < 2) return;
