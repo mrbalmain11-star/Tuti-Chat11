@@ -1426,9 +1426,9 @@ export const VoiceRoomModal: React.FC = () => {
                   {/* 3. Real-time User Sent Messages */}
                   {currentMessages.map((msg) => (
                     <div key={msg.id} className="flex justify-end">
-                      <div className={`toti-chat-bubble rounded-2xl rounded-tr-sm py-1.5 px-2.5 border text-[11px] text-white shadow-sm max-w-[85%] break-words ${msg.senderId === currentUser.id && currentUser.vipLevel >= 1 && currentUser.vipLevel <= 8 ? ["","bg-emerald-950/90 border-emerald-400/70","bg-sky-950/90 border-sky-400/70","bg-indigo-950/90 border-indigo-400/70","bg-violet-950/90 border-violet-400/70","bg-amber-950/90 border-amber-400/70","bg-teal-950/90 border-teal-300/70","bg-blue-950/90 border-blue-300/70","bg-yellow-950/90 border-yellow-300/70"][currentUser.vipLevel] : 'bg-[#1c123d]/88 border-amber-300/25'}`}>
+                      <div className={`toti-chat-bubble rounded-2xl rounded-tr-sm py-1.5 px-2.5 border text-[11px] text-white shadow-sm max-w-[85%] break-words ${msg.senderId === currentUser.id && currentUser.vipLevel >= 1 ? ["","bg-emerald-950/90 border-emerald-400/70","bg-sky-950/90 border-sky-400/70","bg-indigo-950/90 border-indigo-400/70","bg-violet-950/90 border-violet-400/70","bg-amber-950/90 border-amber-400/70","bg-teal-950/90 border-teal-300/70","bg-blue-950/90 border-blue-300/70","bg-yellow-950/90 border-yellow-300/70"][Math.min(8, Math.floor(currentUser.vipLevel))] : 'bg-[#1c123d]/88 border-amber-300/25'}`}>
                         <span className="text-amber-300 font-bold ml-1">{msg.senderName}:</span>
-                        {msg.senderId === currentUser.id && currentUser.vipLevel >= 1 && currentUser.vipLevel <= 8 && (
+                        {msg.senderId === currentUser.id && currentUser.vipLevel >= 1 && (
                           <span className="inline-flex align-middle rounded-full border border-amber-200/50 bg-black/25 px-1.5 py-0.5 text-[9px] font-black text-amber-100 ml-1" aria-label={`مستوى VIP ${currentUser.vipLevel}`}>
                             VIP {currentUser.vipLevel}
                           </span>
