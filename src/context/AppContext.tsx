@@ -1432,10 +1432,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const sendRoomMessage = (roomId: string, text: string): void => {
     if (!text.trim() || !activeRoom || activeRoom.id !== roomId) return;
+    const transition = roomTransitionVersion.current;
     void sendRealRoomMessage(roomId, text).then(() => {
+      if (transition !== roomTransitionVersion.current) return;
       window.dispatchEvent(new CustomEvent('totichat:room-message-sent', { detail: roomId }));
     }).catch(error => {
       console.error('Room message rejected:', error);
+      // A late failure must not restore a draft or show an alert in another room.
+      if (transition !== roomTransitionVersion.current) return;
       window.dispatchEvent(new CustomEvent('totichat:room-message-failed', {
         detail: { roomId, text },
       }));
