@@ -755,7 +755,14 @@ export const WealthLeaderboardModal: React.FC = () => {
               (item.avatar_url === null || typeof item.avatar_url === 'string')
             )
           : [];
-        setRankingState({period,tab:leaderboardTab,rows});
+        // One account or room can occupy only one position in a ranking.
+        const seenEntities = new Set<string>();
+        const uniqueRows = rows.filter(row => {
+          if (seenEntities.has(row.entity_id)) return false;
+          seenEntities.add(row.entity_id);
+          return true;
+        });
+        setRankingState({period,tab:leaderboardTab,rows:uniqueRows});
       } catch(error) {
         if(!alive||currentRequest!==requestId)return;
         console.error('Rankings load failed',error);
