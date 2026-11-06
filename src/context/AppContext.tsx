@@ -1386,15 +1386,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!activeRoom || seatReservationPendingRef.current) return;
     seatReservationPendingRef.current = true;
     const roomId = activeRoom.id;
+    const transitionAtStart = roomTransitionVersion.current;
     let reservationConfirmed = false;
     void reserveSeat(roomId, seatNumber).catch(async error => {
       // Membership can expire while a room remains open; rejoin once and retry.
       const reason = error instanceof Error ? error.message.toLowerCase() : '';
       if (!reason.includes('join room first') && !reason.includes('not a room member')) throw error;
-      await joinRoomMembership(roomId);
+      if (activeRoom?.id !== roomId || roomTransitionVersion.current !== transitionAtStart) throw new Error('Room changed during seat reservation');
+      await queueMembershipTransition(async () => {
+        if (roomTransitionVersion.current !== transitionAtStart) return;
+        await joinRoomMembership(roomId);
+      });
+      if (roomTransitionVersion.current !== transitionAtStart) throw new Error('Room changed during seat reservation');
       return reserveSeat(roomId, seatNumber);
     }).then(() => {
       reservationConfirmed = true;
+      if (roomTransitionVersion.current !== transitionAtStart) return;
       window.dispatchEvent(new CustomEvent('totichat:room-seat-changed', { detail: roomId }));
       setActiveRoom(prev => {
         if (prev?.id !== roomId) return prev;
@@ -1421,6 +1428,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // LiveKit stays unpublished even though the seat is visibly occupied.
       return setMyRoomMute(roomId, false).then(confirmed => {
         if (confirmed !== false) throw new Error('Microphone unmute not confirmed');
+        if (roomTransitionVersion.current !== transitionAtStart) return;
         setMyMicMuted(false);
         setActiveRoom(prev => prev?.id !== roomId ? prev : ({
           ...prev,
@@ -1429,6 +1437,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }));
       });
     }).catch(error => {
+      if (roomTransitionVersion.current !== transitionAtStart) return;
       if (reservationConfirmed) {
         // Seat assignment succeeded; only the separate microphone unmute failed.
         // Do not report a failed reservation or clear the server-confirmed seat.
@@ -1451,7 +1460,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const leaveSeat = (_seatNumber: number): void => {
     if (!activeRoom) return;
     const roomId = activeRoom.id;
+    const transitionAtStart = roomTransitionVersion.current;
     void releaseMySeat(roomId).then(() => {
+      if (roomTransitionVersion.current !== transitionAtStart) return;
       window.dispatchEvent(new CustomEvent('totichat:room-seat-changed', { detail: roomId }));
       setActiveRoom(prev => prev?.id === roomId ? {
         ...prev,
@@ -1460,6 +1471,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       } : prev);
       setMyMicMuted(true);
     }).catch(error => {
+      if (roomTransitionVersion.current !== transitionAtStart) return;
       console.error('Seat release failed:', error);
       alert('تعذر مغادرة المقعد. حاول مجدداً.');
     });
