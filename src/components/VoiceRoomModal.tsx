@@ -915,6 +915,12 @@ export const VoiceRoomModal: React.FC = () => {
     return () => { disposed = true; if (listener) void listener.remove(); };
   }, [activeRoom?.id, isRoomMinimized, showExitOptions, showChatInput, showEmojiPicker, showMusicPlayerModal, showTasksModal, showChangeBgModal, showDecorationsModal, showRoomStatsModal, showHostCenterModal, showAgencyInfoModal, showMembersModal, showMessagesSheet, showToolsDrawer, showRoomModeModal, showRoomInfoModal, selectedMicUser, selectedEmptySeat, setIsRoomMinimized]);
 
+  // Reconcile messages missed while the room was minimized before showing the chat again.
+  useEffect(() => {
+    if (!activeRoom?.id || isRoomMinimized) return;
+    window.dispatchEvent(new CustomEvent('totichat:room-message-refresh', { detail: activeRoom.id }));
+  }, [activeRoom?.id, isRoomMinimized]);
+
   // Get current messages
   const currentMessages = activeRoom ? roomMessages[activeRoom.id] || [] : [];
 
