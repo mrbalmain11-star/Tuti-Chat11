@@ -757,8 +757,9 @@ export const WealthLeaderboardModal: React.FC = () => {
         // One account or room can occupy only one position in a ranking.
         const seenEntities = new Set<string>();
         const uniqueRows = rows.filter(row => {
-          if (seenEntities.has(row.entity_id)) return false;
-          seenEntities.add(row.entity_id);
+          const entityKey = row.entity_id.trim();
+          if (seenEntities.has(entityKey)) return false;
+          seenEntities.add(entityKey);
           return true;
         });
         // Ranking rows are already ordered by the backend; render at most ten.
