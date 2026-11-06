@@ -12,7 +12,7 @@ export async function saveProfileChanges(fields: {
   const patch: Record<string, string | null> = {};
   if (fields.display_name !== undefined) {
     const name = fields.display_name.trim();
-    if (!name || name.length > 40) throw new Error('Invalid display name');
+    if (name.length < 2 || name.length > 40) throw new Error('الاسم يجب أن يكون من 2 إلى 40 حرفاً');
     patch.display_name = name;
   }
   if (fields.bio !== undefined) {
