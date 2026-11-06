@@ -58,6 +58,9 @@ export async function createAdminBanner(file: File, title: string, options: { li
   }
 }
 export async function changeAdminBannerStatus(banner: AdminBanner, status: 'published' | 'archived'): Promise<void> {
+  if (status === 'published' && banner.ends_at && (!Number.isFinite(Date.parse(banner.ends_at)) || Date.parse(banner.ends_at) <= Date.now())) {
+    throw new Error('لا يمكن نشر بنر انتهت صلاحيته. حدّث تاريخ النهاية أولاً.');
+  }
   if (status === 'published' && banner.status !== 'published') {
     const existing = await listAdminBanners();
     if (existing.filter(item => item.status === 'published').length >= 10) throw new Error('الحد الأقصى 10 بنرات منشورة.');
