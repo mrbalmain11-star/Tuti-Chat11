@@ -94,21 +94,21 @@ export const OffersPopup: React.FC = () => {
         </div>
         <div className="p-3">
           <div className="grid grid-cols-2 gap-2 mb-3">
-            <button onClick={()=>setTab('daily')} className={`flex items-center justify-center gap-1.5 rounded-xl py-2.5 font-black text-sm ${tab==='daily'?'bg-[#0a9d72] text-white':'bg-white text-[#137b60]'}`}><Gift size={17} aria-hidden="true" /> المكافآت اليومية</button>
-            <button onClick={()=>setTab('offers')} className={`rounded-xl py-2.5 font-black text-sm ${tab==='offers'?'bg-[#0a9d72] text-white':'bg-white text-[#137b60]'}`}><Coins size={17} aria-hidden="true" /> عروض الشحن</button>
+            <button type="button" onClick={()=>setTab('daily')} className={`flex items-center justify-center gap-1.5 rounded-xl py-2.5 font-black text-sm ${tab==='daily'?'bg-[#0a9d72] text-white':'bg-white text-[#137b60]'}`}><Gift size={17} aria-hidden="true" /> المكافآت اليومية</button>
+            <button type="button" onClick={()=>setTab('offers')} className={`flex items-center justify-center gap-1.5 rounded-xl py-2.5 font-black text-sm ${tab==='offers'?'bg-[#0a9d72] text-white':'bg-white text-[#137b60]'}`}><Coins size={17} aria-hidden="true" /> عروض الشحن</button>
           </div>
           {tab==='daily'?<>
             <div className="grid grid-cols-3 gap-2">
               {Array.from({length:6},(_,i)=>i).map(i=><div key={i} aria-label={`اليوم ${i+1}: ${daily && daily.day===i+1 ? (daily.claimed?'تم الاستلام':'متاح للاستلام') : daily && i+1<daily.day ? 'يوم سابق' : 'غير متاح حالياً'}`} className={`relative rounded-xl border-2 p-2 text-center min-h-[98px] flex flex-col items-center justify-between ${daily?.day===i+1?'bg-gradient-to-b from-[#fff5a3] to-[#f5bd42] border-[#d6a230]':'bg-gradient-to-b from-white to-[#9ee8d0] border-[#71cbb0]'}`}>
                 <strong className="text-[#0b735a] text-sm">اليوم {i+1}</strong>{daily?.day===i+1 && <span className={`rounded-full px-2 py-0.5 text-[10px] font-black ${daily.claimed ? 'bg-emerald-700 text-white' : 'bg-amber-100 text-amber-900'}`}>{daily.claimed ? 'تم الاستلام' : 'متاح اليوم'}</span>}
                 <div className="flex h-10 w-10 items-center justify-center rounded-full border border-amber-300/70 bg-gradient-to-br from-amber-100 via-amber-300 to-amber-500 shadow-[0_3px_9px_rgba(130,88,10,.18)]"><Coins className="text-amber-900" size={24} strokeWidth={1.8} aria-hidden="true"/></div>
-                <span className="text-[#075b45] font-black text-sm">{daily?.day===i+1 ? Number(daily.coins).toLocaleString('ar-IQ') + ' 🪙' : 'حسب الخادم'}</span>
+                <span className="text-[#075b45] font-black text-sm">{daily?.day===i+1 ? Number(daily.coins).toLocaleString('ar-IQ') + ' عملة' : 'حسب الخادم'}</span>
               </div>)}
             </div>
             <div aria-label={`اليوم السابع: ${daily?.day===7 ? (daily.claimed ? 'تم الاستلام' : 'متاح للاستلام') : daily ? (daily.day>7 ? 'يوم سابق' : 'غير متاح حالياً') : 'الحالة غير معروفة'}`} className={`mt-2 rounded-xl border-2 border-[#71cbb0] bg-gradient-to-b from-[#e8fff5] to-[#73d8b4] p-3 text-center ${daily?.day===7?'ring-2 ring-amber-400':''}`}>
               <strong className="text-[#096d53]">اليوم السابع · صندوق الكنز</strong>{daily?.day===7 && <span className={`mx-auto mt-2 block w-fit rounded-full px-3 py-1 text-xs font-black ${daily.claimed ? 'bg-emerald-700 text-white' : 'bg-amber-100 text-amber-900'}`}>{daily.claimed ? 'تم استلام صندوق الكنز' : 'صندوق الكنز متاح اليوم'}</span>}
               <div className="mx-auto my-2 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-200 to-amber-500 shadow-lg"><Gift size={36} className="text-amber-900" aria-hidden="true" /></div>
-              <span className="text-[#075b45] font-black">{daily?.day===7 ? Number(daily.coins).toLocaleString('ar-IQ') + ' 🪙' : 'حسب الخادم'}</span>
+              <span className="text-[#075b45] font-black">{daily?.day===7 ? Number(daily.coins).toLocaleString('ar-IQ') + ' عملة' : 'حسب الخادم'}</span>
             </div>
             <button type="button" disabled={claiming||dailyLoading} onClick={()=>{setNotice('');void loadDaily();}} className="w-full mt-2 flex items-center justify-center gap-2 rounded-xl border border-emerald-300 bg-white/80 px-3 py-2 text-sm font-bold text-emerald-900 disabled:opacity-50"><RefreshCw size={16} className={dailyLoading?'animate-spin':''}/> تحديث حالة المكافأة</button>
             <button type="button" disabled={!daily||daily.claimed||claiming||dailyLoading} onClick={()=>void claim()} className="w-full mt-3 rounded-2xl bg-gradient-to-b from-[#ffe57a] to-[#f6b500] text-[#6b4200] font-black text-lg py-3 border-2 border-[#f0b22a] disabled:opacity-60">{claiming?'جاري الاستلام...':dailyLoading?'جارٍ التحقق...':daily?.claimed?'تم الاستلام اليوم':'استلام المكافأة'}</button>
