@@ -291,6 +291,7 @@ export const VoiceRoomModal: React.FC = () => {
     window.addEventListener('online', refreshVisible);
     document.addEventListener('visibilitychange', refreshVisible);
     window.addEventListener('totichat:room-moderators-changed', refreshVisible);
+    window.addEventListener('totichat:room-bans-changed', refreshVisible);
     return () => {
       active = false;
       window.clearInterval(timer);
@@ -298,6 +299,7 @@ export const VoiceRoomModal: React.FC = () => {
       window.removeEventListener('online', refreshVisible);
       document.removeEventListener('visibilitychange', refreshVisible);
       window.removeEventListener('totichat:room-moderators-changed', refreshVisible);
+      window.removeEventListener('totichat:room-bans-changed', refreshVisible);
     };
   }, [showBansModal, activeRoom?.id, isOwner, isModerator]);
   const setPersonalBlock = async (targetId: string, block: boolean) => {
@@ -316,6 +318,25 @@ export const VoiceRoomModal: React.FC = () => {
     if ((!isOwner && !isModerator) || !activeRoom || !stagingBackend || banActionBusy) return;
     setBanActionBusy(true);
     try {
+      if (!isOwner) {
+        const { data: moderators, error: roleError } = await stagingBackend.rpc('totichat_room_moderator_ids', { p_room_id: activeRoom.id });
+        if (roleError || !Array.isArray(moderators) || !moderators.includes(currentUser.id)) {
+          window.dispatchEvent(new CustomEvent('totichat:room-moderators-changed', { detail: activeRoom.id }));
+          throw new Error('تم سحب صلاحية الإشراف أو تعذر التحقق منها');
+        }
+      }
+      const { data: latestBans, error: bansError } = await stagingBackend.rpc('totichat_blocked_profiles', { p_room_id: activeRoom.id });
+      if (bansError || !Array.isArray(latestBans?.room)) throw bansError ?? new Error('تعذر التحقق من الحظر الحالي');
+      const targetBan = latestBans.room.find((item: { userId: string }) => item.userId === targetId);
+      if (!targetBan) {
+        setRoomBans(latestBans.room);
+        showToast('المستخدم غير محظور حالياً؛ تم تحديث القائمة');
+        return;
+      }
+      if (!isOwner && targetBan.bannedByOwner) {
+        setRoomBans(latestBans.room);
+        throw new Error('حظر المالك لا يستطيع المشرف إزالته');
+      }
       const { data, error } = await stagingBackend.rpc('phase2_room_moderate', {
         p_room_id: activeRoom.id, p_target: targetId, p_action: 'unban', p_request_id: crypto.randomUUID(),
       });
@@ -876,6 +897,9 @@ export const VoiceRoomModal: React.FC = () => {
         if (action === 'release_seat') {
           window.dispatchEvent(new CustomEvent('totichat:room-seat-changed', { detail: activeRoom.id }));
         }
+        if (action === 'ban') {
+          window.dispatchEvent(new CustomEvent('totichat:room-bans-changed', { detail: activeRoom.id }));
+        }
       }
       if (error || data?.success !== true || data?.sfuDisconnected !== true) {
         console.error('Voice moderation not confirmed:', error, data);
@@ -888,6 +912,9 @@ export const VoiceRoomModal: React.FC = () => {
         window.dispatchEvent(new CustomEvent('totichat:room-moderators-changed', { detail: activeRoom.id }));
         if (action === 'release_seat') {
           window.dispatchEvent(new CustomEvent('totichat:room-seat-changed', { detail: activeRoom.id }));
+        }
+        if (action === 'ban') {
+          window.dispatchEvent(new CustomEvent('totichat:room-bans-changed', { detail: activeRoom.id }));
         }
       }
       showToast(action === 'ban' ? 'تم حظر العضو وطرده؛ لن يستطيع العودة إلا بعد فك الحظر' : action === 'kick' ? 'تم طرد العضو من الغرفة' : action === 'mute'
