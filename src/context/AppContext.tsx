@@ -1548,11 +1548,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
+  const micUpdatePendingRef = useRef(false);
   const toggleMyMic = (): void => {
-    if (!activeRoom) return;
+    if (!activeRoom || micUpdatePendingRef.current || seatReservationPendingRef.current || seatReleasePendingRef.current) return;
+    if (!activeRoom.seats.some(seat => seat.user?.id === currentUser.id)) return;
     const roomId = activeRoom.id;
+    const transitionAtStart = roomTransitionVersion.current;
     const nextMuted = !myMicMuted;
+    micUpdatePendingRef.current = true;
     void setMyRoomMute(roomId, nextMuted).then(confirmed => {
+      if (transitionAtStart !== roomTransitionVersion.current) return;
       setMyMicMuted(confirmed);
       setActiveRoom(prev => prev?.id !== roomId ? prev : ({
         ...prev,
@@ -1561,7 +1566,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }));
     }).catch(error => {
       console.error('Server mic mute update failed:', error);
-      alert('تعذر تغيير حالة المايك من الخادم.');
+      if (transitionAtStart === roomTransitionVersion.current) {
+        alert('تعذر تأكيد حالة المايك. ستتم مزامنتها من الخادم.');
+      }
+    }).finally(() => {
+      micUpdatePendingRef.current = false;
+      if (transitionAtStart === roomTransitionVersion.current && navigator.onLine) {
+        window.dispatchEvent(new CustomEvent('totichat:room-seat-changed', { detail: roomId }));
+      }
     });
   };
 
