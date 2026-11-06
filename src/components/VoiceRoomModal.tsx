@@ -935,9 +935,16 @@ export const VoiceRoomModal: React.FC = () => {
     const nextIds = currentMessages.map(message => message.id);
     const previous = seenRoomMessagesRef.current;
     if (previous?.roomId === activeRoom.id && previous.ids.length && !chatNearBottomRef.current) {
-      const previousIds = new Set(previous.ids);
-      const newCount = nextIds.filter(id => !previousIds.has(id)).length;
-      if (newCount) setUnreadRoomMessages(count => Math.min(99, count + newCount));
+      // Only messages after the previously newest message count as unread.
+      // Backfilled history and a fully rotated 100-message window are ambiguous:
+      // do not label old messages as new in either case.
+      const previousLatestId = previous.ids[previous.ids.length - 1];
+      const previousLatestIndex = nextIds.indexOf(previousLatestId);
+      if (previousLatestIndex >= 0) {
+        const previousIds = new Set(previous.ids);
+        const newCount = nextIds.slice(previousLatestIndex + 1).filter(id => !previousIds.has(id)).length;
+        if (newCount) setUnreadRoomMessages(count => Math.min(99, count + newCount));
+      }
     }
     seenRoomMessagesRef.current = { roomId: activeRoom.id, ids: nextIds };
   }, [activeRoom?.id, currentMessages]);
