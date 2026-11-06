@@ -12,7 +12,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             TotiChatTheme {
-                TotiChatApp()
+                TotiChatApp(openMessagesOnLaunch = intent?.action == "com.totichat.app.OPEN_MESSAGES")
             }
         }
     }
