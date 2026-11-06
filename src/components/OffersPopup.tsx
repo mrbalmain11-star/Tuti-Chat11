@@ -101,7 +101,7 @@ export const OffersPopup: React.FC = () => {
             <div className="grid grid-cols-3 gap-2">
               {Array.from({length:6},(_,i)=>i).map(i=><div key={i} aria-label={`اليوم ${i+1}: ${daily && daily.day===i+1 ? (daily.claimed?'تم الاستلام':'متاح للاستلام') : daily && i+1<daily.day ? 'يوم سابق' : 'غير متاح حالياً'}`} className={`relative rounded-xl border-2 p-2 text-center min-h-[98px] flex flex-col items-center justify-between ${daily?.day===i+1?'bg-gradient-to-b from-[#fff5a3] to-[#f5bd42] border-[#d6a230]':'bg-gradient-to-b from-white to-[#9ee8d0] border-[#71cbb0]'}`}>
                 <strong className="text-[#0b735a] text-sm">اليوم {i+1}</strong>{daily?.day===i+1 && <span className={`rounded-full px-2 py-0.5 text-[10px] font-black ${daily.claimed ? 'bg-emerald-700 text-white' : 'bg-amber-100 text-amber-900'}`}>{daily.claimed ? 'تم الاستلام' : 'متاح اليوم'}</span>}
-                <Coins className="text-[#e8a51d]" size={26}/>
+                <div className="flex h-10 w-10 items-center justify-center rounded-full border border-amber-300/70 bg-gradient-to-br from-amber-100 via-amber-300 to-amber-500 shadow-[0_3px_9px_rgba(130,88,10,.18)]"><Coins className="text-amber-900" size={24} strokeWidth={1.8} aria-hidden="true"/></div>
                 <span className="text-[#075b45] font-black text-sm">{daily?.day===i+1 ? Number(daily.coins).toLocaleString('ar-IQ') + ' 🪙' : 'حسب الخادم'}</span>
               </div>)}
             </div>
