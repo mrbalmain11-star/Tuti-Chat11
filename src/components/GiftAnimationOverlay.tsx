@@ -54,10 +54,10 @@ const GiftAssetStage: React.FC<{ url: string; name: string }> = ({ url, name }) 
   );
 };
 
-const ConfirmedGiftBanner: React.FC<{ sender: string; receiver: string; giftName: string; total: number }> = ({ sender, receiver, giftName, total }) => (
+const ConfirmedGiftBanner: React.FC<{ sender: string; receiver: string; giftName: string; total: number; senderAvatar?: string; receiverAvatar?: string }> = ({ sender, receiver, giftName, total, senderAvatar, receiverAvatar }) => (
   <div className="pointer-events-none absolute top-[max(12%,env(safe-area-inset-top))] inset-x-4 z-10 flex justify-center" dir="rtl" aria-live="polite">
     <div className="w-full max-w-sm rounded-2xl border-2 border-amber-300 bg-gradient-to-r from-[#063d32]/95 via-[#0a634b]/95 to-[#073629]/95 px-4 py-3 text-center shadow-[0_8px_30px_rgba(203,155,53,.35)]">
-      <div className="text-xs font-black text-amber-100 truncate">{sender} أهدى إلى {receiver}</div>
+      <div className="flex items-center justify-center gap-2 text-xs font-black text-amber-100"><span className="truncate">{sender}</span>{senderAvatar && <img src={senderAvatar} alt="" className="h-8 w-8 shrink-0 rounded-full border border-amber-300 object-cover" />}<span>أهدى إلى</span>{receiverAvatar && <img src={receiverAvatar} alt="" className="h-8 w-8 shrink-0 rounded-full border border-amber-300 object-cover" />}<span className="truncate">{receiver}</span></div>
       <div className="mt-1 text-sm font-black text-[#ffe6a0] truncate">{giftName} · {total.toLocaleString('ar-IQ')} عملة</div>
     </div>
   </div>
@@ -75,7 +75,7 @@ export const GiftAnimationOverlay: React.FC = () => {
   }, [activeGiftAnimation, clearGiftAnimation]);
 
   if (!activeGiftAnimation) return null;
-  const { gift, sender, receiver, count } = activeGiftAnimation;
+  const { gift, sender, receiver, count, senderAvatar, receiverAvatar } = activeGiftAnimation;
   const epic = gift.price >= 10000 ? getEpicStyle(gift.name) : null;
   const style = epic ? epicStyles[epic] : null;
   const confirmedTotal = Number.isSafeInteger(gift.price * count) ? gift.price * count : 0;
@@ -84,7 +84,7 @@ export const GiftAnimationOverlay: React.FC = () => {
   if (gift.assetFormat === 'json' && gift.assetUrl) {
     return (
       <div className="fixed inset-0 z-[80] pointer-events-none flex flex-col items-center justify-center bg-black/75">
-        {showPremiumBanner && <ConfirmedGiftBanner sender={sender} receiver={receiver} giftName={gift.name} total={confirmedTotal} />}
+        {showPremiumBanner && <ConfirmedGiftBanner sender={sender} receiver={receiver} giftName={gift.name} total={confirmedTotal} senderAvatar={senderAvatar} receiverAvatar={receiverAvatar} />}
         <GiftAssetStage key={gift.id + gift.assetUrl} url={gift.assetUrl} name={gift.name} />
         <div className="text-amber-200 font-bold text-center mt-2" dir="rtl">{sender} أهدى {gift.name} إلى {receiver} ×{count}</div>
         <button type="button" onClick={clearGiftAnimation} className="pointer-events-auto absolute right-4 top-10 rounded-full bg-black/70 text-white p-2" aria-label="إغلاق"><X size={18}/></button>
