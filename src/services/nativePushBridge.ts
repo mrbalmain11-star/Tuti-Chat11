@@ -23,6 +23,12 @@ export async function startAuthenticatedPushRegistration(): Promise<() => Promis
   let stopped = false;
   let registeredToken: string | null = null;
   let ownerId: string | null = null;
+  let inFlight: Promise<void> = Promise.resolve();
+  const enqueue = (event: PushToken): Promise<void> => {
+    const next = inFlight.catch(() => {}).then(() => register(event));
+    inFlight = next;
+    return next;
+  };
   const register = async ({ token }: PushToken) => {
     if (stopped || !token?.trim()) return;
     const { data: { user }, error } = await client.auth.getUser();
@@ -35,10 +41,10 @@ export async function startAuthenticatedPushRegistration(): Promise<() => Promis
       return;
     }
     if (stopped) return;
+    if (stopped) return;
     await registerAndroidPushToken(token);
     if (stopped) {
-      // A logout may have started during the network request. Remove the
-      // just-created association while the authenticated session still exists.
+      // Cleanup awaits this registration before the auth token is revoked.
       await unregisterAndroidPushToken(token);
       return;
     }
@@ -46,17 +52,19 @@ export async function startAuthenticatedPushRegistration(): Promise<() => Promis
     ownerId = user.id;
   };
   const listener = await NativePush.addListener('tokenChanged', event => {
-    void register(event).catch(() => console.warn('Push token registration unavailable'));
+    void enqueue(event).catch(() => console.warn('Push token registration unavailable'));
   });
   try {
-    await register(await NativePush.getToken());
+    await enqueue(await NativePush.getToken());
   } catch {
     // No token is expected when Google Play services or permission is unavailable.
   }
   return async () => {
     stopped = true;
     await listener.remove();
-    // Cleanup must occur before signOut while Supabase still has user context.
+    // Wait for any outstanding Supabase upsert before removing this token.
+    // Otherwise a slow upsert could recreate a registration after sign-out.
+    await inFlight.catch(() => {});
     if (registeredToken) await unregisterAndroidPushToken(registeredToken);
   };
 }
