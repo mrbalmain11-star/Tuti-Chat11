@@ -1455,6 +1455,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         'تعذر حجز المقعد من الخادم. ' + (error instanceof Error ? error.message : ''));
     }).finally(() => {
       seatReservationPendingRef.current = false;
+      // A timeout does not prove the server rejected the seat write. Re-read
+      // authoritative membership after success or failure, including reconnects.
+      if (roomTransitionVersion.current === transitionAtStart && navigator.onLine) {
+        window.dispatchEvent(new CustomEvent('totichat:room-seat-changed', { detail: roomId }));
+      }
     });
   };
 
@@ -1478,6 +1483,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       alert('تعذر مغادرة المقعد. حاول مجدداً.');
     }).finally(() => {
       seatReleasePendingRef.current = false;
+      // The release may have committed despite a lost response; reconcile
+      // with the server instead of trusting the local seat state.
+      if (roomTransitionVersion.current === transitionAtStart && navigator.onLine) {
+        window.dispatchEvent(new CustomEvent('totichat:room-seat-changed', { detail: roomId }));
+      }
     });
   };
 
