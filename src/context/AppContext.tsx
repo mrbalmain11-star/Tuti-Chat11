@@ -1172,7 +1172,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setActiveRoom(room);
       setIsRoomMinimized(false);
       setMyMicMuted(true);
-      const members = await resolveRoomAvatars(await fetchRoomVisualMembers(roomId));
+      let members: Awaited<ReturnType<typeof fetchRoomVisualMembers>>;
+      try {
+        members = await resolveRoomAvatars(await fetchRoomVisualMembers(roomId));
+      } catch (error) {
+        if (transition === roomTransitionVersion.current) {
+          console.error('Room membership visuals unavailable after joining:', error);
+          alert('تم دخول الغرفة، لكن تعذر تحديث المقاعد والأعضاء. حاول تحديث الغرفة.');
+        }
+        return;
+      }
       if (transition !== roomTransitionVersion.current) return;
       const mine = members.find(m => m.user_id === currentUser.id);
       if (mine) setMyMicMuted(mine.is_muted);
