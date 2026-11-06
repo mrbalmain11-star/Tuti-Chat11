@@ -1,0 +1,2 @@
+Build the latest TotiChat staging APK from this branch, including all current changes. Use the unchanged staging-apk.yml packaging and direct APK release.
+Requested by project owner on 2026-11-07.
