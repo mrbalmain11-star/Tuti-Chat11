@@ -40,7 +40,6 @@ export const AdminBannersPanel: React.FC = () => {
     <label className="block text-sm mb-2">عند الضغط على البنر</label>
     <select className="w-full border rounded-xl p-3 mb-3" value={target} onChange={e => setTarget(e.target.value)}>
       <option value="none">للعرض فقط</option>
-      <option value="room">صفحة الغرف</option>
       <option value="vip">VIP</option>
       <option value="wallet">المحفظة</option>
       <option value="agency">الوكالات</option>
