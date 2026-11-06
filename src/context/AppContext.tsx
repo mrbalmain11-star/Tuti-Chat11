@@ -1070,6 +1070,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     if (!isLoggedIn || !activeRoom || !stagingBackend) return;
     const roomId = activeRoom.id;
+    const roomClient = stagingBackend;
     let alive = true;
     let loading = false;
     let pending = false;
@@ -1081,7 +1082,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         do {
           pending = false;
           const members = await resolveRoomAvatars(await fetchRoomVisualMembers(roomId));
-          const { data: moderatorIds, error: moderatorsError } = await stagingBackend.rpc('totichat_room_moderator_ids', { p_room_id: roomId });
+          const { data: moderatorIds, error: moderatorsError } = await roomClient.rpc('totichat_room_moderator_ids', { p_room_id: roomId });
           if (!alive) return;
           if (moderatorsError) console.error('Room moderator roster refresh failed:', moderatorsError);
           const mine = members.find(m => m.user_id === currentUser.id);
