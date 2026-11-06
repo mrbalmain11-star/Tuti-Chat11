@@ -29,6 +29,8 @@ interface GiftAnimationPayload {
   sender: string;
   receiver: string;
   count: number;
+  senderAvatar?: string;
+  receiverAvatar?: string;
 }
 
 interface AppContextType {
@@ -1807,7 +1809,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (!data?.id) throw new Error('Gift event not confirmed');
       // Refresh room trophy totals only after the server confirms the gift event.
       window.dispatchEvent(new CustomEvent('totichat:room-gift-confirmed', { detail: activeRoom.id }));
-      const confirmedAnimation = { gift, sender: currentUser.name, receiver: receiver.name, count };
+      const confirmedAnimation: GiftAnimationPayload = { gift, sender: currentUser.name, receiver: receiver.name, count, senderAvatar: currentUser.avatar, receiverAvatar: receiver.avatar };
       if (activeGiftAnimationRef.current) {
         pendingGiftAnimations.current.push(confirmedAnimation);
       } else {
