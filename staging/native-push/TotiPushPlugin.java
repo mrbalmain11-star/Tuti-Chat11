@@ -2,6 +2,11 @@ package com.numyar.totichat.staging;
 
 import androidx.annotation.NonNull;
 import android.content.Intent;
+import android.Manifest;
+import android.os.Build;
+import android.content.pm.PackageManager;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
@@ -30,6 +35,28 @@ public final class TotiPushPlugin extends Plugin {
         JSObject result = new JSObject();
         result.put("openMessages", openMessages);
         call.resolve(result);
+    }
+
+    @Override
+    protected void handleOnNewIntent(Intent intent) {
+        super.handleOnNewIntent(intent);
+        if (intent != null && "com.numyar.totichat.staging.OPEN_MESSAGES".equals(intent.getAction())) {
+            getActivity().setIntent(intent);
+            JSObject result = new JSObject();
+            result.put("openMessages", true);
+            notifyListeners("openMessages", result, true);
+        }
+    }
+
+    @PluginMethod
+    public void requestNotificationPermission(PluginCall call) {
+        if (Build.VERSION.SDK_INT >= 33 &&
+            ContextCompat.checkSelfPermission(getContext(), Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(getActivity(),
+                new String[]{Manifest.permission.POST_NOTIFICATIONS}, 9137);
+        }
+        call.resolve();
     }
 
     @PluginMethod
