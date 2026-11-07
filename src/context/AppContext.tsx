@@ -501,7 +501,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         connection = connected;
         if (!cancelled) {
           voiceConnectionRef.current = connected;
-          await connected.sync();
+          // connectRoomVoice already synchronizes the initial microphone state.
+          // Do not acquire the microphone twice immediately after permission grant.
+          // Subsequent seat/mute changes are synchronized by the effect below.
         }
       } catch (error) {
         if (!cancelled) {
