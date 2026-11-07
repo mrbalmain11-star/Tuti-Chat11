@@ -64,6 +64,8 @@ import { sounds } from '../utils/audio';
 import { VipName } from './VipName';
 import { VipBadge } from './VipBadge';
 import { ProfileCpCard } from './ProfileCpCard';
+import { RoyalRoomExitDialog } from './RoyalRoomExitDialog';
+import { RoyalGamepadIcon } from './RoyalGamepadIcon';
 
 
 const PRESET_BACKGROUNDS = [
@@ -993,16 +995,11 @@ export const VoiceRoomModal: React.FC = () => {
       )}
 
       {showExitOptions && (
-        <div className="absolute inset-0 z-[120] flex items-center justify-center bg-black/70 px-6" onClick={() => setShowExitOptions(false)}>
-          <div className="w-full max-w-xs rounded-3xl border border-amber-400/50 bg-[#17112b] p-5 shadow-2xl" onClick={event => event.stopPropagation()} dir="rtl">
-            <h3 className="text-center text-lg font-black text-amber-200 mb-4">خيارات الغرفة</h3>
-            <div className="flex flex-col gap-3">
-              <button onClick={() => { setShowExitOptions(false); setIsRoomMinimized(true); }} className="w-full rounded-xl border border-amber-400/40 bg-amber-400/10 py-3 font-bold text-amber-100 flex items-center justify-center gap-2"><Maximize2 className="w-5 h-5" /> تصغير الغرفة</button>
-              <button onClick={() => { setShowExitOptions(false); leaveRoom(); }} className="w-full rounded-xl border border-red-400/40 bg-red-500/10 py-3 font-bold text-red-100 flex items-center justify-center gap-2"><LogOut className="w-5 h-5" /> مغادرة الغرفة</button>
-            </div>
-            <button onClick={() => setShowExitOptions(false)} className="w-full mt-3 py-2 text-sm text-slate-300">إلغاء</button>
-          </div>
-        </div>
+        <RoyalRoomExitDialog
+          onMinimize={() => { setShowExitOptions(false); setIsRoomMinimized(true); }}
+          onLeave={() => { setShowExitOptions(false); leaveRoom(); }}
+          onCancel={() => setShowExitOptions(false)}
+        />
       )}
 
       {/* Toast Notification */}
@@ -1373,7 +1370,7 @@ export const VoiceRoomModal: React.FC = () => {
                     className="w-10 h-10 rounded-2xl bg-[#1b1038]/80 border border-purple-400/30 flex items-center justify-center shadow-lg text-emerald-400 cursor-pointer active:scale-95 transition"
                     title="الألعاب والمسابقات"
                   >
-                    <Gamepad2 className="w-5 h-5 text-emerald-400 stroke-[2]" />
+                    <RoyalGamepadIcon className="w-8 h-8" />
                   </div>
 
                   {/* Double dot */}
