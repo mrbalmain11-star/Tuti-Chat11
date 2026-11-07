@@ -111,20 +111,20 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
           </div>
         )}
 
-        {/* Top-Right Badge: Rank 3 (Bronze / Rose-gold Laurel Crest) */}
+        {/* Top-Right Badge: Rank 3 (Royal bronze Laurel Crest) */}
         {room.rank === 3 && (
           <div className="absolute top-1.5 right-1.5 z-10 w-9 h-9 flex items-center justify-center filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
             <svg viewBox="0 0 40 40" className="w-full h-full">
               <defs>
                 <linearGradient id={`bronzeCrestGrad-${gradientId}`} x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" stopColor="#fed7aa" />
-                  <stop offset="50%" stopColor="#f97316" />
-                  <stop offset="100%" stopColor="#c2410c" />
+                  <stop offset="50%" stopColor="#c88a46" />
+                  <stop offset="100%" stopColor="#74401e" />
                 </linearGradient>
                 <linearGradient id={`purpleGemGrad-${gradientId}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#7e22ce" />
-                  <stop offset="50%" stopColor="#6b21a8" />
-                  <stop offset="100%" stopColor="#581c87" />
+                  <stop offset="0%" stopColor="#ffe2a3" />
+                  <stop offset="50%" stopColor="#c58a37" />
+                  <stop offset="100%" stopColor="#7b471c" />
                 </linearGradient>
               </defs>
               <path
