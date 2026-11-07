@@ -16,6 +16,7 @@ import { sounds } from '../utils/audio';
 import { VipName } from './VipName';
 import { RoyalRoomFollowIcon } from './RoyalRoomFollowIcon';
 import { RoyalRoomLevelBanner } from './RoyalRoomLevelBanner';
+import { RoyalRoomStateIcon } from './RoyalRoomStateIcon';
 import { fetchMyProfile } from '../services/stagingBackend';
 
 export const RoyalRoomsView: React.FC = () => {
@@ -336,7 +337,8 @@ export const RoyalRoomsView: React.FC = () => {
                     <div className="flex items-center justify-between mt-1 text-[10px] text-slate-500">
                       <span className="truncate max-w-[90px]">{room.hostName}</span>
                       <span className="text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.2 rounded-full border border-emerald-200/60">
-                        {room.status === 'closed' ? 'مغلقة' : 'غرفة صوتية'}
+                        <RoyalRoomStateIcon state={room.status ?? 'unknown'} className="h-4 w-4" />
+                        {room.status === 'active' ? 'نشطة' : room.status === 'closed' ? 'مغلقة' : 'الحالة غير متوفرة'}
                       </span>
                     </div>
 
