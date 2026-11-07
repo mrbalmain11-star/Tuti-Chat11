@@ -558,7 +558,7 @@ export const RechargeModal: React.FC = () => {
               {/* Card Content (Right-aligned in RTL) */}
               <div className="relative z-10 text-right pr-1">
                 <p className="text-white/95 text-xs font-bold tracking-wide">
-                  رصيد الماس الحالي
+                  رصيد العملات الحالي
                 </p>
                 <div className="mt-2 flex items-center justify-end gap-1.5">
                   <span
@@ -638,13 +638,18 @@ export const RechargeModal: React.FC = () => {
               })}
             </div>
 
+            <div role="note" className="rounded-xl border border-amber-300 bg-amber-50 px-3 py-2.5 text-right text-[11px] leading-relaxed text-amber-950" dir="rtl">
+              <strong className="block mb-1">الشحن المباشر غير مفعل حالياً</strong>
+              الباقات المعروضة للمعاينة فقط، ولا يتم خصم أي مبلغ أو إضافة عملات من هذه الشاشة. للشحن الفعلي استخدم قائمة «وكلاء الشحن» أعلاه.
+            </div>
+
             {/* Main Action Button: "تأكيد الشحن" (Vibrant Mint/Green Pill) */}
             <div className="pt-2">
               <button
                 onClick={handleConfirmRecharge}
                 className="w-full py-3.5 rounded-full bg-gradient-to-r from-[#20C98F] to-[#12B97C] hover:from-[#1eb883] hover:to-[#0fa66f] text-white font-black text-base shadow-lg shadow-emerald-500/20 active:scale-98 transition flex items-center justify-center gap-2"
               >
-                <span>تأكيد الشحن</span>
+                <span>الاستعلام عن الشحن المباشر</span>
               </button>
             </div>
 
