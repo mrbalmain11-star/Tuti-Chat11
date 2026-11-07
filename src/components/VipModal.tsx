@@ -21,6 +21,7 @@ import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
 import { VipName } from './VipName';
 import { RoyalVipBubble } from './RoyalVipBubble';
+import { RoyalVipActivationBanner } from './RoyalVipActivationBanner';
 import { fetchMyProfile, stagingBackend } from '../services/stagingBackend';
 import { VipBadge, VIP_BEAST_METADATA } from './VipBadge';
 
@@ -456,6 +457,8 @@ export const VipModal: React.FC = () => {
             </RoyalVipBubble>
           </div>
         )}
+
+        <div className="relative z-20 px-4 py-2 flex justify-center"><RoyalVipActivationBanner level={activeTier.level} preview /></div>
 
         {/* ========================================================================= */}
         {/* TOP VIP LEVEL SELECTOR (VIP 1 TO SVIP 12)                                 */}
