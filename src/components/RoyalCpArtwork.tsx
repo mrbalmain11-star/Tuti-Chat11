@@ -30,3 +30,18 @@ export const RoyalCpHeart: React.FC = () => { const id = useId().replace(/:/g, '
   <path d="M40 68 C29 59 7 43 7 26 C7 10 29 6 40 22 C51 6 73 10 73 26 C73 43 51 59 40 68 Z" fill={`url(#cp-heart-emerald-${id})`} stroke="#ffe5aa" strokeWidth="2.5"/>
   <path d="M12 42 L25 42 L31 31 L38 52 L46 37 L52 42 L68 42" fill="none" stroke="#fff4d7" strokeWidth="2" strokeLinejoin="round"/>
 </svg>; };
+
+/** Decorative relationship ribbon, independent of CP eligibility and level. */
+export const RoyalCpRibbon: React.FC<{ label: string }> = ({ label }) => {
+  const id = useId().replace(/:/g, '');
+  const gold = `cp-ribbon-gold-${id}`;
+  return <div className="relative mx-auto w-fit max-w-full px-6 py-1.5 text-center">
+    <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 220 42" preserveAspectRatio="none" aria-hidden="true">
+      <defs><linearGradient id={gold} x1="0" y1="0" x2="1" y2="0"><stop stopColor="#8c5b24"/><stop offset=".5" stopColor="#fff0b0"/><stop offset="1" stopColor="#8c5b24"/></linearGradient></defs>
+      <path d="M4 9 H216 L205 21 L216 33 H4 L15 21 Z" fill="#064f3c" stroke={`url(#${gold})`} strokeWidth="2"/>
+      <path d="M18 6 H202 M18 36 H202" stroke="#e6c376" strokeOpacity=".65"/>
+      <path d="M22 21 L29 15 L36 21 L29 27 Z M184 21 L191 15 L198 21 L191 27 Z" fill="#e8c477"/>
+    </svg>
+    <span className="relative z-10 block truncate text-[10px] font-black text-amber-100">{label}</span>
+  </div>;
+};
