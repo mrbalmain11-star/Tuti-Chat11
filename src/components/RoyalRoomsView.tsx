@@ -154,7 +154,7 @@ export const RoyalRoomsView: React.FC = () => {
               {/* Pulsing Live / Online Badge */}
               <div className="absolute -bottom-1 -left-1 px-1.5 py-0.5 rounded-full bg-emerald-500 text-white text-[9px] font-bold flex items-center gap-1 shadow-sm border border-emerald-300">
                 <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
-                <span>مباشر</span>
+                <span>{myRoom ? 'غرفتي' : 'غير منشأة'}</span>
               </div>
             </div>
 
@@ -197,7 +197,7 @@ export const RoyalRoomsView: React.FC = () => {
 
                 <span className="text-[10px] text-slate-300 bg-white/5 px-2 py-0.5 rounded-full border border-white/10 flex items-center gap-1">
                   <Users className="w-3 h-3 text-purple-300" />
-                  <span>10 مقاعد صوتية</span>
+                  <span>مقاعد الغرفة</span>
                 </span>
               </div>
             </div>
@@ -305,7 +305,7 @@ export const RoyalRoomsView: React.FC = () => {
                     {/* Listeners Count (Bottom Left) */}
                     <div className="absolute bottom-1.5 left-1.5 z-10 flex items-center gap-1 text-white text-[11px] font-bold drop-shadow-md">
                       <span className="text-white text-xs">ılı</span>
-                      <span className="font-sans">{room.listenersCount ?? 120}</span>
+                      <span className="font-sans">{room.listenersCount ?? 0}</span>
                     </div>
 
                     {/* Host Avatar (Bottom Right) */}
