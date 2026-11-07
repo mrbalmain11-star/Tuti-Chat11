@@ -1,5 +1,6 @@
 import React from 'react';
-import { Search, Plus, DoorOpen } from 'lucide-react';
+import { Search } from 'lucide-react';
+import { RoyalCreateRoomIcon } from './RoyalCreateRoomIcon';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
 
@@ -113,10 +114,7 @@ export const Header: React.FC = () => {
             className="toti-premium-icon-button relative w-9 h-9 rounded-xl border border-amber-200/65 bg-gradient-to-br from-amber-300 to-amber-500 text-emerald-950 shadow-sm flex items-center justify-center transition active:scale-90 cursor-pointer group"
             title="إنشاء غرفة"
           >
-            <DoorOpen className="toti-premium-icon toti-premium-icon-active" size={21} strokeWidth={2.1} aria-hidden="true" />
-            <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-amber-400 border border-white text-emerald-950 flex items-center justify-center shadow-sm">
-              <Plus size={11} strokeWidth={3} aria-hidden="true" />
-            </span>
+            <RoyalCreateRoomIcon className="h-8 w-8 drop-shadow-sm" />
           </button>
         </div>
       </div>
