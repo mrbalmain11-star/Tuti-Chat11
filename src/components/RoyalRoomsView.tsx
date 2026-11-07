@@ -15,6 +15,7 @@ import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
 import { VipName } from './VipName';
 import { RoyalRoomFollowIcon } from './RoyalRoomFollowIcon';
+import { RoyalRoomLevelBanner } from './RoyalRoomLevelBanner';
 import { fetchMyProfile } from '../services/stagingBackend';
 
 export const RoyalRoomsView: React.FC = () => {
@@ -202,6 +203,8 @@ export const RoyalRoomsView: React.FC = () => {
               </div>
             </div>
           </div>
+
+          {myRoom && <div className="relative z-10 mt-3"><RoyalRoomLevelBanner roomName={myRoom.title} preview /></div>}
 
           {/* Announcement banner inside card */}
           <div className="mt-3.5 pt-2.5 border-t border-white/10 flex items-center justify-between text-[11px] text-slate-300 relative z-10">
