@@ -16,8 +16,24 @@ export async function stopRoomMusic(): Promise<void> { await music.stop(); }
 /** Connects to the existing staging LiveKit authority. Never ships API secrets to Android. */
 export async function connectRoomVoice(roomId: string, shouldPublish: () => boolean, onError: (message: string) => void): Promise<{ sync: () => Promise<void>; close: () => Promise<void> }> {
   if (!stagingBackend) throw new Error('Voice backend unavailable');
-  const { data, error } = await stagingBackend.functions.invoke('phase2-voice-token', { body: { roomId } });
-  if (error || !data?.token || !data?.url) throw new Error(String(data?.error || error?.message || 'Voice token unavailable'));
+  // Seat assignment and unmute are separate database writes. A token requested
+  // between them is listen-only, even if the UI has already enabled the mic.
+  // Wait for the server to confirm publish rights before joining LiveKit.
+  let data: { token?: string; url?: string; canPublish?: boolean; error?: string } | null = null;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const response = await stagingBackend.functions.invoke('phase2-voice-token', { body: { roomId } });
+    data = response.data;
+    if (response.error || !data?.token || !data?.url) {
+      throw new Error(String(data?.error || response.error?.message || 'Voice token unavailable'));
+    }
+    if (!shouldPublish() || data.canPublish === true) break;
+    if (attempt === 3) {
+      onError('الخادم لم يمنح صلاحية الميكروفون بعد تأكيد المقعد؛ يرجى إعادة فتح المايك');
+      break;
+    }
+    await new Promise<void>(resolve => setTimeout(resolve, 350 * (attempt + 1)));
+  }
+  if (!data?.token || !data.url) throw new Error('Voice token unavailable');
   // Keep voice playback on the low-latency path; adaptive video features are unnecessary for audio-only rooms.
   const room = new Room({ adaptiveStream: false, dynacast: false });
   const audio = new Map<string, HTMLAudioElement>();
