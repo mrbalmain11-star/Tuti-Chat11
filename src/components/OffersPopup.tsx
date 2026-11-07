@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ChevronLeft, ChevronRight, Gift, Coins, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Gift, X } from 'lucide-react';
 import { stagingBackend } from '../services/stagingBackend';
 import { RoyalDailyRewardArtwork } from './RoyalDailyRewardArtwork';
 import { RoyalRechargeHeader } from './RoyalRechargeHeader';
