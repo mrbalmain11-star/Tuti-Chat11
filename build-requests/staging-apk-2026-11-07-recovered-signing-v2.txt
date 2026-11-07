@@ -1,0 +1,1 @@
+Build new staging APK with persistent test signing v2 and direct APK release. Previous debug certificate unavailable; users may need to uninstall old incompatible staging package after backing up data.
