@@ -479,9 +479,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const setup = voiceLifecycleRef.current.catch(() => {}).then(async () => {
       if (cancelled) return;
       try {
-        const connected = await connectRoomVoice(voiceRoomId, () => voicePublishRef.current, message => {
+        const openVoice = () => connectRoomVoice(voiceRoomId, () => voicePublishRef.current, message => {
           if (!cancelled) console.error('Room voice:', message);
         });
+        let connected: Awaited<ReturnType<typeof connectRoomVoice>>;
+        try {
+          connected = await openVoice();
+        } catch (firstError) {
+          // On the first Android permission grant WebView may release the audio
+          // capture source a moment after the original getUserMedia request fails.
+          // Retry the connection once only for this specific transient error.
+          const detail = firstError instanceof Error ? firstError.message : String(firstError);
+          if (cancelled || !/Could not start audio source|NotReadableError|TrackStartError/i.test(detail)) {
+            throw firstError;
+          }
+          console.warn('Retrying voice after Android microphone capture initialization');
+          await new Promise<void>(resolve => setTimeout(resolve, 800));
+          if (cancelled) return;
+          connected = await openVoice();
+        }
         connection = connected;
         if (!cancelled) {
           voiceConnectionRef.current = connected;
