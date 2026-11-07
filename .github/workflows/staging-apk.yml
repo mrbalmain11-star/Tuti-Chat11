@@ -58,6 +58,19 @@ jobs:
         env:
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.STAGING_SUPABASE_PUBLISHABLE_KEY }}
         run: npm run build
+      # Separate QA install identity avoids a signature conflict with the existing
+      # staging app when its original signing key is unavailable.
+      # This modifies only the disposable CI workspace, not the repository app ID.
+      - name: Configure isolated visual QA package
+        run: |
+          node - <<'JS'
+          const fs = require('fs');
+          const path = 'capacitor.config.json';
+          const cfg = JSON.parse(fs.readFileSync(path, 'utf8'));
+          cfg.appId = 'com.numyar.totichat.visualqa';
+          cfg.appName = 'TotiChat Visual QA';
+          fs.writeFileSync(path, JSON.stringify(cfg, null, 2) + '\n');
+          JS
       - name: Generate complete Android project in CI
         run: |
           # Existing checked-in Android folder is incomplete (Gradle wrapper missing).
@@ -74,9 +87,9 @@ jobs:
           if permission not in source:
               source = source.replace('<application', permission + '\n    <application', 1)
           manifest.write_text(source)
-          main = Path("android/app/src/main/java/com/numyar/totichat/staging/MainActivity.java")
+          main = Path("android/app/src/main/java/com/numyar/totichat/visualqa/MainActivity.java")
           main.parent.mkdir(parents=True, exist_ok=True)
-          main.write_text("""package com.numyar.totichat.staging;
+          main.write_text("""package com.numyar.totichat.visualqa;
 
           import android.Manifest;
           import android.content.pm.PackageManager;
@@ -194,6 +207,15 @@ jobs:
           test -f gradle/wrapper/gradle-wrapper.properties
           chmod +x gradlew
           ./gradlew --no-daemon assembleDebug
+      - name: Verify installable QA package and APK signing
+        run: |
+          set -euo pipefail
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -n 1)"
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)"
+          "$AAPT" dump badging "$APK" | grep '^package:'
+          "$AAPT" dump badging "$APK" | grep -q "name='com.numyar.totichat.visualqa'"
+          "$APKSIGNER" verify --verbose --print-certs "$APK"
       - name: Verify microphone permission is packaged
         run: |
           set -euo pipefail
