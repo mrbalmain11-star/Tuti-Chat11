@@ -3,6 +3,7 @@ import { X, Plus, ChevronDown, Check } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { GiftItem } from '../types';
 import { EpicGiftArtwork } from './EpicGiftArtwork';
+import { RoyalGiftIcon } from './RoyalGiftIcon';
 import { SwordArt } from './GiftAnimationOverlay';
 import { sounds } from '../utils/audio';
 
@@ -114,6 +115,10 @@ export const GiftStoreModal: React.FC = () => {
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm font-['Cairo',sans-serif] animate-in fade-in">
       <div className="w-full max-w-md h-[min(74dvh,620px)] min-h-0 bg-gradient-to-b from-[#172434] via-[#101b29] to-[#0b1420] border-t border-amber-400/40 text-white rounded-t-[28px] px-4 pt-3 pb-[max(14px,env(safe-area-inset-bottom))] shadow-[0_-16px_60px_rgba(0,0,0,0.55)] flex flex-col overflow-hidden">
+        <div className="flex-none flex items-center gap-2 pb-2" dir="rtl">
+          <RoyalGiftIcon className="w-9 h-9 shrink-0" />
+          <span className="text-sm font-black text-amber-100">الهدايا الملكية</span>
+        </div>
         {/* Top Header & Categories (Exact Screenshot 18) */}
         <div className="flex-none flex items-center justify-between gap-2 pb-3 border-b border-amber-500/20">
           {/* Categories Tab */}
