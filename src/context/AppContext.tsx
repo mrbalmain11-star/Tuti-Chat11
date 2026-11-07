@@ -529,7 +529,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         connection = connected;
         if (!cancelled) {
           voiceConnectionRef.current = connected;
-          await connected.sync();
+          // connectRoomVoice already synchronizes microphone state on initial connect.
+          // A second immediate capture attempt can race Android WebView's audio source.
         }
       } catch (error) {
         if (!cancelled) {
