@@ -193,13 +193,26 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.android/debug.keystore
-          key: totichat-staging-debug-keystore-v1
-      - name: Check signing key was restored
+          key: totichat-staging-debug-keystore-v2
+      - name: Prepare staging signing key
         run: |
-          if [ ! -s "$HOME/.android/debug.keystore" ]; then
-            echo "::error::Stable staging signing key unavailable; refusing to publish an incompatible APK."
-            exit 1
+          set -euo pipefail
+          mkdir -p "$HOME/.android"
+          if [ -s "$HOME/.android/debug.keystore" ]; then
+            echo "Using previously cached staging signing identity"
+          else
+            echo "::warning::Original staging signing key is unavailable. Generating a new persistent testing key; this APK cannot update an installation signed by the previous key."
+            keytool -genkeypair -v -keystore "$HOME/.android/debug.keystore" \
+              -storepass android -alias androiddebugkey -keypass android \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -dname "CN=Android Debug,O=Android,C=US"
           fi
+          keytool -list -v -keystore "$HOME/.android/debug.keystore" -storepass android | grep 'SHA256:' | head -n 1
+      - name: Save staging signing key for subsequent builds
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: totichat-staging-debug-keystore-v2
       - name: Build Android debug APK
         env:
           JAVA_HOME: ${{ env.JAVA_HOME_21_X64 }}
