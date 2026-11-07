@@ -17,6 +17,7 @@ import { AgencyModal } from './components/AgencyModal';
 import { EditProfileModal } from './components/EditProfileModal';
 import { SearchModal } from './components/SearchModal';
 import { OffersPopup } from './components/OffersPopup';
+import { RoyalNetworkNotice } from './components/RoyalNetworkNotice';
 import { DirectChatModal } from './components/DirectChatModal';
 import { CreateRoomModal } from './components/CreateRoomModal';
 import { StorageModal } from './components/StorageModal';
@@ -219,6 +220,7 @@ export function App() {
     <ErrorBoundary>
       <AppProvider>
         <AppContent />
+        <RoyalNetworkNotice />
       </AppProvider>
     </ErrorBoundary>
   );
