@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, Gift, Coins, X } from 'lucide-react';
 import { stagingBackend } from '../services/stagingBackend';
+import { RoyalDailyRewardArtwork } from './RoyalDailyRewardArtwork';
+import { RoyalRechargeHeader } from './RoyalRechargeHeader';
 
 
 type Offer = { id:string; title:string; image_url:string|null; link_kind:string; link_target:string|null; starts_at:string|null; ends_at:string|null; price_iqd?:number; coins?:number; bonus_coins?:number; description?:string };
@@ -51,17 +53,18 @@ export const OffersPopup: React.FC = () => {
             <div className="grid grid-cols-3 gap-2">
               {amounts.slice(0,6).map((amount,i)=><div key={i} className={`relative rounded-xl border-2 p-2 text-center min-h-[98px] flex flex-col items-center justify-between ${daily?.day===i+1?'bg-gradient-to-b from-[#fff5a3] to-[#f5bd42] border-[#d6a230]':'bg-gradient-to-b from-white to-[#9ee8d0] border-[#71cbb0]'}`}>
                 <strong className="text-[#0b735a] text-sm">اليوم {i+1}</strong>
-                <Coins className="text-[#e8a51d]" size={26}/>
+                <RoyalDailyRewardArtwork day={i+1} active={daily?.day===i+1} claimed={daily?.day===i+1 && daily?.claimed===true} className="w-full !p-1 !border-0 !bg-transparent" />
                 <span className="text-[#075b45] font-black text-sm">{amount} 🪙</span>
               </div>)}
             </div>
             <div className={`mt-2 rounded-xl border-2 border-[#71cbb0] bg-gradient-to-b from-[#e8fff5] to-[#73d8b4] p-3 text-center ${daily?.day===7?'ring-2 ring-amber-400':''}`}>
               <strong className="text-[#096d53]">اليوم السابع · صندوق الكنز</strong>
-              <div className="text-5xl my-1">🎁</div>
+              <RoyalDailyRewardArtwork day={7} active={daily?.day===7} claimed={daily?.day===7 && daily?.claimed===true} className="mx-auto my-1 w-28" />
               <span className="text-[#075b45] font-black">3,000 🪙</span>
             </div>
             <button disabled={!daily||daily.claimed||claiming} onClick={()=>void claim()} className="w-full mt-3 rounded-2xl bg-gradient-to-b from-[#ffe57a] to-[#f6b500] text-[#6b4200] font-black text-lg py-3 border-2 border-[#f0b22a] disabled:opacity-60">{daily?.claimed?'تم الاستلام اليوم':claiming?'جاري الاستلام...':'استلام المكافأة'}</button>
           </>:<>
+            <RoyalRechargeHeader title="عروض الشحن الرسمية" subtitle="العروض المنشورة من الإدارة فقط" />
             {items.length===0?<p className="text-center text-emerald-900 py-8">لا توجد عروض شحن خاصة حالياً</p>:selected&&<div className="rounded-xl bg-white border border-emerald-200 overflow-hidden">
               {selected.image_url?<img src={selected.image_url} alt={selected.title} className="w-full aspect-[2/1] object-contain"/>:<div className="h-32 bg-gradient-to-br from-emerald-800 to-amber-500 flex items-center justify-center text-white"><Gift size={54}/></div>}
               <div className="p-3 text-center"><strong className="text-[#075b45]">{selected.title}</strong><p className="text-sm font-bold text-amber-700 mt-1">{Number(selected.price_iqd).toLocaleString('ar-IQ')} د.ع مقابل {(Number(selected.coins??0)+Number(selected.bonus_coins??0)).toLocaleString('ar-IQ')} عملة</p>{selected.description&&<p className="text-xs mt-1 text-slate-600">{selected.description}</p>}</div>
