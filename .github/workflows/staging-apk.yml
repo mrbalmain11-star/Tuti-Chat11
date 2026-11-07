@@ -35,6 +35,19 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Validate TypeScript
         run: npm run lint
+      - name: Guard stable voice connection lifecycle
+        run: |
+          node - <<'JS'
+          const fs = require('fs');
+          const source = fs.readFileSync('src/context/AppContext.tsx', 'utf8');
+          if (!source.includes('}, [isLoggedIn, voiceRoomId]);')) {
+            throw new Error('Room voice lifecycle must not restart on seat changes');
+          }
+          if (!source.includes('connectRoomVoice(')) {
+            throw new Error('Expected stable room voice connector is missing');
+          }
+          console.log('Voice lifecycle regression guard passed');
+          JS
       - name: Require staging publishable key
         env:
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.STAGING_SUPABASE_PUBLISHABLE_KEY }}
