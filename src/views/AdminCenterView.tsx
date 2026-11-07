@@ -41,7 +41,7 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
         <h1 className="font-black text-xl flex items-center gap-2"><ShieldCheck className="text-amber-300" /> مركز الإدارة</h1>
         <button type="button" onClick={onClose} className="rounded-xl border border-amber-300/60 bg-white/10 px-3 py-2 flex items-center gap-2 text-amber-50"><ArrowRight size={18}/> رجوع</button>
       </header>
-      <main className="p-5 max-w-3xl mx-auto pb-20">
+      <main className="px-3 py-4 sm:p-5 max-w-3xl mx-auto pb-[max(5rem,env(safe-area-inset-bottom))]">
         {loading && <p className="text-slate-500">جاري التحقق من صلاحياتك وقراءة البيانات...</p>}
         {error && <div role="alert" className="bg-red-50 border border-red-200 p-4 rounded-xl text-red-700">{error}</div>}
         {!loading && access && <>
@@ -65,9 +65,9 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
               ...(access.role === 'owner' ? [{id:'testerBadges',label:'شارات المختبرين',Icon:ShieldCheck}] : []),
             ];
             return <div className="space-y-5">
-              {!adminPage ? <div className="grid grid-cols-3 gap-3">
+              {!adminPage ? <div className="grid grid-cols-2 min-[390px]:grid-cols-3 gap-2 sm:gap-3">
                 {tiles.map(({id,label,Icon}) => <button key={id} type="button" onClick={() => setAdminPage(id)}
-                  className="rounded-2xl bg-gradient-to-b from-white to-emerald-50 border border-amber-300/80 p-3 min-h-24 shadow-sm flex flex-col items-center justify-center gap-2 active:bg-emerald-100 focus-visible:outline-2 focus-visible:outline-emerald-700">
+                  className="rounded-2xl bg-gradient-to-b from-white to-emerald-50 border border-amber-300/80 p-2 sm:p-3 min-h-24 shadow-sm flex flex-col items-center justify-center gap-2 active:bg-emerald-100 focus-visible:outline-2 focus-visible:outline-emerald-700">
                   <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-amber-300/70 bg-gradient-to-br from-emerald-800 to-emerald-600 shadow-sm"><Icon size={23} className="text-amber-200" /></span>
                   <span className="text-xs font-black text-emerald-950 text-center">{label}</span>
                 </button>)}
