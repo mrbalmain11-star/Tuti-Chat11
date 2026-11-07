@@ -4,6 +4,7 @@ import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
 import { RoyalRoomRankFrame } from './RoyalRoomRankFrame';
 import { RoyalRoomRankBadge } from './RoyalRoomRankBadge';
+import { RoyalRoomStateIcon } from './RoyalRoomStateIcon';
 
 interface RoomCardProps {
   room: VoiceRoom;
@@ -52,6 +53,11 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
             <RoyalRoomRankBadge rank={room.rank} />
           </div>
         )}
+
+        <div className="absolute top-1.5 left-1.5 z-10 flex items-center gap-1 rounded-full border border-amber-300/50 bg-emerald-950/85 px-1.5 py-0.5 text-[9px] font-bold text-amber-100">
+          <RoyalRoomStateIcon state={room.status ?? 'unknown'} className="h-4 w-4" />
+          <span>{room.status === 'active' ? 'نشطة' : room.status === 'closed' ? 'مغلقة' : 'الحالة غير متوفرة'}</span>
+        </div>
 
         {/* Bottom Bar: Soundwave Listeners Count (Left in LTR / Right in RTL) & Single Host Avatar (Right) */}
         <div className="absolute bottom-2 left-2 right-2 z-10 flex items-center justify-between pointer-events-none">
