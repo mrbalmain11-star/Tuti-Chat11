@@ -66,6 +66,7 @@ import { VipBadge } from './VipBadge';
 import { ProfileCpCard } from './ProfileCpCard';
 import { RoyalRoomExitDialog } from './RoyalRoomExitDialog';
 import { RoyalGamepadIcon } from './RoyalGamepadIcon';
+import { RoyalMicStateBadge } from './RoyalMicStateBadge';
 
 
 const PRESET_BACKGROUNDS = [
@@ -1235,9 +1236,7 @@ export const VoiceRoomModal: React.FC = () => {
                           onError={e => { e.currentTarget.style.display = 'none'; }}
                         /> : null}
                         {seat.isMuted && (
-                          <div className="absolute bottom-1 right-1 z-20 w-5 h-5 rounded-full bg-rose-700/90 border border-white/60 flex items-center justify-center shadow-md pointer-events-none">
-                            <MicOff className="w-3 h-3 text-white" />
-                          </div>
+                          <RoyalMicStateBadge muted className="absolute bottom-1 right-1 z-20 pointer-events-none" />
                         )}
                         {/* Green Count Pill at Bottom of Avatar matching Screenshot 2 */}
                         <div className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 z-10 px-1.5 py-0 rounded-full bg-emerald-600/95 border border-emerald-300/40 text-white text-[9px] font-bold font-mono leading-none shadow-xs">
