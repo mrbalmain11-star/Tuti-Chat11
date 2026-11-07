@@ -553,7 +553,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   // Seat changes require a fresh LiveKit token: the server grants microphone
   // publishing only to seated, unmuted members at token issuance time.
-  }, [isLoggedIn, voiceRoomId, voiceSeat]);
+  }, [isLoggedIn, voiceRoomId, voiceSeat, myMicMuted]);
 
   // Muting a seated microphone only updates the existing LiveKit publication.
   // Reissuing tokens and reconnecting for every mute can exhaust the 20/min preflight budget.
