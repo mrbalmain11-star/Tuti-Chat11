@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { CircleUserRound } from 'lucide-react';
-import { RoyalCpOrnament, RoyalCpAvatarFrame, RoyalCpHeart } from './RoyalCpArtwork';
+import { RoyalCpOrnament, RoyalCpAvatarFrame, RoyalCpHeart, RoyalCpRibbon } from './RoyalCpArtwork';
 import { stagingBackend } from '../services/stagingBackend';
 import { useApp } from '../context/AppContext';
 
@@ -131,7 +131,7 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
                   <span className="relative z-10 mt-1 rounded-md bg-[#063c31]/70 px-1 text-sm font-black text-white drop-shadow-[0_1px_2px_#33051b]">{link.level}</span>
                 </div>
               ) : <span className="text-[11px] font-bold text-amber-200">CP</span>}
-              <span className="max-w-[90px] break-words text-[10px] font-bold text-amber-100">{link.typeLabel}</span>
+              <RoyalCpRibbon label={link.typeLabel} />
             </div>
             <div className="flex min-w-0 flex-col items-center gap-1 text-center">
               <button type="button" disabled={!onPartnerClick} onClick={() => onPartnerClick?.(link.partnerId)} aria-label={`فتح ملف ${link.partnerName || 'الشريك'}`} className="relative h-[76px] w-[76px] shrink-0 disabled:cursor-default enabled:active:scale-95">
