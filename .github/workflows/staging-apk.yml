@@ -35,6 +35,17 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Validate TypeScript
         run: npm run lint
+      - name: Guard Android first microphone permission retry
+        run: |
+          node - <<'JS'
+          const fs = require('fs');
+          const source = fs.readFileSync('src/context/AppContext.tsx', 'utf8');
+          if (!source.includes('Retrying voice after Android microphone capture initialization') ||
+              !source.includes('Could not start audio source|NotReadableError|TrackStartError')) {
+            throw new Error('First Android microphone capture retry is missing');
+          }
+          console.log('Android first-capture regression guard passed');
+          JS
       - name: Guard stable voice connection lifecycle
         run: |
           node - <<'JS'
