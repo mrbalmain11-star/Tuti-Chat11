@@ -35,6 +35,20 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Validate TypeScript
         run: npm run lint
+      - name: Guard stable gesture-based microphone recovery
+        run: |
+          node - <<'JS'
+          const fs = require('fs');
+          const voice = fs.readFileSync('src/services/roomVoice.ts', 'utf8');
+          const app = fs.readFileSync('src/context/AppContext.tsx', 'utf8');
+          if (!voice.includes('retryMicOnGesture') || !voice.includes('micRetryPending')) {
+            throw new Error('Gesture-based microphone recovery is missing');
+          }
+          if (app.includes('await connected.sync();')) {
+            throw new Error('Duplicate microphone sync after connect is not allowed');
+          }
+          console.log('Microphone recovery regression guard passed');
+          JS
       - name: Guard Android first microphone permission retry
         run: |
           node - <<'JS'
