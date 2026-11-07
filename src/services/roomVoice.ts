@@ -125,16 +125,12 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
     });
     return micQueue;
   };
-  try {
-    await sync();
-  } catch (error) {
-    // A failed Android capture must not leave a LiveKit connection alive.
-    closing = true;
-    document.removeEventListener('pointerdown', unlockAudio);
-    await room.disconnect();
-    clearAudio();
-    throw error;
-  }
+  // Keep the room connected when Android cannot open the microphone.
+  // This preserves receiving audio and lets the user retry publishing
+  // without discarding the LiveKit room or the music session.
+  await sync().catch(error => {
+    console.warn('[RoomVoice] microphone capture failed; keeping room connected', error);
+  });
   musicRoom = room;
   return { sync, close: async () => {
     if (musicRoom === room) { musicRoom = null; await music.stop(); }
