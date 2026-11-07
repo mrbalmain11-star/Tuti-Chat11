@@ -27,7 +27,6 @@ import {
   Flame,
   Music,
   Calendar,
-  Gamepad2,
   Rocket,
   Heart,
   Check,
