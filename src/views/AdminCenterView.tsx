@@ -36,10 +36,10 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
   };
   useEffect(() => { void reload(); }, []);
   return (
-    <div className="fixed inset-0 z-[100] bg-[#FDFBF7] text-slate-900 overflow-y-auto font-['Cairo',sans-serif]" dir="rtl">
-      <header className="sticky top-0 bg-white/95 border-b border-amber-200 px-5 py-4 flex items-center justify-between z-10">
-        <h1 className="font-black text-xl flex items-center gap-2"><ShieldCheck className="text-amber-700" /> مركز الإدارة</h1>
-        <button type="button" onClick={onClose} className="rounded-xl border border-amber-200 px-3 py-2 flex items-center gap-2"><ArrowRight size={18}/> رجوع</button>
+    <div className="fixed inset-0 z-[100] bg-gradient-to-b from-[#f9fff9] via-[#f4f9f2] to-[#f6f0dd] text-slate-900 overflow-y-auto font-['Cairo',sans-serif]" dir="rtl">
+      <header className="sticky top-0 bg-gradient-to-l from-[#075a43] to-[#043b30] text-amber-50 border-b border-amber-400/70 px-5 py-4 flex items-center justify-between z-10">
+        <h1 className="font-black text-xl flex items-center gap-2"><ShieldCheck className="text-amber-300" /> مركز الإدارة</h1>
+        <button type="button" onClick={onClose} className="rounded-xl border border-amber-300/60 bg-white/10 px-3 py-2 flex items-center gap-2 text-amber-50"><ArrowRight size={18}/> رجوع</button>
       </header>
       <main className="p-5 max-w-3xl mx-auto pb-20">
         {loading && <p className="text-slate-500">جاري التحقق من صلاحياتك وقراءة البيانات...</p>}
@@ -67,9 +67,9 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
             return <div className="space-y-5">
               {!adminPage ? <div className="grid grid-cols-3 gap-3">
                 {tiles.map(({id,label,Icon}) => <button key={id} type="button" onClick={() => setAdminPage(id)}
-                  className="rounded-2xl bg-white border border-amber-200 p-4 min-h-28 shadow-sm flex flex-col items-center justify-center gap-3 active:bg-amber-50">
-                  <Icon size={28} className="text-amber-700" />
-                  <span className="text-sm font-bold">{label}</span>
+                  className="rounded-2xl bg-gradient-to-b from-white to-emerald-50 border border-amber-300/80 p-3 min-h-24 shadow-sm flex flex-col items-center justify-center gap-2 active:bg-emerald-100 focus-visible:outline-2 focus-visible:outline-emerald-700">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-amber-300/70 bg-gradient-to-br from-emerald-800 to-emerald-600 shadow-sm"><Icon size={23} className="text-amber-200" /></span>
+                  <span className="text-xs font-black text-emerald-950 text-center">{label}</span>
                 </button>)}
               </div> : <>
                 <button type="button" onClick={() => setAdminPage(null)} className="rounded-xl bg-white border border-amber-200 px-4 py-2 text-amber-800 font-bold">رجوع للأقسام</button>
