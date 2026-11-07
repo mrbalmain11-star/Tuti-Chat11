@@ -63,7 +63,15 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
     pendingPlayback.clear();
     document.removeEventListener('pointerdown', retryPlayback);
   };
+  room.on(RoomEvent.LocalTrackPublished, publication => {
+    console.info('[RoomVoice] local track published', { roomId, kind: publication.kind, source: publication.source });
+  });
+  room.on(RoomEvent.TrackSubscriptionFailed, (trackSid, participant, error) => {
+    console.error('[RoomVoice] remote track subscription failed', { roomId, trackSid, participant: participant.identity, error });
+    if (!closing) onError('تعذر استقبال المسار الصوتي من الخادم');
+  });
   room.on(RoomEvent.TrackSubscribed, (track, _publication, participant) => {
+    console.info('[RoomVoice] remote track subscribed', { roomId, kind: track.kind, participant: participant.identity });
     if (closing || track.kind !== 'audio') return;
     const key = participant.identity + ':' + track.sid;
     removeAudio(key);
@@ -134,6 +142,7 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
       if (room.localParticipant.isMicrophoneEnabled === publish) return;
       try {
         await room.localParticipant.setMicrophoneEnabled(publish);
+        console.info('[RoomVoice] microphone publication state', { roomId, requested: publish, enabled: room.localParticipant.isMicrophoneEnabled, tokenCanPublish: data.canPublish });
         if (publish) {
           micRetryPending = false;
           document.removeEventListener('pointerdown', retryMicOnGesture);
