@@ -76,8 +76,8 @@ export const EditProfileModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs font-['Cairo',sans-serif] p-3 animate-in fade-in">
-      <div className="w-full max-w-sm max-h-[92dvh] overflow-y-auto bg-gradient-to-b from-white via-[#f8fff9] to-[#edf8f1] text-slate-900 rounded-3xl p-5 shadow-2xl flex flex-col border-2 border-amber-300/70">
+    <div dir="rtl" className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs font-['Cairo',sans-serif] p-2 sm:p-4 animate-in fade-in">
+      <div className="w-full max-w-sm max-h-[calc(100dvh-1rem)] sm:max-h-[92dvh] overflow-y-auto overscroll-contain bg-gradient-to-b from-white via-[#f8fff9] to-[#edf8f1] text-slate-900 rounded-3xl p-3 sm:p-5 shadow-2xl flex flex-col border-2 border-amber-300/70">
         <div className="flex items-center justify-between pb-3 border-b border-amber-200">
           <h3 className="text-base font-black text-emerald-950">تعديل الملف الشخصي</h3>
           <button
@@ -141,7 +141,7 @@ export const EditProfileModal: React.FC = () => {
 
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="relative w-22 h-22 rounded-full border-[3px] border-amber-400 overflow-hidden shadow-md cursor-pointer group bg-slate-100 active:scale-95 transition"
+              className="relative w-24 h-24 rounded-full border-[3px] border-amber-400 overflow-hidden shadow-md cursor-pointer group bg-slate-100 active:scale-95 transition"
               title="اضغط لتغيير الصورة من المعرض"
             >
               <img src={avatar} alt="Avatar" className="w-full h-full object-cover" />
@@ -213,6 +213,7 @@ export const EditProfileModal: React.FC = () => {
 
           <button
             type="submit"
+            disabled={uploading || uploadingCover || !name.trim()}
             className="w-full py-3 rounded-2xl bg-gradient-to-l from-emerald-700 via-emerald-600 to-emerald-800 hover:brightness-110 text-white font-black text-sm shadow-md border border-amber-400/70 transition active:scale-95"
           >
             حفظ التغييرات
