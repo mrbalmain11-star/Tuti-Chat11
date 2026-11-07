@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { VoiceRoom } from '../types';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
+import { RoyalRoomRankFrame } from './RoyalRoomRankFrame';
 
 interface RoomCardProps {
   room: VoiceRoom;
@@ -39,6 +40,8 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
             <span className="text-5xl font-black text-white/75">{room.title.trim().slice(0, 1) || '♪'}</span>
           </div>
         )}
+
+        {(room.rank === 1 || room.rank === 2 || room.rank === 3) && <RoyalRoomRankFrame rank={room.rank} />}
 
         {/* Subtle dark gradient overlay at top and bottom for readability */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/65 pointer-events-none" />
