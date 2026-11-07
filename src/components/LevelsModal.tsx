@@ -3,6 +3,7 @@ import { ArrowRight } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
 import { OfficialScreenshotBadge, EntranceBannerPreview } from './LevelBadgeIcons';
+import { RoyalLevelUpBanner } from './RoyalLevelUpBanner';
 import {
   getLevelProgress,
   calculateCumulativeExpForLevel,
@@ -471,7 +472,7 @@ export const LevelsModal: React.FC = () => {
                   {/* Column 3 (Left in RTL for Wealth): مؤثر الدخول (Entrance Banner Preview) */}
                   {isWealth && (
                     <div className="flex items-center justify-center">
-                      <EntranceBannerPreview level={t.badgeLevel} />
+                      <div className="w-36"><RoyalLevelUpBanner level={t.badgeLevel} category="wealth" preview /></div>
                     </div>
                   )}
                 </div>
