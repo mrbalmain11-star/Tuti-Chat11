@@ -373,7 +373,7 @@ export const InternalProfileModal: React.FC = () => {
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/90 font-['Cairo',sans-serif] select-none p-0 overflow-hidden animate-in fade-in duration-200">
       {/* Toast Notification */}
       {toastMsg && (
-        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[80] bg-[#160A2E]/95 border border-purple-500/40 text-white text-xs font-bold px-5 py-2.5 rounded-full shadow-2xl flex items-center gap-2 backdrop-blur-md">
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[80] bg-emerald-950/95 border border-amber-400/50 text-white text-xs font-bold px-5 py-2.5 rounded-full shadow-2xl flex items-center gap-2 backdrop-blur-md">
           <Check className="w-4 h-4 text-emerald-400" />
           <span>{toastMsg}</span>
         </div>
@@ -553,12 +553,12 @@ export const InternalProfileModal: React.FC = () => {
           {/* Badges Line: Flag + Gender/Age + Charm Level + Wealth Level + VIP/VLP Level */}
           <div className="flex items-center gap-1.5 mt-2 justify-start flex-wrap">
             {/* Flag */}
-            <span className="text-base leading-none">🇮🇶</span>
+            <span className="text-base leading-none">{displayedUser.countryFlag || '🌐'}</span>
 
             {/* Gender & Age Pill (27 ♂) */}
             <div className="bg-[#2DD4BF] text-[#042F2E] text-[11px] font-black px-2 py-0.5 rounded-full flex items-center gap-0.5 shadow-xs">
-              <span>27</span>
-              <span className="text-xs">♂</span>
+              {typeof displayedUser.age === 'number' && displayedUser.age > 0 && <span>{displayedUser.age}</span>}
+              <span className="text-xs">{displayedUser.gender === 'أنثى' ? '♀' : displayedUser.gender === 'ذكر' ? '♂' : '—'}</span>
             </div>
 
             {/* Charm / Magic Level Badge (مستوى السحر) */}
@@ -872,14 +872,14 @@ export const InternalProfileModal: React.FC = () => {
                 setLevelsModalTab('charm');
                 setOpenLevelsModal(true);
               }}
-              className="rounded-2xl bg-gradient-to-l from-purple-500/15 via-fuchsia-50/80 to-white border-2 border-purple-300 p-3.5 flex items-center justify-between cursor-pointer active:scale-98 transition shadow-[0_4px_14px_rgba(168,85,247,0.12)] hover:border-purple-400 hover:shadow-md"
+              className="rounded-2xl bg-gradient-to-l from-emerald-500/15 via-amber-50/80 to-white border-2 border-emerald-300 p-3.5 flex items-center justify-between cursor-pointer active:scale-98 transition shadow-[0_4px_14px_rgba(168,85,247,0.12)] hover:border-purple-400 hover:shadow-md"
             >
               {/* Text on Right in RTL */}
               <div className="text-right">
-                <span className="text-xl font-black text-purple-950 block font-sans tracking-wide">
+                <span className="text-xl font-black text-emerald-950 block font-sans tracking-wide">
                   Lv. {displayedUser.charmLevel || 1}
                 </span>
-                <span className="text-xs text-purple-800 font-black mt-0.5 block flex items-center gap-1">
+                <span className="text-xs text-emerald-800 font-black mt-0.5 block flex items-center gap-1">
                   <span>✨</span>
                   <span>مستوى السحر</span>
                 </span>
@@ -1384,7 +1384,7 @@ export const InternalProfileModal: React.FC = () => {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-sm bg-[#150a28] border border-purple-500/40 rounded-3xl p-5 shadow-2xl text-right animate-in zoom-in-95 space-y-4"
+            className="w-full max-w-sm bg-emerald-950 border border-amber-400/50 rounded-3xl p-5 shadow-2xl text-right animate-in zoom-in-95 space-y-4"
           >
             <div className="flex items-center justify-between pb-2 border-b border-white/10">
               <h3 className="text-sm font-black text-white flex items-center gap-1.5">
@@ -1441,7 +1441,7 @@ export const InternalProfileModal: React.FC = () => {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-sm bg-[#150a28] border border-purple-500/40 rounded-3xl p-5 shadow-2xl text-right animate-in zoom-in-95 space-y-4"
+            className="w-full max-w-sm bg-emerald-950 border border-amber-400/50 rounded-3xl p-5 shadow-2xl text-right animate-in zoom-in-95 space-y-4"
           >
             <div className="flex items-center justify-between pb-2 border-b border-white/10">
               <h3 className="text-sm font-black text-white flex items-center gap-1.5">
