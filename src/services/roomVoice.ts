@@ -105,6 +105,12 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
     throw error;
   }
   let micQueue: Promise<void> = Promise.resolve();
+  let micRetryPending = false;
+  const retryMicOnGesture = () => {
+    if (closing || !micRetryPending || !shouldPublish()) return;
+    micRetryPending = false;
+    void sync().catch(() => {});
+  };
   const sync = (): Promise<void> => {
     micQueue = micQueue.catch(() => {}).then(async () => {
       if (closing) return;
@@ -112,34 +118,37 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
       if (room.localParticipant.isMicrophoneEnabled === publish) return;
       try {
         await room.localParticipant.setMicrophoneEnabled(publish);
+        if (publish) {
+          micRetryPending = false;
+          document.removeEventListener('pointerdown', retryMicOnGesture);
+        }
       } catch (error) {
         const name = error instanceof Error ? error.name : 'UnknownError';
         const detail = error instanceof Error ? error.message : String(error);
         const devices = navigator.mediaDevices;
         const context = !devices?.getUserMedia ? ' [getUserMedia unavailable]' : '';
         onError('فشل تشغيل الميكروفون [' + name + ']: ' + detail + context);
-        // Android WebView may reject capture before runtime permission is granted.
-        // Do not silently report a successful unmute.
+        // Keep receiving room audio if Android microphone capture fails.
+        // Retry publishing only after a fresh user gesture; never reconnect the room.
+        if (publish && !closing) {
+          micRetryPending = true;
+          document.addEventListener('pointerdown', retryMicOnGesture);
+        }
         throw error;
       }
     });
     return micQueue;
   };
-  try {
-    await sync();
-  } catch (error) {
-    // A failed Android capture must not leave a LiveKit connection alive.
-    closing = true;
-    document.removeEventListener('pointerdown', unlockAudio);
-    await room.disconnect();
-    clearAudio();
-    throw error;
-  }
+  // Microphone capture can fail on Android even when the remote audio connection works.
+  // Preserve listening and let the next tap retry the microphone on the same room.
+  await sync().catch(error => console.warn('[RoomVoice] microphone pending gesture retry', error));
   musicRoom = room;
   return { sync, close: async () => {
     if (musicRoom === room) { musicRoom = null; await music.stop(); }
     closing = true;
     document.removeEventListener('pointerdown', unlockAudio);
+    document.removeEventListener('pointerdown', retryMicOnGesture);
+    micRetryPending = false;
     await micQueue.catch(() => {});
     await room.disconnect();
     clearAudio();
