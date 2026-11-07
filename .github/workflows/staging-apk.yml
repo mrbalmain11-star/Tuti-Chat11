@@ -1,6 +1,11 @@
 name: Build TotiChat Staging APK V011
 on:
   workflow_dispatch: {}
+  push:
+    branches:
+      - work/nov04-visual-upgrade
+    paths:
+      - .github/workflows/staging-apk.yml
 permissions:
   contents: write
 jobs:
