@@ -41,6 +41,7 @@ import { AgencyProfileCard } from './AgencyProfileCard';
 import { CpSearchModal } from './CpSearchModal';
 import { ProfileCpCard } from './ProfileCpCard';
 import { ProfileReportForm } from './ProfileReportForm';
+import { RoyalIdEmblem } from './RoyalIdEmblem';
 
 export const InternalProfileModal: React.FC = () => {
   const {
@@ -634,7 +635,7 @@ export const InternalProfileModal: React.FC = () => {
               <Copy className="w-3.5 h-3.5 text-slate-500" />
             )}
             <span className="font-semibold tracking-wider">
-              ID: {isSelf ? (displaySpecialId || myPublicId || '—') : (visitorPublicId || '—')}
+              <RoyalIdEmblem variant={isSelf && displaySpecialId ? 'special' : 'standard'} className="inline-block h-4 w-4 align-middle me-1" /> ID: {isSelf ? (displaySpecialId || myPublicId || '—') : (visitorPublicId || '—')}
             </span>
           </button>
 
