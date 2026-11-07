@@ -297,10 +297,11 @@ export const RoyalRoomsView: React.FC = () => {
                       onClick={(e) => {
                         e.stopPropagation();
                         toggleFollowHost(room.hostId);
-                        showToast(`تم تحديث متابعة ${room.hostName}`);
+                        showToast(`تم إلغاء متابعة ${room.hostName}`);
                       }}
                       className="absolute top-1.5 left-1.5 z-10 p-1.5 rounded-full bg-black/50 hover:bg-black/70 text-emerald-200 hover:text-emerald-100 backdrop-blur-xs transition active:scale-90"
-                      title="إلغاء أو تعديل المتابعة"
+                      title="إلغاء متابعة الغرفة"
+                      aria-label={`إلغاء متابعة غرفة ${room.title}`}
                     >
                       <RoyalRoomFollowIcon followed className="w-6 h-6" />
                     </button>
@@ -335,7 +336,7 @@ export const RoyalRoomsView: React.FC = () => {
                     <div className="flex items-center justify-between mt-1 text-[10px] text-slate-500">
                       <span className="truncate max-w-[90px]">{room.hostName}</span>
                       <span className="text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.2 rounded-full border border-emerald-200/60">
-                        مباشر 🎙️
+                        {room.status === 'closed' ? 'مغلقة' : 'غرفة صوتية'}
                       </span>
                     </div>
 
