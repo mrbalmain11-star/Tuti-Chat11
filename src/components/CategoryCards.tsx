@@ -23,7 +23,7 @@ export const CategoryCards: React.FC = () => {
     { tab: 'room' as const, title: t.cardRoom, bg: 'from-[#0e674b] via-[#0b4935] to-[#052a21]' },
   ];
   return (
-    <div className="grid grid-cols-3 gap-2 px-4 py-2 select-none" dir={isRtl ? 'rtl' : 'ltr'}>
+    <div className="grid grid-cols-3 gap-1.5 sm:gap-2 px-2 sm:px-4 py-2 select-none" dir={isRtl ? 'rtl' : 'ltr'}>
       {cards.map(card => (
         <button type="button" key={card.tab} onClick={() => { sounds.playClick(); setLeaderboardTab(card.tab); setOpenWealthLeaderboardModal(true); }} className={`relative flex min-w-0 flex-col items-center justify-between overflow-hidden rounded-2xl border-2 border-amber-400/70 bg-gradient-to-b ${card.bg} p-2 text-amber-100 shadow-lg transition active:scale-95`}>
           <span className="relative z-10 text-xs font-black">{card.title}</span>
