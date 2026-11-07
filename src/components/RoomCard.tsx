@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useId, useState } from 'react';
 import { VoiceRoom } from '../types';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
@@ -10,6 +10,7 @@ interface RoomCardProps {
 
 export const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
   const { enterRoom } = useApp();
+  const gradientId = useId().replace(/:/g, '');
   const [coverFailed, setCoverFailed] = useState(false);
   const [hostAvatarFailed, setHostAvatarFailed] = useState(false);
   useEffect(() => { setCoverFailed(false); }, [room.coverImage]);
@@ -52,12 +53,12 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
             <svg viewBox="0 0 40 40" className="w-full h-full">
               {/* Golden Laurel Wings */}
               <defs>
-                <linearGradient id="goldCrestGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <linearGradient id={`goldCrestGrad-${gradientId}`} x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" stopColor="#fef08a" />
                   <stop offset="50%" stopColor="#eab308" />
                   <stop offset="100%" stopColor="#ca8a04" />
                 </linearGradient>
-                <linearGradient id="redGemGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <linearGradient id={`redGemGrad-${gradientId}`} x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" stopColor="#b91c1c" />
                   <stop offset="50%" stopColor="#991b1b" />
                   <stop offset="100%" stopColor="#7f1d1d" />
@@ -66,12 +67,12 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
               {/* Outer Crown Crest */}
               <path
                 d="M20 4 L24 9 L30 6 L28 14 L34 16 L29 22 L31 29 L23 27 L20 33 L17 27 L9 29 L11 22 L6 16 L12 14 L10 6 L16 9 Z"
-                fill="url(#goldCrestGrad)"
+                fill={`url(#goldCrestGrad-${gradientId})`}
                 stroke="#fff"
                 strokeWidth="0.75"
               />
               {/* Inner Diamond / Shield */}
-              <polygon points="20,10 27,20 20,30 13,20" fill="url(#redGemGrad)" stroke="#fef08a" strokeWidth="1" />
+              <polygon points="20,10 27,20 20,30 13,20" fill={`url(#redGemGrad-${gradientId})`} stroke="#fef08a" strokeWidth="1" />
               {/* Number 1 */}
               <text x="20" y="24" textAnchor="middle" fill="#ffffff" fontSize="13" fontWeight="900" fontFamily="sans-serif">
                 1
@@ -85,12 +86,12 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
           <div className="absolute top-1.5 right-1.5 z-10 w-9 h-9 flex items-center justify-center filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
             <svg viewBox="0 0 40 40" className="w-full h-full">
               <defs>
-                <linearGradient id="silverCrestGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <linearGradient id={`silverCrestGrad-${gradientId}`} x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" stopColor="#ffffff" />
                   <stop offset="50%" stopColor="#cbd5e1" />
                   <stop offset="100%" stopColor="#94a3b8" />
                 </linearGradient>
-                <linearGradient id="blueGemGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <linearGradient id={`blueGemGrad-${gradientId}`} x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" stopColor="#2563eb" />
                   <stop offset="50%" stopColor="#1d4ed8" />
                   <stop offset="100%" stopColor="#1e40af" />
@@ -98,11 +99,11 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
               </defs>
               <path
                 d="M20 4 L24 9 L30 6 L28 14 L34 16 L29 22 L31 29 L23 27 L20 33 L17 27 L9 29 L11 22 L6 16 L12 14 L10 6 L16 9 Z"
-                fill="url(#silverCrestGrad)"
+                fill={`url(#silverCrestGrad-${gradientId})`}
                 stroke="#fff"
                 strokeWidth="0.75"
               />
-              <polygon points="20,10 27,20 20,30 13,20" fill="url(#blueGemGrad)" stroke="#e2e8f0" strokeWidth="1" />
+              <polygon points="20,10 27,20 20,30 13,20" fill={`url(#blueGemGrad-${gradientId})`} stroke="#e2e8f0" strokeWidth="1" />
               <text x="20" y="24" textAnchor="middle" fill="#ffffff" fontSize="13" fontWeight="900" fontFamily="sans-serif">
                 2
               </text>
@@ -115,12 +116,12 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
           <div className="absolute top-1.5 right-1.5 z-10 w-9 h-9 flex items-center justify-center filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
             <svg viewBox="0 0 40 40" className="w-full h-full">
               <defs>
-                <linearGradient id="bronzeCrestGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <linearGradient id={`bronzeCrestGrad-${gradientId}`} x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" stopColor="#fed7aa" />
                   <stop offset="50%" stopColor="#f97316" />
                   <stop offset="100%" stopColor="#c2410c" />
                 </linearGradient>
-                <linearGradient id="purpleGemGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <linearGradient id={`purpleGemGrad-${gradientId}`} x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" stopColor="#7e22ce" />
                   <stop offset="50%" stopColor="#6b21a8" />
                   <stop offset="100%" stopColor="#581c87" />
@@ -128,11 +129,11 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
               </defs>
               <path
                 d="M20 4 L24 9 L30 6 L28 14 L34 16 L29 22 L31 29 L23 27 L20 33 L17 27 L9 29 L11 22 L6 16 L12 14 L10 6 L16 9 Z"
-                fill="url(#bronzeCrestGrad)"
+                fill={`url(#bronzeCrestGrad-${gradientId})`}
                 stroke="#fff"
                 strokeWidth="0.75"
               />
-              <polygon points="20,10 27,20 20,30 13,20" fill="url(#purpleGemGrad)" stroke="#fed7aa" strokeWidth="1" />
+              <polygon points="20,10 27,20 20,30 13,20" fill={`url(#purpleGemGrad-${gradientId})`} stroke="#fed7aa" strokeWidth="1" />
               <text x="20" y="24" textAnchor="middle" fill="#ffffff" fontSize="13" fontWeight="900" fontFamily="sans-serif">
                 3
               </text>
