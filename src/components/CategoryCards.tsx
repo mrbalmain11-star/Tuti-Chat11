@@ -1,6 +1,7 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
+import { RoyalRoomRankBadge } from './RoyalRoomRankBadge';
 
 export const CategoryCards: React.FC = () => {
   const { setOpenWealthLeaderboardModal, setLeaderboardTab, t, isRtl } = useApp();
@@ -32,7 +33,7 @@ export const CategoryCards: React.FC = () => {
               alt="Rank 2"
               className="w-full h-full rounded-full object-cover"
             />
-            <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[9px] drop-shadow">🥈</span>
+            <span className="absolute -top-3 left-1/2 -translate-x-1/2 h-5 w-5 drop-shadow" aria-label="المركز 2"><RoyalRoomRankBadge rank={2} /></span>
           </div>
 
           {/* Rank 1 (Center) */}
@@ -42,7 +43,7 @@ export const CategoryCards: React.FC = () => {
               alt="Rank 1"
               className="w-full h-full rounded-full object-cover"
             />
-            <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[9px] drop-shadow">🥇</span>
+            <span className="absolute -top-3 left-1/2 -translate-x-1/2 h-5 w-5 drop-shadow" aria-label="المركز 1"><RoyalRoomRankBadge rank={1} /></span>
           </div>
 
           {/* Rank 3 (Left) */}
@@ -52,7 +53,7 @@ export const CategoryCards: React.FC = () => {
               alt="Rank 3"
               className="w-full h-full rounded-full object-cover"
             />
-            <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[9px] drop-shadow">🥉</span>
+            <span className="absolute -top-3 left-1/2 -translate-x-1/2 h-5 w-5 drop-shadow" aria-label="المركز 3"><RoyalRoomRankBadge rank={3} /></span>
           </div>
         </div>
       </div>
@@ -82,7 +83,7 @@ export const CategoryCards: React.FC = () => {
               alt="Rank 2"
               className="w-full h-full rounded-full object-cover"
             />
-            <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[9px] drop-shadow">🥈</span>
+            <span className="absolute -top-3 left-1/2 -translate-x-1/2 h-5 w-5 drop-shadow" aria-label="المركز 2"><RoyalRoomRankBadge rank={2} /></span>
           </div>
 
           {/* Rank 1 (Center) */}
@@ -92,7 +93,7 @@ export const CategoryCards: React.FC = () => {
               alt="Rank 1"
               className="w-full h-full rounded-full object-cover"
             />
-            <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[9px] drop-shadow">🥇</span>
+            <span className="absolute -top-3 left-1/2 -translate-x-1/2 h-5 w-5 drop-shadow" aria-label="المركز 1"><RoyalRoomRankBadge rank={1} /></span>
           </div>
 
           {/* Rank 3 (Left) */}
@@ -102,7 +103,7 @@ export const CategoryCards: React.FC = () => {
               alt="Rank 3"
               className="w-full h-full rounded-full object-cover"
             />
-            <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[9px] drop-shadow">🥉</span>
+            <span className="absolute -top-3 left-1/2 -translate-x-1/2 h-5 w-5 drop-shadow" aria-label="المركز 3"><RoyalRoomRankBadge rank={3} /></span>
           </div>
         </div>
       </div>
@@ -132,7 +133,7 @@ export const CategoryCards: React.FC = () => {
               alt="Rank 2"
               className="w-full h-full rounded-xl object-cover"
             />
-            <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[9px] drop-shadow">🥈</span>
+            <span className="absolute -top-3 left-1/2 -translate-x-1/2 h-5 w-5 drop-shadow" aria-label="المركز 2"><RoyalRoomRankBadge rank={2} /></span>
           </div>
 
           {/* Rank 1 (Center) */}
@@ -142,7 +143,7 @@ export const CategoryCards: React.FC = () => {
               alt="Rank 1"
               className="w-full h-full rounded-xl object-cover"
             />
-            <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[9px] drop-shadow">🥇</span>
+            <span className="absolute -top-3 left-1/2 -translate-x-1/2 h-5 w-5 drop-shadow" aria-label="المركز 1"><RoyalRoomRankBadge rank={1} /></span>
           </div>
 
           {/* Rank 3 (Left) */}
@@ -152,7 +153,7 @@ export const CategoryCards: React.FC = () => {
               alt="Rank 3"
               className="w-full h-full rounded-xl object-cover"
             />
-            <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[9px] drop-shadow">🥉</span>
+            <span className="absolute -top-3 left-1/2 -translate-x-1/2 h-5 w-5 drop-shadow" aria-label="المركز 3"><RoyalRoomRankBadge rank={3} /></span>
           </div>
         </div>
       </div>
