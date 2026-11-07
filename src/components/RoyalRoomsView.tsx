@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
   Crown,
-  Heart,
   Sparkles,
   Settings,
   Copy,
@@ -15,6 +14,7 @@ import {
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
 import { VipName } from './VipName';
+import { RoyalRoomFollowIcon } from './RoyalRoomFollowIcon';
 import { fetchMyProfile } from '../services/stagingBackend';
 
 export const RoyalRoomsView: React.FC = () => {
@@ -236,15 +236,15 @@ export const RoyalRoomsView: React.FC = () => {
         {/* Section Header */}
         <div className="flex items-center justify-between mb-3 px-1">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-rose-500 to-pink-400 flex items-center justify-center text-white shadow-md shadow-rose-500/20">
-              <Heart className="w-4.5 h-4.5 text-white fill-white" />
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-700 to-teal-500 flex items-center justify-center text-white shadow-md shadow-emerald-500/20">
+              <RoyalRoomFollowIcon followed className="w-6 h-6" />
             </div>
             <div className="flex flex-col text-right leading-tight">
               <div className="flex items-center gap-1.5">
                 <h2 className="text-base font-black text-slate-900 tracking-wide">
                   الغرف الذي اتابعها
                 </h2>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 border border-rose-200">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
                   {followedRooms.length} غرف
                 </span>
               </div>
@@ -296,10 +296,10 @@ export const RoyalRoomsView: React.FC = () => {
                         toggleFollowHost(room.hostId);
                         showToast(`تم تحديث متابعة ${room.hostName}`);
                       }}
-                      className="absolute top-1.5 left-1.5 z-10 p-1.5 rounded-full bg-black/50 hover:bg-black/70 text-rose-400 hover:text-rose-300 backdrop-blur-xs transition active:scale-90"
+                      className="absolute top-1.5 left-1.5 z-10 p-1.5 rounded-full bg-black/50 hover:bg-black/70 text-emerald-200 hover:text-emerald-100 backdrop-blur-xs transition active:scale-90"
                       title="إلغاء أو تعديل المتابعة"
                     >
-                      <Heart className="w-3.5 h-3.5 fill-rose-500 text-rose-500" />
+                      <RoyalRoomFollowIcon followed className="w-6 h-6" />
                     </button>
 
                     {/* Listeners Count (Bottom Left) */}
@@ -349,7 +349,7 @@ export const RoyalRoomsView: React.FC = () => {
         ) : (
           /* Empty State when no rooms are followed */
           <div className="rounded-3xl p-6 bg-white/80 border border-dashed border-amber-300/80 text-center flex flex-col items-center justify-center shadow-xs">
-            <div className="w-14 h-14 rounded-full bg-rose-50 border border-rose-200 flex items-center justify-center text-2xl mb-3 shadow-xs">
+            <div className="w-14 h-14 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-2xl mb-3 shadow-xs">
               ❤️
             </div>
             <h3 className="text-sm font-black text-slate-800 mb-1">
