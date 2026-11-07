@@ -8,7 +8,7 @@ export const RoyalRoomRankFrame: React.FC<{ rank: 1 | 2 | 3 }> = ({ rank }) => {
   const colors = {
     1: { light: '#fff4ae', mid: '#e5ad31', dark: '#8a4c0c', stone: '#e8a51c' },
     2: { light: '#effaff', mid: '#91b7dc', dark: '#405b85', stone: '#5cb6ff' },
-    3: { light: '#ffe2d5', mid: '#d9919d', dark: '#84465d', stone: '#ff81a7' },
+    3: { light: '#ffe6b8', mid: '#c88a46', dark: '#74401e', stone: '#e5a45e' },
   }[rank];
   return (
     <svg viewBox="0 0 200 200" preserveAspectRatio="none" className="absolute inset-0 z-10 w-full h-full pointer-events-none" aria-hidden="true">
