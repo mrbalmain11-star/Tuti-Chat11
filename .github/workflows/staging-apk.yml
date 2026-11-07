@@ -208,11 +208,6 @@ jobs:
               -dname "CN=Android Debug,O=Android,C=US"
           fi
           keytool -list -v -keystore "$HOME/.android/debug.keystore" -storepass android | grep 'SHA256:' | head -n 1
-      - name: Save staging signing key for subsequent builds
-        uses: actions/cache/save@v4
-        with:
-          path: ~/.android/debug.keystore
-          key: totichat-staging-debug-keystore-v2
       - name: Build Android debug APK
         env:
           JAVA_HOME: ${{ env.JAVA_HOME_21_X64 }}
