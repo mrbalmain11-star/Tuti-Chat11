@@ -76,19 +76,20 @@ export const EditProfileModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs font-['Cairo',sans-serif] p-4 animate-in fade-in">
-      <div className="w-full max-w-sm bg-white text-slate-900 rounded-3xl p-5 shadow-2xl flex flex-col">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-          <h3 className="text-base font-black text-slate-900">تعديل الملف الشخصي</h3>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs font-['Cairo',sans-serif] p-3 animate-in fade-in">
+      <div className="w-full max-w-sm max-h-[92dvh] overflow-y-auto bg-gradient-to-b from-white via-[#f8fff9] to-[#edf8f1] text-slate-900 rounded-3xl p-5 shadow-2xl flex flex-col border-2 border-amber-300/70">
+        <div className="flex items-center justify-between pb-3 border-b border-amber-200">
+          <h3 className="text-base font-black text-emerald-950">تعديل الملف الشخصي</h3>
           <button
             onClick={() => setOpenEditProfileModal(false)}
-            className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-600"
+            className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-900"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         <form onSubmit={handleSave} className="py-3 space-y-3">
+          <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] leading-5 text-emerald-950 text-right">الحفظ الحالي يدعم الاسم الأساسي والنبذة الشخصية فقط. بقية الخيارات معروضة للمعاينة ولا تُحفظ من هذه الشاشة.</p>
           {/* Profile Cover Banner selector */}
           <div className="flex flex-col">
             <input
@@ -104,13 +105,13 @@ export const EditProfileModal: React.FC = () => {
             </label>
             <div
               onClick={() => coverInputRef.current?.click()}
-              className="relative w-full h-24 rounded-2xl border-2 border-dashed border-purple-300 hover:border-purple-500 overflow-hidden shadow-xs cursor-pointer group bg-slate-900 active:scale-98 transition flex items-center justify-center"
+              className="relative w-full h-24 rounded-2xl border-2 border-dashed border-amber-300 hover:border-emerald-500 overflow-hidden shadow-xs cursor-pointer group bg-slate-900 active:scale-98 transition flex items-center justify-center"
               title="اضغط لتغيير الغلاف من المعرض"
             >
               <img src={cover} alt="Cover" className="w-full h-full object-cover" />
               {uploadingCover && (
                 <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white z-10">
-                  <Loader2 className="w-6 h-6 animate-spin text-purple-300" />
+                  <Loader2 className="w-6 h-6 animate-spin text-amber-200" />
                 </div>
               )}
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition gap-2">
@@ -121,7 +122,7 @@ export const EditProfileModal: React.FC = () => {
             <button
               type="button"
               onClick={() => coverInputRef.current?.click()}
-              className="mt-1 text-[11px] font-bold text-purple-600 hover:text-purple-700 self-center flex items-center gap-1.5 transition active:scale-95 py-1"
+              className="mt-1 text-[11px] font-bold text-emerald-700 hover:text-emerald-900 self-center flex items-center gap-1.5 transition active:scale-95 py-1"
             >
               <ImageIcon className="w-3.5 h-3.5" />
               <span>اختيار غلاف جديد من المعرض</span>
@@ -140,7 +141,7 @@ export const EditProfileModal: React.FC = () => {
 
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="relative w-22 h-22 rounded-full border-2 border-emerald-500 overflow-hidden shadow-md cursor-pointer group bg-slate-100 active:scale-95 transition"
+              className="relative w-22 h-22 rounded-full border-[3px] border-amber-400 overflow-hidden shadow-md cursor-pointer group bg-slate-100 active:scale-95 transition"
               title="اضغط لتغيير الصورة من المعرض"
             >
               <img src={avatar} alt="Avatar" className="w-full h-full object-cover" />
@@ -212,7 +213,7 @@ export const EditProfileModal: React.FC = () => {
 
           <button
             type="submit"
-            className="w-full py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition active:scale-95"
+            className="w-full py-3 rounded-2xl bg-gradient-to-l from-emerald-700 via-emerald-600 to-emerald-800 hover:brightness-110 text-white font-black text-sm shadow-md border border-amber-400/70 transition active:scale-95"
           >
             حفظ التغييرات
           </button>
