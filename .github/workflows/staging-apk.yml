@@ -232,6 +232,20 @@ jobs:
           jarsigner -verify "$APK"
           sha256sum "$APK" | tee android/app/build/outputs/apk/debug/app-debug.apk.sha256
           ls -lh "$APK"
+      - name: Install APK on real Android emulator before publishing
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: |
+            set -euo pipefail
+            adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+            adb shell pm path com.numyar.totichat.visualqa | grep '^package:'
+            adb shell am start -n com.numyar.totichat.visualqa/.MainActivity
+            sleep 5
+            adb shell pidof com.numyar.totichat.visualqa
       # Publish the verified APK directly below. Avoid the Actions artifact ZIP,
       # which has produced corrupted archives on mobile downloads.
       - name: Publish directly downloadable staging APK
