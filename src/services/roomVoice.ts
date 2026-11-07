@@ -105,6 +105,12 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
     throw error;
   }
   let micQueue: Promise<void> = Promise.resolve();
+  let micRetryPending = false;
+  const retryMicOnGesture = () => {
+    if (closing || !micRetryPending || !shouldPublish()) return;
+    micRetryPending = false;
+    void sync().catch(() => {});
+  };
   const sync = (): Promise<void> => {
     micQueue = micQueue.catch(() => {}).then(async () => {
       if (closing) return;
@@ -112,14 +118,21 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
       if (room.localParticipant.isMicrophoneEnabled === publish) return;
       try {
         await room.localParticipant.setMicrophoneEnabled(publish);
+        if (publish) {
+          micRetryPending = false;
+          document.removeEventListener('pointerdown', retryMicOnGesture);
+        }
       } catch (error) {
         const name = error instanceof Error ? error.name : 'UnknownError';
         const detail = error instanceof Error ? error.message : String(error);
         const devices = navigator.mediaDevices;
         const context = !devices?.getUserMedia ? ' [getUserMedia unavailable]' : '';
         onError('فشل تشغيل الميكروفون [' + name + ']: ' + detail + context);
-        // Android WebView may reject capture before runtime permission is granted.
-        // Do not silently report a successful unmute.
+        // Keep the room connected and retry capture only after a new user gesture.
+        if (publish && !closing) {
+          micRetryPending = true;
+          document.addEventListener('pointerdown', retryMicOnGesture);
+        }
         throw error;
       }
     });
@@ -136,6 +149,8 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
     if (musicRoom === room) { musicRoom = null; await music.stop(); }
     closing = true;
     document.removeEventListener('pointerdown', unlockAudio);
+    document.removeEventListener('pointerdown', retryMicOnGesture);
+    micRetryPending = false;
     await micQueue.catch(() => {});
     await room.disconnect();
     clearAudio();
