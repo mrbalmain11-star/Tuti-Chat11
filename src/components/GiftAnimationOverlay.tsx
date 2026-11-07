@@ -3,6 +3,7 @@ import { GiftLottieAnimation } from './GiftLottieAnimation';
 import { X } from 'lucide-react';
 import { EpicGiftArtwork } from './EpicGiftArtwork';
 import { useApp } from '../context/AppContext';
+import { RoyalGiftAnnouncement } from './RoyalGiftAnnouncement';
 
 type EpicStyle = 'zulfiqar' | 'falcon' | 'throne' | 'dragon' | 'jet' | 'heart' | 'castle' | 'tree' | 'cosmos' | 'ship';
 const epicStyles: Record<EpicStyle, { names: string[]; color: string; icon: string }> = {
@@ -75,6 +76,7 @@ export const GiftAnimationOverlay: React.FC = () => {
       <div className="fixed inset-0 z-[80] pointer-events-none flex flex-col items-center justify-center bg-black/75">
         <GiftAssetStage key={gift.id + gift.assetUrl} url={gift.assetUrl} name={gift.name} />
         <div className="text-amber-200 font-bold text-center mt-2" dir="rtl">{sender} أهدى {gift.name} إلى {receiver} ×{count}</div>
+        <div className="absolute inset-x-3 top-[max(5rem,env(safe-area-inset-top))] flex justify-center pointer-events-auto"><RoyalGiftAnnouncement sender={sender} receiver={receiver} giftName={gift.name} giftPrice={gift.price} quantity={count} /></div>
         <button type="button" onClick={clearGiftAnimation} className="pointer-events-auto absolute right-4 top-10 rounded-full bg-black/70 text-white p-2" aria-label="إغلاق"><X size={18}/></button>
       </div>
     );
@@ -84,6 +86,7 @@ export const GiftAnimationOverlay: React.FC = () => {
   if (!epic || !style) {
     return (
       <div className="fixed inset-0 z-[80] pointer-events-none flex items-center justify-center font-['Cairo',sans-serif]">
+        <div className="absolute inset-x-3 top-[max(5rem,env(safe-area-inset-top))] flex justify-center pointer-events-auto"><RoyalGiftAnnouncement sender={sender} receiver={receiver} giftName={gift.name} giftPrice={gift.price} quantity={count} /></div>
         <div className="rounded-3xl border border-amber-400/60 bg-[#1c1327]/95 px-8 py-6 text-center shadow-2xl">
           <div className="text-6xl mb-3">{gift.icon}</div>
           <div className="text-amber-200 font-black">{gift.name} ×{count}</div>
