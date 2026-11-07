@@ -1,0 +1,1 @@
+Rebuild staging APK after verifying Supabase LiveKit token canPublish is determined by seat/mute at issuance. Preserve direct APK release packaging.
