@@ -1,0 +1,1 @@
+Build staging APK with restored known-good debug signing identity. Fail build if cached keystore is unavailable. Preserve direct APK release packaging.
