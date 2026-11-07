@@ -20,6 +20,7 @@ import confetti from 'canvas-confetti';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
 import { VipName } from './VipName';
+import { RoyalVipBubble } from './RoyalVipBubble';
 import { fetchMyProfile, stagingBackend } from '../services/stagingBackend';
 import { VipBadge, VIP_BEAST_METADATA } from './VipBadge';
 
@@ -446,6 +447,15 @@ export const VipModal: React.FC = () => {
             <span>🪙</span>
           </div>
         </header>
+
+        {activeTier.level >= 1 && activeTier.level <= 8 && (
+          <div className="relative z-20 px-4 py-3 bg-black/30" dir="rtl">
+            <p className="mb-3 text-[11px] font-bold text-amber-200">معاينة فقاعة الدردشة — {activeTier.name}</p>
+            <RoyalVipBubble level={activeTier.level} className="max-w-xs mx-auto text-xs">
+              أهلاً بكم في TotiChat ✨
+            </RoyalVipBubble>
+          </div>
+        )}
 
         {/* ========================================================================= */}
         {/* TOP VIP LEVEL SELECTOR (VIP 1 TO SVIP 12)                                 */}
