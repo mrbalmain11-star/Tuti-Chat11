@@ -96,6 +96,9 @@ export const CreateRoomModal: React.FC = () => {
             ) : (
               <RoyalCreateRoomIcon className="w-20 h-20 transition-transform duration-300 group-hover:scale-105" />
             )}
+            <span className="absolute bottom-2 left-2 flex h-10 w-10 items-center justify-center rounded-xl border border-amber-300/70 bg-emerald-950/85 shadow-lg" aria-hidden="true">
+              <RoyalCreateRoomIcon className="h-9 w-9" />
+            </span>
             <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-xs font-bold text-white backdrop-blur-[1px]">
               تغيير الصورة
             </div>
