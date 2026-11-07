@@ -336,7 +336,7 @@ export const RoyalRoomsView: React.FC = () => {
 
                     <div className="flex items-center justify-between mt-1 text-[10px] text-slate-500">
                       <span className="truncate max-w-[90px]">{room.hostName}</span>
-                      <span className="text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.2 rounded-full border border-emerald-200/60">
+                      <span className="inline-flex shrink-0 items-center gap-1 text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-200/60">
                         <RoyalRoomStateIcon state={room.status ?? 'unknown'} className="h-4 w-4" />
                         {room.status === 'active' ? 'نشطة' : room.status === 'closed' ? 'مغلقة' : 'الحالة غير متوفرة'}
                       </span>
