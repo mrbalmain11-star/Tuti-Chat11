@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { ChevronRight, Plus } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
+import { RoyalCreateRoomIcon } from './RoyalCreateRoomIcon';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
 
@@ -51,7 +52,7 @@ export const CreateRoomModal: React.FC = () => {
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-[#0B0424] text-white font-['Cairo',sans-serif] flex flex-col justify-between p-6 select-none overflow-y-auto animate-in fade-in"
+      className="fixed inset-0 z-50 bg-[#052d25] text-white font-['Cairo',sans-serif] flex flex-col justify-between p-6 select-none overflow-y-auto animate-in fade-in"
       dir="rtl"
     >
       {/* Top Header */}
@@ -84,7 +85,7 @@ export const CreateRoomModal: React.FC = () => {
               sounds.playClick();
               fileInputRef.current?.click();
             }}
-            className="w-44 h-44 rounded-3xl bg-[#191136] border border-purple-800/40 overflow-hidden flex items-center justify-center cursor-pointer shadow-2xl relative group active:scale-95 transition"
+            className="w-44 h-44 rounded-3xl bg-[#0b4538] border border-amber-400/40 overflow-hidden flex items-center justify-center cursor-pointer shadow-2xl relative group active:scale-95 transition"
           >
             {coverImage ? (
               <img
@@ -93,7 +94,7 @@ export const CreateRoomModal: React.FC = () => {
                 className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
               />
             ) : (
-              <Plus className="w-16 h-16 text-slate-400 group-hover:text-white transition" />
+              <RoyalCreateRoomIcon className="w-20 h-20 transition-transform duration-300 group-hover:scale-105" />
             )}
             <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-xs font-bold text-white backdrop-blur-[1px]">
               تغيير الصورة
@@ -112,7 +113,7 @@ export const CreateRoomModal: React.FC = () => {
               onChange={(e) => setRoomName(e.target.value)}
               placeholder="يرجى الإدخال"
               required
-              className="w-full bg-[#191136] text-white rounded-2xl px-5 py-4 text-sm font-medium focus:outline-none focus:ring-1 focus:ring-purple-500 placeholder-slate-500 transition shadow-inner"
+              className="w-full bg-[#0b4538] text-white rounded-2xl px-5 py-4 text-sm font-medium focus:outline-none focus:ring-1 focus:ring-amber-400 placeholder-slate-500 transition shadow-inner"
             />
           </div>
 
@@ -125,7 +126,7 @@ export const CreateRoomModal: React.FC = () => {
                 onChange={(e) => setWelcomeMessage(e.target.value)}
                 placeholder="يرجى الإدخال"
                 rows={4}
-                className="w-full bg-[#191136] text-white rounded-2xl px-5 py-4 text-sm font-medium focus:outline-none focus:ring-1 focus:ring-purple-500 placeholder-slate-500 resize-none transition shadow-inner"
+                className="w-full bg-[#0b4538] text-white rounded-2xl px-5 py-4 text-sm font-medium focus:outline-none focus:ring-1 focus:ring-amber-400 placeholder-slate-500 resize-none transition shadow-inner"
               />
             </div>
           </div>
@@ -137,7 +138,7 @@ export const CreateRoomModal: React.FC = () => {
         <button
           type="submit"
           form="create-room-form"
-          className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#814AF6] to-[#25B4F8] text-white font-black text-base shadow-[0_4px_20px_rgba(129,74,246,0.4)] active:scale-98 transition cursor-pointer hover:opacity-95"
+          className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#087c60] to-[#0b5948] text-white font-black text-base shadow-[0_4px_20px_rgba(8,124,96,0.35)] active:scale-98 transition cursor-pointer hover:opacity-95"
         >
           إنشاء غرفة
         </button>
