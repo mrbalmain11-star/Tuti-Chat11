@@ -25,6 +25,7 @@ import { VipBadge } from '../components/VipBadge';
 import { fetchMyProfile, fetchMyAdminAccess, saveMyProfile, uploadMyAvatar, uploadMyCover, getMyAvatarUrl, type AdminAccess, stagingBackend } from '../services/stagingBackend';
 import { AdminCenterView } from './AdminCenterView';
 import { AgencyProfileCard } from '../components/AgencyProfileCard';
+import { RoyalIdEmblem } from '../components/RoyalIdEmblem';
 
 export const ProfileView: React.FC = () => {
   const {
@@ -456,7 +457,7 @@ export const ProfileView: React.FC = () => {
                   <Copy className="w-3.5 h-3.5 text-amber-600" />
                 )}
                 <span className="font-semibold tracking-wider">
-                  ID: {specialId || publicId || '—'}
+                  <RoyalIdEmblem variant={specialId ? 'special' : 'standard'} className="inline-block h-4 w-4 align-middle me-1" /> ID: {specialId || publicId || '—'}
                 </span>
               </button>
 
