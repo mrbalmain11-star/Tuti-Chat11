@@ -3,6 +3,7 @@ import { ChevronRight, ChevronDown, FileText, X, Check, ArrowRightLeft, Sparkles
 import confetti from 'canvas-confetti';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
+import { RoyalRechargeHeader } from './RoyalRechargeHeader';
 
 // 6 Recharge Packs exactly from Image 1
 export interface RechargePack {
@@ -586,6 +587,11 @@ export const RechargeModal: React.FC = () => {
               {agentsLoading ? <p>جاري تحميل الوكلاء...</p> : agentsError ? <p role="alert" className="text-red-600">تعذر تحميل الوكلاء: {agentsError}</p> : rechargeAgents.length === 0 ? <p className="text-slate-500">لا توجد وكالات شحن معتمدة حالياً</p> : rechargeAgents.map(agent => <div key={agent.id} className="rounded-xl border border-emerald-200 bg-emerald-50 p-4"><strong className="block">{agent.name}</strong><span className="text-sm">ID: {agent.public_id}</span></div>)}
             </section>}
             {rechargeMode === 'app' && <>
+
+            <RoyalRechargeHeader
+              title="باقات الشحن الملكية"
+              subtitle="اختر الباقة المناسبة لك — الأسعار المعروضة هي الأسعار المحددة في نظام الشحن"
+            />
 
             {/* 6 Packages Grid (3 Columns x 2 Rows) */}
             <div className="grid grid-cols-3 gap-2.5">
