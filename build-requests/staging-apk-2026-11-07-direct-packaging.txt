@@ -1,0 +1,1 @@
+Build with established Gradle APK packaging and publish APK directly as release asset, without GitHub Actions ZIP artifact.
