@@ -186,6 +186,20 @@ jobs:
           test -s "$RES/mipmap-xxxhdpi/ic_launcher.webp"
       - name: Register Google OAuth callback
         run: node scripts/configure-android-oauth.mjs
+      # Reuse the signing identity from the previously successful staging builds.
+      # Without this cache, disposable runners create a different debug certificate
+      # and Android rejects updates over an existing installation.
+      - name: Restore stable staging debug signing key
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: totichat-staging-debug-keystore-v1
+      - name: Check signing key was restored
+        run: |
+          if [ ! -s "$HOME/.android/debug.keystore" ]; then
+            echo "::error::Stable staging signing key unavailable; refusing to publish an incompatible APK."
+            exit 1
+          fi
       - name: Build Android debug APK
         env:
           JAVA_HOME: ${{ env.JAVA_HOME_21_X64 }}
