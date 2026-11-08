@@ -44,6 +44,7 @@ Classification:
 3. Resolve section 16 room-level event source before enabling its banner; do not invent server state.
 4. Resolve section 17 host-follow vs room-follow behavior with an explicitly approved server model.
 5. Test responsive screens, RTL, long text, image fallback, room lifecycle and stable audio/music on Android.
-6. **Do not build an APK until separate explicit owner approval.**
+6. Level progression uses cumulative gift-event amounts against client-side thresholds; early threshold values appear to use per-level costs as cumulative totals, likely explaining rapid early progression. Full official thresholds are still pending, so no values or existing user levels were changed.
+7. **Do not build an APK until separate explicit owner approval.**
 
 No requirement in this inventory is marked **complete and verified** without passing test evidence. Games remain deferred under the owner's separate decision.
