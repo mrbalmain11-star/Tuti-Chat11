@@ -11,6 +11,7 @@ import {
   Share2,
   ChevronLeft,
   Volume2,
+  House,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
@@ -93,7 +94,7 @@ export const RoyalRoomsView: React.FC = () => {
     if (myRoom) {
       enterRoom(myRoom.id);
     } else {
-      createVoiceRoom(`دولة العراق 🇮🇶 (غرفتي)`, 'غرفتي الخاصة 👑');
+      createVoiceRoom(currentUser.name ? `غرفة ${currentUser.name}` : 'غرفتي', '');
     }
   };
 
@@ -212,20 +213,10 @@ export const RoyalRoomsView: React.FC = () => {
 
           {/* Top Row: Room Avatar + Info */}
           <div className="flex items-start gap-3.5 relative z-10">
-            {/* Room Cover / Avatar with Golden Crown */}
+            {/* Room cover, or a drawn room icon until the server returns one. */}
             <div className="relative shrink-0">
               <div className="w-16 h-16 rounded-2xl p-[2px] bg-gradient-to-tr from-amber-400 via-yellow-200 to-amber-600 shadow-md">
-                <img
-                  src={myRoom?.coverImage || currentUser.avatar || '/src/assets/images/iraq_flag_cover_1790177322445.jpg'}
-                  alt="غرفتي"
-                  className="w-full h-full rounded-2xl object-cover group-hover:scale-105 transition duration-300"
-                />
-              </div>
-
-              {/* Pulsing Live / Online Badge */}
-              <div className="absolute -bottom-1 -left-1 px-1.5 py-0.5 rounded-full bg-emerald-500 text-white text-[9px] font-bold flex items-center gap-1 shadow-sm border border-emerald-300">
-                <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
-                <span>مباشر</span>
+                {myRoom?.coverImage ? <img src={myRoom.coverImage} alt="غلاف الغرفة" className="h-full w-full rounded-2xl object-cover group-hover:scale-105 transition duration-300" /> : <div className="flex h-full w-full items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-950 to-emerald-800 text-amber-200"><House className="h-8 w-8" aria-hidden="true" /></div>}
               </div>
             </div>
 
@@ -233,18 +224,16 @@ export const RoyalRoomsView: React.FC = () => {
             <div className="flex-1 text-right min-w-0">
               <div className="flex items-center gap-2 justify-start">
                 <h3 className="text-[15px] font-black text-white truncate drop-shadow-sm group-hover:text-amber-300 transition">
-                  {myRoom?.title || `غرفة ${currentUser.nickname || currentUser.name || 'دولة العراق'}`}
+                  {myRoom?.title || (currentUser.name ? `غرفة ${currentUser.name}` : 'غرفتي')}
                 </h3>
-                <span className="text-base shrink-0 leading-none">
-                  {currentUser.countryFlag || '🇮🇶'}
-                </span>
+                {currentUser.countryFlag && <span className="shrink-0 text-base leading-none">{currentUser.countryFlag}</span>}
               </div>
 
               {/* Host Tag and VIP Name */}
               <div className="flex items-center gap-1.5 mt-1">
                 <span className="text-[11px] text-slate-400 font-medium">المضيف:</span>
                 <VipName
-                  name={currentUser.nickname || currentUser.name || 'دولة العراق'}
+                  name={currentUser.nickname || currentUser.name || '—'}
                   vipLevel={currentUser.vipLevel}
                   fallbackColor="text-amber-200"
                   className="text-[12px] font-bold"
@@ -253,7 +242,7 @@ export const RoyalRoomsView: React.FC = () => {
 
               {/* Room ID and Capacity Pills */}
               <div className="flex items-center gap-2 mt-2 flex-wrap">
-                <button
+                {myRoom ? <button
                   onClick={handleCopyId}
                   className="flex items-center gap-1 text-[10px] text-amber-200/90 hover:text-amber-100 bg-white/10 hover:bg-white/15 px-2 py-0.5 rounded-full font-mono border border-amber-300/20 transition active:scale-95"
                   title="نسخ معرف الغرفة"
@@ -264,12 +253,12 @@ export const RoyalRoomsView: React.FC = () => {
                   ) : (
                     <Copy className="w-3 h-3 text-amber-300" />
                   )}
-                </button>
+                </button> : <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-slate-300">لا توجد غرفة منشأة</span>}
 
-                <span className="text-[10px] text-slate-300 bg-white/5 px-2 py-0.5 rounded-full border border-white/10 flex items-center gap-1">
+                {myRoom && <span className="text-[10px] text-slate-300 bg-white/5 px-2 py-0.5 rounded-full border border-white/10 flex items-center gap-1">
                   <Users className="w-3 h-3 text-purple-300" />
                   <span>15 مقعداً صوتياً</span>
-                </span>
+                </span>}
               </div>
             </div>
           </div>
@@ -277,7 +266,7 @@ export const RoyalRoomsView: React.FC = () => {
           {/* Announcement banner inside card */}
           <div className="mt-3.5 pt-2.5 border-t border-white/10 flex items-center justify-between text-[11px] text-slate-300 relative z-10">
             <span className="truncate max-w-[210px] text-slate-400">
-              🎙️ {myRoom?.announcement || 'أهلاً وسهلاً بالجميع في غرفتي الرسمية على توتي شات'}
+              {myRoom?.announcement || (myRoom ? 'لا توجد رسالة ترحيب' : 'أنشئ غرفتك لتظهر تفاصيلها هنا')}
             </span>
             <div className="flex items-center gap-2 shrink-0">
               <button

@@ -577,7 +577,7 @@ export const InternalProfileModal: React.FC = () => {
             {user.age && user.age > 0 && (
               <div className="bg-emerald-100 text-emerald-950 text-[11px] font-black px-2 py-0.5 rounded-full flex items-center gap-0.5 shadow-xs">
                 <span>{user.age}</span>
-                <span className="text-xs">{user.gender === 'ذكر' ? '♂' : '♀'}</span>
+                {user.gender && <span className="text-xs">{user.gender === 'ذكر' ? '♂' : user.gender === 'أنثى' ? '♀' : ''}</span>}
               </div>
             )}
 

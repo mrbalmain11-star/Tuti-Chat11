@@ -23,7 +23,7 @@ export interface UserProfile {
   followingCount?: number;
   fansCount: number;
   visitorsCount: number;
-  gender: 'ذكر' | 'أنثى';
+  gender: '' | 'ذكر' | 'أنثى';
   birthdate: string;
   age?: number | null;
   bio: string;

@@ -197,7 +197,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     followingCount: 0,
     fansCount: 0,
     visitorsCount: 0,
-    gender: 'ذكر',
+    gender: '',
     birthdate: '',
     bio: '',
     album: [],

@@ -44,6 +44,7 @@ Scope: code and Staging only. No APK build. Voice/music engines and Android pack
 | Recharge package display | Removed hardcoded coin amounts and prices; active packages now load from the Staging `recharge_packages` table. Direct in-app purchase remains unavailable and does not claim or perform a credit. | Implemented, needs account/device QA |
 | VIP purchase safety | Staging `store_catalog` lists active VIP 1–8 at prices different from `staging_purchase_vip`; the RPC also permits VIP 9–12 without active catalog rows. The UI now hides unverified prices/perks and blocks purchases until the catalog and RPC are reconciled. No price or entitlement was changed. | Implemented partially; backend price approval/reconciliation is deferred |
 | Profile defaults and level display | Removed sample public-profile ID, country, gender, date-of-birth, and bio fallbacks. Wealth/charm levels are no longer derived from EXP in the client; profile and room profile show raw server EXP or an unavailable level state. The levels screen no longer fabricates level/progress thresholds. | Implemented; needs device QA; official server level fields remain pending |
+| Home/system visual placeholders | Replaced random stock faces on system-message tiles and VIP avatar fallback with programmatic icons. Removed the always-on “live” badge and Iraq-flag/country default from the My Room card; only show room cover, ID, and 15-seat capacity when a real room exists. | Implemented, needs device QA |
 
 ## Remaining work and gates
 

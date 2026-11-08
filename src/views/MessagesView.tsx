@@ -3,6 +3,7 @@ import { stagingBackend } from '../services/stagingBackend';
 import type { DirectConversation } from '../types';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
+import { BellRing, ShieldCheck } from 'lucide-react';
 
 export const MessagesView: React.FC = () => {
   const { conversations, setOpenChatThread, currentUser, t, isRtl } = useApp();
@@ -99,16 +100,9 @@ export const MessagesView: React.FC = () => {
         >
           {/* Right side: Avatar & Text */}
           <div className="flex items-center gap-3.5 flex-1 min-w-0">
-            {/* Avatar: Golden Royal Dome Bell */}
-            <div className="relative w-14 h-14 rounded-full overflow-hidden shrink-0 border border-amber-300/40 shadow-sm bg-gradient-to-b from-amber-100 to-amber-200">
-              <img
-                src="/system-bell.jpg"
-                alt="رسائل النظام"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1546776310-eef45dd6d63c?w=200&auto=format&fit=crop&q=80';
-                }}
-                className="w-full h-full object-cover"
-              />
+            {/* Programmatic icon: no stock avatar fallback for a system account. */}
+            <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-amber-300/40 bg-gradient-to-b from-amber-100 to-amber-200 text-amber-800 shadow-sm" aria-hidden="true">
+              <BellRing className="h-7 w-7" />
             </div>
 
             {/* Titles */}
@@ -140,15 +134,8 @@ export const MessagesView: React.FC = () => {
           {/* Right side: Avatar & Text */}
           <div className="flex items-center gap-3.5 flex-1 min-w-0">
             {/* Avatar: Cute Mascot in Green Hood */}
-            <div className="relative w-14 h-14 rounded-full overflow-hidden shrink-0 border border-emerald-300/40 shadow-sm bg-gradient-to-b from-emerald-100 to-emerald-200">
-              <img
-                src="/official-mascot.jpg"
-                alt="رسائل رسمية"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80';
-                }}
-                className="w-full h-full object-cover"
-              />
+            <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-emerald-300/40 bg-gradient-to-b from-emerald-100 to-emerald-200 text-emerald-800 shadow-sm" aria-hidden="true">
+              <ShieldCheck className="h-7 w-7" />
             </div>
 
             {/* Titles */}

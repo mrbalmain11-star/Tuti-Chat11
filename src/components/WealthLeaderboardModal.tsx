@@ -129,7 +129,7 @@ export const WealthLeaderboardModal: React.FC = () => {
     wealthLevel:0,wealthExp:0,charmLevel:0,charmExp:0,gameLevel:0,gameExp:0,
     coins:0,diamonds:0,hearts:0,
     friendsCount:0,followersCount:0,followingCount:0,fansCount:0,visitorsCount:0,
-    gender:'ذكر',birthdate:'',bio:'',album:[],
+    gender:'',birthdate:'',bio:'',album:[],
   });
 
 

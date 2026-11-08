@@ -637,14 +637,7 @@ export const VipModal: React.FC = () => {
             {/* Avatar Circle with active VIP glow ring */}
             <div className="relative w-16 h-16 rounded-full shrink-0 p-0.5 bg-gradient-to-tr from-amber-400 via-yellow-300 to-amber-600 shadow-[0_0_16px_rgba(245,158,11,0.6)]">
               <div className="w-full h-full rounded-full overflow-hidden border border-amber-100 bg-slate-900">
-                <img
-                  src={
-                    currentUser.avatar ||
-                    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&fit=crop&q=80'
-                  }
-                  alt={currentUser.name}
-                  className="w-full h-full object-cover"
-                />
+                {currentUser.avatar ? <img src={currentUser.avatar} alt={currentUser.name || 'صورة الحساب'} className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center text-amber-200" aria-label="لا توجد صورة شخصية"><User className="h-7 w-7" /></div>}
               </div>
               <div className="absolute -top-1 -right-0.5 text-xs">👑</div>
             </div>
