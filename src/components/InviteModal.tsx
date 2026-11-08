@@ -1,17 +1,32 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, Copy, Check, Share2, MessageCircle, Send, Link2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
+import { fetchMyProfile } from '../services/stagingBackend';
 
 export const InviteModal: React.FC = () => {
   const { openInviteModal, setOpenInviteModal, currentUser } = useApp();
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [publicId, setPublicId] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!openInviteModal) { setPublicId(null); return; }
+    let active = true;
+    void fetchMyProfile().then(profile => {
+      const id = Number(profile?.public_id);
+      if (active) setPublicId(Number.isInteger(id) && id >= 100000 && id <= 999999 ? id : null);
+    }).catch(error => {
+      console.error('Unable to load invite account ID:', error);
+      if (active) setPublicId(null);
+    });
+    return () => { active = false; };
+  }, [openInviteModal, currentUser.id]);
 
   if (!openInviteModal) return null;
 
-  const accountId = String(currentUser.id ?? '').trim();
+  const accountId = publicId ? String(publicId) : '';
   const inviteUrl = accountId ? `https://tuliling.app/invite?u=${encodeURIComponent(accountId)}` : '';
   const inviteCode = accountId;
 
