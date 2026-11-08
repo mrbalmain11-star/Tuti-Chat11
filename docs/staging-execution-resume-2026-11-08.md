@@ -37,6 +37,7 @@ Scope: code and Staging only. No APK build. Voice/music engines and Android pack
 | Login loading states | Made the Google login button show a busy spinner and progress label; made the login surface scroll vertically on short devices; added busy indication to OTP send/resend and removed unused OTP state. Auth calls and Google/OTP flow were not changed. | Implemented, needs Android login QA |
 | Profile inventory cleanup | Removed fixed car/frame showcase claims and hardcoded gift names/counts from the public profile. Self profile shows only equipped frame and vehicle values present in the authenticated Supabase inventory; other profiles and gift board show a clear unavailable state until verified data is exposed. | Implemented, needs account/device QA |
 | Agency member identities | Replaced the fixed “registered host” label and blank IDs with profile names, avatar URLs, and public account IDs read from Supabase under the existing authenticated profiles policy; removed the fabricated score field. | Implemented, needs agency-account QA |
+| VIP storage status | Replaced the fixed VIP 7 card, sample expiry, and invented privilege list with the account's actual VIP level/expiry; show an unavailable notice when no verified privilege catalog is supplied. | Implemented, needs account/device QA |
 
 ## Remaining work and gates
 

@@ -16,7 +16,6 @@ import {
   Compass,
   Store,
   Layers,
-  Award,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
@@ -336,78 +335,46 @@ export const StorageModal: React.FC = () => {
                ------------------------------------------------------------- */
             <div>
               {bagCategory === 'vip' ? (
-                /* VIP Tab Content */
+                /* VIP status from the authenticated account */
                 <div className="space-y-3 animate-in fade-in">
-                  {/* VIP 7 Royal Gold Banner Card */}
-                  <div
-                    onClick={() => {
-                      sounds.playClick();
-                      setOpenVipModal(true);
-                    }}
-                    className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#FCE19C] via-[#FCE9B8] to-[#FCE096] border border-[#F5CF75] p-4 shadow-lg cursor-pointer active:scale-98 transition flex items-center justify-between"
-                  >
-                    {/* Left: Royal Ruby Phoenix Crest */}
-                    <div className="w-12 h-12 flex items-center justify-center shrink-0">
-                      <Crown className="w-10 h-10 text-[#9C6118] drop-shadow-xs" />
-                    </div>
-
-                    {/* Right: VIP Info */}
-                    <div className="text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <span className="text-xs font-black px-2 py-0.5 rounded-full bg-[#9C6118] text-white">
-                          نشط حالياً
-                        </span>
-                        <h3 className="text-2xl font-black text-[#9C6118] font-serif">VIP 7</h3>
+                  <div className="relative overflow-hidden rounded-2xl border border-amber-300 bg-gradient-to-r from-[#FCE19C] via-[#FCE9B8] to-[#FCE096] p-4 shadow-lg">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center">
+                        <Crown className="h-10 w-10 text-[#9C6118] drop-shadow-xs" aria-hidden="true" />
                       </div>
-                      <p className="text-xs text-[#865922] font-bold mt-1">
-                        سوف تنتهي في {currentUser.vipExpiry || '04/01/2026'}
-                      </p>
+                      <div className="min-w-0 flex-1 text-right">
+                        {currentUser.vipLevel > 0 ? (
+                          <>
+                            <div className="flex flex-wrap items-center justify-end gap-1.5">
+                              <span className="rounded-full bg-[#9C6118] px-2 py-0.5 text-xs font-black text-white">نشط</span>
+                              <h3 className="font-serif text-2xl font-black text-[#9C6118]">VIP {currentUser.vipLevel}</h3>
+                            </div>
+                            <p className="mt-1 break-words text-xs font-bold text-[#865922]">
+                              {currentUser.vipExpiry ? `ينتهي في ${currentUser.vipExpiry}` : 'تاريخ الانتهاء غير متاح'}
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <h3 className="text-lg font-black text-[#9C6118]">لا يوجد اشتراك VIP نشط</h3>
+                            <p className="mt-1 text-xs font-bold text-[#865922]">ستظهر تفاصيل الاشتراك بعد تأكيده على الحساب.</p>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
 
-                  {/* VIP Privileges List */}
-                  <div className="bg-[#0E241A] rounded-2xl border border-emerald-900/50 p-3.5 space-y-3">
-                    <div className="flex items-center justify-between border-b border-emerald-900/40 pb-2.5">
-                      <h4 className="text-xs font-black text-amber-300 flex items-center gap-1.5">
-                        <Award className="w-4 h-4 text-amber-400" />
-                        <span>امتيازات ومميزات VIP 7 المفعلة</span>
-                      </h4>
-                      <span className="text-[10px] text-emerald-400 font-bold bg-emerald-950/70 px-2 py-0.5 rounded-full border border-emerald-800/40">
-                        7 مزايا نشطة
-                      </span>
+                  <div className="space-y-3 rounded-2xl border border-emerald-900/50 bg-[#0E241A] p-3.5">
+                    <div className="flex items-start gap-2 rounded-xl border border-emerald-800/50 bg-[#091A12] p-3 text-right">
+                      <Crown className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" aria-hidden="true" />
+                      <p className="text-xs leading-5 text-slate-300">مزايا VIP التفصيلية غير معروضة حتى تتوفر قائمة موثقة مرتبطة بمستوى اشتراكك.</p>
                     </div>
-
-                    <div className="grid grid-cols-2 gap-2 text-right">
-                      {[
-                        { title: 'شارة VIP 7 الحصرية', desc: 'شارة ذهبية متوهجة على الاسم', icon: '👑' },
-                        { title: 'أولوية صعود المايك', desc: 'حجز المقاعد الأولية بالرومات', icon: '🎤' },
-                        { title: 'حصانة ضد الكتم والطرد', desc: 'حماية كاملة من المشرفين', icon: '🛡️' },
-                        { title: 'دخولية موكب VIP مجانية', desc: 'مؤثرات دخول ملكية مجاناً', icon: '🏎️' },
-                        { title: 'فقاعة وإطار VIP الملكي', desc: 'مقتنيات حصرية لأصحاب الرتب', icon: '💬' },
-                        { title: 'خصم 15% على الهدايا', desc: 'توفير عملات عند إرسال الهدايا', icon: '🎁' },
-                      ].map((perk, i) => (
-                        <div
-                          key={i}
-                          className="bg-[#091A12] border border-[#163828] rounded-xl p-2.5 flex items-start gap-2"
-                        >
-                          <span className="text-xl shrink-0">{perk.icon}</span>
-                          <div>
-                            <p className="text-xs font-bold text-white leading-tight">{perk.title}</p>
-                            <p className="text-[10px] text-slate-400 mt-0.5">{perk.desc}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
                     <button
-                      onClick={() => {
-                        sounds.playClick();
-                        setOpenVipModal(true);
-                      }}
-                      className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-amber-950 font-black text-xs rounded-xl shadow-md active:scale-98 transition flex items-center justify-center gap-2"
+                      type="button"
+                      onClick={() => { sounds.playClick(); setOpenVipModal(true); }}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 py-2.5 text-xs font-black text-amber-950 shadow-md transition active:scale-98 hover:from-amber-400 hover:to-yellow-300"
                     >
-                      <Crown className="w-4 h-4" />
-                      <span>ترقية أو تمديد اشتراك VIP</span>
+                      <Crown className="h-4 w-4" aria-hidden="true" />
+                      <span>{currentUser.vipLevel > 0 ? 'عرض خيارات تمديد VIP' : 'عرض اشتراكات VIP'}</span>
                     </button>
                   </div>
                 </div>
