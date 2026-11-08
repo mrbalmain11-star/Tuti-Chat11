@@ -20,7 +20,6 @@ import {
   ExternalLink,
   Power,
   Volume2,
-  VolumeX,
   Smile,
   Mail,
   LayoutGrid,
@@ -653,7 +652,6 @@ export const VoiceRoomModal: React.FC = () => {
   const [tasksClaimed, setTasksClaimed] = useState<Record<string, boolean>>({});
 
   // Audio / Sound states
-  const roomSoundMuted = false;
   const [audioModeHQ, setAudioModeHQ] = useState(true);
 
   // Floating animated emojis
@@ -1907,20 +1905,27 @@ export const VoiceRoomModal: React.FC = () => {
               <Smile className="w-5 h-5 text-white stroke-[2]" />
             </button>
 
-            {/* 5. Speaker Button (🔊): Toggle room volume */}
+            {/* 5. Microphone Button: Server-confirmed self mute state */}
             <button
-              disabled
-              className={`w-10 h-10 rounded-full border transition active:scale-95 shadow-md cursor-pointer flex items-center justify-center ${
-                !roomSoundMuted
-                  ? 'bg-[#241747]/90 hover:bg-[#342263] border-purple-400/25 text-white'
-                  : 'bg-rose-950/70 border-rose-500/40 text-rose-300'
+              type="button"
+              disabled={!isUserOnAnySeat || !activeRoom}
+              aria-label={myMicMuted ? 'فتح المايك' : 'كتم المايك'}
+              aria-pressed={!myMicMuted}
+              onClick={() => {
+                sounds.playClick();
+                toggleMyMic();
+              }}
+              className={`w-10 h-10 rounded-full border transition active:scale-95 shadow-md cursor-pointer flex items-center justify-center disabled:cursor-not-allowed disabled:opacity-40 ${
+                myMicMuted
+                  ? 'bg-rose-950/80 border-rose-400/50 text-rose-200'
+                  : 'bg-emerald-950/80 border-emerald-300/50 text-emerald-100 hover:bg-emerald-900'
               }`}
-              title="التحكم بصوت الغرفة غير متاح حالياً"
+              title={!isUserOnAnySeat ? 'اجلس على أحد المقاعد لتفعيل المايك' : myMicMuted ? 'فتح المايك' : 'كتم المايك'}
             >
-              {roomSoundMuted ? (
-                <VolumeX className="w-5 h-5 text-rose-300 stroke-[2]" />
+              {myMicMuted ? (
+                <MicOff className="w-5 h-5 stroke-[2]" />
               ) : (
-                <Volume2 className="w-5 h-5 text-white stroke-[2]" />
+                <Mic className="w-5 h-5 stroke-[2]" />
               )}
             </button>
           </div>
@@ -2092,21 +2097,24 @@ export const VoiceRoomModal: React.FC = () => {
                     <span className="text-xs font-bold text-slate-200">استبدال العملات</span>
                   </div>
 
-                  {/* الصوت */}
-                  <div
-                    aria-disabled="true"
-                    title="التحكم بصوت الغرفة غير متاح حالياً"
-                    className="flex flex-col items-center gap-1.5 opacity-60"
+                  {/* Mic mute: uses the existing server-confirmed self mute action */}
+                  <button
+                    type="button"
+                    disabled={!isUserOnAnySeat || !activeRoom}
+                    aria-label={myMicMuted ? 'فتح المايك' : 'كتم المايك'}
+                    aria-pressed={!myMicMuted}
+                    title={!isUserOnAnySeat ? 'اجلس على أحد المقاعد لتفعيل المايك' : myMicMuted ? 'فتح المايك' : 'كتم المايك'}
+                    onClick={() => {
+                      sounds.playClick();
+                      toggleMyMic();
+                    }}
+                    className="flex flex-col items-center gap-1.5 disabled:cursor-not-allowed disabled:opacity-40"
                   >
-                    <div className="w-13 h-13 rounded-2xl bg-[#281a4b] border border-white/10 flex items-center justify-center shadow-md group-hover:border-purple-400/50">
-                      {roomSoundMuted ? (
-                        <VolumeX className="w-6 h-6 text-rose-400 stroke-[2]" />
-                      ) : (
-                        <Volume2 className="w-6 h-6 text-white stroke-[2]" />
-                      )}
-                    </div>
-                    <span className="text-xs font-bold text-slate-200">الصوت</span>
-                  </div>
+                    <span className={`w-13 h-13 rounded-2xl border flex items-center justify-center shadow-md ${myMicMuted ? 'bg-rose-950/80 border-rose-400/50' : 'bg-emerald-950/80 border-emerald-300/50'}`}>
+                      {myMicMuted ? <MicOff className="w-6 h-6 text-rose-300 stroke-[2]" /> : <Mic className="w-6 h-6 text-emerald-200 stroke-[2]" />}
+                    </span>
+                    <span className="text-xs font-bold text-slate-200">{myMicMuted ? 'فتح المايك' : 'كتم المايك'}</span>
+                  </button>
 
                   {/* مسح الشاشة */}
                   <div
