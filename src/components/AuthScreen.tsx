@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Headphones, ChevronLeft, ShieldCheck, X, FileText, Check } from 'lucide-react';
+import { Headphones, ChevronLeft, ShieldCheck, X, FileText, Check, LoaderCircle } from 'lucide-react';
 import { sounds } from '../utils/audio';
 import { signInWithRealGoogle, stagingBackend, NATIVE_AUTH_ERROR_EVENT } from '../services/stagingBackend';
 
@@ -51,7 +51,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[999] bg-[#05010c] text-white flex flex-col justify-between overflow-hidden select-none font-['Cairo',sans-serif]"
+      className="fixed inset-0 z-[999] bg-[#05010c] text-white flex flex-col justify-between overflow-x-hidden overflow-y-auto select-none font-['Cairo',sans-serif]"
       dir="rtl"
     >
       {/* Toast Notification */}
@@ -160,6 +160,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
         <button
           onClick={handleGoogleLogin}
           disabled={isLoading}
+          aria-busy={isLoading}
           className="w-full py-4 px-6 rounded-full bg-gradient-to-b from-white via-[#F8FAFC] to-[#E2E8F0] hover:brightness-105 active:scale-[0.98] text-slate-900 shadow-[0_8px_25px_rgba(255,255,255,0.2)] border border-white flex items-center justify-between transition cursor-pointer group"
         >
           {/* Google G Multi-Color Icon */}
@@ -186,11 +187,13 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
 
           {/* Text: سجل الدخول عبر جوجل */}
           <span className="text-base font-black text-slate-900 tracking-wide">
-            سجل الدخول عبر جوجل
+            {isLoading ? 'جارٍ فتح تسجيل Google...' : 'سجل الدخول عبر جوجل'}
           </span>
 
           {/* Forward Arrow */}
-          <ChevronLeft className="w-6 h-6 text-slate-700 stroke-[3] group-hover:-translate-x-1 transition" />
+          {isLoading
+            ? <LoaderCircle className="w-6 h-6 text-emerald-800 animate-spin" aria-hidden="true" />
+            : <ChevronLeft className="w-6 h-6 text-slate-700 stroke-[3] group-hover:-translate-x-1 transition" />}
         </button>
 
         {/* 3. سياسة الاستخدام > with Shield/Doc Icon */}

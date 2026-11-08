@@ -34,6 +34,7 @@ Scope: code and Staging only. No APK build. Voice/music engines and Android pack
 | Migration corrections | Staging function-definition checks caught an invalid array alias and then an incorrect schema reference before any gift call. Follow-up migrations corrected both. Final remote checks confirm the corrected alias and delegate, `SECURITY DEFINER`, empty search path, authenticated execute, and no anon execute. | Applied and definition/security checked; financial execution not tested |
 | Level progression diagnosis | The server EXP RPCs sum historical `gift_events.amount`, while `GIFT_LEVEL_THRESHOLDS` compares that cumulative total against a list whose initial values match the previously specified per-level targets. Treating per-level costs as cumulative thresholds can explain the unusually fast early progression. | Root cause identified as likely; no thresholds or user levels changed because the complete official schedule is still pending |
 | Narrow-screen CSS | Removed an invalid, redundant class selector under the 360px media query; shared base styles already set the same font letter-spacing. | Build passes and the CSS selector warning is gone; visual Android QA still pending |
+| Login loading states | Made the Google login button show a busy spinner and progress label; made the login surface scroll vertically on short devices; added busy indication to OTP send/resend and removed unused OTP state. Auth calls and Google/OTP flow were not changed. | Implemented, needs Android login QA |
 
 ## Remaining work and gates
 
