@@ -30,7 +30,7 @@ Scope: code and Staging only. No APK build. Voice/music engines and Android pack
 2. Group gift send is not available. Do not fan out separate debits from the client; it needs an atomic, authorized server operation and integration testing. Existing single-recipient gift flow was not changed. Gift chooser visuals are improved, but full group sending and flow acceptance remain open.
 3. Audit and complete the remaining home/profile icon and responsive screen changes against approved references.
 4. Audit Google/Email OTP loading and error states; verify sign-in on Android without changing stable authentication.
-5. Confirm current level/EXP server source and investigate fast progression. Final thresholds remain deferred until the owner supplies official prices; do not rewrite existing balances or invent thresholds.
+5. Level audit: Staging wealth/charm EXP RPCs sum `gift_events.amount`; the client currently maps that EXP to levels using `GIFT_LEVEL_THRESHOLDS` in `src/utils/levelUtils.ts`. The level mapping is therefore not server-authoritative, and the approved official threshold table is incomplete. Do not change balances or invent higher-level thresholds; server-side mapping and any correction to progression wait for the complete official table.
 6. Test room creation, DM quota (3rd/4th, UTC rollover, mutual follow, block, retry, concurrency), gifts, role boundaries, and all visual changes on test accounts and Android.
 7. Run final checks after all remaining code changes. Build APK only after separate owner approval.
 
