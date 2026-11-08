@@ -40,6 +40,7 @@ Scope: code and Staging only. No APK build. Voice/music engines and Android pack
 | VIP storage status | Replaced the fixed VIP 7 card, sample expiry, and invented privilege list with the account's actual VIP level/expiry; show an unavailable notice when no verified privilege catalog is supplied. | Implemented, needs account/device QA |
 | Agency metric placeholders | Replaced static host/agency zero salaries, levels, progress, time, commission, and rewards with explicit server-data-unavailable screens; the rewards modal hides fake balances and keeps withdrawal disabled until an audited backend flow exists. | Implemented, needs agency-account QA |
 | Diagnostic upload action | Removed the simulated 100% success message; the profile now reports that diagnostic upload is unavailable and confirms no data was sent. | Implemented, needs device QA |
+| Invite screen | Removed the client-only 2,500 coin simulation, unverified reward and customer-service claims, and fake account-ID fallback. Kept sharing and copy actions using the current account identifier, with unavailable states when it is missing. | Implemented, needs account/device QA |
 
 ## Remaining work and gates
 
