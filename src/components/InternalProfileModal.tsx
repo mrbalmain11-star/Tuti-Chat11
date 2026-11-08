@@ -67,11 +67,16 @@ export const InternalProfileModal: React.FC = () => {
     setOpenAgencyModal,
     setOpenVipModal,
     agencyMemberCount,
+    bagItems,
+    equippedFrame,
+    equippedMount,
   } = useApp();
 
   // The user being displayed: either targeted user or current user
   const user: UserProfile = internalProfileUser?.id === currentUser.id ? currentUser : (internalProfileUser || currentUser);
   const isSelf = user.id === currentUser.id;
+  const equippedFrameItem = isSelf ? bagItems.find(item => item.id === equippedFrame && item.category === 'frames') : undefined;
+  const equippedMountItem = isSelf ? bagItems.find(item => item.id === equippedMount && item.category === 'mounts') : undefined;
   const [showCpSearch,setShowCpSearch] = useState(false);
   const [cpRefreshKey, setCpRefreshKey] = useState(0);
   const [cpPartnerAvatar, setCpPartnerAvatar] = useState<string | null>(null);
@@ -1056,278 +1061,58 @@ export const InternalProfileModal: React.FC = () => {
             5. Tab Content Area
             ========================================================================= */}
         <div className="flex-1 flex flex-col items-center justify-center py-6 px-6">
-          {/* TAB 1: الإطار (Frame) - 3D Holographic Pastel Saturn Planet */}
+          {/* TAB 1: Equipped frame from the authenticated inventory */}
           {activeTab === 'frame' && (
-            <div className="flex flex-col items-center justify-center animate-in fade-in duration-200">
-              <div
-                onClick={() => {
-                  sounds.playClick();
-                  setOpenStorageModal(true);
-                }}
-                className="relative w-52 h-52 flex items-center justify-center cursor-pointer group active:scale-95 transition"
-                title="انقر لتخصيص المظهر وتجهيز العناصر"
-              >
-                {/* Ambient Celestial Glow */}
-                <div className="absolute inset-0 bg-purple-500/15 rounded-full blur-2xl group-hover:bg-purple-500/25 transition" />
-
-                {/* SVG 3D Pastel Lavender Planet with Orbital Ring and Craters */}
-                <svg
-                  viewBox="0 0 220 220"
-                  className="w-full h-full drop-shadow-[0_15px_35px_rgba(168,85,247,0.35)]"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <defs>
-                    <radialGradient
-                      id="planetBodyGrad"
-                      cx="40%"
-                      cy="35%"
-                      r="65%"
-                      fx="35%"
-                      fy="30%"
-                    >
-                      <stop offset="0%" stopColor="#FFFFFF" />
-                      <stop offset="25%" stopColor="#E9D5FF" />
-                      <stop offset="60%" stopColor="#C084FC" />
-                      <stop offset="85%" stopColor="#818CF8" />
-                      <stop offset="100%" stopColor="#4338CA" />
-                    </radialGradient>
-
-                    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#EDE9FE" />
-                      <stop offset="45%" stopColor="#DDD6FE" />
-                      <stop offset="70%" stopColor="#A78BFA" />
-                      <stop offset="100%" stopColor="#6366F1" />
-                    </linearGradient>
-
-                    <radialGradient id="craterGrad" cx="30%" cy="30%" r="70%">
-                      <stop offset="0%" stopColor="#4338CA" />
-                      <stop offset="80%" stopColor="#6366F1" />
-                      <stop offset="100%" stopColor="#818CF8" />
-                    </radialGradient>
-
-                    <radialGradient id="moonGrad" cx="35%" cy="30%" r="70%">
-                      <stop offset="0%" stopColor="#FFFFFF" />
-                      <stop offset="50%" stopColor="#DDD6FE" />
-                      <stop offset="100%" stopColor="#7C3AED" />
-                    </radialGradient>
-                  </defs>
-
-                  {/* Back half of the ring */}
-                  <ellipse
-                    cx="110"
-                    cy="110"
-                    rx="98"
-                    ry="36"
-                    transform="rotate(-26 110 110)"
-                    fill="none"
-                    stroke="url(#ringGrad)"
-                    strokeWidth="11"
-                    strokeLinecap="round"
-                    opacity="0.75"
-                  />
-
-                  {/* Planet Sphere */}
-                  <circle cx="110" cy="110" r="54" fill="url(#planetBodyGrad)" />
-
-                  {/* Craters */}
-                  <ellipse cx="90" cy="85" rx="8" ry="11" fill="url(#craterGrad)" opacity="0.65" />
-                  <ellipse cx="125" cy="80" rx="9" ry="12" fill="url(#craterGrad)" opacity="0.65" />
-                  <ellipse cx="98" cy="135" rx="10" ry="12" fill="url(#craterGrad)" opacity="0.6" />
-                  <ellipse cx="132" cy="125" rx="6" ry="8" fill="url(#craterGrad)" opacity="0.55" />
-
-                  {/* Front half of the ring */}
-                  <path
-                    d="M 24 148 C 45 185, 140 185, 196 115"
-                    fill="none"
-                    stroke="url(#ringGrad)"
-                    strokeWidth="11"
-                    strokeLinecap="round"
-                  />
-
-                  {/* Orbiting Moon */}
-                  <circle cx="152" cy="172" r="7" fill="url(#moonGrad)" />
-                </svg>
+            <div className="w-full max-w-sm rounded-2xl border border-amber-300/70 bg-gradient-to-br from-white via-amber-50 to-emerald-50 p-5 text-center shadow-sm">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-amber-300 bg-amber-100 text-amber-800">
+                <Award className="h-8 w-8" aria-hidden="true" />
               </div>
-
-              <div
-                onClick={() => {
-                  sounds.playClick();
-                  setOpenStorageModal(true);
-                }}
-                className="mt-2 text-center cursor-pointer hover:opacity-80 transition"
-              >
-                <span className="text-xs font-bold text-amber-900 bg-amber-100/70 border border-amber-300/60 px-3 py-1 rounded-full shadow-2xs">
-                  ✨ انقر لمعاينة وتجهيز إطارات الصورة الرمزية
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 2: المركبة (Vehicle) - 3D Luxury Supercar / Royal Mount Showcase */}
-          {activeTab === 'vehicle' && (
-            <div className="w-full flex flex-col items-center justify-center animate-in fade-in duration-200">
-              <div
-                onClick={() => {
-                  sounds.playClick();
-                  setOpenStorageModal(true);
-                }}
-                className="relative w-64 h-44 flex flex-col items-center justify-center cursor-pointer group active:scale-95 transition rounded-3xl bg-gradient-to-b from-amber-500/10 via-amber-200/20 to-yellow-500/5 border border-amber-300/60 p-4 shadow-sm"
-              >
-                {/* Ambient Golden Underglow */}
-                <div className="absolute inset-0 bg-amber-400/15 rounded-3xl blur-xl group-hover:bg-amber-400/25 transition" />
-
-                {/* 3D Supercar / Cyber Mount Illustration */}
-                <div className="relative z-10 w-44 h-24 flex items-center justify-center">
-                  <svg
-                    viewBox="0 0 200 100"
-                    className="w-full h-full drop-shadow-[0_12px_24px_rgba(245,158,11,0.35)]"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <defs>
-                      <linearGradient id="goldCarGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="#F59E0B" />
-                        <stop offset="35%" stopColor="#FCD34D" />
-                        <stop offset="70%" stopColor="#D97706" />
-                        <stop offset="100%" stopColor="#78350F" />
-                      </linearGradient>
-                      <linearGradient id="cockpitGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#0F172A" />
-                        <stop offset="100%" stopColor="#38BDF8" />
-                      </linearGradient>
-                      <radialGradient id="wheelGlow" cx="50%" cy="50%" r="50%">
-                        <stop offset="0%" stopColor="#FDE047" />
-                        <stop offset="60%" stopColor="#B45309" />
-                        <stop offset="100%" stopColor="#1E293B" />
-                      </radialGradient>
-                    </defs>
-
-                    {/* Speed Trails */}
-                    <path d="M5 45 L40 45" stroke="#FDE68A" strokeWidth="2" strokeDasharray="3 3" opacity="0.6" />
-                    <path d="M12 55 L35 55" stroke="#FDE68A" strokeWidth="2" strokeDasharray="4 4" opacity="0.5" />
-                    <path d="M2 65 L45 65" stroke="#F59E0B" strokeWidth="2" strokeDasharray="2 3" opacity="0.7" />
-
-                    {/* Car Silhouette / Sleek Body */}
-                    <path
-                      d="M30 65 L45 52 L75 42 L130 42 L158 52 L185 60 L188 68 L170 70 L30 70 Z"
-                      fill="url(#goldCarGrad)"
-                      stroke="#FDE68A"
-                      strokeWidth="1.5"
-                    />
-
-                    {/* Cockpit / Windshield */}
-                    <path
-                      d="M72 43 L88 30 L124 30 L136 43 Z"
-                      fill="url(#cockpitGrad)"
-                      stroke="#93C5FD"
-                      strokeWidth="1"
-                      opacity="0.9"
-                    />
-
-                    {/* Rear Spoiler */}
-                    <path d="M25 46 L38 52 L36 56 L23 50 Z" fill="#D97706" stroke="#FDE68A" strokeWidth="0.8" />
-
-                    {/* Wheels with Golden Rims */}
-                    <circle cx="58" cy="70" r="14" fill="#0F172A" stroke="#F59E0B" strokeWidth="2.5" />
-                    <circle cx="58" cy="70" r="8" fill="url(#wheelGlow)" />
-                    <circle cx="58" cy="70" r="3" fill="#FFF" />
-
-                    <circle cx="152" cy="70" r="14" fill="#0F172A" stroke="#F59E0B" strokeWidth="2.5" />
-                    <circle cx="152" cy="70" r="8" fill="url(#wheelGlow)" />
-                    <circle cx="152" cy="70" r="3" fill="#FFF" />
-
-                    {/* Headlight Neon Beam */}
-                    <polygon points="186,63 198,60 198,68 186,66" fill="#67E8F9" opacity="0.9" />
-                  </svg>
-                </div>
-
-                <div className="relative z-10 text-center mt-1">
-                  <span className="text-xs font-black text-amber-950 flex items-center justify-center gap-1">
-                    <Car className="w-3.5 h-3.5 text-amber-600" />
-                    لامبورغيني أفينتادور الذهب
-                  </span>
-                  <span className="text-[11px] text-amber-700/90 font-medium block mt-0.5">
-                    تمنحك موكباً استعراضياً فاخراً ومؤثر صوتي عند دخول الغرف
-                  </span>
-                </div>
-              </div>
-
-              <button
-                onClick={() => {
-                  sounds.playClick();
-                  setOpenStorageModal(true);
-                }}
-                className="mt-3 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-bold text-xs shadow-xs active:scale-95 transition flex items-center gap-1.5 cursor-pointer"
-              >
-                <span>معاينة وتجهيز المركبات في التخزين</span>
-                <ChevronRight className="w-3.5 h-3.5 rotate-180" />
-              </button>
-            </div>
-          )}
-
-          {/* TAB 3: لوحة الهدايا (Gift Board) - Luxury Gift Showcase Wall */}
-          {activeTab === 'gifts' && (
-            <div className="w-full flex flex-col items-center animate-in fade-in duration-200">
-              <div className="w-full flex items-center justify-between mb-3 px-1">
-                <span className="text-xs font-black text-amber-950 flex items-center gap-1">
-                  <Gift className="w-3.5 h-3.5 text-rose-500" />
-                  لوحة الهدايا المستلمة
-                </span>
-                <span className="text-[11px] font-bold text-rose-600 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full">
-                  128 هدية مستلمة 🎁
-                </span>
-              </div>
-
-              {/* 6 Grid of Showcase Gifts */}
-              <div className="w-full grid grid-cols-3 gap-2">
-                {[
-                  { name: 'تاج الملوك', icon: '👑', count: 14, color: 'from-amber-500/10 to-yellow-500/20', border: 'border-amber-300' },
-                  { name: 'قصر الأحلام', icon: '🏰', count: 5, color: 'from-purple-500/10 to-indigo-500/20', border: 'border-purple-300' },
-                  { name: 'فيراري الذهبية', icon: '🏎️', count: 9, color: 'from-amber-500/10 to-orange-500/20', border: 'border-amber-300' },
-                  { name: 'باقة الورد', icon: '🌹', count: 48, color: 'from-rose-500/10 to-red-500/20', border: 'border-rose-300' },
-                  { name: 'ألماسة النور', icon: '💎', count: 36, color: 'from-cyan-500/10 to-blue-500/20', border: 'border-cyan-300' },
-                  { name: 'صاروخ الفضاء', icon: '🚀', count: 16, color: 'from-indigo-500/10 to-violet-500/20', border: 'border-indigo-300' },
-                ].map((gift, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => {
-                      sounds.playCoin();
-                    }}
-                    className={`relative p-2.5 rounded-2xl bg-gradient-to-b ${gift.color} border ${gift.border} flex flex-col items-center justify-center cursor-pointer active:scale-95 transition shadow-2xs hover:shadow-xs group`}
-                  >
-                    <span className="text-2xl group-hover:scale-110 transition drop-shadow-sm">
-                      {gift.icon}
-                    </span>
-                    <span className="text-[11px] font-bold text-slate-800 mt-1 line-clamp-1">
-                      {gift.name}
-                    </span>
-                    <span className="text-[10px] font-black text-rose-600 bg-white/80 px-1.5 py-0.2 rounded-full mt-0.5 border border-rose-200">
-                      x{gift.count}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {!isSelf ? (
-                <button
-                  onClick={() => {
-                    sounds.playClick();
-                    setSelectedGiftReceiver(user);
-                    setOpenGiftStore(true);
-                  }}
-                  className="mt-3 px-4 py-1.5 rounded-full bg-gradient-to-r from-rose-500 to-amber-500 text-white font-bold text-xs shadow-xs active:scale-95 transition flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Gift className="w-3.5 h-3.5" />
-                  <span>إرسال هدية جديدة لملء اللوحة</span>
-                </button>
+              <h3 className="mt-3 text-sm font-black text-amber-950">الإطار المجهز</h3>
+              {isSelf && equippedFrameItem ? (
+                <p className="mt-1 text-sm font-bold text-emerald-900">{equippedFrameItem.name}</p>
               ) : (
-                <div className="mt-2.5 text-center">
-                  <span className="text-[11px] text-slate-500 font-medium">
-                    يتم تحديث لوحة الهدايا تلقائياً فور استلام الهدايا من الأصدقاء في الغرف
-                  </span>
-                </div>
+                <p className="mt-1 text-xs leading-6 text-slate-600">
+                  {isSelf ? 'لا توجد بيانات إطار مجهز متاحة حالياً.' : 'بيانات الإطار المجهز لهذا الحساب غير متاحة للعرض.'}
+                </p>
               )}
+              {isSelf && equippedFrameItem && <p className="mt-1 text-xs text-slate-500">الصلاحية: {equippedFrameItem.expiry}</p>}
+              {isSelf && (
+                <button type="button" onClick={() => { sounds.playClick(); setOpenStorageModal(true); }} className="mt-4 rounded-full border border-amber-400 bg-white px-4 py-2 text-xs font-black text-amber-950 active:scale-95">
+                  فتح التخزين
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* TAB 2: Equipped vehicle from the authenticated inventory */}
+          {activeTab === 'vehicle' && (
+            <div className="w-full max-w-sm rounded-2xl border border-amber-300/70 bg-gradient-to-br from-white via-amber-50 to-emerald-50 p-5 text-center shadow-sm">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-amber-300 bg-amber-100 text-amber-800">
+                <Car className="h-8 w-8" aria-hidden="true" />
+              </div>
+              <h3 className="mt-3 text-sm font-black text-amber-950">المركبة المجهزة</h3>
+              {isSelf && equippedMountItem ? (
+                <p className="mt-1 text-sm font-bold text-emerald-900">{equippedMountItem.name}</p>
+              ) : (
+                <p className="mt-1 text-xs leading-6 text-slate-600">
+                  {isSelf ? 'لا توجد بيانات مركبة مجهزة متاحة حالياً.' : 'بيانات المركبة المجهزة لهذا الحساب غير متاحة للعرض.'}
+                </p>
+              )}
+              {isSelf && equippedMountItem && <p className="mt-1 text-xs text-slate-500">الصلاحية: {equippedMountItem.expiry}</p>}
+              {isSelf && (
+                <button type="button" onClick={() => { sounds.playClick(); setOpenStorageModal(true); }} className="mt-4 rounded-full border border-amber-400 bg-white px-4 py-2 text-xs font-black text-amber-950 active:scale-95">
+                  فتح التخزين
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* TAB 3: Gift history is hidden until the server exposes verified records. */}
+          {activeTab === 'gifts' && (
+            <div className="w-full max-w-sm rounded-2xl border border-rose-200 bg-rose-50/70 px-5 py-8 text-center" role="status">
+              <Gift className="mx-auto h-8 w-8 text-rose-500" aria-hidden="true" />
+              <h3 className="mt-3 text-sm font-black text-rose-950">لوحة الهدايا</h3>
+              <p className="mt-1 text-xs leading-6 text-rose-900/75">لا يعرض التطبيق أعداداً أو هدايا افتراضية؛ سجل الهدايا الموثق غير متاح للواجهة حالياً.</p>
             </div>
           )}
 
