@@ -31,7 +31,6 @@ import {
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
 import { UserProfile } from '../types';
-import { getLevelFromExp } from '../utils/levelUtils';
 import { CharmBadge, WealthBadge, GameBadge } from './LevelBadgeIcons';
 import { processImageFile } from '../utils/imageUpload';
 import { fetchMyProfile, saveMyProfile, uploadMyAvatar, uploadMyCover, getMyAvatarUrl, stagingBackend, fetchMyAdminAccess } from '../services/stagingBackend';
@@ -135,7 +134,7 @@ export const InternalProfileModal: React.FC = () => {
     return () => { active = false; };
   }, [openInternalProfileModal, isSelf, currentUser.id]);
   const [savedCover, setSavedCover] = useState<string>('');
-  const [visitorStatus, setVisitorStatus] = useState<{ userId: string; wealthLevel: number; charmLevel: number; vipLevel: number } | null>(null);
+  const [visitorStatus, setVisitorStatus] = useState<{ userId: string; vipLevel: number } | null>(null);
   useEffect(() => {
     let active = true;
     setVisitorStatus(null);
@@ -146,15 +145,14 @@ export const InternalProfileModal: React.FC = () => {
         if (!active || !data) return;
         setVisitorStatus({
           userId: user.id,
-          wealthLevel: getLevelFromExp(Number.isFinite(Number(data.wealth_exp)) ? Math.max(0, Number(data.wealth_exp)) : 0, 260),
-          charmLevel: getLevelFromExp(Number.isFinite(Number(data.charm_exp)) ? Math.max(0, Number(data.charm_exp)) : 0, 260),
           vipLevel: Number.isFinite(Number(data.vip_tier)) ? Math.max(0, Math.trunc(Number(data.vip_tier))) : 0,
         });
       }).catch(error => console.error('Visitor levels load failed:', error));
     return () => { active = false; };
   }, [openInternalProfileModal, isSelf, user.id]);
   const displayedUser = openInternalProfileModal && !isSelf && visitorStatus?.userId === user.id ? { ...user, ...visitorStatus } : user;
-  const hasVerifiedProfileLevels = isSelf || visitorStatus?.userId === user.id;
+  // Staging returns experience totals, not official level fields; never derive a level in the client.
+  const hasVerifiedProfileLevels = false;
   const [visitorAssets, setVisitorAssets] = useState<{ userId: string; publicId: string; cover: string; avatar: string; bio: string; name: string } | null>(null);
   const visitorAssetsForUser = openInternalProfileModal && !isSelf && visitorAssets?.userId === user.id ? visitorAssets : null;
   const visitorPublicId = visitorAssetsForUser?.publicId || '';

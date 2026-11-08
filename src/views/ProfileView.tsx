@@ -19,7 +19,6 @@ import {
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
 import { processImageFile } from '../utils/imageUpload';
-import { CharmBadge, WealthBadge, GameBadge } from '../components/LevelBadgeIcons';
 import { VipName } from '../components/VipName';
 import { VipBadge } from '../components/VipBadge';
 import { fetchMyProfile, fetchMyAdminAccess, saveMyProfile, uploadMyAvatar, uploadMyCover, getMyAvatarUrl, type AdminAccess, stagingBackend } from '../services/stagingBackend';
@@ -464,40 +463,13 @@ export const ProfileView: React.FC = () => {
 
                 {/* Only verified profile values are displayed. */}
                 {/* Charm / Experience Level Badge */}
-                <CharmBadge
-                  level={currentUser.charmLevel}
-                  size="compact"
-                  onClick={() => {
-                    sounds.playClick();
-                    setLevelsModalTab('charm');
-                    setOpenLevelsModal(true);
-                  }}
-                  className="shadow-xs"
-                />
+                <button type="button" onClick={() => { sounds.playClick(); setLevelsModalTab('charm'); setOpenLevelsModal(true); }} className="rounded-full border border-purple-200 bg-purple-50 px-2 py-1 text-[10px] font-bold text-purple-800">مستوى السحر: —</button>
 
                 {/* Wealth Level Badge */}
-                <WealthBadge
-                  level={currentUser.wealthLevel}
-                  size="compact"
-                  onClick={() => {
-                    sounds.playClick();
-                    setLevelsModalTab('wealth');
-                    setOpenLevelsModal(true);
-                  }}
-                  className="shadow-xs"
-                />
+                <button type="button" onClick={() => { sounds.playClick(); setLevelsModalTab('wealth'); setOpenLevelsModal(true); }} className="rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-[10px] font-bold text-amber-900">مستوى الثروة: —</button>
 
                 {/* Games Level Badge (مستوى الألعاب) */}
-                <GameBadge
-                  level={currentUser.gameLevel || 0}
-                  size="compact"
-                  onClick={() => {
-                    sounds.playClick();
-                    setLevelsModalTab('games');
-                    setOpenLevelsModal(true);
-                  }}
-                  className="shadow-xs"
-                />
+                <button type="button" onClick={() => { sounds.playClick(); setLevelsModalTab('games'); setOpenLevelsModal(true); }} className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-900">مستوى الألعاب: —</button>
 
                 {/* VIP Level Badge (إشارة VIP واحدة فقط في الملف الشخصي) */}
                 {currentUser.vipLevel > 0 && (

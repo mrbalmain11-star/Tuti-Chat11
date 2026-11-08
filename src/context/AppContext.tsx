@@ -22,7 +22,6 @@ import { fetchRoomVisualMembers, type RoomVisualMember } from '../services/roomV
 import { reserveSeat, joinRoomMembership, leaveRoomMembership, sendRealRoomMessage, setMyRoomMute, releaseMySeat } from '../services/roomMembershipRpc';
 import { Language, Translations, translations } from '../i18n/translations';
 import { StorageItem, BagItem, storeFrames, storeMounts, storeBubbles, storeEntrances } from '../data/storageItems';
-import { getLevelFromExp, calculateCumulativeExpForLevel } from '../utils/levelUtils';
 
 interface GiftAnimationPayload {
   gift: GiftItem;
@@ -403,7 +402,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setCurrentUser(prev => ({
           ...prev,
           wealthExp: exp,
-          wealthLevel: getLevelFromExp(exp, 260),
         }));
       }
     };
@@ -412,7 +410,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (error) throw error;
       const exp = Number(data);
       if (active && Number.isSafeInteger(exp) && exp >= 0) {
-        setCurrentUser(prev => ({ ...prev, charmExp: exp, charmLevel: getLevelFromExp(exp, 260) }));
+        setCurrentUser(prev => ({ ...prev, charmExp: exp }));
       }
     };
     const onFocus = () => {
@@ -1003,19 +1001,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setOpenInternalProfileModal(true);
       return;
     }
+    if (!user.id) {
+      alert('تعذر فتح الملف الشخصي لأن معرّف الحساب غير متاح.');
+      return;
+    }
     const fullUser: UserProfile = {
-      id: user.id || '9500',
+      id: user.id,
       name: user.name || 'مستخدم توتي',
       nickname: (user as UserProfile).nickname || user.name || 'مستخدم توتي',
       avatar: user.avatar || '',
-      country: (user as UserProfile).country || 'العراق',
-      countryCode: (user as UserProfile).countryCode || 'IQ',
-      countryFlag: (user as UserProfile).countryFlag || '🇮🇶',
+      country: (user as UserProfile).country || '',
+      countryCode: (user as UserProfile).countryCode || '',
+      countryFlag: (user as UserProfile).countryFlag || '',
       vipLevel: (user as UserProfile).vipLevel ?? 0,
       vipExpiry: (user as UserProfile).vipExpiry || '',
-      wealthLevel: (user as UserProfile).wealthLevel ?? 1,
+      wealthLevel: (user as UserProfile).wealthLevel ?? 0,
       wealthExp: (user as UserProfile).wealthExp ?? 0,
-      charmLevel: (user as UserProfile).charmLevel ?? 1,
+      charmLevel: (user as UserProfile).charmLevel ?? 0,
       charmExp: (user as UserProfile).charmExp ?? 0,
       coins: (user as UserProfile).coins ?? 0,
       diamonds: (user as UserProfile).diamonds ?? 0,
@@ -1025,9 +1027,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       followingCount: (user as UserProfile).followingCount ?? 0,
       fansCount: (user as UserProfile).fansCount ?? 0,
       visitorsCount: (user as UserProfile).visitorsCount ?? 0,
-      gender: (user as UserProfile).gender || 'ذكر',
-      birthdate: (user as UserProfile).birthdate || '1998-05-15',
-      bio: (user as UserProfile).bio || 'مرحباً بكم في حسابي الشخصي 🕊️',
+      gender: (user as UserProfile).gender || '',
+      birthdate: (user as UserProfile).birthdate || '',
+      bio: (user as UserProfile).bio || '',
       album: (user as UserProfile).album || [
         ...(user.avatar ? [user.avatar] : []),
       ],
@@ -1832,7 +1834,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setCurrentUser(prev => ({
           ...prev,
           wealthExp: wealthTotal,
-          wealthLevel: getLevelFromExp(wealthTotal, 260),
         }));
       }
       return true;
@@ -1900,7 +1901,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       window.dispatchEvent(new Event('totichat:wallet-changed'));
       const { data: wealthTotal, error: wealthError } = await stagingBackend.rpc('staging_my_wealth_exp');
       if (!wealthError && typeof wealthTotal === 'number' && Number.isSafeInteger(wealthTotal)) {
-        setCurrentUser(prev => ({ ...prev, wealthExp: wealthTotal, wealthLevel: getLevelFromExp(wealthTotal, 260) }));
+        setCurrentUser(prev => ({ ...prev, wealthExp: wealthTotal }));
       }
       return true;
     } catch (error) {
