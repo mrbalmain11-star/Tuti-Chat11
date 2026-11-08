@@ -20,6 +20,7 @@ Scope: code and Staging only. No APK build. Voice/music engines and Android pack
 | Login screen | Removed the phone-login entry point; Google login and current email OTP flow were not changed. | Implemented, needs device QA |
 | Gift chooser | Recolored gift cards to the green and gold visual identity and made each selectable gift a keyboard and screen-reader button with its real name and price. Existing server-backed send and debit path is unchanged. | Implemented, needs device QA |
 | Profile data display | Removed fixed Iraqi flag and fixed age/gender sample from the profile; show the account's country and age only when present, hide missing game levels, and avoid showing visitor wealth/charm levels until the Staging status RPC returns. | Implemented, needs device and data QA |
+| Home category cards | Removed fixed sample profile photos from wealth/charm/room ranking previews. Replaced them with code-drawn rank emblems, consistent green/gold cards, and accessible buttons. | Implemented, needs device QA |
 
 ## Remaining work and gates
 
@@ -40,4 +41,4 @@ Scope: code and Staging only. No APK build. Voice/music engines and Android pack
 
 ## Next step
 
-Continue the remaining UI and feature scope from this checkpoint; rerun lint/build and `git diff --check` after each coding batch. Latest reviewed commit before the current uncommitted gift chooser change: `49f08a36b987d32c131513b7524a9734abe8e1f1`. Changes on this branch must not be described as a completed release until device and backend acceptance gates below are closed. Do not create an APK.
+Continue the remaining UI and feature scope from this checkpoint; rerun lint/build and `git diff --check` after each coding batch. The latest checkpoint predates the profile and home card batch being prepared now. Changes on this branch must not be described as a completed release until device and backend acceptance gates below are closed. Do not create an APK.

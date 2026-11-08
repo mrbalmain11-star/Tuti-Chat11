@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 19580)
-Total output lines: 1514
-
 import React, { useState, useRef, useEffect } from 'react';
 import {
   ChevronRight,
@@ -602,7 +599,321 @@ export const InternalProfileModal: React.FC = () => {
                 setLevelsModalTab('wealth');
                 setOpenLevelsModal(true);
               }}
-              c…4580 tokens truncated…       fill="#FAF5FF"
+              className="shadow-xs"
+            />}
+
+            {/* Games Level Badge (مستوى الألعاب) */}
+            {user.gameLevel != null && user.gameLevel > 0 && <GameBadge
+              level={user.gameLevel}
+              size="compact"
+              onClick={() => {
+                sounds.playClick();
+                setLevelsModalTab('games');
+                setOpenLevelsModal(true);
+              }}
+              className="shadow-xs"
+            />}
+
+            {/* Subscribed VIP/VLP Level Badge (مستوى VLP/VIP المشترك فيه) */}
+            {displayedUser.vipLevel && displayedUser.vipLevel > 0 ? (
+              <VipBadge
+                vipLevel={displayedUser.vipLevel}
+                size="compact"
+                className="shadow-xs"
+                onClick={() => {
+                  sounds.playClick();
+                  setOpenVipModal(true);
+                }}
+              />
+            ) : isSelf ? (
+              <button
+                onClick={() => {
+                  sounds.playClick();
+                  setOpenVipModal(true);
+                }}
+                className="px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-400/20 via-yellow-400/30 to-amber-500/20 border border-amber-300 text-amber-900 text-[10px] font-black flex items-center gap-1 hover:bg-amber-100 transition active:scale-95 shadow-xs cursor-pointer"
+                title="تفعيل VLP"
+              >
+                <Crown className="w-3 h-3 text-amber-700" />
+                <span>تفعيل VLP</span>
+              </button>
+            ) : null}
+          </div>
+
+          {/* ID Line: ❐ ID: 313 */}
+          <button
+            onClick={handleCopyId}
+            className={`flex items-center gap-1.5 mt-2 rounded-full border px-2.5 py-1 text-xs font-mono transition active:scale-95 cursor-pointer ${isSelf ? (verifiedAdminIdentity?.userId === user.id ? "border-red-400 bg-gradient-to-r from-red-50 via-amber-50 to-amber-100 text-red-900" : displaySpecialId ? "border-pink-300 bg-gradient-to-r from-pink-50 to-amber-100 text-pink-800" : "border-sky-200 bg-sky-50 text-sky-800") : (visitorSpecialIdUser === user.id ? "border-pink-300 bg-gradient-to-r from-pink-50 to-amber-100 text-pink-800" : "border-sky-200 bg-sky-50 text-sky-800")}`}
+            title="نسخ المعرف"
+          >
+            {copiedId ? (
+              <Check className="w-3.5 h-3.5 text-emerald-600" />
+            ) : (
+              <Copy className="w-3.5 h-3.5 text-slate-500" />
+            )}
+            {isSelf && verifiedAdminIdentity?.userId === user.id ? <Shield className="h-3.5 w-3.5 text-red-700" aria-label="إدارة موثقة" /> : (isSelf ? !!displaySpecialId : visitorSpecialIdUser === user.id) && <Crown className="h-3.5 w-3.5 text-amber-600" aria-hidden="true" />}
+            <span className="font-semibold tracking-wider">
+              ID: {isSelf ? (displaySpecialId || myPublicId || '—') : (visitorPublicId || '—')}
+            </span>
+          </button>
+
+          {/* Bio / Status Line with Edit Pencil for self */}
+          <div className="flex items-start justify-between gap-2 mt-2">
+            <p className="text-sm text-slate-700 text-right font-medium flex-1">
+              {(isSelf ? user.bio : visitorBio) || 'هذا المستخدم غامض ولم يترك أي أثر.'}
+            </p>
+            {isSelf && (
+              <button
+                onClick={() => {
+                  sounds.playClick();
+                  setEditBioInput(user.bio || '');
+                  setShowEditBioModal(true);
+                }}
+                className="w-6 h-6 rounded-full bg-amber-100 hover:bg-amber-200 border border-amber-300 text-amber-900 flex items-center justify-center shrink-0 transition active:scale-90 cursor-pointer shadow-xs"
+                title="تعديل السيرة الذاتية"
+              >
+                <Pencil className="w-3 h-3 text-amber-800" />
+              </button>
+            )}
+          </div>
+
+          <ProfileCpCard key={user.id} userId={user.id} userName={isSelf ? (user.nickname || user.name) : (visitorName || user.nickname || user.name)} userAvatar={isSelf ? user.avatar : (visitorAvatar || user.avatar)} onPartnerClick={partnerId => { if (!stagingBackend) return; void (async () => {
+            const { data, error } = await stagingBackend.from('profiles').select('id,display_name,avatar_url').eq('id', partnerId).maybeSingle();
+            if (error || !data) { showToast('تعذر فتح ملف الشريك'); return; }
+            const avatar = data.avatar_url ? (/^https?:\/\//.test(data.avatar_url) ? data.avatar_url : stagingBackend.storage.from('profile-avatars').getPublicUrl(data.avatar_url).data.publicUrl) : '';
+            setInternalProfileUser({ ...currentUser, id: data.id, name: data.display_name || 'مستخدم', nickname: data.display_name || 'مستخدم', avatar, country: '', countryCode: '', countryFlag: '', birthdate: '', age: null, friendsCount: 0, followersCount: 0, followingCount: 0, fansCount: 0, visitorsCount: 0, hearts: 0, gameLevel: 0, gameExp: 0, cover: '', bio: '', album: [], vipExpiry: '', specialIdBadge: undefined, isBanned: false, banReason: undefined, isNameBanned: false, isAvatarBanned: false, wealthExp: 0, charmExp: 0, wealthLevel: 0, charmLevel: 0, coins: 0, diamonds: 0, vipLevel: 0, isSuperAdmin: false, isRechargeAgent: false, isHost: false, isSpecialId: false, permissions: [], agencyRole: undefined, agencyName: undefined, rechargeCoins: 0, hasWelcomeBanner: false });
+          })().catch(() => showToast('تعذر فتح ملف الشريك')); }} refreshKey={cpRefreshKey} onLinksChange={links => { const confirmed = links.find(link => link.accepted); setCpPartnerAvatar(confirmed?.partnerAvatar || null); setCpPartnerId(confirmed?.partnerId || null); setHasConfirmedCp(Boolean(confirmed)); }} />
+          {/* Realistic Dynamic Agency Rectangle (مستطيل الوكالة الفعلي مطابق للصورة تماماً) */}
+          {verifiedAgency && (
+            <AgencyProfileCard
+              avatar={isSelf ? currentUser.avatar : (visitorAvatar || user.avatar)}
+              agencyName={verifiedAgency.name}
+              agencyId={String(verifiedAgency.public_id)}
+              memberCount={verifiedAgency.member_count}
+              roleLabel={verifiedAgency.role}
+              onClick={() => setOpenAgencyModal(true)}
+              className="mt-3.5"
+            />
+          )}
+          {/* Stats Row: (الزوار | المعجبون | متابعة | الأصدقاء) */}
+          <div className="grid grid-cols-4 gap-2 text-center mt-4 p-2.5 rounded-2xl bg-white/95 border border-amber-200/90 shadow-xs">
+            {/* الأصدقاء */}
+            <div
+              onClick={() => sounds.playClick()}
+              className="cursor-pointer active:scale-95 transition"
+            >
+              <span className="text-xl font-bold text-slate-900 block font-sans">
+                {isSelf ? (currentUser.friendsCount || 0) : (user.friendsCount || 0)}
+              </span>
+              <span className="text-xs text-slate-500 font-bold mt-0.5 block">
+                الأصدقاء
+              </span>
+            </div>
+
+            {/* متابعة */}
+            <div
+              onClick={() => sounds.playClick()}
+              className="cursor-pointer active:scale-95 transition"
+            >
+              <span className="text-xl font-bold text-slate-900 block font-sans">
+                {isSelf ? (currentUser.followingCount || 0) : (user.followingCount || 0)}
+              </span>
+              <span className="text-xs text-slate-500 font-bold mt-0.5 block">
+                متابعة
+              </span>
+            </div>
+
+            {/* المعجبون */}
+            <div
+              onClick={() => sounds.playClick()}
+              className="cursor-pointer active:scale-95 transition"
+            >
+              <span className="text-xl font-bold text-slate-900 block font-sans">
+                {isSelf
+                  ? (currentUser.followersCount || 0)
+                  : ((user.followersCount || 0) + (isUserFollowed ? 1 : 0))}
+              </span>
+              <span className="text-xs text-slate-500 font-bold mt-0.5 block">
+                المعجبون
+              </span>
+            </div>
+
+            {/* الزوار */}
+            <div
+              onClick={() => sounds.playClick()}
+              className="cursor-pointer active:scale-95 transition"
+            >
+              <span className="text-xl font-bold text-slate-900 block font-sans">
+                {isSelf ? (currentUser.visitorsCount || 0) : (user.visitorsCount || 0)}
+              </span>
+              <span className="text-xs text-slate-500 font-bold mt-0.5 block">
+                الزوار
+              </span>
+            </div>
+          </div>
+
+          {/* Active Voice Room Mic Control Banner if user is currently on mic in room */}
+          {seatOnActiveRoom && (
+            <div className="mt-4 relative overflow-hidden p-3.5 rounded-2xl bg-gradient-to-r from-[#e6fff2] via-[#f6fff8] to-[#fff4d7] border border-[#c5a55a]/70 flex flex-wrap items-center justify-between gap-2 shadow-[0_4px_16px_rgba(10,91,61,0.12)]">
+              <div className="flex items-center gap-2.5">
+                <div className="text-right">
+                  <span className="text-xs font-black text-slate-900 block">
+                    {isSelf ? `أنت على المايك رقم ${seatOnActiveRoom.seatNumber}` : `على المايك رقم ${seatOnActiveRoom.seatNumber}`}
+                  </span>
+                  <span className={`text-[10px] font-bold ${seatOnActiveRoom.isMuted ? 'text-amber-800' : 'text-emerald-700'}`}>
+                    {seatOnActiveRoom.isMuted ? 'المايك مكتوم 🔇' : 'متصل ويتحدث 🎙️'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                {isSelf ? (
+                  <>
+                    <button
+                      onClick={() => {
+                        sounds.playClick();
+                        toggleMuteSeat(seatOnActiveRoom.seatNumber);
+                        showToast(seatOnActiveRoom.isMuted ? 'تم تفعيل المايك 🎙️' : 'تم كتم المايك 🔇');
+                      }}
+                      className="px-3 py-2 rounded-xl bg-white hover:bg-emerald-50 text-emerald-950 border border-emerald-300 text-[11px] font-black transition active:scale-95 cursor-pointer shadow-sm"
+                    >
+                      {seatOnActiveRoom.isMuted ? 'إلغاء الكتم' : 'كتم المايك'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        sounds.playClick();
+                        leaveSeat(seatOnActiveRoom.seatNumber);
+                        showToast(`نزلت من المايك رقم ${seatOnActiveRoom.seatNumber}`);
+                      }}
+                      className="px-3 py-2 rounded-xl bg-gradient-to-r from-emerald-800 to-emerald-700 hover:from-emerald-700 hover:to-emerald-600 text-white border border-amber-400/60 text-[11px] font-bold transition active:scale-95 cursor-pointer flex items-center gap-1 shadow-sm"
+                    >
+                      <LogOut className="w-3 h-3" />
+                      <span>نزول</span>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => {
+                        sounds.playClick();
+                        setOpenInternalProfileModal(false);
+                        sendRoomMessage(activeRoom?.id || '', `@${user.nickname || user.name} `);
+                        showToast(`تمت مناداة ${user.name} في شات الغرفة`);
+                      }}
+                      className="px-2.5 py-1.5 rounded-xl bg-cyan-950/70 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-900/80 text-[11px] font-bold transition active:scale-95 cursor-pointer"
+                    >
+                      @مناداة
+                    </button>
+                    <button
+                      onClick={() => {
+                        sounds.playClick();
+                        toggleMuteSeat(seatOnActiveRoom.seatNumber);
+                        showToast(seatOnActiveRoom.isMuted ? 'تم إلغاء كتم مايك المستخدم' : 'تم كتم مايك المستخدم');
+                      }}
+                      className="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-amber-300 text-[11px] font-bold transition active:scale-95 cursor-pointer"
+                    >
+                      {seatOnActiveRoom.isMuted ? 'إلغاء كتم' : 'كتم'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        sounds.playClick();
+                        leaveSeat(seatOnActiveRoom.seatNumber);
+                        showToast(`تم إنزال ${user.name} من المايك`);
+                      }}
+                      className="px-2.5 py-1.5 rounded-xl bg-rose-950/70 border border-rose-500/40 text-rose-300 hover:bg-rose-900/80 text-[11px] font-bold transition active:scale-95 cursor-pointer"
+                    >
+                      طرد
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* =========================================================================
+            3. "مستوى الحساب" (Account Level) Cards: (مستوى السحر | مستوى الثروة)
+            ========================================================================= */}
+        <div className="px-6 mt-4">
+          <h2 className="text-base font-black text-amber-950 text-right mb-2.5">
+            مستوى الحساب
+          </h2>
+
+          <div className="grid grid-cols-2 gap-3">
+            {/* Card 1 (Right in RTL): مستوى الثروة (Wealth Level) - Distinct Gold Heraldic Theme */}
+            <div
+              onClick={() => {
+                sounds.playClick();
+                setLevelsModalTab('wealth');
+                setOpenLevelsModal(true);
+              }}
+              className="rounded-2xl bg-gradient-to-l from-amber-500/15 via-amber-50/80 to-white border-2 border-amber-300 p-3.5 flex items-center justify-between cursor-pointer active:scale-98 transition shadow-[0_4px_14px_rgba(245,158,11,0.12)] hover:border-amber-400 hover:shadow-md"
+            >
+              {/* Text on Right in RTL */}
+              <div className="text-right">
+                <span className="text-xl font-black text-amber-950 block font-sans tracking-wide">
+                  {hasVerifiedProfileLevels ? `Lv. ${displayedUser.wealthLevel || 1}` : '—'}
+                </span>
+                <span className="text-xs text-amber-800 font-black mt-0.5 block flex items-center gap-1">
+                  <span>👑</span>
+                  <span>مستوى الثروة</span>
+                </span>
+              </div>
+
+              {/* 3D Gold Imperial Seal Icon */}
+              <div className="w-11 h-11 flex items-center justify-center shrink-0">
+                <svg viewBox="0 0 40 40" className="w-10 h-10 drop-shadow-[0_2px_8px_rgba(245,158,11,0.5)]">
+                  <circle cx="20" cy="20" r="18" fill="url(#goldSealGrad)" stroke="#FEF08A" strokeWidth="1.5" />
+                  <circle cx="20" cy="20" r="14" fill="#78350F" stroke="#F59E0B" strokeWidth="1" />
+                  {/* Central Crown & Diamond Motif */}
+                  <polygon points="20,9 27,20 20,31 13,20" fill="#FEF08A" />
+                  <polygon points="20,12 24,20 20,28 16,20" fill="#F59E0B" />
+                  <circle cx="20" cy="20" r="2.5" fill="#FFF" />
+                  <defs>
+                    <linearGradient id="goldSealGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#FEF08A" />
+                      <stop offset="50%" stopColor="#F59E0B" />
+                      <stop offset="100%" stopColor="#78350F" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+              </div>
+            </div>
+
+            {/* Card 2 (Left in RTL): مستوى السحر (Charm Level) - Distinct Purple Faceted Crystal Theme */}
+            <div
+              onClick={() => {
+                sounds.playClick();
+                setLevelsModalTab('charm');
+                setOpenLevelsModal(true);
+              }}
+              className="rounded-2xl bg-gradient-to-l from-purple-500/15 via-fuchsia-50/80 to-white border-2 border-purple-300 p-3.5 flex items-center justify-between cursor-pointer active:scale-98 transition shadow-[0_4px_14px_rgba(168,85,247,0.12)] hover:border-purple-400 hover:shadow-md"
+            >
+              {/* Text on Right in RTL */}
+              <div className="text-right">
+                <span className="text-xl font-black text-purple-950 block font-sans tracking-wide">
+                  {hasVerifiedProfileLevels ? `Lv. ${displayedUser.charmLevel || 1}` : '—'}
+                </span>
+                <span className="text-xs text-purple-800 font-black mt-0.5 block flex items-center gap-1">
+                  <span>✨</span>
+                  <span>مستوى السحر</span>
+                </span>
+              </div>
+
+              {/* 3D Purple Faceted Crystal Star Amulet */}
+              <div className="w-11 h-11 flex items-center justify-center shrink-0">
+                <svg viewBox="0 0 40 40" className="w-10 h-10 drop-shadow-[0_2px_8px_rgba(168,85,247,0.45)]">
+                  {/* Hexagon Crystal Base */}
+                  <polygon
+                    points="20,3 36,11.5 36,28.5 20,37 4,28.5 4,11.5"
+                    fill="url(#purpleAmuletGrad)"
+                    stroke="#F0ABFC"
+                    strokeWidth="1.5"
+                  />
+                  {/* 8-point Faceted Star Center */}
+                  <path
+                    d="M20 9L22.5 15.5L29 14.5L24.5 19.5L28.5 25L22 24L20 30L18 24L11.5 25L15.5 19.5L11 14.5L17.5 15.5L20 9Z"
+                    fill="#FAF5FF"
                     stroke="#D946EF"
                     strokeWidth="0.8"
                   />
