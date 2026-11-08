@@ -22,6 +22,7 @@ Scope: code and Staging only. No APK build. Voice/music engines and Android pack
 | Profile data display | Removed fixed Iraqi flag and fixed age/gender sample from the profile; show the account's country and age only when present, hide missing game levels, and avoid showing visitor wealth/charm levels until the Staging status RPC returns. | Implemented, needs device and data QA |
 | Home category cards | Removed fixed sample profile photos from wealth/charm/room ranking previews. Replaced them with code-drawn rank emblems, consistent green/gold cards, and accessible buttons. | Implemented, needs device QA |
 | Leaderboard seed data | Removed 664 lines of unused hardcoded demo accounts, rooms, avatars, and scores. The live leaderboard continues to use the existing `live_rankings` Staging RPC. | Implemented; live ranking/device QA pending |
+| Login cleanup | Removed the unreachable legacy phone OTP modal and its dormant SMS handlers; Google login and the separate Google-email OTP screen are unchanged. | Implemented, Google login/device QA pending |
 
 ## Remaining work and gates
 

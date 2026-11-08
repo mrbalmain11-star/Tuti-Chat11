@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Headphones, Smartphone, ChevronLeft, ShieldCheck, X, FileText, Check, Loader2, ArrowRight } from 'lucide-react';
-import { useApp } from '../context/AppContext';
+import { Headphones, ChevronLeft, ShieldCheck, X, FileText, Check } from 'lucide-react';
 import { sounds } from '../utils/audio';
 import { signInWithRealGoogle, stagingBackend, NATIVE_AUTH_ERROR_EVENT } from '../services/stagingBackend';
 
@@ -15,16 +14,8 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   onClose,
   canDismiss = false,
 }) => {
-  const { setIsLoggedIn, currentUser, updateUserProfile } = useApp();
-  const [showPhoneModal, setShowPhoneModal] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showSupportModal, setShowSupportModal] = useState(false);
-
-  // Phone Login State
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [countryCode, setCountryCode] = useState('+964');
-  const [otpCode, setOtpCode] = useState('');
-  const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [isLoading, setIsLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -53,45 +44,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
     } catch (error) {
       console.error('Google OAuth failed:', error);
       showToast('تعذر تسجيل الدخول الحقيقي. حاول مجدداً.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSendOtp = (e: React.FormEvent) => {
-    e.preventDefault();
-    showToast('تسجيل الهاتف غير متاح حتى يتم تفعيل خدمة OTP الحقيقية.');
-  };
-
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isLoading) return;
-    const digits = (value: string) => value.replace(/[٠-٩۰-۹]/g, character => {
-      const arabic = '٠١٢٣٤٥٦٧٨٩'.indexOf(character);
-      return String(arabic >= 0 ? arabic : '۰۱۲۳۴۵۶۷۸۹'.indexOf(character));
-    }).replace(/[^0-9]/g, '');
-    const token = digits(otpCode);
-    const phone = countryCode + digits(phoneNumber).replace(/^0+/, '');
-    if (!token || token.length < 4 || token.length > 8) {
-      showToast('أدخل رمز التحقق كاملاً');
-      return;
-    }
-    if (!stagingBackend) {
-      showToast('تعذر الاتصال بخدمة التحقق');
-      return;
-    }
-    setIsLoading(true);
-    try {
-      const { data, error } = await stagingBackend.auth.verifyOtp({ phone, token, type: 'sms' });
-      if (error) throw error;
-      if (!data.session?.user) throw new Error('لم يتم إنشاء جلسة دخول صالحة');
-      setShowPhoneModal(false);
-      setOtpCode('');
-      showToast('تم التحقق بنجاح');
-      // AppContext observes the authenticated session; no manual login bypass.
-    } catch (error) {
-      console.error('OTP verify button failed', error);
-      showToast(error instanceof Error ? error.message : 'تعذر التحقق من الرمز');
     } finally {
       setIsLoading(false);
     }
@@ -284,111 +236,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
           <ChevronLeft className="w-5 h-5 text-slate-400 group-hover:text-amber-400 stroke-[2.5] group-hover:-translate-x-0.5 transition shrink-0" />
         </button>
       </div>
-
-      {/* =========================================================================
-          Phone Number Login Modal (انبثاق تسجيل رقم الهاتف)
-          ========================================================================= */}
-      {showPhoneModal && (
-        <div className="fixed inset-0 z-[1050] bg-black/85 backdrop-blur-md flex items-center justify-center px-4 py-6 overflow-y-auto">
-          <div className="w-full max-w-md bg-[#100724] border border-amber-500/40 rounded-3xl p-5 sm:p-6 shadow-2xl my-auto max-h-[calc(100dvh-3rem)] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-purple-900/50">
-              <div className="flex items-center gap-2">
-                <Smartphone className="w-5 h-5 text-amber-400" />
-                <h3 className="text-base font-black text-white">تسجيل الدخول عبر الهاتف</h3>
-              </div>
-              <button
-                onClick={() => {
-                  setShowPhoneModal(false);
-                  setStep('phone');
-                }}
-                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-slate-300"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {step === 'phone' ? (
-              <form onSubmit={handleSendOtp} className="pt-4 space-y-4">
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  أدخل رقم هاتفك لتسجيل الدخول فوراً واستلام رمز التحقق:
-                </p>
-
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <select
-                    value={countryCode}
-                    onChange={(e) => setCountryCode(e.target.value)}
-                    className="w-full sm:w-auto min-h-12 p-3 rounded-xl bg-purple-950/80 border border-purple-700/60 text-amber-300 text-sm font-bold focus:outline-none focus:border-amber-400"
-                  >
-                    <option value="+964">العراق (+964) 🇮🇶</option>
-                    <option value="+966">السعودية (+966) 🇸🇦</option>
-                    <option value="+20">مصر (+20) 🇪🇬</option>
-                    <option value="+963">سوريا (+963) 🇸🇾</option>
-                    <option value="+971">الإمارات (+971) 🇦🇪</option>
-                  </select>
-
-                  <input
-                    type="tel"
-                    placeholder="770 123 4567"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    required
-                    className="w-full sm:flex-1 min-w-0 min-h-12 p-3 rounded-xl bg-purple-950/80 border border-purple-700/60 text-white text-base font-sans text-left focus:outline-none focus:border-amber-400"
-                    dir="ltr"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full py-3.5 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-black text-sm shadow-lg active:scale-95 transition flex items-center justify-center gap-2"
-                >
-                  {isLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin text-black" />
-                  ) : (
-                    <span>إرسال رمز التحقق</span>
-                  )}
-                </button>
-              </form>
-            ) : (
-              <form onSubmit={handleVerifyOtp} className="pt-4 space-y-4">
-                <p className="text-xs text-slate-300">
-                  تم إرسال رمز التحقق المكوّن من 4 أرقام إلى هاتفك:
-                </p>
-
-                <input
-                  type="text"
-                  maxLength={6}
-                  placeholder="1 2 3 4"
-                  value={otpCode}
-                  onChange={(e) => setOtpCode(e.target.value)}
-                  required
-                  className="w-full p-3.5 rounded-xl bg-purple-950/80 border border-amber-400 text-amber-300 text-xl font-mono text-center tracking-widest focus:outline-none"
-                />
-
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full py-3.5 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-black text-sm shadow-lg active:scale-95 transition flex items-center justify-center gap-2"
-                >
-                  {isLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin text-black" />
-                  ) : (
-                    <span>تأكيد والدخول</span>
-                  )}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setStep('phone')}
-                  className="w-full text-xs text-slate-400 hover:text-white text-center py-1 font-semibold"
-                >
-                  تغيير رقم الهاتف
-                </button>
-              </form>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* =========================================================================
           Terms of Use & Privacy Modal (سياسة الاستخدام)
