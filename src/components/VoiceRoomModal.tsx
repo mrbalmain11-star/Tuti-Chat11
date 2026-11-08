@@ -68,6 +68,7 @@ import { sounds } from '../utils/audio';
 import { VipName } from './VipName';
 import { VipBadge } from './VipBadge';
 import { ProfileCpCard } from './ProfileCpCard';
+import { getLevelFromExp } from '../utils/levelUtils';
 
 
 const PRESET_BACKGROUNDS = [
@@ -469,6 +470,32 @@ export const VoiceRoomModal: React.FC = () => {
 
   const [selectedMicPublicId, setSelectedMicPublicId] = useState<string>('—');
   const [selectedMicUser, setSelectedMicUser] = useState<{ seatNumber: number; user: UserProfile } | null>(null);
+  const [selectedMicVerifiedStatus, setSelectedMicVerifiedStatus] = useState<{ userId: string; wealthExp: number; charmExp: number; vipLevel: number; loadFailed?: boolean } | null>(null);
+  useEffect(() => {
+    let active = true;
+    const userId = selectedMicUser?.user.id;
+    setSelectedMicVerifiedStatus(null);
+    if (!userId || !stagingBackend) return;
+    void Promise.resolve(stagingBackend.rpc('staging_visited_profile_status', { p_user_id: userId }))
+      .then(({ data, error }) => {
+        if (error) throw error;
+        if (!active || !data) return;
+        const row = data as { wealth_exp?: unknown; charm_exp?: unknown; vip_tier?: unknown };
+        const wealthExp = Number(row.wealth_exp);
+        const charmExp = Number(row.charm_exp);
+        const vipLevel = Number(row.vip_tier);
+        setSelectedMicVerifiedStatus({
+          userId,
+          wealthExp: Number.isSafeInteger(wealthExp) && wealthExp >= 0 ? wealthExp : 0,
+          charmExp: Number.isSafeInteger(charmExp) && charmExp >= 0 ? charmExp : 0,
+          vipLevel: Number.isSafeInteger(vipLevel) && vipLevel >= 0 ? vipLevel : 0,
+        });
+      }).catch(error => {
+        console.warn('Verified room profile levels unavailable:', error);
+        if (active) setSelectedMicVerifiedStatus({ userId, wealthExp: 0, charmExp: 0, vipLevel: 0, loadFailed: true });
+      });
+    return () => { active = false; };
+  }, [selectedMicUser?.user.id]);
   useEffect(() => {
     let active = true;
     setSelectedMicPublicId('—');
@@ -2556,10 +2583,13 @@ export const VoiceRoomModal: React.FC = () => {
               </h3>
 
               {selectedMicAgencyName && <p className="mt-1 text-center text-[11px] font-bold text-red-400">{selectedMicAgencyName}</p>}
-              <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-xs font-bold">
-                {Number(selectedMicUser.user.wealthLevel || 0) > 0 && <span className="rounded-full bg-amber-500/15 border border-amber-400/40 px-3 py-1 text-amber-200">الثروة Lv.{selectedMicUser.user.wealthLevel}</span>}
-                {Number(selectedMicUser.user.charmLevel || 0) > 0 && <span className="rounded-full bg-fuchsia-500/15 border border-fuchsia-400/40 px-3 py-1 text-fuchsia-200">السحر Lv.{selectedMicUser.user.charmLevel}</span>}
-                {Number(selectedMicUser.user.vipLevel || 0) > 0 && <span className="rounded-full border border-yellow-400/50 bg-yellow-500/15 px-3 py-1 text-yellow-200">VIP {selectedMicUser.user.vipLevel}</span>}
+              <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-xs font-bold" aria-live="polite">
+                {selectedMicVerifiedStatus?.userId === selectedMicUser.user.id ? <>
+                  {getLevelFromExp(selectedMicVerifiedStatus.wealthExp, 260) > 0 && <span className="rounded-full bg-amber-500/15 border border-amber-400/40 px-3 py-1 text-amber-200">الثروة Lv.{getLevelFromExp(selectedMicVerifiedStatus.wealthExp, 260)}</span>}
+                  {getLevelFromExp(selectedMicVerifiedStatus.charmExp, 260) > 0 && <span className="rounded-full bg-fuchsia-500/15 border border-fuchsia-400/40 px-3 py-1 text-fuchsia-200">السحر Lv.{getLevelFromExp(selectedMicVerifiedStatus.charmExp, 260)}</span>}
+                  {selectedMicVerifiedStatus.vipLevel > 0 && <span className="rounded-full border border-yellow-400/50 bg-yellow-500/15 px-3 py-1 text-yellow-200">VIP {selectedMicVerifiedStatus.vipLevel}</span>}
+                  {selectedMicVerifiedStatus.loadFailed && <span className="text-slate-400">تعذر التحقق من المستويات</span>}
+                </> : <span className="text-slate-400">جارٍ التحقق من بيانات الحساب…</span>}
               </div>
               <ProfileCpCard key={selectedMicUser.user.id} userId={selectedMicUser.user.id} userName={selectedMicUser.user.nickname || selectedMicUser.user.name} userAvatar={selectedMicUser.user.avatar} onPartnerClick={partnerId => { if (!stagingBackend) return; void (async () => {
                 const { data, error } = await stagingBackend.from('profiles').select('id,display_name,avatar_url').eq('id', partnerId).maybeSingle();

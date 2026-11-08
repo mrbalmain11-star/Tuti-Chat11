@@ -10,7 +10,7 @@ Scope: code and Staging only. No APK build. Voice/music engines and Android pack
 
 | Area | Change | Status |
 | --- | --- | --- |
-| Room seats and profile | Removed the crown over seat avatars, blue user glyph beside names, fabricated role pill, and zero-level labels. | Implemented, needs device and live-data QA |
+| Room seats and profile | Removed the crown over seat avatars, blue user glyph beside names, fabricated role pill, and zero-level labels. Wealth, charm, and VIP levels now load from the verified profile status RPC before display. | Implemented, needs device and live-data QA |
 | Room chat clear state | Replaced the eye glyph on the restore control with the explicit text “إظهار الدردشة”. | Implemented, needs device QA |
 | Room profile controls | Kept self mute/leave controls; removed moderator ban/mute/release actions from the public profile card. | Implemented, needs role-based device QA |
 | Mic status panel | Removed the duplicate mic icon while retaining the server-backed seat number and mute status. | Implemented, needs device QA |
@@ -33,9 +33,9 @@ Scope: code and Staging only. No APK build. Voice/music engines and Android pack
 
 - `npm run lint` — passed (`tsc --noEmit`).
 - `npm run build` — passed. Existing warnings remain for the font-class CSS selector, direct `eval` in `lottie-web`, ineffective dynamic import, and large output chunk.
-- `git diff --check` — passed before the final checkpoint edit.
+- `git diff --check` — passed after the verified-profile RPC edit.
 - Staging DM function definition, RLS policies, and execution grants — re-read after migration; confirmed no direct-message RLS policy change and execute remains limited to `authenticated` plus database owner.
 
 ## Next step
 
-Review the final diff, rerun lint/build and `git diff --check`, commit these changes on the approved branch, push to GitHub, then continue the remaining scope from this checkpoint. Do not create an APK.
+Continue the remaining UI and feature scope from this checkpoint; rerun lint/build and `git diff --check` after each coding batch. Changes on this branch must not be described as a completed release until device and backend acceptance gates below are closed. Do not create an APK.
