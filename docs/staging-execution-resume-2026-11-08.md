@@ -71,3 +71,10 @@ Scope: code and Staging only. No APK build. Voice/music engines and Android pack
 ## Next step
 
 Continue from the remaining work and gates above; rerun lint/build and `git diff --check` after each coding batch. Changes on this branch must not be described as a completed release until device and backend acceptance gates below are closed. Do not create an APK.
+
+## Release verification update
+
+- GitHub Actions run `42513926364` for commit `312716282b056b65db50aaef8231461d1159ef5d` failed TypeScript because the earlier level-UI edit accidentally copied tool truncation text into `VoiceRoomModal.tsx` and removed a large block of room UI. This was caught before release.
+- Restored the room component from its clean parent commit `68f4aeafe380a2590962adacffee40f468d1216a`, then reapplied only the intended view-level changes: show server EXP and verified VIP instead of client-derived levels. No LiveKit, mic permission, music engine, or Android audio configuration changes were made.
+- Local `npm run lint`, `npm run build`, `node --test tests/treasury.test.mjs` (5/5), and `git diff --check` now pass. GitHub Actions must be rerun after the repair commit; Android/device and account/concurrency QA remain open.
+- Publication is not cleared: official level thresholds, reconciled VIP catalog/RPC prices, direct purchase/recharge implementation, live account tests, and Android verification remain gates. No APK was built.

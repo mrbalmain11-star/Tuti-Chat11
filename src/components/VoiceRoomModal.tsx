@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 52808)
-Total output lines: 3611
-
 import { VipMessageFrame } from './VipMessageFrame';
 import { stagingBackend } from '../services/stagingBackend';
 import { RoomManagementPanel } from './RoomManagementPanel';
@@ -1606,7 +1603,848 @@ export const VoiceRoomModal: React.FC = () => {
               className="absolute bottom-3 right-4 pointer-events-auto w-10 h-10 rounded-full bg-black/50 border border-purple-400/40 text-white flex items-center justify-center"
               aria-label="إعادة إظهار الدردشة"
               title="إعادة إظهار الدردشة"
-      …12808 tokens truncated…      setMusicSelectionOpen(true);
+            >
+              <span className="text-[11px] font-bold text-emerald-100">إظهار الدردشة</span>
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* 4. TABS ROW: الكل (with teal underline) | الدردشة | أخرى */}
+            <div className="relative z-10 px-6 mt-1 flex items-center justify-end gap-6 text-sm">
+              {/* أخرى */}
+              <button
+                onClick={() => {
+                  sounds.playClick();
+                  setActiveChatTab('other');
+                }}
+                className={`font-bold transition cursor-pointer ${
+                  activeChatTab === 'other' ? 'text-white' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                أخرى
+              </button>
+
+              {/* الدردشة */}
+              <button
+                onClick={() => {
+                  sounds.playClick();
+                  setActiveChatTab('chat');
+                }}
+                className={`font-bold transition cursor-pointer ${
+                  activeChatTab === 'chat' ? 'text-white' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                الدردشة
+              </button>
+
+              {/* الكل (Active with teal underline) */}
+              <button
+                onClick={() => {
+                  sounds.playClick();
+                  setActiveChatTab('all');
+                }}
+                className="flex flex-col items-center cursor-pointer"
+              >
+                <span
+                  className={`font-black transition ${
+                    activeChatTab === 'all' ? 'text-white' : 'text-slate-400'
+                  }`}
+                >
+                  الكل
+                </span>
+                {activeChatTab === 'all' && (
+                  <span className="w-5 h-0.5 rounded-full bg-[#26d0b2] mt-0.5 shadow-[0_0_8px_rgba(38,208,178,0.8)]" />
+                )}
+              </button>
+            </div>
+
+            {/* 5. CHAT STREAM & WELCOME NOTICES */}
+            <div className="relative z-10 px-4 flex-1 flex flex-col justify-end pb-2 overflow-hidden">
+              <div className="w-full flex items-end justify-between gap-3">
+                {/* Left side floating badges: 🚀, 🎮, •• */}
+                <div className="flex flex-col items-center gap-2 pb-1 shrink-0">
+                  {/* Rocket Badge */}
+                  <div
+                    onClick={() => {
+                      sounds.playLevelUp();
+                      showToast('صاروخ السرعة والدخول الملكي 🚀');
+                    }}
+                    className="w-10 h-10 rounded-2xl bg-[#1b1038]/80 border border-purple-400/30 flex items-center justify-center shadow-lg text-cyan-300 cursor-pointer active:scale-95 transition"
+                    title="صاروخ السرعة"
+                  >
+                    <Rocket className="w-5 h-5 text-cyan-300 animate-pulse stroke-[2]" />
+                  </div>
+
+                  {/* Gamepad Badge */}
+                  <div
+                    onClick={() => {
+                      sounds.playClick();
+                      setShowToolsDrawer(true);
+                    }}
+                    className="w-10 h-10 rounded-2xl bg-[#1b1038]/80 border border-purple-400/30 flex items-center justify-center shadow-lg text-emerald-400 cursor-pointer active:scale-95 transition"
+                    title="الألعاب والمسابقات"
+                  >
+                    <RoyalGamepadIcon className="w-7 h-7 drop-shadow-[0_2px_5px_rgba(16,185,129,0.45)]" />
+                  </div>
+
+                  {/* Double dot */}
+                  <div className="flex items-center gap-1 opacity-70">
+                    <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                  </div>
+                </div>
+
+                {/* Chat Messages Column */}
+                <div
+                  ref={chatScrollRef}
+                  onScroll={(event) => {
+                    const element = event.currentTarget;
+                    const programmed = chatProgrammaticScrollRef.current;
+                    chatProgrammaticScrollRef.current = null;
+                    if (programmed !== null && Math.abs(element.scrollTop - programmed) < 2) return;
+                    chatNearBottomRef.current = element.scrollHeight - element.scrollTop - element.clientHeight < 48;
+                    if (chatNearBottomRef.current) setUnreadRoomMessages(0);
+                    chatScrollPositionRef.current = element.scrollTop;
+                    const firstVisible = Array.from(element.querySelectorAll<HTMLElement>('[data-room-message-id]'))
+                      .find(message => message.offsetTop + message.offsetHeight > element.scrollTop + element.offsetTop);
+                    chatAnchorRef.current = firstVisible?.dataset.roomMessageId
+                      ? { id: firstVisible.dataset.roomMessageId, offset: firstVisible.offsetTop - element.offsetTop - element.scrollTop }
+                      : null;
+                  }}
+                  className="flex-1 space-y-1.5 overflow-y-auto max-h-48 no-scrollbar pr-1"
+                >
+                  {/* Room rules and real host welcome, never demo accounts or stock avatars. */}
+                  <div className="bg-[#180f33]/85 backdrop-blur-md rounded-2xl p-3 border border-purple-500/20 text-xs text-slate-200 leading-relaxed shadow-lg">
+                    أهلاً بك في TotiChat. يرجى احترام الآخرين والالتزام بقواعد الغرفة.
+                  </div>
+                  {activeRoom.announcement?.trim() && (
+                    <div className="flex items-start gap-2 justify-end">
+                      <div className="flex flex-col items-end min-w-0">
+                        <div className="text-xs font-black text-white mb-1">{activeRoom.hostName || (activeRoom.hostId === currentUser.id ? currentUser.name : 'صاحب الغرفة')}</div>
+                        <div className="bg-[#160d33]/90 backdrop-blur-md rounded-2xl p-2.5 border border-purple-500/30 text-xs text-slate-100 shadow-md text-right leading-relaxed">
+                          {activeRoom.announcement}
+                        </div>
+                      </div>
+                      <div className="w-10 h-10 rounded-full overflow-hidden border border-amber-300/80 bg-[#1b1038] shrink-0 flex items-center justify-center">
+                        {(activeRoom.hostAvatar || (activeRoom.hostId === currentUser.id ? currentUser.avatar : '')) ? (
+                          <img src={activeRoom.hostAvatar || currentUser.avatar} alt="صاحب الغرفة" className="w-full h-full object-cover" />
+                        ) : <span className="text-white font-bold">{(activeRoom.hostName || currentUser.name || 'غ').charAt(0)}</span>}
+                      </div>
+                    </div>
+                  )}
+                  {/* 3. Real-time User Sent Messages */}
+                  {currentMessages.map((msg) => (
+                    <div key={msg.id} data-room-message-id={msg.id} className="flex min-w-0 items-start justify-end gap-1.5">
+                      <VipMessageFrame level={msg.senderId === currentUser.id ? currentUser.vipLevel : (msg.vipLevel ?? 0)}>
+                        <span className="text-amber-300 font-bold ml-1">{msg.senderName}:</span>
+                        {(msg.senderId === currentUser.id ? currentUser.vipLevel : (msg.vipLevel ?? 0)) >= 1 && (
+                          <span className="inline-flex align-middle rounded-full border border-amber-200/50 bg-black/25 px-1.5 py-0.5 text-[9px] font-black text-amber-100 ml-1" aria-label={`مستوى VIP ${(msg.senderId === currentUser.id ? currentUser.vipLevel : (msg.vipLevel ?? 0))}`}>
+                            VIP {(msg.senderId === currentUser.id ? currentUser.vipLevel : (msg.vipLevel ?? 0))}
+                          </span>
+                        )}
+                        <span>{msg.text}</span>
+                      </VipMessageFrame>
+                      <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full border border-amber-300/70 bg-emerald-950 shadow-sm" aria-label={`صورة ${msg.senderName}`}>
+                        {(msg.senderId === currentUser.id ? currentUser.avatar : msg.senderAvatar) ? (
+                          <img src={msg.senderId === currentUser.id ? currentUser.avatar : msg.senderAvatar} alt={msg.senderName} className="h-full w-full object-cover" loading="lazy" />
+                        ) : <span className="flex h-full w-full items-center justify-center text-xs font-bold text-white">{msg.senderName.trim().charAt(0) || '؟'}</span>}
+                      </div>
+                    </div>
+                  ))}
+
+                </div>
+                {unreadRoomMessages > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const container = chatScrollRef.current;
+                      if (container) {
+                        container.scrollTop = container.scrollHeight;
+                        chatScrollPositionRef.current = container.scrollTop;
+                      }
+                      chatNearBottomRef.current = true;
+                      chatAnchorRef.current = null;
+                      setUnreadRoomMessages(0);
+                    }}
+                    className="self-center rounded-full border border-emerald-300/50 bg-emerald-950/90 px-3 py-1 text-[11px] font-bold text-emerald-100"
+                    aria-label="الانتقال إلى الرسائل الجديدة"
+                  >
+                    رسائل جديدة ({unreadRoomMessages}) ↓
+                  </button>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Chat input text drawer */}
+        {showChatInput && (
+          <form
+            onSubmit={handleSendChat}
+            className="relative z-30 p-2.5 bg-[#140b2e]/95 border-t border-purple-500/20 flex items-center gap-2 animate-in slide-in-from-bottom"
+          >
+            <input
+              type="text"
+              placeholder="اكتب رسالة في الروم..."
+              value={chatMessage}
+              onChange={(e) => setChatMessage(e.target.value)}
+              aria-invalid={chatMessage.trim().length > 1000}
+              aria-describedby="room-chat-length"
+              className="flex-1 p-2 rounded-xl bg-white/10 border border-white/20 text-white text-xs focus:outline-none focus:border-cyan-400"
+              autoFocus
+            />
+            <button
+              type="button"
+              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+              className="p-2 rounded-xl bg-white/10 text-white hover:text-amber-300 cursor-pointer"
+            >
+              <Smile className="w-4 h-4" />
+            </button>
+            <span id="room-chat-length" className={`text-[10px] tabular-nums ${chatMessage.trim().length > 1000 ? 'text-red-300' : 'text-slate-300'}`} aria-live="polite">
+              {chatMessage.trim().length}/1000
+            </span>
+            <button
+              type="submit"
+              disabled={!chatMessage.trim() || chatMessage.trim().length > 1000}
+              className="p-2 rounded-xl bg-[#26d0b2] hover:bg-[#20b89d] text-slate-950 font-bold transition active:scale-95 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowChatInput(false)}
+              className="p-2 rounded-xl bg-white/10 text-white cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </form>
+        )}
+
+        {/* Emoji picker popup */}
+        {showEmojiPicker && (
+          <div className="relative z-30 p-2 bg-[#120926]/95 border-t border-purple-500/20 flex items-center justify-around text-2xl animate-in slide-in-from-bottom">
+            {['❤️', '🌹', '👑', '🔥', '👏', '😍', '🎉', '✨', '💎'].map((em) => (
+              <button
+                key={em}
+                onClick={() => {
+                  triggerFloatingEmoji(em);
+                  setShowEmojiPicker(false);
+                }}
+                className="hover:scale-125 transition active:scale-95 p-1 cursor-pointer"
+              >
+                {em}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* =========================================================================
+            6. BOTTOM ACTION BAR: EXACT ICONS (Screenshot 1)
+            - Far Left: 🎁 Gift box button with colorful 3D ribbon
+            - ⊞ 4-squares grid button (opens Tools Drawer from Screenshot 2)
+            - ✉ Envelope button (direct messages)
+            - 😊 Smiley face button (emoji reactions)
+            - 🔊 Speaker button (mute/unmute room audio)
+            - Far Right: 💬 Chat bubble button (opens text input)
+            ========================================================================= */}
+        <footer className="relative z-20 px-4 py-2 bg-transparent flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            {/* 1. Gift Button: 3D colorful gift box */}
+            <button
+              onClick={() => {
+                sounds.playGiftFanfare();
+                setSelectedGiftReceiver({
+                  id: currentUser.id,
+                  name: currentUser.name,
+                  avatar: currentUser.avatar,
+                });
+                setOpenGiftStore(true);
+              }}
+              className="relative w-11 h-11 rounded-full bg-gradient-to-tr from-cyan-400 via-purple-500 to-pink-500 p-[1.5px] flex items-center justify-center transition active:scale-90 hover:scale-105 cursor-pointer shadow-[0_0_15px_rgba(236,72,153,0.5)]"
+              title="إرسال هدية 🎁"
+            >
+              <div className="w-full h-full rounded-full bg-[#1e103f] flex items-center justify-center">
+                <RoyalGiftIcon className="w-8 h-8 drop-shadow-[0_2px_5px_rgba(245,105,220,0.6)]" />
+              </div>
+            </button>
+
+            {/* 2. 4-Squares Grid Button (⊞): Opens Screenshot 2 Drawer */}
+            <button
+              onClick={() => {
+                sounds.playClick();
+                setShowToolsDrawer(true);
+              }}
+              className="w-10 h-10 rounded-full bg-[#241747]/90 hover:bg-[#342263] border border-purple-400/25 text-white flex items-center justify-center transition active:scale-95 shadow-md cursor-pointer"
+              title="أدوات ووظائف الغرفة"
+            >
+              <LayoutGrid className="w-5 h-5 text-white stroke-[2.2]" />
+            </button>
+
+            {/* 3. Envelope Button (✉): Direct messages */}
+            <button
+              onClick={() => {
+                sounds.playClick();
+                setShowMessagesSheet(true);
+              }}
+              className="w-10 h-10 rounded-full bg-[#241747]/90 hover:bg-[#342263] border border-purple-400/25 text-white flex items-center justify-center transition active:scale-95 shadow-md cursor-pointer"
+              title="الرسائل المباشرة"
+            >
+              <Mail className="w-5 h-5 text-white stroke-[2]" />
+            </button>
+
+            {/* 4. Smiley Emoji Button (😊): Reactions */}
+            <button
+              onClick={() => {
+                sounds.playClick();
+                setShowEmojiPicker(!showEmojiPicker);
+              }}
+              className="w-10 h-10 rounded-full bg-[#241747]/90 hover:bg-[#342263] border border-purple-400/25 text-white flex items-center justify-center transition active:scale-95 shadow-md cursor-pointer"
+              title="التعبيرات والرموز التفاعلية"
+            >
+              <Smile className="w-5 h-5 text-white stroke-[2]" />
+            </button>
+
+            {/* 5. Microphone Button: Server-confirmed self mute state */}
+            <button
+              type="button"
+              disabled={!isUserOnAnySeat || !activeRoom}
+              aria-label={myMicMuted ? 'فتح المايك' : 'كتم المايك'}
+              aria-pressed={!myMicMuted}
+              onClick={() => {
+                sounds.playClick();
+                toggleMyMic();
+              }}
+              className={`w-10 h-10 rounded-full border transition active:scale-95 shadow-md cursor-pointer flex items-center justify-center disabled:cursor-not-allowed disabled:opacity-40 ${
+                myMicMuted
+                  ? 'bg-rose-950/80 border-rose-400/50 text-rose-200'
+                  : 'bg-emerald-950/80 border-emerald-300/50 text-emerald-100 hover:bg-emerald-900'
+              }`}
+              title={!isUserOnAnySeat ? 'اجلس على أحد المقاعد لتفعيل المايك' : myMicMuted ? 'فتح المايك' : 'كتم المايك'}
+            >
+              {myMicMuted ? (
+                <MicOff className="w-5 h-5 stroke-[2]" />
+              ) : (
+                <Mic className="w-5 h-5 stroke-[2]" />
+              )}
+            </button>
+          </div>
+
+          {/* 6. Far Right: Chat Speech Bubble Button */}
+          <button
+            onClick={() => {
+              sounds.playClick();
+              setShowChatInput(!showChatInput);
+            }}
+            className="w-11 h-11 rounded-full bg-[#241747]/90 hover:bg-[#342263] border border-purple-400/25 text-white flex items-center justify-center transition active:scale-95 shadow-md cursor-pointer"
+            title="كتابة رسالة"
+          >
+            <MessageCircle className="w-5 h-5 text-white stroke-[2.2]" />
+          </button>
+        </footer>
+
+        {/* =========================================================================
+            8. BOTTOM SHEET DRAWER (EXACT REPLICA OF SCREENSHOT 2)
+            Opens when tapping the 4-Squares Grid button (⊞)
+            Header 1: اللعب 🔥
+            - وضع الغرفة (يتحكم بإذن وصلاحيات المايكات)
+            - ظرف أحمر
+            - الموسيقى
+            - المهام
+            Header 2: الأدوات 🧰
+            Row 1:
+            - الصوت
+            - استبدال العملات
+            - الرسوم
+            - وضع الصوت
+            Row 2:
+            - Host Center
+            - Agency Center
+            ========================================================================= */}
+        {showToolsDrawer && (
+          <div
+            onClick={() => setShowToolsDrawer(false)}
+            className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-end justify-center animate-in fade-in"
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md bg-gradient-to-b from-[#180e36] to-[#0d061f] border-t border-purple-500/30 rounded-t-3xl p-5 shadow-2xl animate-in slide-in-from-bottom flex flex-col space-y-5"
+            >
+              {/* Handle */}
+              <div className="w-10 h-1 rounded-full bg-white/20 mx-auto -mt-1 mb-1" />
+
+              {/* ---------------- SECTION 1: اللعب 🔥 ---------------- */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-start gap-1.5 text-white font-black text-sm">
+                  <span>اللعب</span>
+                  <span className="text-base">🔥</span>
+                </div>
+
+                <div className="grid grid-cols-4 gap-2 text-center">
+                  {/* 1. وضع الغرفة: يفتح إدارة وصلاحيات الصعود للمايك */}
+                  <div
+                    onClick={() => {
+                      sounds.playClick();
+                      setShowToolsDrawer(false);
+                      setShowRoomModeModal(true);
+                    }}
+                    className="flex flex-col items-center gap-1.5 cursor-pointer group active:scale-95 transition"
+                  >
+                    <div className="w-14 h-14 rounded-2xl bg-[#281a4b] border border-white/10 flex items-center justify-center shadow-md group-hover:border-purple-400/50">
+                      <LayoutGrid className="w-7 h-7 text-white stroke-[2]" />
+                    </div>
+                    <span className="text-xs font-bold text-slate-200">وضع الغرفة</span>
+                  </div>
+
+                  {/* 2. ظرف أحمر */}
+                  <div
+                    onClick={() => {
+                      sounds.playClick();
+                      setShowToolsDrawer(false);
+                      showToast('الظرف الأحمر غير متاح حتى ربط المكافآت بالخادم.');
+                    }}
+                    className="flex flex-col items-center gap-1.5 cursor-pointer group active:scale-95 transition"
+                  >
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-rose-600 to-red-500 border border-rose-300/30 flex items-center justify-center shadow-lg group-hover:scale-105">
+                      <span className="text-2xl filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.4)]">🧧</span>
+                    </div>
+                    <span className="text-xs font-bold text-slate-200">ظرف أحمر</span>
+                  </div>
+
+                  {/* 3. الموسيقى */}
+                  <div
+                    onClick={() => {
+                      sounds.playClick();
+                      setShowToolsDrawer(false);
+                      setShowMusicPlayerModal(true);
+                    }}
+                    className="flex flex-col items-center gap-1.5 cursor-pointer group active:scale-95 transition"
+                  >
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-500 to-indigo-600 border border-purple-300/30 flex items-center justify-center shadow-lg group-hover:scale-105">
+                      <Music className="w-7 h-7 text-white stroke-[2.2]" />
+                    </div>
+                    <span className="text-xs font-bold text-slate-200">الموسيقى</span>
+                  </div>
+
+                  {/* 4. المهام */}
+                  <div
+                    onClick={() => {
+                      sounds.playClick();
+                      setShowToolsDrawer(false);
+                      setShowTasksModal(true);
+                    }}
+                    className="flex flex-col items-center gap-1.5 cursor-pointer group active:scale-95 transition"
+                  >
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-500 to-cyan-500 border border-blue-300/30 flex items-center justify-center shadow-lg group-hover:scale-105">
+                      <Calendar className="w-7 h-7 text-white stroke-[2.2]" />
+                    </div>
+                    <span className="text-xs font-bold text-slate-200">المهام</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* ---------------- SECTION 2: الأدوات والتفاعل 🧰 ---------------- */}
+              <div className="space-y-3 pt-1">
+                <div className="flex items-center justify-start gap-1.5 text-white font-black text-sm">
+                  <span>الأدوات</span>
+                  <span className="text-base">🧰</span>
+                </div>
+
+                {/* 6 Grid Icons: وضع الصوت | الرسوم | استبدال العملات | الصوت | مسح الشاشة | تحميل التطبيق */}
+                <div className="grid grid-cols-4 gap-2 text-center">
+                  {/* وضع الصوت */}
+                  <div
+                    onClick={() => {
+                      sounds.playClick();
+                      setAudioModeHQ(!audioModeHQ);
+                      showToast(audioModeHQ ? 'وضع الصوت: عالي الدقة HD 🎵' : 'وضع الصوت: قياسي منخفض البث 🎙️');
+                    }}
+                    className="flex flex-col items-center gap-1.5 cursor-pointer group active:scale-95 transition"
+                  >
+                    <div className="w-13 h-13 rounded-2xl bg-[#281a4b] border border-white/10 flex items-center justify-center shadow-md group-hover:border-purple-400/50">
+                      <Radio className="w-6 h-6 text-white stroke-[2]" />
+                    </div>
+                    <span className="text-xs font-bold text-slate-200">وضع الصوت</span>
+                  </div>
+
+                  {/* الرسوم */}
+                  <div
+                    onClick={() => {
+                      sounds.playClick();
+                      setShowToolsDrawer(false);
+                      setOpenStorageModal(true);
+                    }}
+                    className="flex flex-col items-center gap-1.5 cursor-pointer group active:scale-95 transition"
+                  >
+                    <div className="w-13 h-13 rounded-2xl bg-[#281a4b] border border-white/10 flex items-center justify-center shadow-md group-hover:border-purple-400/50">
+                      <Sliders className="w-6 h-6 text-white stroke-[2]" />
+                    </div>
+                    <span className="text-xs font-bold text-slate-200">الرسوم</span>
+                  </div>
+
+                  {/* استبدال العملات */}
+                  <div
+                    onClick={() => {
+                      sounds.playClick();
+                      setShowToolsDrawer(false);
+                      setOpenRechargeModal(true);
+                    }}
+                    className="flex flex-col items-center gap-1.5 cursor-pointer group active:scale-95 transition"
+                  >
+                    <div className="w-13 h-13 rounded-2xl bg-[#281a4b] border border-white/10 flex items-center justify-center shadow-md group-hover:border-purple-400/50">
+                      <Coins className="w-6 h-6 text-white stroke-[2]" />
+                    </div>
+                    <span className="text-xs font-bold text-slate-200">استبدال العملات</span>
+                  </div>
+
+                  {/* Mic mute: uses the existing server-confirmed self mute action */}
+                  <button
+                    type="button"
+                    disabled={!isUserOnAnySeat || !activeRoom}
+                    aria-label={myMicMuted ? 'فتح المايك' : 'كتم المايك'}
+                    aria-pressed={!myMicMuted}
+                    title={!isUserOnAnySeat ? 'اجلس على أحد المقاعد لتفعيل المايك' : myMicMuted ? 'فتح المايك' : 'كتم المايك'}
+                    onClick={() => {
+                      sounds.playClick();
+                      toggleMyMic();
+                    }}
+                    className="flex flex-col items-center gap-1.5 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <span className={`w-13 h-13 rounded-2xl border flex items-center justify-center shadow-md ${myMicMuted ? 'bg-rose-950/80 border-rose-400/50' : 'bg-emerald-950/80 border-emerald-300/50'}`}>
+                      {myMicMuted ? <MicOff className="w-6 h-6 text-rose-300 stroke-[2]" /> : <Mic className="w-6 h-6 text-emerald-200 stroke-[2]" />}
+                    </span>
+                    <span className="text-xs font-bold text-slate-200">{myMicMuted ? 'فتح المايك' : 'كتم المايك'}</span>
+                  </button>
+
+                  {/* مسح الشاشة */}
+                  <div
+                    onClick={() => {
+                      sounds.playClick();
+                      setShowToolsDrawer(false);
+                      setClearScreen(!clearScreen);
+                      showToast(!clearScreen ? 'تم تفعيل مسح الشاشة لمشاهدة الغرفة بنقاء 👁️' : 'تم إلغاء مسح الشاشة');
+                    }}
+                    className="flex flex-col items-center gap-1.5 cursor-pointer group active:scale-95 transition"
+                  >
+                    <div className={`w-13 h-13 rounded-2xl border flex items-center justify-center shadow-md ${
+                      clearScreen ? 'bg-purple-600/40 border-[#26d0b2]' : 'bg-[#281a4b] border-white/10'
+                    }`}>
+                      {clearScreen ? <EyeOff className="w-6 h-6 text-[#26d0b2]" /> : <Eye className="w-6 h-6 text-white stroke-[2]" />}
+                    </div>
+                    <span className="text-xs font-bold text-slate-200">مسح الشاشة</span>
+                  </div>
+
+
+                  {/* أعضاء الغرفة (متاح للجميع للاطلاع على الحضور) */}
+                  <div
+                    onClick={() => {
+                      sounds.playClick();
+                      setShowToolsDrawer(false);
+                      setShowMembersModal(true);
+                    }}
+                    className="flex flex-col items-center gap-1.5 cursor-pointer group active:scale-95 transition"
+                  >
+                    <div className="w-13 h-13 rounded-2xl bg-[#281a4b] border border-white/10 flex items-center justify-center shadow-md group-hover:border-purple-400/50">
+                      <Users className="w-6 h-6 text-white stroke-[2]" />
+                    </div>
+                    <span className="text-xs font-bold text-slate-200">أعضاء الغرفة</span>
+                  </div>
+
+                  {/* الحظر داخل أدوات الغرفة، دون زر عائم يحجب المحادثة */}
+                  <button type="button" onClick={() => { setShowBansModal(true); setShowToolsDrawer(false); }} className="flex flex-col items-center gap-1.5 active:scale-95">
+                    <span className="flex h-13 w-13 items-center justify-center rounded-2xl border border-white/10 bg-[#281a4b]"><Shield className="h-6 w-6 text-rose-300" /></span>
+                    <span className="text-xs font-bold text-slate-200">المحظورون</span>
+                  </button>
+
+                  {/* مشاركة الغرفة */}
+                  <div
+                    onClick={() => {
+                      sounds.playClick();
+                      setShowToolsDrawer(false);
+                      if (navigator.clipboard) {
+                        navigator.clipboard.writeText(window.location.href);
+                      }
+                      showToast('تم نسخ رابط الغرفة للمشاركة بنجاح 🔗');
+                    }}
+                    className="flex flex-col items-center gap-1.5 cursor-pointer group active:scale-95 transition"
+                  >
+                    <div className="w-13 h-13 rounded-2xl bg-[#281a4b] border border-white/10 flex items-center justify-center shadow-md group-hover:border-purple-400/50">
+                      <ExternalLink className="w-6 h-6 text-white stroke-[2]" />
+                    </div>
+                    <span className="text-xs font-bold text-slate-200">مشاركة</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* ---------------- SECTION 3: إدارة الغرفة والمالك 👑 (تظهر فقط لمالك الغرفة والمشرفين) ---------------- */}
+              {(isOwner || isModerator) && (
+                <div className="space-y-3 pt-2 border-t border-purple-500/20">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-amber-300 font-black text-sm">
+                      <Crown className="w-4 h-4 text-amber-400" />
+                      <span>إدارة الغرفة والمالك</span>
+                    </div>
+                    <span className="text-[10px] font-bold text-amber-400 bg-amber-400/10 border border-amber-400/30 px-2 py-0.5 rounded-full">
+                      {isOwner ? 'صلاحيات المالك 👑' : 'صلاحيات المشرف 🛡️'}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-2 text-center">
+                    {/* معلومات الغرفة */}
+                    <div
+                      onClick={() => {
+                        sounds.playClick();
+                        setShowToolsDrawer(false);
+                        setShowRoomInfoModal(true);
+                      }}
+                      className="flex flex-col items-center gap-1.5 cursor-pointer group active:scale-95 transition"
+                    >
+                      <div className="w-13 h-13 rounded-2xl bg-amber-500/15 border border-amber-400/30 flex items-center justify-center shadow-md group-hover:border-amber-400">
+                        <Settings className="w-6 h-6 text-amber-300 stroke-[2]" />
+                      </div>
+                      <span className="text-[11px] font-bold text-slate-200">معلومات الغرفة</span>
+                    </div>
+
+                    {/* إدارة الأعضاء والمشرفين */}
+                    <div
+                      onClick={() => {
+                        sounds.playClick();
+                        setShowToolsDrawer(false);
+                        setShowMembersModal(true);
+                      }}
+                      className="flex flex-col items-center gap-1.5 cursor-pointer group active:scale-95 transition"
+                    >
+                      <div className="w-13 h-13 rounded-2xl bg-purple-500/15 border border-purple-400/30 flex items-center justify-center shadow-md group-hover:border-purple-400">
+                        <Shield className="w-6 h-6 text-purple-300 stroke-[2]" />
+                      </div>
+                      <span className="text-[11px] font-bold text-slate-200">المشرفون</span>
+                    </div>
+
+                    {/* إدارة الوكالة (Agency Center - تظهر للمالك ووكالته فقط) */}
+                    <div
+                      onClick={() => {
+                        sounds.playClick();
+                        setShowToolsDrawer(false);
+                        setShowAgencyInfoModal(true);
+                      }}
+                      className="flex flex-col items-center gap-1.5 cursor-pointer group active:scale-95 transition"
+                    >
+                      <div className="w-13 h-13 rounded-2xl bg-indigo-500/15 border border-indigo-400/30 flex items-center justify-center shadow-md group-hover:border-indigo-400">
+                        <Users className="w-6 h-6 text-indigo-300 stroke-[2]" />
+                      </div>
+                      <span className="text-[11px] font-bold text-slate-200">إدارة الوكالة</span>
+                    </div>
+
+                    {/* مركز المضيفين (Host Center) */}
+                    <div
+                      onClick={() => {
+                        sounds.playClick();
+                        setShowToolsDrawer(false);
+                        setShowHostCenterModal(true);
+                      }}
+                      className="flex flex-col items-center gap-1.5 cursor-pointer group active:scale-95 transition"
+                    >
+                      <div className="w-13 h-13 rounded-2xl bg-teal-500/15 border border-teal-400/30 flex items-center justify-center shadow-md group-hover:border-teal-400">
+                        <Radio className="w-6 h-6 text-teal-300 stroke-[2]" />
+                      </div>
+                      <span className="text-[11px] font-bold text-slate-200">Host Center</span>
+                    </div>
+
+                    {/* زينة وتخصيص الغرفة */}
+                    <div
+                      onClick={() => {
+                        sounds.playClick();
+                        setShowToolsDrawer(false);
+                        setShowDecorationsModal('mic');
+                      }}
+                      className="flex flex-col items-center gap-1.5 cursor-pointer group active:scale-95 transition"
+                    >
+                      <div className="w-13 h-13 rounded-2xl bg-pink-500/15 border border-pink-400/30 flex items-center justify-center shadow-md group-hover:border-pink-400">
+                        <Brush className="w-6 h-6 text-pink-300 stroke-[2]" />
+                      </div>
+                      <span className="text-[11px] font-bold text-slate-200">زينة الغرفة</span>
+                    </div>
+
+                    {/* خلفية الغرفة */}
+                    <div
+                      onClick={() => {
+                        sounds.playClick();
+                        setShowToolsDrawer(false);
+                        setShowChangeBgModal(true);
+                      }}
+                      className="flex flex-col items-center gap-1.5 cursor-pointer group active:scale-95 transition"
+                    >
+                      <div className="w-13 h-13 rounded-2xl bg-purple-500/15 border border-purple-400/30 flex items-center justify-center shadow-md group-hover:border-purple-400">
+                        <Palette className="w-6 h-6 text-purple-300 stroke-[2]" />
+                      </div>
+                      <span className="text-[11px] font-bold text-slate-200">خلفية الغرفة</span>
+                    </div>
+
+                    {/* إحصائيات الغرفة */}
+                    <div
+                      onClick={() => {
+                        sounds.playClick();
+                        setShowToolsDrawer(false);
+                        setShowRoomStatsModal(true);
+                      }}
+                      className="flex flex-col items-center gap-1.5 cursor-pointer group active:scale-95 transition"
+                    >
+                      <div className="w-13 h-13 rounded-2xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center shadow-md group-hover:border-cyan-400">
+                        <BarChart3 className="w-6 h-6 text-cyan-300 stroke-[2]" />
+                      </div>
+                      <span className="text-[11px] font-bold text-slate-200">الإحصائيات</span>
+                    </div>
+
+                    {/* وضع الغرفة والصلاحيات */}
+                    <div
+                      onClick={() => {
+                        sounds.playClick();
+                        setShowToolsDrawer(false);
+                        setShowRoomModeModal(true);
+                      }}
+                      className="flex flex-col items-center gap-1.5 cursor-pointer group active:scale-95 transition"
+                    >
+                      <div className="w-13 h-13 rounded-2xl bg-amber-500/15 border border-amber-400/30 flex items-center justify-center shadow-md group-hover:border-amber-400">
+                        <Lock className="w-6 h-6 text-amber-300 stroke-[2]" />
+                      </div>
+                      <span className="text-[11px] font-bold text-slate-200">أذونات المايك</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* =========================================================================
+            ROOM MODE & MIC PERMISSIONS MODAL (وضع الغرفة وصلاحيات الصعود)
+            Allows setting:
+            1. صعود تلقائي ومفتوح للجميع
+            2. بإذن المالك فقط (عضوية أو إشراف)
+            ========================================================================= */}
+        {showRoomModeModal && (
+          <div
+            onClick={() => setShowRoomModeModal(false)}
+            className="fixed inset-0 z-60 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in"
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-sm bg-[#160e33] border border-purple-400/40 rounded-3xl p-5 shadow-2xl text-white space-y-4"
+            >
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                <div className="flex items-center gap-2">
+                  <LayoutGrid className="w-5 h-5 text-purple-400" />
+                  <h3 className="font-bold text-sm">وضع الغرفة وصلاحيات المايك</h3>
+                </div>
+                <button
+                  onClick={() => setShowRoomModeModal(false)}
+                  className="w-7 h-7 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                <p role="status" className="p-3.5 rounded-2xl border border-white/10 bg-white/5 text-xs text-slate-300">
+                  تغيير صلاحيات الصعود للمايك غير متاح حالياً حتى ربطه بالخادم.
+                </p>
+
+                {/* Mode 3: تغيير خلفية الغرفة (متاح لصاحب الغرفة والمشرفين) */}
+                <div
+                  onClick={() => {
+                    sounds.playClick();
+                    const isOwner = activeRoom.hostId === currentUser.id;
+                    if (!isOwner && !currentUser.isSuperAdmin) {
+                      sounds.playError();
+                      showToast('🔒 ميزة تغيير خلفية الغرفة مخصصة فقط لصاحب الغرفة أو المشرفين المخولين');
+                      return;
+                    }
+                    setShowRoomModeModal(false);
+                    setShowChangeBgModal(true);
+                  }}
+                  className="p-3.5 rounded-2xl border border-purple-400/40 bg-purple-900/30 hover:bg-purple-900/50 cursor-pointer transition active:scale-98 flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-purple-500 to-pink-500 text-white flex items-center justify-center shadow-md">
+                      <Palette className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black text-white">تغيير خلفية الغرفة 🎨</h4>
+                      <p className="text-[10px] text-purple-200">
+                        {activeRoom.hostId === currentUser.id
+                          ? 'تخصيص خلفية الغرفة وحفظها لجميع الزوار'
+                          : 'صلاحية صاحب الغرفة والمشرفين فقط'}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-xs text-purple-300 font-bold">تعديل ←</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Royal room music player: separate from voice participant */}
+        {showMusicPlayerModal && (
+          <div onClick={() => { if (!musicPickerPendingRef.current && Date.now() - musicPickerReturnAtRef.current >= 2000) setShowMusicPlayerModal(false); }} className="fixed inset-0 z-60 bg-black/85 backdrop-blur-md flex items-center justify-center p-3">
+            <div onClick={e => e.stopPropagation()} dir="rtl" className="w-full max-w-sm max-h-[92vh] overflow-y-auto rounded-[30px] border border-[#bd8d38]/60 bg-gradient-to-b from-[#302316] via-[#18130f] to-[#080808] p-5 text-white shadow-2xl shadow-amber-700/20 space-y-5">
+              <div className="flex justify-between items-center">
+                <button aria-label="إغلاق" onClick={() => setShowMusicPlayerModal(false)} className="p-2 rounded-full bg-white/10"><X size={20}/></button>
+                <span className="text-[#e9c776] font-bold tracking-wider text-sm">TOTICHAT MUSIC</span>
+                <Music size={22} className="text-[#e9c776]"/>
+              </div>
+              <div className="aspect-square max-h-[240px] mx-auto rounded-3xl border border-amber-500/40 bg-gradient-to-br from-[#594022] via-[#17120e] to-black flex flex-col items-center justify-center shadow-inner shadow-amber-600/20">
+                <Music size={76} className="text-[#e6bb61] drop-shadow-lg"/>
+                <span className="mt-4 text-amber-100/70 text-xs">موسيقى الغرفة الملكية</span>
+              </div>
+              <div className="text-center space-y-1">
+                <h3 className="font-bold text-lg text-amber-50 truncate">{musicFileName || 'اختر أغنية من هاتفك'}</h3>
+                <p className="text-xs text-amber-200/70">{musicStatus === 'playing' ? 'قيد التشغيل' : musicStatus === 'paused' ? 'متوقف مؤقتاً' : 'جاهز للتشغيل'}</p>
+              </div>
+              {(isOwner || isModerator) ? (
+                <>
+                  <div dir="ltr" className="space-y-1">
+                    <input aria-label="تقدم الأغنية" type="range" min={0} max={musicProgress.duration || 1} step={0.1} value={Math.min(musicProgress.position, musicProgress.duration || 1)} disabled={musicStatus === 'stopped'} onChange={e => { const position=Number(e.target.value); seekRoomMusic(position); setMusicProgress(p=>({...p,position})); }} className="w-full accent-[#d8aa52]"/>
+                    <div className="flex justify-between text-xs text-white/60"><span>{Math.floor(musicProgress.position/60)}:{String(Math.floor(musicProgress.position%60)).padStart(2,'0')}</span><span>{Math.floor(musicProgress.duration/60)}:{String(Math.floor(musicProgress.duration%60)).padStart(2,'0')}</span></div>
+                  </div>
+                  <div dir="ltr" className="flex items-center justify-between gap-2">
+                    <button aria-label="تشغيل عشوائي" onClick={() => setMusicShuffle(v=>!v)} className={musicShuffle ? 'text-amber-400' : 'text-white/60'}><Shuffle size={22}/></button>
+                    <button aria-label="السابق" disabled={!musicQueue.length || musicBusy} onClick={() => switchQueuedMusic(-1)}><SkipBack size={28}/></button>
+                    <button aria-label={musicStatus === 'playing' ? 'إيقاف مؤقت' : 'تشغيل'} disabled={musicBusy || (musicStatus === 'stopped' && !musicQueue.length)} className="rounded-full bg-gradient-to-br from-[#f5d48a] to-[#bc852d] p-5 text-black disabled:opacity-40" onClick={async () => { try { if (musicStatus === 'stopped') { await playQueuedMusic(musicQueue[musicIndex >= 0 && musicIndex < musicQueue.length ? musicIndex : 0], musicIndex >= 0 && musicIndex < musicQueue.length ? musicIndex : 0); } else if (musicStatus === 'paused') { await resumeRoomMusic(); setMusicStatus('playing'); } else { pauseRoomMusic(); setMusicStatus('paused'); } } catch(error) { console.error(error); showToast('تعذر التحكم بالموسيقى'); } }}>{musicStatus === 'playing' ? <Pause size={30} fill="currentColor"/> : <Play size={30} fill="currentColor"/>}</button>
+                    <button aria-label="التالي" disabled={!musicQueue.length || musicBusy} onClick={() => switchQueuedMusic(1)}><SkipForward size={28}/></button>
+                    <button aria-label="تكرار" onClick={() => setMusicRepeat(v=>!v)} className={musicRepeat ? 'text-amber-400' : 'text-white/60'}><Repeat size={22}/></button>
+                  </div>
+                  <div dir="ltr" className="flex items-center gap-3"><Volume1 size={18} className="text-amber-300"/><input aria-label="صوت الموسيقى" type="range" min={0} max={100} value={musicVolume} onChange={e => {const v=Number(e.target.value); setMusicVolume(v); setRoomMusicVolume(v/100);}} className="flex-1 accent-[#d8aa52]"/><Volume2 size={18} className="text-amber-300"/></div>
+                  <label htmlFor="totichat-room-music-file" onClick={openMusicPicker} className="flex items-center justify-center gap-2 w-full rounded-xl bg-gradient-to-r from-[#b7812e] to-[#f1d18a] text-black font-bold py-3 cursor-pointer">
+                    <FolderOpen size={20}/> اختيار موسيقى من الهاتف
+                  </label>
+
+                  {musicQueue.length > 0 && <div className="rounded-xl border border-amber-500/20 bg-black/30 p-3 max-h-36 overflow-y-auto space-y-1"><p className="text-xs text-amber-300 mb-2">قائمة الأغاني ({musicQueue.length})</p>{musicQueue.map((file,index)=><button key={index} disabled={musicBusy} onClick={()=>void playQueuedMusic(file,index)} className={'w-full text-right text-xs truncate rounded-lg px-2 py-2 '+(musicIndex===index?'bg-amber-500/20 text-amber-200':'text-white/70')}>{index+1}. {file.name}</button>)}</div>}
+                  <button onClick={() => {void stopRoomMusic().then(()=>{setMusicStatus('stopped');setMusicFileName('');setMusicProgress({position:0,duration:0});musicRoomRef.current=null;}).catch(error=>{console.error(error);showToast('تعذر إيقاف الموسيقى');});}} className="w-full border border-amber-500/40 rounded-xl py-2 text-amber-100 text-sm">إيقاف نهائي</button>
+                </>
+              ) : <p className="text-center text-sm text-amber-100/70">التحكم ببث الموسيقى متاح لإدارة الغرفة فقط.</p>}
+            </div>
+          </div>
+        )}
+
+                  <input id="totichat-room-music-file" ref={musicPickerRef} type="file" multiple accept="audio/*" className="absolute w-px h-px opacity-0 pointer-events-none" onChange={e => {
+                    musicPickerReturnAtRef.current = Date.now();
+                    musicPickerPendingRef.current = false;
+                    setShowMusicPlayerModal(true);
+                    const files = Array.from(e.target.files || []).filter(file => file.type.startsWith('audio/') || /\.(mp3|m4a|aac|wav|ogg|flac)$/i.test(file.name));
+                    e.target.value = '';
+                    if (!files.length) {
+                      showToast('لم يصل ملف صوتي من منتقي ملفات Android');
+                      return;
+                    }
+                    const unique = Array.from(new Map(files.map(file => [musicFileKey(file), file])).values());
+                    // Android file pickers may return only one file even with multiple enabled.
+                    // Accumulate selections until the user confirms; never replace earlier picks.
+                    setMusicSelection(previous => {
+                      const known = new Set(previous.map(musicFileKey));
+                      return [...previous, ...unique.filter(file => !known.has(musicFileKey(file)))];
+                    });
+                    setMusicSelectionKeys(previous => Array.from(new Set([...previous, ...unique.map(musicFileKey)])));
+                    setMusicSelectionOpen(true);
                   }}/> 
 
         {musicSelectionOpen && (
@@ -1754,8 +2592,8 @@ export const VoiceRoomModal: React.FC = () => {
               {selectedMicAgencyName && <p className="mt-1 text-center text-[11px] font-bold text-red-400">{selectedMicAgencyName}</p>}
               <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-xs font-bold" aria-live="polite">
                 {selectedMicVerifiedStatus?.userId === selectedMicUser.user.id ? <>
-                  <span className="rounded-full border border-amber-400/40 bg-amber-500/15 px-3 py-1 text-amber-200">خبرة الثروة: {selectedMicVerifiedStatus.wealthExp.toLocaleString()}</span>
-                  <span className="rounded-full border border-fuchsia-400/40 bg-fuchsia-500/15 px-3 py-1 text-fuchsia-200">خبرة السحر: {selectedMicVerifiedStatus.charmExp.toLocaleString()}</span>
+                  <span className="rounded-full bg-amber-500/15 border border-amber-400/40 px-3 py-1 text-amber-200">خبرة الثروة: {selectedMicVerifiedStatus.wealthExp.toLocaleString()}</span>
+                  <span className="rounded-full bg-fuchsia-500/15 border border-fuchsia-400/40 px-3 py-1 text-fuchsia-200">خبرة السحر: {selectedMicVerifiedStatus.charmExp.toLocaleString()}</span>
                   {selectedMicVerifiedStatus.vipLevel > 0 && <span className="rounded-full border border-yellow-400/50 bg-yellow-500/15 px-3 py-1 text-yellow-200">VIP {selectedMicVerifiedStatus.vipLevel}</span>}
                   {selectedMicVerifiedStatus.loadFailed && <span className="text-slate-400">تعذر التحقق من المستويات</span>}
                 </> : <span className="text-slate-400">جارٍ التحقق من بيانات الحساب…</span>}
