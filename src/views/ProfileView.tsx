@@ -842,15 +842,11 @@ export const ProfileView: React.FC = () => {
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-bold text-slate-900">{t.inviteFriends}</span>
-                <span className="text-[10px] font-black text-amber-700 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full shadow-xs">
-                  2500 🪙
-                </span>
               </div>
             </div>
 
             {/* Chevron */}
             <div className="flex items-center gap-1.5 text-xs text-amber-600">
-              <span className="text-[11px] font-medium hidden sm:inline">{t.newUserReward}</span>
               {isRtl ? <ChevronLeft className="w-4 h-4 text-slate-400 group-hover:text-amber-600 transition" /> : <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-amber-600 transition" />}
             </div>
           </div>
