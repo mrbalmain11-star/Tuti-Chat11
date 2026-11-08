@@ -209,19 +209,22 @@ export const GiftStoreModal: React.FC = () => {
             const isSelected = selectedGift?.id === gift.id;
             const cinematic = gift.price >= 10000 && gift.id.startsWith('epic-');
             const epicKind = gift.id === 'epic-imperial-falcon' ? 'falcon' : gift.id === 'epic-royal-throne' ? 'throne' : gift.id === 'epic-legendary-dragon' ? 'dragon' : gift.id === 'epic-royal-jet' ? 'jet' : gift.id === 'epic-royal-lovers-heart' ? 'heart' : null;
-            const palette = cinematic ? 'from-[#352047] via-[#141a36] to-[#090d1a]' : 'from-[#24203d] via-[#171b34] to-[#101827]';
+            const palette = cinematic ? 'from-[#183c32] via-[#142a27] to-[#0a1716]' : 'from-[#16342d] via-[#142622] to-[#0c1918]';
 
             return (
-              <div
+              <button
+                type="button"
                 key={gift.id}
                 onClick={() => {
                   sounds.playClick();
                   setSelectedGiftId(gift.id);
                 }}
-                className={`relative min-w-0 rounded-2xl p-2 flex flex-col items-center justify-between cursor-pointer border transition-all duration-200 bg-gradient-to-b ${palette} ${
+                aria-pressed={isSelected}
+                aria-label={`${gift.name}، ${gift.price.toLocaleString('en-US')} عملة`}
+                className={`relative min-w-0 w-full rounded-2xl p-2 flex flex-col items-center justify-between text-white cursor-pointer border transition-all duration-200 bg-gradient-to-b ${palette} ${
                   isSelected
-                    ? 'border-amber-400 bg-gradient-to-b from-amber-500/20 to-slate-900 shadow-lg scale-102'
-                    : 'border-slate-800/80 bg-slate-900/60 hover:border-slate-700'
+                    ? 'border-amber-300 bg-gradient-to-b from-emerald-500/25 to-slate-900 shadow-[0_0_18px_rgba(16,185,129,.18)] scale-[1.02]'
+                    : 'border-emerald-900/70 bg-emerald-950/30 hover:border-emerald-700'
                 }`}
               >
                 {cinematic && <span className="absolute top-1 right-1 text-[8px] font-black text-amber-200 bg-amber-800/60 border border-amber-400/40 rounded-full px-1.5 py-0.5">سينمائية</span>}
@@ -233,8 +236,8 @@ export const GiftStoreModal: React.FC = () => {
                 )}
 
                 {/* Gift Large Animated Icon */}
-                <div className="relative w-[74px] h-[74px] flex-none flex items-center justify-center text-[35px] my-1 rounded-2xl border border-amber-400/25 shadow-[inset_0_0_15px_rgba(251,191,36,0.12),0_0_16px_rgba(168,85,247,0.18)]">
-                  <span className="absolute inset-0 rounded-full bg-amber-300/10 blur-md" aria-hidden="true" />
+                <div className="relative w-[74px] h-[74px] flex-none flex items-center justify-center text-[35px] my-1 rounded-2xl border border-amber-300/30 shadow-[inset_0_0_15px_rgba(251,191,36,0.12),0_0_16px_rgba(16,185,129,0.16)]">
+                  <span className="absolute inset-0 rounded-full bg-emerald-300/10 blur-md" aria-hidden="true" />
                   {gift.id==='epic-zulfiqar'?<div className="relative z-10 w-full h-full flex items-center justify-center [&_svg]:!w-[45px] [&_svg]:!h-[75px]"><SwordArt /></div> : epicKind ? <div className="relative z-10 w-full h-full flex items-center justify-center [&_svg]:!w-[72px] [&_svg]:!h-[72px]"><EpicGiftArtwork kind={epicKind} /></div> : <span className="relative z-10 drop-shadow-[0_0_12px_rgba(255,206,116,0.7)]">{gift.icon}</span>}
                 </div>
 
@@ -248,7 +251,7 @@ export const GiftStoreModal: React.FC = () => {
                   <span>🪙</span>
                   <span>{gift.price.toLocaleString('ar-EG')}</span>
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>

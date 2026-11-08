@@ -18,11 +18,12 @@ Scope: code and Staging only. No APK build. Voice/music engines and Android pack
 | Room creation | Query the authenticated room list before opening the creation flow; route existing owners into their room; prevent duplicate client requests. Existing server RPC uses a per-owner advisory lock and returns the existing room. | Implemented, needs concurrent/device QA |
 | Direct-message policy | Replaced `staging_send_dm` on Staging: mutual follows are unrestricted; otherwise at most three accepted messages per recipient per UTC day. Per-pair advisory locking and nonce idempotency prevent races/retry double-counts. Blocking and OTP checks remain. | Applied to Staging and definition/RLS/execute grants re-read; account and concurrent scenario tests pending |
 | Login screen | Removed the phone-login entry point; Google login and current email OTP flow were not changed. | Implemented, needs device QA |
+| Gift chooser | Recolored gift cards to the green and gold visual identity and made each selectable gift a keyboard and screen-reader button with its real name and price. Existing server-backed send and debit path is unchanged. | Implemented, needs device QA |
 
 ## Remaining work and gates
 
 1. Add an authoritative room-music presence indicator only after a real server-backed status exists; current music playback state is local and must not be represented as another user's activity.
-2. Group gift send is not available. Do not fan out separate debits from the client; it needs an atomic, authorized server operation and integration testing. Existing single-recipient gift flow was not changed.
+2. Group gift send is not available. Do not fan out separate debits from the client; it needs an atomic, authorized server operation and integration testing. Existing single-recipient gift flow was not changed. Gift chooser visuals are improved, but full group sending and flow acceptance remain open.
 3. Audit and complete the remaining home/profile icon and responsive screen changes against approved references.
 4. Audit Google/Email OTP loading and error states; verify sign-in on Android without changing stable authentication.
 5. Confirm current level/EXP server source and investigate fast progression. Final thresholds remain deferred until the owner supplies official prices; do not rewrite existing balances or invent thresholds.
@@ -38,4 +39,4 @@ Scope: code and Staging only. No APK build. Voice/music engines and Android pack
 
 ## Next step
 
-Continue the remaining UI and feature scope from this checkpoint; rerun lint/build and `git diff --check` after each coding batch. Changes on this branch must not be described as a completed release until device and backend acceptance gates below are closed. Do not create an APK.
+Continue the remaining UI and feature scope from this checkpoint; rerun lint/build and `git diff --check` after each coding batch. Latest reviewed commit before the current uncommitted gift chooser change: `49f08a36b987d32c131513b7524a9734abe8e1f1`. Changes on this branch must not be described as a completed release until device and backend acceptance gates below are closed. Do not create an APK.
