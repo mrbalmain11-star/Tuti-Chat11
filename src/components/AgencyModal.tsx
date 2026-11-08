@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
+import { imageUrl } from '../services/imageUrl';
 
 export const AgencyModal: React.FC = () => {
   const {
@@ -96,7 +97,7 @@ export const AgencyModal: React.FC = () => {
   const [showDateDropdown, setShowDateDropdown] = useState(false);
 
   // Agency Members List for Agent
-  const [membersList, setMembersList] = useState<Array<{ id: string; name: string; role: string; score: string; avatar: string }>>([]);
+  const [membersList, setMembersList] = useState<Array<{ id: string; publicId: number | null; name: string; role: string; avatar: string }>>([]);
 
   const [agencyJoinRequests, setAgencyJoinRequests] = useState<Array<{ id: string; agency_id: string; user_id: string; status: string }>>([]);
   const [ownedAgencyIds, setOwnedAgencyIds] = useState<string[]>([]);
@@ -114,9 +115,24 @@ export const AgencyModal: React.FC = () => {
     const ids = owned.map((agency: { id: string }) => agency.id);
     setOwnedAgencyIds(ids);
     setAgencyJoinRequests((data?.requests ?? []).filter((request: { agency_id: string; status: string }) => ids.includes(request.agency_id) && request.status === 'pending_new'));
-    setMembersList((data?.members ?? []).filter((member: { agency_id: string }) => ids.includes(member.agency_id)).map((member: { user_id: string }) => ({
-      id: member.user_id, name: 'مضيف مسجل', role: 'مضيف', score: '—', avatar: '',
-    })));
+    const activeMembers = (data?.members ?? []).filter((member: { agency_id: string }) => ids.includes(member.agency_id)) as Array<{ user_id: string; agency_id: string }>;
+    const memberIds = [...new Set(activeMembers.map(member => member.user_id).filter(Boolean))];
+    const { data: profiles, error: profilesError } = memberIds.length
+      ? await stagingBackend.from('profiles').select('id,public_id,display_name,avatar_url').in('id', memberIds)
+      : { data: [], error: null };
+    if (profilesError) throw profilesError;
+    const profileById = new Map((profiles ?? []).map(profile => [profile.id, profile]));
+    setMembersList(activeMembers.map(member => {
+      const profile = profileById.get(member.user_id);
+      const publicId = Number(profile?.public_id);
+      return {
+        id: member.user_id,
+        publicId: Number.isSafeInteger(publicId) && publicId > 0 ? publicId : null,
+        name: typeof profile?.display_name === 'string' && profile.display_name.trim() ? profile.display_name.trim() : 'الاسم غير متاح',
+        role: 'مضيف',
+        avatar: imageUrl(profile?.avatar_url),
+      };
+    }));
     setAgencyMembersLoading(false);
   };
   useEffect(() => {
@@ -1085,7 +1101,7 @@ export const AgencyModal: React.FC = () => {
                         <div className="text-right">
                           <h5 className="font-black text-white">{m.name}</h5>
                           <span className="text-[10px] text-amber-300 font-bold block">{m.role}</span>
-                          <span className="text-[9px] text-slate-400 font-mono">ID: {/^[0-9]{4,10}$/.test(String(m.id)) ? m.id : '—'}</span>
+                          <span className="text-[9px] text-slate-400 font-mono">{m.publicId ? `ID: ${m.publicId}` : 'رقم الحساب غير متاح'}</span>
                         </div>
                       </div>
 
@@ -1109,7 +1125,6 @@ export const AgencyModal: React.FC = () => {
                             <X className="w-3.5 h-3.5" />
                           </button>
                         )}
-                        <span className="font-mono font-bold text-amber-400 text-xs mr-1">{m.score}</span>
                       </div>
                     </div>
                   ))}

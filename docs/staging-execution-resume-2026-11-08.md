@@ -36,6 +36,7 @@ Scope: code and Staging only. No APK build. Voice/music engines and Android pack
 | Narrow-screen CSS | Removed an invalid, redundant class selector under the 360px media query; shared base styles already set the same font letter-spacing. | Build passes and the CSS selector warning is gone; visual Android QA still pending |
 | Login loading states | Made the Google login button show a busy spinner and progress label; made the login surface scroll vertically on short devices; added busy indication to OTP send/resend and removed unused OTP state. Auth calls and Google/OTP flow were not changed. | Implemented, needs Android login QA |
 | Profile inventory cleanup | Removed fixed car/frame showcase claims and hardcoded gift names/counts from the public profile. Self profile shows only equipped frame and vehicle values present in the authenticated Supabase inventory; other profiles and gift board show a clear unavailable state until verified data is exposed. | Implemented, needs account/device QA |
+| Agency member identities | Replaced the fixed “registered host” label and blank IDs with profile names, avatar URLs, and public account IDs read from Supabase under the existing authenticated profiles policy; removed the fabricated score field. | Implemented, needs agency-account QA |
 
 ## Remaining work and gates
 
