@@ -212,6 +212,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     isAvatarBanned: false,
   });
   const [currentUser, setCurrentUser] = useState<UserProfile>(makeEmptyUser);
+  const roomCreationPendingRef = useRef(false);
 
   // Only a verified Supabase auth session may unlock the app.
   const [isLoggedIn, setIsLoggedInState] = useState(false);
@@ -1776,6 +1777,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const message = error instanceof Error ? error.message : String(error ?? '');
       alert(/blocked|dm_block/i.test(message)
         ? 'لا يمكن إرسال رسالة خاصة بسبب وجود حظر بين الحسابين.'
+        : /DAILY_DM_LIMIT_REACHED/i.test(message)
+          ? 'وصلت إلى الحد اليومي: 3 رسائل لهذا المستخدم. يمكنك مراسلته مجدداً بعد تجدد الحد بتوقيت UTC.'
         : 'تعذر إرسال الرسالة من الخادم.');
     });
   };
@@ -1913,35 +1916,53 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const createVoiceRoom = async (title: string, _tag: string, coverDataUrl?: string): Promise<VoiceRoom> => {
-    const trimmed = title.trim();
-    if (trimmed.length < 2 || trimmed.length > 60) throw new Error('اسم الغرفة يجب أن يكون بين حرفين و60 حرفاً.');
-    if (!stagingBackend || !currentUser.id) throw new Error('يجب تسجيل الدخول قبل إنشاء غرفة.');
-    if (rooms.some(room => room.hostId === currentUser.id)) throw new Error('لديك غرفة بالفعل.');
-    const { data, error } = await stagingBackend.rpc('staging_create_my_room', { p_title: trimmed });
-    if (error || typeof data !== 'string') throw error ?? new Error('Room creation not confirmed');
-    const roomId = data;
-    if (coverDataUrl?.startsWith('data:image/')) {
-      const response = await fetch(coverDataUrl);
-      const blob = await response.blob();
-      if (!blob.type.startsWith('image/') || blob.size > 5 * 1024 * 1024) throw new Error('صورة الغرفة غير مدعومة.');
-      const extension = blob.type === 'image/png' ? 'png' : blob.type === 'image/webp' ? 'webp' : 'jpg';
-      const path = roomId + '/cover-' + Date.now() + '.' + extension;
-      const { error: uploadError } = await stagingBackend.storage.from('totichat-room-images')
-        .upload(path, blob, { contentType: blob.type, upsert: false });
-      if (uploadError) throw new Error('تم إنشاء الغرفة لكن تعذر رفع صورتها: ' + uploadError.message);
-      const { data: saved, error: saveError } = await stagingBackend.rpc('phase2_room_customize', {
-        p_room_id: roomId, p_cover_path: path,
-      });
-      if (saveError || saved !== true) throw new Error('تم إنشاء الغرفة لكن تعذر حفظ صورتها بالخادم.');
+    if (roomCreationPendingRef.current) throw new Error('إنشاء الغرفة جارٍ بالفعل. انتظر لحظة.');
+    roomCreationPendingRef.current = true;
+    try {
+      const trimmed = title.trim();
+      if (trimmed.length < 2 || trimmed.length > 60) throw new Error('اسم الغرفة يجب أن يكون بين حرفين و60 حرفاً.');
+      if (!stagingBackend || !currentUser.id) throw new Error('يجب تسجيل الدخول قبل إنشاء غرفة.');
+
+      // Refresh the authenticated server list before creating. This also routes
+      // owners who already have a room directly back into their official room.
+      const existingRows = await fetchRealRooms();
+      const existingRoom = existingRows.find(room => room.owner_id === currentUser.id);
+      if (existingRoom) {
+        const mappedRooms = existingRows.map(mapRoomToUi);
+        setRooms(mappedRooms);
+        const roomForEntry = mappedRooms.find(room => room.id === existingRoom.id);
+        if (!roomForEntry) throw new Error('تعذر تحميل غرفتك الحالية.');
+        return roomForEntry;
+      }
+
+      const { data, error } = await stagingBackend.rpc('staging_create_my_room', { p_title: trimmed });
+      if (error || typeof data !== 'string') throw error ?? new Error('Room creation not confirmed');
+      const roomId = data;
+      if (coverDataUrl?.startsWith('data:image/')) {
+        const response = await fetch(coverDataUrl);
+        const blob = await response.blob();
+        if (!blob.type.startsWith('image/') || blob.size > 5 * 1024 * 1024) throw new Error('صورة الغرفة غير مدعومة.');
+        const extension = blob.type === 'image/png' ? 'png' : blob.type === 'image/webp' ? 'webp' : 'jpg';
+        const path = roomId + '/cover-' + Date.now() + '.' + extension;
+        const { error: uploadError } = await stagingBackend.storage.from('totichat-room-images')
+          .upload(path, blob, { contentType: blob.type, upsert: false });
+        if (uploadError) throw new Error('تم إنشاء الغرفة لكن تعذر رفع صورتها: ' + uploadError.message);
+        const { data: saved, error: saveError } = await stagingBackend.rpc('phase2_room_customize', {
+          p_room_id: roomId, p_cover_path: path,
+        });
+        if (saveError || saved !== true) throw new Error('تم إنشاء الغرفة لكن تعذر حفظ صورتها بالخادم.');
+      }
+      const rows = await fetchRealRooms();
+      const createdRoom = rows.find(room => room.id === roomId);
+      if (!createdRoom) throw new Error('تم إنشاء الغرفة لكن تعذر العثور عليها في قائمة الغرف.');
+      const mappedRooms = rows.map(mapRoomToUi);
+      const roomForEntry = mappedRooms.find(room => room.id === roomId);
+      if (!roomForEntry) throw new Error('تعذر تحميل الغرفة الجديدة.');
+      setRooms(mappedRooms);
+      return roomForEntry;
+    } finally {
+      roomCreationPendingRef.current = false;
     }
-    const rows = await fetchRealRooms();
-    const createdRoom = rows.find(room => room.id === roomId);
-    if (!createdRoom) throw new Error('تم إنشاء الغرفة لكن تعذر العثور عليها في قائمة الغرف.');
-    const mappedRooms = rows.map(mapRoomToUi);
-    const roomForEntry = mappedRooms.find(room => room.id === roomId);
-    if (!roomForEntry) throw new Error('تعذر تحميل الغرفة الجديدة.');
-    setRooms(mappedRooms);
-    return roomForEntry;
   };
 
   const updateRoom = (roomId: string, updates: Partial<VoiceRoom>): Promise<void> => {

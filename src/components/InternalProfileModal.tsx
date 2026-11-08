@@ -756,9 +756,6 @@ export const InternalProfileModal: React.FC = () => {
           {seatOnActiveRoom && (
             <div className="mt-4 relative overflow-hidden p-3.5 rounded-2xl bg-gradient-to-r from-[#e6fff2] via-[#f6fff8] to-[#fff4d7] border border-[#c5a55a]/70 flex flex-wrap items-center justify-between gap-2 shadow-[0_4px_16px_rgba(10,91,61,0.12)]">
               <div className="flex items-center gap-2.5">
-                <div className={`w-9 h-9 rounded-xl border border-[#e2c87e] shadow-[inset_0_1px_3px_rgba(255,255,255,0.8)] flex items-center justify-center ${seatOnActiveRoom.isMuted ? 'bg-amber-100 text-amber-900' : 'bg-gradient-to-br from-emerald-100 to-emerald-300 text-emerald-900'}`}>
-                  {seatOnActiveRoom.isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4 animate-pulse" />}
-                </div>
                 <div className="text-right">
                   <span className="text-xs font-black text-slate-900 block">
                     {isSelf ? `أنت على المايك رقم ${seatOnActiveRoom.seatNumber}` : `على المايك رقم ${seatOnActiveRoom.seatNumber}`}

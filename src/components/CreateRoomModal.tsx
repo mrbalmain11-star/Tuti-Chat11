@@ -1,16 +1,40 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ChevronRight, Plus } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
 import { RoyalCreateRoomIcon } from './RoyalCreateRoomIcon';
+import { fetchRealRooms } from '../services/stagingBackend';
+import { mapRoomToUi } from '../services/mapRoomToUi';
 
 export const CreateRoomModal: React.FC = () => {
-  const { openCreateRoomModal, setOpenCreateRoomModal, createVoiceRoom, enterRoom } = useApp();
+  const { openCreateRoomModal, setOpenCreateRoomModal, createVoiceRoom, enterRoom, currentUser } = useApp();
   const [roomName, setRoomName] = useState('');
   const [saving, setSaving] = useState(false);
   const [welcomeMessage, setWelcomeMessage] = useState('اهلا وسهلا');
   const [coverImage, setCoverImage] = useState<string>('/src/assets/images/iraq_flag_cover_1790177322445.jpg');
+  const [checkingExistingRoom, setCheckingExistingRoom] = useState(false);
+  const [roomLookupError, setRoomLookupError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!openCreateRoomModal || !currentUser.id) return;
+    let active = true;
+    setCheckingExistingRoom(true);
+    setRoomLookupError('');
+    void fetchRealRooms().then(rows => {
+      if (!active) return;
+      const existing = rows.find(room => room.owner_id === currentUser.id);
+      if (!existing) return;
+      const room = mapRoomToUi(existing);
+      setOpenCreateRoomModal(false);
+      enterRoom(room.id, room);
+    }).catch(error => {
+      if (active) setRoomLookupError(error instanceof Error ? error.message : 'تعذر التحقق من غرفتك الحالية.');
+    }).finally(() => {
+      if (active) setCheckingExistingRoom(false);
+    });
+    return () => { active = false; };
+  }, [openCreateRoomModal, currentUser.id]);
 
   if (!openCreateRoomModal) return null;
 
@@ -34,7 +58,7 @@ export const CreateRoomModal: React.FC = () => {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!roomName.trim()) return;
+    if (!roomName.trim() || checkingExistingRoom) return;
     if (saving) return;
     setSaving(true);
     try {
@@ -57,6 +81,8 @@ export const CreateRoomModal: React.FC = () => {
     >
       {/* Top Header */}
       <div>
+        {checkingExistingRoom && <p role="status" className="mb-2 rounded-xl border border-emerald-300/30 bg-emerald-950/40 px-3 py-2 text-center text-xs font-bold text-emerald-100">نتحقق من الغرفة المرتبطة بحسابك…</p>}
+        {roomLookupError && <p role="alert" className="mb-2 rounded-xl border border-amber-300/40 bg-amber-950/40 px-3 py-2 text-center text-xs font-bold text-amber-100">{roomLookupError}</p>}
         <div className="relative flex items-center justify-center pt-2 pb-6">
           <button
             onClick={() => {
@@ -138,6 +164,7 @@ export const CreateRoomModal: React.FC = () => {
         <button
           type="submit"
           form="create-room-form"
+          disabled={saving || checkingExistingRoom}
           className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#814AF6] to-[#25B4F8] text-white font-black text-base shadow-[0_4px_20px_rgba(129,74,246,0.4)] active:scale-98 transition cursor-pointer hover:opacity-95"
         >
           إنشاء غرفة

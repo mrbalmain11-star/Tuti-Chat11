@@ -1,0 +1,41 @@
+# TotiChat Staging execution checkpoint — 2026-11-08
+
+Branch: `integration/legacy-backend-staging`
+
+Starting commit: `042f5bc7742f88a9525893fa6f2183b4c0258fe3`
+
+Scope: code and Staging only. No APK build. Voice/music engines and Android packaging are protected.
+
+## Work completed in this session
+
+| Area | Change | Status |
+| --- | --- | --- |
+| Room seats and profile | Removed the crown over seat avatars, blue user glyph beside names, fabricated role pill, and zero-level labels. | Implemented, needs device and live-data QA |
+| Room chat clear state | Replaced the eye glyph on the restore control with the explicit text “إظهار الدردشة”. | Implemented, needs device QA |
+| Room profile controls | Kept self mute/leave controls; removed moderator ban/mute/release actions from the public profile card. | Implemented, needs role-based device QA |
+| Mic status panel | Removed the duplicate mic icon while retaining the server-backed seat number and mute status. | Implemented, needs device QA |
+| Direct chat | Added sender avatar, real sender name, and a thin divider under sender identity. | Implemented, needs device QA |
+| Room creation | Query the authenticated room list before opening the creation flow; route existing owners into their room; prevent duplicate client requests. Existing server RPC uses a per-owner advisory lock and returns the existing room. | Implemented, needs concurrent/device QA |
+| Direct-message policy | Replaced `staging_send_dm` on Staging: mutual follows are unrestricted; otherwise at most three accepted messages per recipient per UTC day. Per-pair advisory locking and nonce idempotency prevent races/retry double-counts. Blocking and OTP checks remain. | Applied to Staging and definition/RLS/execute grants re-read; account and concurrent scenario tests pending |
+| Login screen | Removed the phone-login entry point; Google login and current email OTP flow were not changed. | Implemented, needs device QA |
+
+## Remaining work and gates
+
+1. Add an authoritative room-music presence indicator only after a real server-backed status exists; current music playback state is local and must not be represented as another user's activity.
+2. Group gift send is not available. Do not fan out separate debits from the client; it needs an atomic, authorized server operation and integration testing. Existing single-recipient gift flow was not changed.
+3. Audit and complete the remaining home/profile icon and responsive screen changes against approved references.
+4. Audit Google/Email OTP loading and error states; verify sign-in on Android without changing stable authentication.
+5. Confirm current level/EXP server source and investigate fast progression. Final thresholds remain deferred until the owner supplies official prices; do not rewrite existing balances or invent thresholds.
+6. Test room creation, DM quota (3rd/4th, UTC rollover, mutual follow, block, retry, concurrency), gifts, role boundaries, and all visual changes on test accounts and Android.
+7. Run final checks after all remaining code changes. Build APK only after separate owner approval.
+
+## Checks already run
+
+- `npm run lint` — passed (`tsc --noEmit`).
+- `npm run build` — passed. Existing warnings remain for the font-class CSS selector, direct `eval` in `lottie-web`, ineffective dynamic import, and large output chunk.
+- `git diff --check` — passed before the final checkpoint edit.
+- Staging DM function definition, RLS policies, and execution grants — re-read after migration; confirmed no direct-message RLS policy change and execute remains limited to `authenticated` plus database owner.
+
+## Next step
+
+Review the final diff, rerun lint/build and `git diff --check`, commit these changes on the approved branch, push to GitHub, then continue the remaining scope from this checkpoint. Do not create an APK.

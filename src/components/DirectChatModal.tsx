@@ -120,18 +120,26 @@ export const DirectChatModal: React.FC = () => {
           {cpError && <p role="alert" className="text-center text-xs text-rose-600">{cpError}</p>}
           {openChatThread.messages.map(m => {
             const mine = m.sender === 'me';
+            const senderName = mine ? (currentUser.nickname || currentUser.name || 'أنت') : openChatThread.userName;
+            const senderAvatar = mine ? currentUser.avatar : openChatThread.userAvatar;
             return (
-              <div key={m.id} className={`flex flex-col ${mine ? 'items-start' : 'items-end'}`}>
-                <div className={`max-w-[85%] min-w-[76px] px-3 pt-2 pb-1.5 rounded-xl text-sm leading-6 break-words shadow-sm ${mine ? 'bg-[#d9fdd3] text-[#172b25] rounded-tr-sm' : 'bg-white text-[#172b25] rounded-tl-sm'}`}>
-                  <p className="whitespace-pre-wrap break-words" dir="auto">{m.text}</p>
-                  <div className="text-[10px] leading-4 text-slate-500 text-left mt-0.5" dir="ltr">{formatTime(m.timestamp)}</div>
+              <div key={m.id} className={`flex min-w-0 items-end gap-2 ${mine ? 'flex-row-reverse' : ''}`}>
+                <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full border border-emerald-900/10 bg-emerald-900/10">
+                  {senderAvatar ? <img src={senderAvatar} alt={senderName} className="h-full w-full object-cover" onError={e => { e.currentTarget.style.display = 'none'; }} /> : <span className="flex h-full w-full items-center justify-center text-xs font-black text-emerald-900">{senderName.trim().charAt(0) || '؟'}</span>}
+                </div>
+                <div className={`max-w-[82%] min-w-[76px] ${mine ? 'items-start' : 'items-end'} flex flex-col`}>
+                  <div className="mb-1 w-full border-b border-slate-400/40 pb-0.5 text-[10px] font-bold text-slate-600">{senderName}</div>
+                  <div className={`w-fit max-w-full px-3 pt-2 pb-1.5 rounded-xl text-sm leading-6 break-words shadow-sm ${mine ? 'bg-[#d9fdd3] text-[#172b25] rounded-tr-sm' : 'bg-white text-[#172b25] rounded-tl-sm'}`}>
+                    <p className="whitespace-pre-wrap break-words" dir="auto">{m.text}</p>
+                    <div className="text-[10px] leading-4 text-slate-500 text-left mt-0.5" dir="ltr">{formatTime(m.timestamp)}</div>
+                  </div>
                 </div>
               </div>
             );
           })}
           <div ref={endRef} />
         </div>
-        <form onSubmit={handleSend} className="px-3 py-2 bg-[#f6f4f1] flex items-center gap-2 shrink-0">
+        <form onSubmit={handleSend} className="border-t border-slate-300/70 px-3 py-2 bg-[#f6f4f1] flex items-center gap-2 shrink-0">
           <input type="text" value={inputText} maxLength={2000} onChange={e => setInputText(e.target.value)} placeholder="اكتب رسالة..." className="flex-1 min-w-0 bg-white rounded-full px-4 py-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-right" />
           <button type="submit" aria-label="إرسال" disabled={!inputText.trim()} className="w-11 h-11 rounded-full bg-[#008f72] text-white flex items-center justify-center shrink-0 disabled:opacity-50 active:scale-95 transition"><Send className="w-5 h-5 rotate-180" /></button>
         </form>

@@ -241,29 +241,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
           <ChevronLeft className="w-6 h-6 text-slate-700 stroke-[3] group-hover:-translate-x-1 transition" />
         </button>
 
-        {/* 2. Phone Login Pill Button (24K Gold Metallic Pill) */}
-        <button
-          onClick={() => {
-            sounds.playCoin();
-            setShowPhoneModal(true);
-          }}
-          disabled={isLoading}
-          className="w-full py-4 px-6 rounded-full bg-gradient-to-r from-[#D97706] via-[#FBBF24] to-[#B45309] hover:brightness-105 active:scale-[0.98] text-slate-950 shadow-[0_8px_25px_rgba(245,158,11,0.35)] border border-amber-300/80 flex items-center justify-between transition cursor-pointer group"
-        >
-          {/* Phone Icon */}
-          <div className="w-7 h-7 flex items-center justify-center shrink-0">
-            <Smartphone className="w-6 h-6 text-slate-950 stroke-[2.5]" />
-          </div>
-
-          {/* Text: سجل الدخول عبر الهاتف */}
-          <span className="text-base font-black text-slate-950 tracking-wide">
-            سجل الدخول عبر الهاتف
-          </span>
-
-          {/* Forward Arrow */}
-          <ChevronLeft className="w-6 h-6 text-slate-950 stroke-[3] group-hover:-translate-x-1 transition" />
-        </button>
-
         {/* 3. سياسة الاستخدام > with Shield/Doc Icon */}
         <button
           onClick={() => {

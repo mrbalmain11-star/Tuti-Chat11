@@ -1514,9 +1514,6 @@ export const VoiceRoomModal: React.FC = () => {
                             : 'border-white/80'
                         }`}
                       >
-                        {Number(seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel || 0) >= 1 && (
-                          <Crown className="absolute -top-1 left-1/2 -translate-x-1/2 z-20 w-5 h-5 text-amber-200 fill-amber-500 drop-shadow-[0_0_5px_#facc15] pointer-events-none" />
-                        )}
                         <div className="absolute inset-0 rounded-full bg-gradient-to-br from-emerald-700 to-teal-950 flex items-center justify-center text-white text-lg font-black">{(seat.user.name || '؟').slice(0,1)}</div>
                         {seat.user.avatar ? <img
                           src={seat.user.avatar}
@@ -1556,7 +1553,6 @@ export const VoiceRoomModal: React.FC = () => {
                         className="text-xs sm:text-sm font-black truncate text-center block"
                         fallbackColor="text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]"
                       />
-                      <span className="text-[10px] text-cyan-300 shrink-0">👤</span>
                     </div>
                   ) : (
                     <span className="text-xs sm:text-sm font-bold text-slate-300 font-mono mt-1 tracking-wider drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
@@ -1584,7 +1580,7 @@ export const VoiceRoomModal: React.FC = () => {
               aria-label="إعادة إظهار الدردشة"
               title="إعادة إظهار الدردشة"
             >
-              <Eye className="w-5 h-5 text-[#26d0b2]" />
+              <span className="text-[11px] font-bold text-emerald-100">إظهار الدردشة</span>
             </button>
           </div>
         ) : (
@@ -2532,7 +2528,7 @@ export const VoiceRoomModal: React.FC = () => {
               onClick={(e) => e.stopPropagation()}
               className="w-full max-w-md max-h-[min(88dvh,780px)] overflow-y-auto overscroll-contain bg-[#101924]/95 border-t border-slate-700/70 rounded-t-3xl backdrop-blur-xl shadow-2xl p-5 pt-3 text-white relative animate-in slide-in-from-bottom [padding-bottom:calc(1.5rem+env(safe-area-inset-bottom,0px))]"
             >
-              {/* Top Header Row: Close button on left, Role badge on right */}
+              {/* Top Header Row: close control only; room roles are not profile badges. */}
               <div className="flex items-center justify-between">
                 <button
                   onClick={() => setSelectedMicUser(null)}
@@ -2542,16 +2538,7 @@ export const VoiceRoomModal: React.FC = () => {
                   <X className="w-4 h-4" />
                 </button>
 
-                {/* Golden Role Badge e.g. [R المصمم I 🦁] matching screenshot */}
-                <div className="px-3 py-1 rounded-full bg-gradient-to-r from-amber-700/80 via-yellow-600/90 to-amber-700/80 border border-amber-400 text-amber-100 font-black text-xs flex items-center gap-1.5 shadow-sm">
-                  <span>🦁</span>
-                  <span>
-                    {selectedMicUser.user.id === activeRoom.hostId
-                      ? 'مالك الغرفة'
-                      : (selectedMicUser.user.agencyRole || 'عضو')}
-                  </span>
-                  <span className="font-serif">R</span>
-                </div>
+                <span className="text-xs font-bold text-slate-400">الملف الشخصي</span>
               </div>
 
               {/* Circular Avatar popping up out of the top edge */}
@@ -2570,8 +2557,8 @@ export const VoiceRoomModal: React.FC = () => {
 
               {selectedMicAgencyName && <p className="mt-1 text-center text-[11px] font-bold text-red-400">{selectedMicAgencyName}</p>}
               <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-xs font-bold">
-                <span className="rounded-full bg-amber-500/15 border border-amber-400/40 px-3 py-1 text-amber-200">الثروة Lv.{selectedMicUser.user.wealthLevel}</span>
-                <span className="rounded-full bg-fuchsia-500/15 border border-fuchsia-400/40 px-3 py-1 text-fuchsia-200">السحر Lv.{selectedMicUser.user.charmLevel}</span>
+                {Number(selectedMicUser.user.wealthLevel || 0) > 0 && <span className="rounded-full bg-amber-500/15 border border-amber-400/40 px-3 py-1 text-amber-200">الثروة Lv.{selectedMicUser.user.wealthLevel}</span>}
+                {Number(selectedMicUser.user.charmLevel || 0) > 0 && <span className="rounded-full bg-fuchsia-500/15 border border-fuchsia-400/40 px-3 py-1 text-fuchsia-200">السحر Lv.{selectedMicUser.user.charmLevel}</span>}
                 {Number(selectedMicUser.user.vipLevel || 0) > 0 && <span className="rounded-full border border-yellow-400/50 bg-yellow-500/15 px-3 py-1 text-yellow-200">VIP {selectedMicUser.user.vipLevel}</span>}
               </div>
               <ProfileCpCard key={selectedMicUser.user.id} userId={selectedMicUser.user.id} userName={selectedMicUser.user.nickname || selectedMicUser.user.name} userAvatar={selectedMicUser.user.avatar} onPartnerClick={partnerId => { if (!stagingBackend) return; void (async () => {
@@ -2586,7 +2573,6 @@ export const VoiceRoomModal: React.FC = () => {
               </button>
 
               {selectedMicUser.user.id !== currentUser.id && <button type="button" onClick={() => void setPersonalBlock(selectedMicUser.user.id, !personalBlocks.some(item => item.userId === selectedMicUser.user.id))} className="mx-auto mt-2 block rounded-xl bg-slate-700 px-4 py-2 text-xs text-white">{personalBlocks.some(item => item.userId === selectedMicUser.user.id) ? 'فك الحظر الشخصي' : 'حظر شخصي'}</button>}
-              {(isOwner || isModerator) && selectedMicUser.user.id !== currentUser.id && <button type="button" onClick={() => void handleVoiceModeration(selectedMicUser.user.id, 'ban')} className="mx-auto mt-2 block rounded-xl bg-red-900/60 px-4 py-2 text-xs text-white">حظر وطرد من الغرفة</button>}
               {/* ID Row with Copy */}
               <div
                 onClick={() => {
@@ -2642,17 +2628,13 @@ export const VoiceRoomModal: React.FC = () => {
                 </button>
               </div>
 
-              {/* Only the seat owner or authorized moderators may see mic controls. */}
-              {(selectedMicUser.user.id === currentUser.id || ((isOwner || isModerator) && selectedMicUser.user.id !== activeRoom.hostId)) && <div className="border-t border-slate-800/90 pt-3 flex items-center justify-around">
+              {/* Self seat controls stay with the user; moderation actions live in room management. */}
+              {selectedMicUser.user.id === currentUser.id && <div className="border-t border-slate-800/90 pt-3 flex items-center justify-around">
                 {/* Action 1: نزل من المايك */}
                 <button
                   onClick={() => {
                     sounds.playClick();
-                    if (selectedMicUser.user.id === currentUser.id) {
-                      leaveSeat(selectedMicUser.seatNumber);
-                    } else {
-                      void handleVoiceModeration(selectedMicUser.user.id, 'release_seat');
-                    }
+                    leaveSeat(selectedMicUser.seatNumber);
                     setSelectedMicUser(null);
                   }}
                   className="flex flex-col items-center gap-1 text-slate-300 hover:text-white transition active:scale-95 cursor-pointer"
@@ -2667,13 +2649,7 @@ export const VoiceRoomModal: React.FC = () => {
                 <button
                   onClick={() => {
                     sounds.playClick();
-                    if (selectedMicUser.user.id === currentUser.id) {
-                      toggleMyMic();
-                    } else {
-                      // A participant can self-mute without being moderator-muted.
-                      // Do not infer moderation state from the microphone state.
-                      void handleVoiceModeration(selectedMicUser.user.id, 'mute');
-                    }
+                    toggleMyMic();
                     setSelectedMicUser(null);
                   }}
                   className="flex flex-col items-center gap-1 text-slate-300 hover:text-white transition active:scale-95 cursor-pointer"
@@ -2681,24 +2657,8 @@ export const VoiceRoomModal: React.FC = () => {
                   <div className="w-10 h-10 rounded-full bg-slate-800/90 flex items-center justify-center border border-slate-700 shadow-sm">
                     <MicOff className="w-5 h-5 text-rose-400" />
                   </div>
-                  <span className="text-xs font-bold">{selectedMicUser.user.id === currentUser.id ? (myMicMuted ? 'فتح المايك' : 'كتم المايك') : 'حظر مايك'}</span>
+                  <span className="text-xs font-bold">{myMicMuted ? 'فتح المايك' : 'كتم المايك'}</span>
                 </button>
-                {selectedMicUser.user.id !== currentUser.id && selectedMicUser.user.id !== activeRoom.hostId && (isOwner || isModerator) && (
-                  <button
-                    onClick={() => {
-                      sounds.playClick();
-                      void handleAllowMic(selectedMicUser.user.id);
-                      setSelectedMicUser(null);
-                    }}
-                    className="flex flex-col items-center gap-1 text-emerald-300 active:scale-95 transition"
-                    title="إزالة حظر المايك الإداري، دون تشغيل مايك العضو تلقائياً"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-emerald-950/70 border border-emerald-600/60 flex items-center justify-center">
-                      <Mic className="w-5 h-5" />
-                    </div>
-                    <span className="text-xs font-bold">فك حظر المايك</span>
-                  </button>
-                )}
               </div>}
             </div>
           </div>
