@@ -25,21 +25,29 @@ Scope: code and Staging only. No APK build. Voice/music engines and Android pack
 | Leaderboard seed data | Removed 664 lines of unused hardcoded demo accounts, rooms, avatars, and scores. The live leaderboard continues to use the existing `live_rankings` Staging RPC. | Implemented; live ranking/device QA pending |
 | Login cleanup | Removed the unreachable legacy phone OTP modal and its dormant SMS handlers; Google login and the separate Google-email OTP screen are unchanged. | Implemented, Google login/device QA pending |
 
+## Work completed in the continuation batch
+
+| Area | Change | Status |
+| --- | --- | --- |
+| Group room gifts | Added a server RPC that validates the exact current seated-recipient set (up to 14), gift price/category and quantity, and an idempotency key; serializes against seat changes; delegates each child transfer through the existing checked gift function inside one PostgreSQL transaction, so any failed recipient rolls back the whole batch. Authenticated-only execution, blank search path, and the existing wallet/ledger/audit path are retained. | Implemented on Staging; test-account and concurrency QA pending |
+| Group gift UI | Added “send to everyone,” recipient count and total cost preview. It uses a stable request ID across retry and displays recipient animations only after the server confirms all recipients. | Implemented, needs Android QA |
+| Migration corrections | Staging function-definition checks caught an invalid array alias and then an incorrect schema reference before any gift call. Follow-up migrations corrected both. Final remote checks confirm the corrected alias and delegate, `SECURITY DEFINER`, empty search path, authenticated execute, and no anon execute. | Applied and definition/security checked; financial execution not tested |
+
 ## Remaining work and gates
 
 1. Add an authoritative room-music presence indicator only after a real server-backed status exists; current music playback state is local and must not be represented as another user's activity.
-2. Group gift send is not available. Do not fan out separate debits from the client; it needs an atomic, authorized server operation and integration testing. Existing single-recipient gift flow was not changed. Gift chooser visuals are improved, but full group sending and flow acceptance remain open.
-3. Audit and complete the remaining home/profile icon and responsive screen changes against approved references.
-4. Audit Google/Email OTP loading and error states; verify sign-in on Android without changing stable authentication.
-5. Level audit: Staging wealth/charm EXP RPCs sum `gift_events.amount`; the client currently maps that EXP to levels using `GIFT_LEVEL_THRESHOLDS` in `src/utils/levelUtils.ts`. The level mapping is therefore not server-authoritative, and the approved official threshold table is incomplete. Do not change balances or invent higher-level thresholds; server-side mapping and any correction to progression wait for the complete official table.
-6. Test room creation, DM quota (3rd/4th, UTC rollover, mutual follow, block, retry, concurrency), gifts, role boundaries, and all visual changes on test accounts and Android.
-7. Run final checks after all remaining code changes. Build APK only after separate owner approval.
+2. Audit and complete the remaining home/profile icon and responsive screen changes against approved references.
+3. Audit Google/Email OTP loading and error states; verify sign-in on Android without changing stable authentication.
+4. Level audit: Staging wealth/charm EXP RPCs sum `gift_events.amount`; the client currently maps that EXP to levels using `GIFT_LEVEL_THRESHOLDS` in `src/utils/levelUtils.ts`. The level mapping is therefore not server-authoritative, and the approved official threshold table is incomplete. Do not change balances or invent higher-level thresholds; server-side mapping and any correction to progression wait for the complete official table.
+5. Test room creation, DM quota (3rd/4th, UTC rollover, mutual follow, block, retry, concurrency), single/group gifts, role boundaries, and all visual changes on test accounts and Android. No financial test gift was sent in this batch.
+6. Run final checks after all remaining code changes. Build APK only after separate owner approval.
 
 ## Checks already run
 
 - `npm run lint` — passed (`tsc --noEmit`).
 - `npm run build` — passed. Existing warnings remain for the font-class CSS selector, direct `eval` in `lottie-web`, ineffective dynamic import, and large output chunk.
-- `git diff --check` — passed after the verified-profile RPC edit.
+- `git diff --check` — passed for the group-gift changes.
+- Staging group-gift function definition and grants — confirmed corrected implementation, security-definer mode, empty search path, authenticated execute, and anon denied. No real gift call or wallet mutation was used as a test.
 - Staging DM function definition, RLS policies, and execution grants — re-read after migration; confirmed no direct-message RLS policy change and execute remains limited to `authenticated` plus database owner.
 
 ## Next step

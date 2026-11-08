@@ -63,6 +63,7 @@ interface AppContextType {
   unreadCount: number;
   gifts: GiftItem[];
   sendGift: (gift: GiftItem, receiver: { id: string; name: string; avatar?: string }, count?: number) => Promise<boolean>;
+  sendGiftToRoom: (gift: GiftItem, receivers: Array<{ id: string; name: string; avatar?: string }>, count: number, requestId: string) => Promise<boolean>;
   activeGiftAnimation: GiftAnimationPayload | null;
   clearGiftAnimation: () => void;
   agencies: Agency[];
@@ -1842,6 +1843,73 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  // The server wraps all room-recipient gift operations in one atomic transaction.
+  const sendGiftToRoom = async (
+    gift: GiftItem,
+    receivers: Array<{ id: string; name: string; avatar?: string }>,
+    count: number,
+    requestId: string
+  ): Promise<boolean> => {
+    const recipientIds = receivers.map(receiver => receiver.id);
+    const totalCost = gift?.price * count * receivers.length;
+    if (!stagingBackend || !activeRoom || !gift || !receivers.length || receivers.length > 14 ||
+        recipientIds.some(id => !id || id === currentUser.id) || new Set(recipientIds).size !== recipientIds.length ||
+        ![1, 7, 17, 77, 777].includes(count) || !Number.isSafeInteger(totalCost) || totalCost <= 0 ||
+        !requestId) {
+      alert('الهدية أو قائمة المستلمين أو الغرفة غير صالحة.');
+      return false;
+    }
+    try {
+      const { data, error } = await stagingBackend.rpc('phase3_send_gift_to_room', {
+        p_room_id: activeRoom.id,
+        p_recipient_ids: recipientIds,
+        p_gift_id: gift.id,
+        p_quantity: count,
+        p_request_id: requestId,
+        p_expected_price: gift.price,
+      });
+      if (error) throw error;
+      if (!data?.id || !Array.isArray(data.results) || data.results.length !== receivers.length) {
+        throw new Error('Atomic group gift was not confirmed');
+      }
+      const confirmedIds = new Set<string>(data.results.map((item: { recipient_id?: unknown }) =>
+        typeof item?.recipient_id === 'string' ? item.recipient_id : ''
+      ));
+      if (confirmedIds.size !== receivers.length || receivers.some(receiver => !confirmedIds.has(receiver.id))) {
+        throw new Error('Group gift recipient confirmation mismatch');
+      }
+
+      for (const receiver of receivers) {
+        const animation: GiftAnimationPayload = {
+          gift,
+          sender: currentUser.name,
+          receiver: receiver.name,
+          count,
+          senderAvatar: currentUser.avatar,
+          receiverAvatar: receiver.avatar,
+        };
+        if (activeGiftAnimationRef.current) pendingGiftAnimations.current.push(animation);
+        else {
+          activeGiftAnimationRef.current = animation;
+          setActiveGiftAnimation(animation);
+        }
+      }
+      window.dispatchEvent(new CustomEvent('totichat:room-gift-confirmed', { detail: activeRoom.id }));
+      const wallet = await fetchMyWallet().catch(() => null);
+      if (wallet) setCurrentUser(prev => ({ ...prev, coins: wallet.coins, diamonds: wallet.diamonds }));
+      window.dispatchEvent(new Event('totichat:wallet-changed'));
+      const { data: wealthTotal, error: wealthError } = await stagingBackend.rpc('staging_my_wealth_exp');
+      if (!wealthError && typeof wealthTotal === 'number' && Number.isSafeInteger(wealthTotal)) {
+        setCurrentUser(prev => ({ ...prev, wealthExp: wealthTotal, wealthLevel: getLevelFromExp(wealthTotal, 260) }));
+      }
+      return true;
+    } catch (error) {
+      console.error('Atomic group gift delivery failed:', error);
+      alert('لم يؤكد الخادم إرسال المجموعة. لم تُعرض نتيجة الإرسال كناجحة؛ أعد المحاولة بنفس الطلب.');
+      return false;
+    }
+  };
+
   const clearGiftAnimation = () => {
     const next = pendingGiftAnimations.current.shift() ?? null;
     activeGiftAnimationRef.current = next;
@@ -2079,6 +2147,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         unreadCount,
         gifts: realGifts,
         sendGift,
+        sendGiftToRoom,
         activeGiftAnimation,
         clearGiftAnimation,
         agencies,

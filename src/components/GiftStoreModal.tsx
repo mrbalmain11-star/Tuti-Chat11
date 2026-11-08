@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { X, Plus, ChevronDown, Check } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { GiftItem } from '../types';
@@ -16,6 +16,7 @@ export const GiftStoreModal: React.FC = () => {
     currentUser,
     activeRoom,
     sendGift,
+    sendGiftToRoom,
     setOpenRechargeModal,
     selectedGiftReceiver,
     setSelectedGiftReceiver,
@@ -25,11 +26,11 @@ export const GiftStoreModal: React.FC = () => {
   const [selectedGiftId, setSelectedGiftId] = useState<string | null>(null);
   const selectedGift = gifts.find(g => g.id === selectedGiftId) ?? gifts[0] ?? null;
   const [selectedCount, setSelectedCount] = useState<number>(1);
-  const totalCost = selectedGift ? selectedGift.price * selectedCount : 0;
-  const hasEnoughCoins = Number.isSafeInteger(totalCost) && totalCost <= currentUser.coins;
   const [selectedReceiverIndex, setSelectedReceiverIndex] = useState<number>(0);
+  const [sendToAll, setSendToAll] = useState(false);
   const [showCountDropdown, setShowCountDropdown] = useState<boolean>(false);
   const [sending, setSending] = useState(false);
+  const groupRequestId = useRef<string | null>(null);
 
   useEffect(() => {
     if (openGiftStore) window.dispatchEvent(new Event('totichat:gift-store-opened'));
@@ -78,6 +79,9 @@ export const GiftStoreModal: React.FC = () => {
 
   const currentReceiver = receivers[selectedReceiverIndex] || receivers[0] || null;
   const isSupportingSelf = Boolean(activeRoom && currentReceiver?.id === currentUser.id);
+  const recipientCount = sendToAll ? roomUserReceivers.length : currentReceiver ? 1 : 0;
+  const totalCost = selectedGift ? selectedGift.price * selectedCount * recipientCount : 0;
+  const hasEnoughCoins = Number.isSafeInteger(totalCost) && totalCost > 0 && totalCost <= currentUser.coins;
 
   const filteredGifts = gifts.filter((g) => {
     if (activeCategory === 'الكل') return true;
@@ -86,7 +90,7 @@ export const GiftStoreModal: React.FC = () => {
 
   const handleSend = async () => {
     if (sending) return;
-    if (!selectedGift || !currentReceiver?.id) {
+    if (!selectedGift || (sendToAll ? roomUserReceivers.length === 0 : !currentReceiver?.id)) {
       window.alert('لا توجد هدية أو مستلم متاح. حاول مجدداً بعد تحميل البيانات.');
       return;
     }
@@ -101,8 +105,17 @@ export const GiftStoreModal: React.FC = () => {
     sounds.playClick();
     setSending(true);
     try {
-      const success = await sendGift(selectedGift, currentReceiver, selectedCount);
-      if (success) setOpenGiftStore(false);
+      let success: boolean;
+      if (sendToAll) {
+        groupRequestId.current ??= crypto.randomUUID();
+        success = await sendGiftToRoom(selectedGift, roomUserReceivers, selectedCount, groupRequestId.current);
+      } else {
+        success = await sendGift(selectedGift, currentReceiver!, selectedCount);
+      }
+      if (success) {
+        groupRequestId.current = null;
+        setOpenGiftStore(false);
+      }
     } catch (error) {
       console.error('Gift sheet send handler failed:', error);
       window.alert('تعذر إكمال إرسال الهدية. افحص رصيدك وسجل العمليات قبل إعادة المحاولة.');
@@ -158,9 +171,26 @@ export const GiftStoreModal: React.FC = () => {
               <span className="text-slate-400 font-medium shrink-0">إرسال الدعم إلى:</span>
               
               <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                {activeRoom && roomUserReceivers.length > 0 && (
+                  <button
+                    type="button"
+                    aria-pressed={sendToAll}
+                    onClick={() => {
+                      sounds.playClick();
+                      groupRequestId.current = null;
+                      setSendToAll(value => !value);
+                    }}
+                    className={`shrink-0 rounded-lg border px-2 py-1 text-[11px] font-black transition ${sendToAll
+                      ? 'border-emerald-300 bg-emerald-500 text-emerald-950'
+                      : 'border-emerald-700/60 bg-emerald-950/60 text-emerald-200 hover:bg-emerald-900/70'}`}
+                  >
+                    {sendToAll ? 'إلى الجميع ✓' : `إلى الجميع (${roomUserReceivers.length})`}
+                  </button>
+                )}
                 {/* Direct Quick Button to Support Self - Inside Room Only */}
                 {activeRoom && (
                   <button
+                    disabled={sendToAll}
                     type="button"
                     onClick={() => {
                       sounds.playClick();
@@ -169,7 +199,7 @@ export const GiftStoreModal: React.FC = () => {
                         setSelectedReceiverIndex(selfIdx);
                       }
                     }}
-                    className={`px-2 py-0.5 rounded-lg text-[11px] font-bold flex items-center gap-1 transition ${
+                    className={`px-2 py-0.5 rounded-lg text-[11px] font-bold flex items-center gap-1 transition disabled:opacity-40 ${
                       isSupportingSelf
                         ? 'bg-amber-500 text-slate-950 font-black shadow-xs'
                         : 'bg-amber-950/50 text-amber-300 border border-amber-500/40 hover:bg-amber-900/60'
@@ -182,9 +212,12 @@ export const GiftStoreModal: React.FC = () => {
                 )}
 
                 {/* Receiver Dropdown */}
-                <select
+                {!sendToAll && <select
                   value={selectedReceiverIndex}
-                  onChange={(e) => setSelectedReceiverIndex(Number(e.target.value))}
+                  onChange={(e) => {
+                    groupRequestId.current = null;
+                    setSelectedReceiverIndex(Number(e.target.value));
+                  }}
                   className="bg-slate-900 border border-amber-500/30 text-amber-300 rounded-lg px-2 py-1 text-xs focus:outline-none max-w-[150px] truncate font-bold"
                 >
                   {receivers.map((r, idx) => (
@@ -192,11 +225,11 @@ export const GiftStoreModal: React.FC = () => {
                       {r.name}
                     </option>
                   ))}
-                </select>
+                </select>}
               </div>
             </div>
 
-            <div className="text-[10px] text-slate-400 px-1">اختر المستلم والهدية والكمية قبل الإرسال</div>
+            <div className="text-[10px] text-slate-400 px-1">{sendToAll ? `الإرسال إلى ${roomUserReceivers.length} مستلمين جالسين؛ يعيد الخادم التحقق قبل الخصم.` : 'اختر المستلم والهدية والكمية قبل الإرسال'}</div>
           </div>
         )}
 
@@ -217,6 +250,7 @@ export const GiftStoreModal: React.FC = () => {
                 key={gift.id}
                 onClick={() => {
                   sounds.playClick();
+                    groupRequestId.current = null;
                   setSelectedGiftId(gift.id);
                 }}
                 aria-pressed={isSelected}
@@ -257,7 +291,7 @@ export const GiftStoreModal: React.FC = () => {
         </div>
 
         <div className="flex-none flex items-center justify-between px-1 py-1.5 text-[11px]" dir="rtl">
-          <span className="text-slate-300">إجمالي الهدية ×{selectedCount}</span>
+          <span className="text-slate-300">{sendToAll ? `الإجمالي لـ ${recipientCount} مستخدم ×${selectedCount}` : `إجمالي الهدية ×${selectedCount}`}</span>
           <span className={hasEnoughCoins ? 'text-amber-300 font-black' : 'text-red-400 font-black'}>{totalCost.toLocaleString('en-US')} 🪙{!hasEnoughCoins ? ' · رصيد غير كافٍ' : ''}</span>
         </div>
         {/* Bottom Bar: Coins Balance + Recharging + Count Selector + Send Button */}
@@ -307,6 +341,7 @@ export const GiftStoreModal: React.FC = () => {
                       key={count}
                       onClick={() => {
                         sounds.playClick();
+                        groupRequestId.current = null;
                         setSelectedCount(count);
                         setShowCountDropdown(false);
                       }}
@@ -321,11 +356,11 @@ export const GiftStoreModal: React.FC = () => {
 
             {/* Royal Send Button */}
             <button
-              onClick={handleSend} disabled={sending || !hasEnoughCoins || !selectedGift || !currentReceiver}
+              onClick={handleSend} disabled={sending || !hasEnoughCoins || !selectedGift || (sendToAll ? roomUserReceivers.length === 0 : !currentReceiver)}
               title={selectedGift ? `الإجمالي: ${totalCost.toLocaleString('en-US')} عملة` : 'اختر هدية'}
               className="bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 text-slate-950 font-black text-xs px-5 py-2 rounded-full shadow-lg active:scale-95 hover:brightness-110 transition flex items-center gap-1"
             >
-              <span>{sending ? 'جارٍ الإرسال…' : isSupportingSelf ? 'دعم حسابي 🌟' : 'إرسال'}</span>
+              <span>{sending ? 'جارٍ الإرسال…' : sendToAll ? `إرسال للجميع (${roomUserReceivers.length})` : isSupportingSelf ? 'دعم حسابي 🌟' : 'إرسال'}</span>
             </button>
           </div>
         </div>
