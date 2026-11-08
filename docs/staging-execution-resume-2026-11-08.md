@@ -41,4 +41,4 @@ Scope: code and Staging only. No APK build. Voice/music engines and Android pack
 
 ## Next step
 
-Continue the remaining UI and feature scope from this checkpoint; rerun lint/build and `git diff --check` after each coding batch. The latest checkpoint predates the profile and home card batch being prepared now. Changes on this branch must not be described as a completed release until device and backend acceptance gates below are closed. Do not create an APK.
+Continue from the remaining work and gates above; rerun lint/build and `git diff --check` after each coding batch. Changes on this branch must not be described as a completed release until device and backend acceptance gates below are closed. Do not create an APK.
