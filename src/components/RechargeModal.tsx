@@ -11,14 +11,6 @@ export interface RechargePack {
   price: string;
 }
 
-const rechargePacks: RechargePack[] = [
-  { id: 'pack-1', coins: 4900, price: '0.99 $' },
-  { id: 'pack-2', coins: 24500, price: '4.99 $' },
-  { id: 'pack-3', coins: 49000, price: '9.99 $' },
-  { id: 'pack-4', coins: 122500, price: '24.99 $' },
-  { id: 'pack-5', coins: 245000, price: '49.99 $' },
-  { id: 'pack-6', coins: 490000, price: '99.99 $' },
-];
 
 /* =========================================================
    SVG Graphics for Realistic 3D Coins, Diamond & Backgrounds
@@ -393,7 +385,10 @@ export const RechargeModal: React.FC = () => {
 
   // Two tabs: 'coins' (عملات معدنية) and 'diamonds' (ألماسي)
   const [activeTab, setActiveTab] = useState<'coins' | 'diamonds'>('coins');
-  const [selectedPack, setSelectedPack] = useState<RechargePack>(rechargePacks[0]); // default 0.99$ selected like in image 1
+  const [rechargePacks, setRechargePacks] = useState<RechargePack[]>([]);
+  const [selectedPack, setSelectedPack] = useState<RechargePack | null>(null);
+  const [packagesLoading, setPackagesLoading] = useState(false);
+  const [packagesError, setPackagesError] = useState('');
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showOrderCheckModal, setShowOrderCheckModal] = useState(false);
   const [showExchangeModal, setShowExchangeModal] = useState(false);
@@ -405,6 +400,34 @@ export const RechargeModal: React.FC = () => {
   const [rechargeAgents, setRechargeAgents] = useState<Array<{ id: string; name: string; public_id: number }>>([]);
   const [agentsError, setAgentsError] = useState('');
   const [agentsLoading, setAgentsLoading] = useState(false);
+  useEffect(() => {
+    if (!openRechargeModal || activeTab !== 'coins' || rechargeMode !== 'app') return;
+    let active = true;
+    setPackagesLoading(true);
+    setPackagesError('');
+    void (async () => {
+      const { stagingBackend } = await import('../services/stagingBackend');
+      if (!stagingBackend) throw new Error('خدمة باقات الشحن غير متاحة');
+      const { data, error } = await stagingBackend.from('recharge_packages')
+        .select('id,price_usd,gold_amount').eq('is_active', true).order('price_usd');
+      if (error) throw error;
+      const rows = (data ?? [])
+        .filter(row => Number.isFinite(Number(row.gold_amount)) && Number(row.gold_amount) > 0 && Number.isFinite(Number(row.price_usd)) && Number(row.price_usd) > 0)
+        .map(row => ({ id: String(row.id), coins: Number(row.gold_amount), price: `${Number(row.price_usd).toFixed(2)} $` }));
+      if (active) {
+        setRechargePacks(rows);
+        setSelectedPack(rows[0] ?? null);
+      }
+    })().catch(error => {
+      if (active) {
+        setRechargePacks([]);
+        setSelectedPack(null);
+        setPackagesError(error instanceof Error ? error.message : 'تعذر تحميل باقات الشحن');
+      }
+    }).finally(() => { if (active) setPackagesLoading(false); });
+    return () => { active = false; };
+  }, [openRechargeModal, activeTab, rechargeMode]);
+
   useEffect(() => {
     if (!openRechargeModal || rechargeMode !== 'agents') return;
     let active = true;
@@ -590,8 +613,10 @@ export const RechargeModal: React.FC = () => {
 
             {/* 6 Packages Grid (3 Columns x 2 Rows) */}
             <div className="grid grid-cols-3 gap-2.5">
-              {rechargePacks.map((pack) => {
-                const isSelected = selectedPack.id === pack.id;
+              {packagesLoading ? <div className="col-span-3 rounded-xl border border-slate-200 p-4 text-center text-xs text-slate-500" role="status">جاري تحميل باقات الشحن…</div>
+                : packagesError || rechargePacks.length === 0 ? <div className="col-span-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-center text-xs text-amber-900" role="status">{packagesError || 'لا توجد باقات شحن نشطة حالياً.'}</div>
+                : rechargePacks.map((pack) => {
+                const isSelected = selectedPack?.id === pack.id;
 
                 return (
                   <div

@@ -41,6 +41,7 @@ Scope: code and Staging only. No APK build. Voice/music engines and Android pack
 | Agency metric placeholders | Replaced static host/agency zero salaries, levels, progress, time, commission, and rewards with explicit server-data-unavailable screens; the rewards modal hides fake balances and keeps withdrawal disabled until an audited backend flow exists. | Implemented, needs agency-account QA |
 | Diagnostic upload action | Removed the simulated 100% success message; the profile now reports that diagnostic upload is unavailable and confirms no data was sent. | Implemented, needs device QA |
 | Invite screen | Removed the client-only 2,500 coin simulation, unverified reward and customer-service claims, fake account-ID fallback, and the matching reward badge in the profile menu. Kept sharing and copy actions using the current account identifier, with unavailable states when it is missing. | Implemented, needs account/device QA |
+| Recharge package display | Removed hardcoded coin amounts and prices; active packages now load from the Staging `recharge_packages` table. Direct in-app purchase remains unavailable and does not claim or perform a credit. | Implemented, needs account/device QA |
 
 ## Remaining work and gates
 
