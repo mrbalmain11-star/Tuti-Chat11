@@ -104,15 +104,31 @@ export const GiftStoreModal: React.FC = () => {
     }
     sounds.playClick();
     setSending(true);
+    let groupRequestStorageKey: string | null = null;
     try {
       let success: boolean;
       if (sendToAll) {
-        groupRequestId.current ??= crypto.randomUUID();
+        const recipientKey = roomUserReceivers.map(receiver => receiver.id).sort().join(',');
+        groupRequestStorageKey = `totichat:group-gift:${currentUser.id}:${activeRoom!.id}:${selectedGift.id}:${selectedCount}:${recipientKey}`;
+        if (!groupRequestId.current) {
+          try {
+            const savedRequestId = localStorage.getItem(groupRequestStorageKey);
+            groupRequestId.current = savedRequestId && /^[0-9a-f-]{36}$/i.test(savedRequestId)
+              ? savedRequestId
+              : crypto.randomUUID();
+            localStorage.setItem(groupRequestStorageKey, groupRequestId.current);
+          } catch {
+            groupRequestId.current = crypto.randomUUID();
+          }
+        }
         success = await sendGiftToRoom(selectedGift, roomUserReceivers, selectedCount, groupRequestId.current);
       } else {
         success = await sendGift(selectedGift, currentReceiver!, selectedCount);
       }
       if (success) {
+        if (groupRequestStorageKey) {
+          try { localStorage.removeItem(groupRequestStorageKey); } catch { /* browser storage may be unavailable */ }
+        }
         groupRequestId.current = null;
         setOpenGiftStore(false);
       }

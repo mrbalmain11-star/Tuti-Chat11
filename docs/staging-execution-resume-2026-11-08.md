@@ -30,7 +30,7 @@ Scope: code and Staging only. No APK build. Voice/music engines and Android pack
 | Area | Change | Status |
 | --- | --- | --- |
 | Group room gifts | Added a server RPC that validates the exact current seated-recipient set (up to 14), gift price/category and quantity, and an idempotency key; serializes against seat changes; delegates each child transfer through the existing checked gift function inside one PostgreSQL transaction, so any failed recipient rolls back the whole batch. Authenticated-only execution, blank search path, and the existing wallet/ledger/audit path are retained. | Implemented on Staging; test-account and concurrency QA pending |
-| Group gift UI | Added “send to everyone,” recipient count and total cost preview. It uses a stable request ID across retry and displays recipient animations only after the server confirms all recipients. | Implemented, needs Android QA |
+| Group gift UI | Added “send to everyone,” recipient count and total cost preview. It stores an idempotency key per user, room, gift, quantity, and sorted recipient set, reuses that key after an uncertain retry even if the modal or app is reopened, clears it after confirmation, and displays recipient animations only after the server confirms all recipients. | Implemented, needs Android QA |
 | Migration corrections | Staging function-definition checks caught an invalid array alias and then an incorrect schema reference before any gift call. Follow-up migrations corrected both. Final remote checks confirm the corrected alias and delegate, `SECURITY DEFINER`, empty search path, authenticated execute, and no anon execute. | Applied and definition/security checked; financial execution not tested |
 
 ## Remaining work and gates
