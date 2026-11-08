@@ -33,6 +33,7 @@ Scope: code and Staging only. No APK build. Voice/music engines and Android pack
 | Group gift UI | Added “send to everyone,” recipient count and total cost preview. It stores an idempotency key per user, room, gift, quantity, and sorted recipient set, reuses that key after an uncertain retry even if the modal or app is reopened, clears it after confirmation, and displays recipient animations only after the server confirms all recipients. | Implemented, needs Android QA |
 | Migration corrections | Staging function-definition checks caught an invalid array alias and then an incorrect schema reference before any gift call. Follow-up migrations corrected both. Final remote checks confirm the corrected alias and delegate, `SECURITY DEFINER`, empty search path, authenticated execute, and no anon execute. | Applied and definition/security checked; financial execution not tested |
 | Level progression diagnosis | The server EXP RPCs sum historical `gift_events.amount`, while `GIFT_LEVEL_THRESHOLDS` compares that cumulative total against a list whose initial values match the previously specified per-level targets. Treating per-level costs as cumulative thresholds can explain the unusually fast early progression. | Root cause identified as likely; no thresholds or user levels changed because the complete official schedule is still pending |
+| Narrow-screen CSS | Removed an invalid, redundant class selector under the 360px media query; shared base styles already set the same font letter-spacing. | Build passes and the CSS selector warning is gone; visual Android QA still pending |
 
 ## Remaining work and gates
 
@@ -46,7 +47,7 @@ Scope: code and Staging only. No APK build. Voice/music engines and Android pack
 ## Checks already run
 
 - `npm run lint` — passed (`tsc --noEmit`).
-- `npm run build` — passed. Existing warnings remain for the font-class CSS selector, direct `eval` in `lottie-web`, ineffective dynamic import, and large output chunk.
+- `npm run build` — passed. Existing warnings remain for direct `eval` in `lottie-web`, ineffective dynamic import, and large output chunk. The invalid 360px font selector warning was removed.
 - `git diff --check` — passed for the group-gift changes.
 - Staging group-gift function definition and grants — confirmed corrected implementation, security-definer mode, empty search path, authenticated execute, and anon denied. No real gift call or wallet mutation was used as a test.
 - Staging DM function definition, RLS policies, and execution grants — re-read after migration; confirmed no direct-message RLS policy change and execute remains limited to `authenticated` plus database owner.

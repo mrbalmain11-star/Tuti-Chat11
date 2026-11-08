@@ -328,10 +328,6 @@ img, svg { max-width: 100%; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
-@media (max-width: 360px) {
-  .font-\\['Cairo'\\,sans-serif\\] { letter-spacing: normal; }
-}
-
 /* Profile Android WebView compatibility: avoid GPU filter tile artifacts on low-end devices. */
 .profile-android-safe { isolation: isolate; }
 .profile-android-safe .drop-shadow-xs,
