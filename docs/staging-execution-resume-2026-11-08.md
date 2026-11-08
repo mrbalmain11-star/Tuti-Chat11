@@ -42,6 +42,7 @@ Scope: code and Staging only. No APK build. Voice/music engines and Android pack
 | Diagnostic upload action | Removed the simulated 100% success message; the profile now reports that diagnostic upload is unavailable and confirms no data was sent. | Implemented, needs device QA |
 | Invite screen | Removed the client-only 2,500 coin simulation, unverified reward and customer-service claims, fake account-ID fallback, and the matching reward badge in the profile menu. Kept sharing and copy actions using the current account identifier, with unavailable states when it is missing. | Implemented, needs account/device QA |
 | Recharge package display | Removed hardcoded coin amounts and prices; active packages now load from the Staging `recharge_packages` table. Direct in-app purchase remains unavailable and does not claim or perform a credit. | Implemented, needs account/device QA |
+| VIP purchase safety | Staging `store_catalog` lists active VIP 1–8 at prices different from `staging_purchase_vip`; the RPC also permits VIP 9–12 without active catalog rows. The UI now hides unverified prices/perks and blocks purchases until the catalog and RPC are reconciled. No price or entitlement was changed. | Implemented partially; backend price approval/reconciliation is deferred |
 
 ## Remaining work and gates
 
@@ -51,6 +52,7 @@ Scope: code and Staging only. No APK build. Voice/music engines and Android pack
 4. Level audit: Staging wealth/charm EXP RPCs sum `gift_events.amount`; the client maps that cumulative total using `GIFT_LEVEL_THRESHOLDS` in `src/utils/levelUtils.ts`. Early entries match per-level targets rather than cumulative sums, a likely cause of fast early level-ups. The complete official schedule is still pending. Move level calculation to a server-owned threshold table and correct progression only after the owner supplies the full official schedule; do not change balances or invent thresholds.
 5. Test room creation, DM quota (3rd/4th, UTC rollover, mutual follow, block, retry, concurrency), single/group gifts, role boundaries, and all visual changes on test accounts and Android. No financial test gift was sent in this batch.
 6. Run final checks after all remaining code changes. Build APK only after separate owner approval.
+7. VIP checkout remains blocked: staging `store_catalog` prices for levels 1–8 do not match the `staging_purchase_vip` RPC price case, and levels 9–12 have no active catalog row. Confirm the official price schedule and reconcile the server catalog/RPC before re-enabling checkout.
 
 ## Checks already run
 

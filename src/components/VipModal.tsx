@@ -293,6 +293,10 @@ export const VIP_TIERS: VipTierData[] = [
 
 type PopupType = 'badge' | 'nickname' | 'mic' | 'headframe' | null;
 
+// Staging currently has different VIP prices in store_catalog and the purchase RPC.
+// Keep purchases unavailable until the owner confirms one authoritative price list.
+const VIP_PURCHASE_PRICES_RECONCILED = false;
+
 export const VipModal: React.FC = () => {
   const {
     openVipModal,
@@ -360,6 +364,10 @@ export const VipModal: React.FC = () => {
       setGiftSuccessToast('هذه الرتبة مملوكة بالفعل؛ لا حاجة إلى شراء جديد.');
       return;
     }
+    if (!VIP_PURCHASE_PRICES_RECONCILED) {
+      setGiftSuccessToast('شراء VIP متوقف مؤقتاً حتى توحيد أسعار الكتالوج والخادم. لم يتم الخصم.');
+      return;
+    }
     if (!stagingBackend) {
       alert('تعذر الاتصال بخادم الشراء.');
       return;
@@ -377,7 +385,7 @@ export const VipModal: React.FC = () => {
       sounds.playLevelUp();
       confetti({ particleCount: 150, spread: 100, origin: { y: 0.5 },
         colors: [activeTier.themeColor, '#f59e0b', '#ffd700', '#ffffff'] });
-      setGiftSuccessToast(`🎉 تم شراء ${activeTier.name} بنجاح لمدة 30 يوماً!`);
+      setGiftSuccessToast(`🎉 تم شراء ${activeTier.name} بنجاح لمدة ${activeTier.durationDays} يوماً!`);
     } catch (error) {
       console.error('VIP purchase rejected:', error);
       alert('فشل شراء VIP. لم يتم تأكيد أي خصم. تحقق من الرصيد والاتصال ثم حاول مجدداً.');
@@ -531,7 +539,7 @@ export const VipModal: React.FC = () => {
                   </span>
                 ) : (
                   <span className="px-3 py-1 rounded-full bg-black/70 text-amber-300 font-mono font-black text-[11px] shadow-lg border border-amber-400/60 backdrop-blur-xs">
-                    {activeTier.price.toLocaleString()} 🪙
+                    {VIP_PURCHASE_PRICES_RECONCILED ? `${activeTier.price.toLocaleString()} 🪙` : 'السعر غير معتمد'}
                   </span>
                 )}
               </div>
@@ -801,7 +809,7 @@ export const VipModal: React.FC = () => {
               <span>✦ قائمة مزايا رتبة {activeTier.name}:</span>
             </h3>
             <div className="space-y-2">
-              {activeTier.perks.map((perk, i) => (
+              {VIP_PURCHASE_PRICES_RECONCILED ? activeTier.perks.map((perk, i) => (
                 <div
                   key={i}
                   className="flex items-center gap-2.5 p-2 rounded-xl bg-white/[0.04] border border-white/5"
@@ -817,7 +825,7 @@ export const VipModal: React.FC = () => {
                   </div>
                   <span className="text-xs text-slate-200 leading-snug">{perk}</span>
                 </div>
-              ))}
+              )) : <div role="status" className="rounded-xl border border-amber-500/30 bg-amber-950/30 p-3 text-xs leading-6 text-amber-100">قائمة المزايا والأسعار الرسمية غير متاحة حالياً من مصدر موحّد.</div>}
             </div>
           </div>
         </div>
@@ -828,10 +836,10 @@ export const VipModal: React.FC = () => {
         <footer className="relative z-30 px-4 py-3 bg-[#0a0414]/98 backdrop-blur-md border-t border-amber-600/40 flex items-center justify-between shadow-[0_-4px_20px_rgba(0,0,0,0.8)]">
           {/* Right in RTL: Price Tag in Coins */}
           <div className="text-right">
-            <span className="text-[10px] text-slate-400 block font-bold">سعر الاشتراك (30 يوماً):</span>
+            <span className="text-[10px] text-slate-400 block font-bold">سعر الاشتراك:</span>
             <div className="flex items-center gap-1 font-mono font-black text-amber-300 text-sm">
-              <span>{activeTier.price.toLocaleString()}</span>
-              <span className="text-xs font-sans text-amber-400">كوينز 🪙</span>
+              <span>{VIP_PURCHASE_PRICES_RECONCILED ? activeTier.price.toLocaleString() : 'غير متاح'}</span>
+              {VIP_PURCHASE_PRICES_RECONCILED && <span className="text-xs font-sans text-amber-400">كوينز 🪙</span>}
             </div>
           </div>
 
@@ -865,10 +873,11 @@ export const VipModal: React.FC = () => {
             ) : (
               <button
                 onClick={handleAction}
-                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-xs transition active:scale-95 cursor-pointer shadow-[0_2px_15px_rgba(245,158,11,0.6)] border border-yellow-200 flex items-center gap-1.5"
+                disabled={!VIP_PURCHASE_PRICES_RECONCILED || vipPurchaseBusy}
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-xs transition active:scale-95 cursor-pointer shadow-[0_2px_15px_rgba(245,158,11,0.6)] border border-yellow-200 flex items-center gap-1.5 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <span>شراء الآن</span>
-                <span>🪙</span>
+                <span>{VIP_PURCHASE_PRICES_RECONCILED ? 'شراء الآن' : 'الشراء غير متاح'}</span>
+                {VIP_PURCHASE_PRICES_RECONCILED && <span>🪙</span>}
               </button>
             )}
           </div>
@@ -1019,7 +1028,9 @@ export const VipModal: React.FC = () => {
                       <button
                         onClick={() => {
                           sounds.playClick();
-                          if ((currentUser.coins ?? 0) >= activeTier.price) {
+                          if (!VIP_PURCHASE_PRICES_RECONCILED) {
+                            handleAction();
+                          } else if ((currentUser.coins ?? 0) >= activeTier.price) {
                             handleAction();
                           } else {
                             setActivePopup(null);
@@ -1029,7 +1040,7 @@ export const VipModal: React.FC = () => {
                         className="w-full h-12.5 rounded-full bg-gradient-to-r from-[#FFE58A] via-[#FFD666] to-[#F5A623] hover:brightness-105 active:scale-98 transition shadow-[0_4px_18px_rgba(245,166,35,0.45)] cursor-pointer flex items-center justify-center gap-2 text-[#3D2105] font-black text-sm"
                       >
                         <span>إلى الشحن</span>
-                        <span className="font-mono text-xs opacity-80">({activeTier.price.toLocaleString()} 🪙)</span>
+                        {VIP_PURCHASE_PRICES_RECONCILED && <span className="font-mono text-xs opacity-80">({activeTier.price.toLocaleString()} 🪙)</span>}
                       </button>
                     )}
                   </div>
@@ -1223,9 +1234,9 @@ export const VipModal: React.FC = () => {
 
               {/* Price summary */}
               <div className="p-3 rounded-xl bg-amber-950/40 border border-amber-500/30 flex items-center justify-between text-xs">
-                <span className="text-slate-300">سعر الاشتراك (30 يوماً):</span>
+                <span className="text-slate-300">سعر الاشتراك:</span>
                 <span className="font-bold text-amber-300 font-mono">
-                  {activeTier.price.toLocaleString()} كوينز 🪙
+                  {VIP_PURCHASE_PRICES_RECONCILED ? `${activeTier.price.toLocaleString()} كوينز 🪙` : 'غير متاح'}
                 </span>
               </div>
 
