@@ -38,6 +38,8 @@ Scope: code and Staging only. No APK build. Voice/music engines and Android pack
 | Profile inventory cleanup | Removed fixed car/frame showcase claims and hardcoded gift names/counts from the public profile. Self profile shows only equipped frame and vehicle values present in the authenticated Supabase inventory; other profiles and gift board show a clear unavailable state until verified data is exposed. | Implemented, needs account/device QA |
 | Agency member identities | Replaced the fixed “registered host” label and blank IDs with profile names, avatar URLs, and public account IDs read from Supabase under the existing authenticated profiles policy; removed the fabricated score field. | Implemented, needs agency-account QA |
 | VIP storage status | Replaced the fixed VIP 7 card, sample expiry, and invented privilege list with the account's actual VIP level/expiry; show an unavailable notice when no verified privilege catalog is supplied. | Implemented, needs account/device QA |
+| Agency metric placeholders | Replaced static host/agency zero salaries, levels, progress, time, commission, and rewards with explicit server-data-unavailable screens; the rewards modal hides fake balances and keeps withdrawal disabled until an audited backend flow exists. | Implemented, needs agency-account QA |
+| Diagnostic upload action | Removed the simulated 100% success message; the profile now reports that diagnostic upload is unavailable and confirms no data was sent. | Implemented, needs device QA |
 
 ## Remaining work and gates
 

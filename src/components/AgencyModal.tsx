@@ -7,18 +7,11 @@ import {
   ChevronDown,
   Users,
   Database,
-  Gift,
   ArrowUpDown,
-  Calendar,
-  Clock,
-  HelpCircle,
   Crown,
   BellRing,
   Send,
   MessageCircle,
-  Sparkles,
-  Info,
-  DollarSign
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
@@ -93,8 +86,6 @@ export const AgencyModal: React.FC = () => {
   const [expandedHostIndex, setExpandedHostIndex] = useState<number | null>(0);
 
   // Date Filter in Agent Data Details
-  const [selectedDateFilter, setSelectedDateFilter] = useState<'هذا الشهر' | 'اليوم'>('هذا الشهر');
-  const [showDateDropdown, setShowDateDropdown] = useState(false);
 
   // Agency Members List for Agent
   const [membersList, setMembersList] = useState<Array<{ id: string; publicId: number | null; name: string; role: string; avatar: string }>>([]);
@@ -163,7 +154,6 @@ export const AgencyModal: React.FC = () => {
   const [newMemberId, setNewMemberId] = useState('');
 
   // Agent Withdrawable Balance
-  const [agentBalance, setAgentBalance] = useState('0.00');
 
   // Toast message
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -287,350 +277,32 @@ export const AgencyModal: React.FC = () => {
             يظهر فقط عند النقر على مركز البيانات في شاشة المضيف
             ========================================================================= */}
         {activeSubView === 'host_data_details' ? (
-          <div className="relative z-30 w-full h-full flex flex-col bg-[#F6F7F9] text-slate-800 animate-in fade-in duration-200 overflow-hidden">
-            {/* Header with Back button */}
-            <div className="w-full bg-white border-b border-slate-200/80 px-4 py-3 flex items-center justify-between shrink-0 shadow-xs">
-              <button
-                onClick={() => {
-                  sounds.playClick();
-                  setActiveSubView(null);
-                }}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-700 hover:bg-slate-100 transition active:scale-95 cursor-pointer"
-                title="رجوع لصفحة المضيف"
-              >
-                <ChevronRight className="w-6 h-6 stroke-[2.5]" />
-              </button>
-
-              <h2 className="text-base font-black text-slate-900 tracking-wide">
-                تفاصيل بيانات المضيف
-              </h2>
-
-              <div className="w-8" />
+          <div className="relative z-30 flex h-full w-full flex-col overflow-hidden bg-[#F6F7F9] text-slate-800 animate-in fade-in duration-200">
+            <div className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 py-3 shadow-xs">
+              <button type="button" onClick={() => { sounds.playClick(); setActiveSubView(null); }} aria-label="العودة إلى مركز الوكالة" className="flex h-9 w-9 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100"><ChevronRight className="h-6 w-6" /></button>
+              <h2 className="text-base font-black text-slate-900">تفاصيل بيانات المضيف</h2>
+              <span className="w-9" />
             </div>
-
-            {/* Host Specific Metrics (Zeroed Out) */}
-            <div className="flex-1 overflow-y-auto no-scrollbar p-3.5 space-y-3">
-              {/* Card 1: مركز البيانات */}
-              <div
-                onClick={() => {
-                  sounds.playClick();
-                  showToast('ساعات البث وأيام الفعالية يتم احتسابها تلقائياً أثناء البث المباشر.');
-                }}
-                className="w-full bg-white rounded-2xl p-3.5 shadow-xs border border-slate-100 space-y-2.5 cursor-pointer active:scale-[0.99] transition"
-              >
-                <h3 className="text-xs font-bold text-slate-800 text-right">مركز البيانات</h3>
-
-                <div className="w-full bg-[#F8FAFC] border border-slate-100 rounded-xl p-3 flex items-center justify-between">
-                  <div className="text-right">
-                    <span className="text-[10px] text-slate-400 font-bold block">ايام فعالية</span>
-                    <span className="text-base font-black text-[#00BFA5]">0 يوم</span>
-                  </div>
-
-                  <div className="w-[1px] h-8 bg-slate-200" />
-
-                  <div className="text-right">
-                    <span className="text-[10px] text-slate-400 font-bold block">إجمالي الوقت</span>
-                    <span className="text-base font-black text-[#00BFA5]">0.00 ساعة</span>
-                  </div>
-
-                  <ChevronLeft className="w-4 h-4 text-[#00BFA5]" />
-                </div>
-              </div>
-
-              {/* Card 2: الرواتب */}
-              <div className="grid grid-cols-3 gap-2">
-                <div
-                  onClick={() => {
-                    sounds.playClick();
-                    showToast('إجمالي الرواتب المحتسبة للمضيف: $0');
-                  }}
-                  className="bg-white rounded-2xl p-2.5 text-center shadow-xs border border-slate-100 cursor-pointer active:scale-95 transition"
-                >
-                  <span className="text-[10px] text-slate-400 font-bold block">الرواتب الاجمالية</span>
-                  <span className="text-base font-black text-[#00BFA5] font-mono mt-0.5 block">$0</span>
-                </div>
-
-                <div
-                  onClick={() => {
-                    sounds.playClick();
-                    showToast('رواتب الكونز يتم تحويلها دورياً حسب الدعم المستلم.');
-                  }}
-                  className="bg-white rounded-2xl p-2.5 text-center shadow-xs border border-slate-100 cursor-pointer active:scale-95 transition"
-                >
-                  <div className="flex items-center justify-center gap-0.5 text-[10px] text-slate-400 font-bold">
-                    <span>رواتب الكونز</span>
-                    <HelpCircle className="w-2.5 h-2.5 text-slate-400" />
-                  </div>
-                  <span className="text-base font-black text-[#00BFA5] font-mono mt-0.5 block">$0</span>
-                </div>
-
-                <div
-                  onClick={() => {
-                    sounds.playClick();
-                    showToast('رواتب الماس تتاح عند الوصول للهدف الشهري.');
-                  }}
-                  className="bg-white rounded-2xl p-2.5 text-center shadow-xs border border-slate-100 cursor-pointer active:scale-95 transition"
-                >
-                  <div className="flex items-center justify-center gap-0.5 text-[10px] text-slate-400 font-bold">
-                    <span>رواتب الماس</span>
-                    <HelpCircle className="w-2.5 h-2.5 text-slate-400" />
-                  </div>
-                  <span className="text-base font-bold text-slate-400 font-mono mt-0.5 block">~</span>
-                </div>
-              </div>
-
-              {/* Card 3: الكونزات المستلمة */}
-              <div
-                onClick={() => {
-                  sounds.playClick();
-                  showToast('الهدف الحالي: Lv0 (0/550,000 كوينز).');
-                }}
-                className="w-full bg-white rounded-2xl p-3.5 shadow-xs border border-slate-100 space-y-2 cursor-pointer active:scale-[0.99] transition"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                    <span>الكونزات المستلمة</span>
-                  </span>
-                  <ChevronLeft className="w-4 h-4 text-slate-400" />
-                </div>
-
-                <div className="flex items-center justify-between text-xs font-bold">
-                  <span className="text-[#00BFA5] font-black">Lv0</span>
-                  <span className="text-amber-500 font-mono flex items-center gap-1">
-                    <span>🪙</span>
-                    <span>0/550000</span>
-                  </span>
-                </div>
-
-                <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
-                  <div className="h-full bg-[#00BFA5] rounded-full w-[0%]" />
-                </div>
-              </div>
-
-              {/* Card 4: بطاقات الماس */}
-              <div className="grid grid-cols-2 gap-2">
-                <div className="bg-white rounded-2xl p-3 text-center shadow-xs border border-slate-100">
-                  <span className="text-[10px] text-slate-400 font-bold block">مستوى رواتب الماس</span>
-                  <span className="text-base font-bold text-slate-400 font-mono mt-0.5 block">~</span>
-                </div>
-
-                <div className="bg-white rounded-2xl p-3 text-center shadow-xs border border-slate-100">
-                  <span className="text-[10px] text-slate-400 font-bold block">عدد الالماس تم مسح</span>
-                  <span className="text-base font-bold text-slate-400 font-mono mt-0.5 block">~</span>
-                </div>
+            <div className="flex flex-1 items-center justify-center p-6">
+              <div className="w-full max-w-sm rounded-2xl border border-amber-200 bg-white p-6 text-center shadow-xs" role="status">
+                <Database className="mx-auto h-8 w-8 text-amber-600" aria-hidden="true" />
+                <p className="mt-3 text-sm font-black text-slate-800">بيانات البث والرواتب غير متاحة حالياً</p>
+                <p className="mt-2 text-xs leading-6 text-slate-500">لم يوفّر الخادم قيماً موثقة لهذه الشاشة، لذلك لا نعرض ساعات أو أرصدة أو مستويات تقديرية.</p>
               </div>
             </div>
           </div>
         ) : activeSubView === 'agent_data_details' ? (
-          /* =========================================================================
-              DETAILED SUB-PAGE 2: AGENT DATA CENTER (بيانات الوكيل الشاملة)
-              يظهر فقط عند النقر على مركز البيانات في شاشة الوكيل
-              ========================================================================= */
-          <div className="relative z-30 w-full h-full flex flex-col bg-[#F6F7F9] text-slate-800 animate-in fade-in duration-200 overflow-hidden">
-            {/* Header with Back button */}
-            <div className="w-full bg-white border-b border-slate-200/80 px-4 py-3 flex items-center justify-between shrink-0 shadow-xs">
-              <button
-                onClick={() => {
-                  sounds.playClick();
-                  setActiveSubView(null);
-                }}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-700 hover:bg-slate-100 transition active:scale-95 cursor-pointer"
-                title="رجوع لصفحة الوكيل"
-              >
-                <ChevronRight className="w-6 h-6 stroke-[2.5]" />
-              </button>
-
-              <h2 className="text-base font-black text-slate-900 tracking-wide">
-                مركز بيانات الوكالة
-              </h2>
-
-              <div className="w-8" />
+          <div className="relative z-30 flex h-full w-full flex-col overflow-hidden bg-[#F6F7F9] text-slate-800 animate-in fade-in duration-200">
+            <div className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 py-3 shadow-xs">
+              <button type="button" onClick={() => { sounds.playClick(); setActiveSubView(null); }} aria-label="العودة إلى مركز الوكالة" className="flex h-9 w-9 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100"><ChevronRight className="h-6 w-6" /></button>
+              <h2 className="text-base font-black text-slate-900">مركز بيانات الوكالة</h2>
+              <span className="w-9" />
             </div>
-
-            {/* Agent Detailed Metrics */}
-            <div className="flex-1 overflow-y-auto no-scrollbar p-3.5 space-y-3">
-              {/* Date Filter Dropdown */}
-              <div className="relative w-full bg-white rounded-2xl p-3 shadow-xs border border-slate-100 flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-800">الوقت</span>
-                <button
-                  onClick={() => setShowDateDropdown(!showDateDropdown)}
-                  className="flex items-center gap-1.5 text-xs font-bold text-slate-700 bg-slate-50 border border-slate-200/70 px-3 py-1.5 rounded-xl cursor-pointer active:scale-95 transition"
-                >
-                  <Calendar className="w-3.5 h-3.5 text-slate-500" />
-                  <span className="font-mono">{selectedDateFilter}</span>
-                  <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-                </button>
-
-                {showDateDropdown && (
-                  <div className="absolute top-12 left-3 z-40 bg-white rounded-xl shadow-xl border border-slate-200 p-1 flex flex-col w-32 animate-in fade-in zoom-in-95">
-                    {(['هذا الشهر', 'اليوم'] as const).map((d) => (
-                      <button
-                        key={d}
-                        onClick={() => {
-                          sounds.playClick();
-                          setSelectedDateFilter(d);
-                          setShowDateDropdown(false);
-                          showToast(`تم تغيير فلتر الوقت إلى: ${d}`);
-                        }}
-                        className={`px-3 py-1.5 text-right text-xs rounded-lg font-bold transition ${
-                          selectedDateFilter === d ? 'bg-amber-50 text-amber-700' : 'text-slate-700 hover:bg-slate-50'
-                        }`}
-                      >
-                        {d}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Data Center Card with Timer */}
-              <div className="w-full bg-white rounded-2xl p-3.5 shadow-xs border border-slate-100 space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-bold text-slate-800">مركز البيانات</h3>
-                  <div className="flex items-center gap-1 text-xs font-mono font-bold text-[#00BFA5]">
-                    <span>00:00:00:00</span>
-                    <Clock className="w-3.5 h-3.5" />
-                  </div>
-                </div>
-
-                <div className="w-full bg-[#F8FAFC] border border-slate-100 rounded-xl p-3 flex items-center justify-between">
-                  <div className="text-right">
-                    <span className="text-[10px] text-slate-400 font-bold block">ايام فعالية</span>
-                    <span className="text-base font-black text-[#00BFA5]">0 يوم</span>
-                  </div>
-
-                  <div className="w-[1px] h-8 bg-slate-200" />
-
-                  <div className="text-right">
-                    <span className="text-[10px] text-slate-400 font-bold block">إجمالي الوقت</span>
-                    <span className="text-base font-black text-[#00BFA5]">0.00 ساعة</span>
-                  </div>
-
-                  <ChevronLeft className="w-4 h-4 text-[#00BFA5]" />
-                </div>
-              </div>
-
-              {/* Grid of 6 Cards for Agency */}
-              <div className="grid grid-cols-3 gap-2">
-                <div
-                  onClick={() => {
-                    sounds.playClick();
-                    showToast('بيانات الرواتب غير متاحة حالياً');
-                  }}
-                  className="bg-white rounded-2xl p-2.5 text-center shadow-xs border border-slate-100 cursor-pointer active:scale-95 transition"
-                >
-                  <span className="text-[10px] text-slate-400 font-bold block">رواتب الوكالة</span>
-                  <span className="text-base font-black text-[#00BFA5] font-mono mt-0.5 block">$0</span>
-                </div>
-
-                <div
-                  onClick={() => {
-                    sounds.playClick();
-                    showToast('رواتب الوكيل المباشرة: $0');
-                  }}
-                  className="bg-white rounded-2xl p-2.5 text-center shadow-xs border border-slate-100 cursor-pointer active:scale-95 transition"
-                >
-                  <span className="text-[10px] text-slate-400 font-bold block">رواتب الوكيل</span>
-                  <span className="text-base font-black text-[#00BFA5] font-mono mt-0.5 block">$0</span>
-                </div>
-
-                <div
-                  onClick={() => {
-                    sounds.playClick();
-                    showToast('مجموع رواتب المضيفين التابعين للوكالة: $0');
-                  }}
-                  className="bg-white rounded-2xl p-2.5 text-center shadow-xs border border-slate-100 cursor-pointer active:scale-95 transition"
-                >
-                  <span className="text-[10px] text-slate-400 font-bold block">رواتب المضيفين</span>
-                  <span className="text-base font-black text-[#00BFA5] font-mono mt-0.5 block">$0</span>
-                </div>
-
-                <div
-                  onClick={() => {
-                    sounds.playClick();
-                    showToast('نسبة عمولة الوكيل الرسمية: 0%');
-                  }}
-                  className="bg-white rounded-2xl p-2.5 text-center shadow-xs border border-slate-100 cursor-pointer active:scale-95 transition"
-                >
-                  <div className="flex items-center justify-center gap-0.5 text-[10px] text-slate-400 font-bold">
-                    <span>نسبة الوكيل</span>
-                    <HelpCircle className="w-2.5 h-2.5 text-slate-400" />
-                  </div>
-                  <span className="text-base font-black text-[#00BFA5] font-mono mt-0.5 block">$0</span>
-                </div>
-
-                <div
-                  onClick={() => {
-                    sounds.playClick();
-                    showToast('رواتب الكونز المستحقة: $0');
-                  }}
-                  className="bg-white rounded-2xl p-2.5 text-center shadow-xs border border-slate-100 cursor-pointer active:scale-95 transition"
-                >
-                  <div className="flex items-center justify-center gap-0.5 text-[10px] text-slate-400 font-bold">
-                    <span>رواتب الكونز</span>
-                    <HelpCircle className="w-2.5 h-2.5 text-slate-400" />
-                  </div>
-                  <span className="text-base font-black text-[#00BFA5] font-mono mt-0.5 block">$0</span>
-                </div>
-
-                <div
-                  onClick={() => {
-                    sounds.playClick();
-                    showToast('رواتب الماس الخاصة بالوكالة: لا توجد');
-                  }}
-                  className="bg-white rounded-2xl p-2.5 text-center shadow-xs border border-slate-100 cursor-pointer active:scale-95 transition"
-                >
-                  <div className="flex items-center justify-center gap-0.5 text-[10px] text-slate-400 font-bold">
-                    <span>رواتب الماس</span>
-                    <HelpCircle className="w-2.5 h-2.5 text-slate-400" />
-                  </div>
-                  <span className="text-base font-bold text-slate-400 font-mono mt-0.5 block">~</span>
-                </div>
-              </div>
-
-              {/* Agency Coins Target */}
-              <div className="w-full bg-white rounded-2xl p-3.5 shadow-xs border border-slate-100 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                    <span>🎁</span>
-                    <span>الكونزات المستلمة</span>
-                  </span>
-                  <ChevronLeft className="w-4 h-4 text-slate-400" />
-                </div>
-
-                <div className="flex items-center justify-between text-xs font-bold">
-                  <span className="text-[#00BFA5] font-black">Lv0</span>
-                  <span className="text-amber-500 font-mono flex items-center gap-1">
-                    <span>🪙</span>
-                    <span>غير متاح</span>
-                  </span>
-                </div>
-
-                <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
-                  <div className="h-full bg-[#00BFA5] rounded-full w-[0%]" />
-                </div>
-              </div>
-
-              {/* Diamond Stats */}
-              <div className="grid grid-cols-2 gap-2">
-                <div className="bg-white rounded-2xl p-3 text-center shadow-xs border border-slate-100">
-                  <span className="text-[10px] text-slate-400 font-bold block">مستوى رواتب الماس</span>
-                  <span className="text-base font-bold text-slate-400 font-mono mt-0.5 block">~</span>
-                </div>
-
-                <div className="bg-white rounded-2xl p-3 text-center shadow-xs border border-slate-100">
-                  <span className="text-[10px] text-slate-400 font-bold block">عدد الالماس تم مسح</span>
-                  <span className="text-base font-bold text-slate-400 font-mono mt-0.5 block">~</span>
-                </div>
-              </div>
-
-              {/* Hosts Breakdown List */}
-              <div className="space-y-2 pt-1">
-                <h4 className="text-sm font-bold text-slate-900 pr-1">
-                  تفاصيل البيانات
-                </h4>
-
-                <div className="rounded-2xl border border-slate-200 bg-white p-5 text-center text-sm text-slate-500" role="status">لا توجد بيانات أعضاء موثقة متاحة حالياً</div>
+            <div className="flex flex-1 items-center justify-center p-6">
+              <div className="w-full max-w-sm rounded-2xl border border-amber-200 bg-white p-6 text-center shadow-xs" role="status">
+                <Database className="mx-auto h-8 w-8 text-amber-600" aria-hidden="true" />
+                <p className="mt-3 text-sm font-black text-slate-800">إحصاءات الوكالة غير متاحة حالياً</p>
+                <p className="mt-2 text-xs leading-6 text-slate-500">لا توجد بيانات موثقة عن الرواتب أو الأهداف أو ساعات النشاط من الخادم. ستبقى هذه الشاشة بلا أرقام حتى يتوفر مصدر بيانات موثوق.</p>
               </div>
             </div>
           </div>
@@ -1138,61 +810,16 @@ export const AgencyModal: React.FC = () => {
             AGENT SUB-MODAL 2: المكافأة والأرباح
             ========================================================================= */}
         {activeSubView === 'agent_rewards' && (
-          <div
-            onClick={() => setActiveSubView(null)}
-            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in"
-          >
-            <div
-              onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-[380px] rounded-t-[32px] sm:rounded-[32px] bg-gradient-to-b from-[#0E1526] to-[#060A14] border-t sm:border border-amber-400/50 p-4 shadow-2xl flex flex-col max-h-[85vh] animate-in slide-in-from-bottom-4"
-            >
-              <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-yellow-400/20 border border-yellow-400 flex items-center justify-center text-yellow-300">
-                    <Gift className="w-4 h-4" />
-                  </div>
-                  <h4 className="text-base font-black text-yellow-200">سجل الأرباح والمكافآت</h4>
-                </div>
-
-                <button
-                  onClick={() => setActiveSubView(null)}
-                  className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 flex items-center justify-center text-xs cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/75 p-0 backdrop-blur-sm sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-label="سجل الأرباح والمكافآت">
+            <div className="w-full max-w-sm rounded-t-3xl border border-amber-400/40 bg-[#0E1526] p-5 text-center text-white shadow-2xl sm:rounded-3xl">
+              <div className="flex items-center justify-between">
+                <h4 className="text-base font-black text-amber-200">الأرباح والمكافآت</h4>
+                <button type="button" onClick={() => setActiveSubView(null)} aria-label="إغلاق" className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-slate-200"><X className="h-4 w-4" /></button>
               </div>
-
-              <div className="flex-1 overflow-y-auto no-scrollbar space-y-3">
-                <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-500/20 via-purple-950/40 to-slate-900 border border-amber-400/40 text-center space-y-2">
-                  <span className="text-xs font-bold text-slate-300">رصيد أرباح وعمولات الوكيل المتاحة</span>
-                  <h3 className="text-3xl font-black text-emerald-400 font-mono tracking-tight">$ {agentBalance}</h3>
-                  <p className="text-[11px] text-amber-300 font-bold">نسبة عمولة الوكالة الحالية: 0% من دعم المضيفين</p>
-                  <button
-                    onClick={() => {
-                      sounds.playLevelUp();
-                      showToast('سحب الأرباح غير متاح حتى تفعيل الخدمة والتحقق من الرصيد على الخادم');
-                    }}
-                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black text-xs shadow-md active:scale-95 transition mt-2 cursor-pointer"
-                  >
-                    سحب الأرباح الآن
-                  </button>
-                </div>
-
-                <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-2 text-right">
-                  <h5 className="text-xs font-black text-amber-300 flex items-center gap-1.5">
-                    <Gift className="w-4 h-4" />
-                    <span>مكافآت التميز الشهرية:</span>
-                  </h5>
-                  <div className="flex justify-between items-center text-xs p-2 rounded-lg bg-black/30 border border-white/5">
-                    <span className="text-slate-300">مكافأة أفضل 3 وكالات في العراق</span>
-                    <span className="font-bold text-amber-400 font-mono">+$ 0.00</span>
-                  </div>
-                  <div className="flex justify-between items-center text-xs p-2 rounded-lg bg-black/30 border border-white/5">
-                    <span className="text-slate-300">بونص ساعات البث الإضافية</span>
-                    <span className="font-bold text-emerald-400 font-mono">+$ 0.00</span>
-                  </div>
-                </div>
-              </div>
+              <Database className="mx-auto mt-5 h-8 w-8 text-amber-300" aria-hidden="true" />
+              <p className="mt-3 text-sm font-bold text-white">سجل الأرباح والعمولات غير متاح من الخادم حالياً</p>
+              <p className="mt-2 text-xs leading-6 text-slate-300">لا توجد بيانات موثقة عن الرصيد أو النسبة أو المكافآت، لذلك أُخفيت القيم التجريبية وتعطّل السحب حتى ربطه بعملية مالية آمنة.</p>
+              <button type="button" disabled className="mt-5 w-full rounded-xl bg-white/10 py-2.5 text-xs font-black text-slate-400" aria-disabled="true">السحب غير متاح</button>
             </div>
           </div>
         )}

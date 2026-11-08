@@ -253,12 +253,9 @@ export const ProfileView: React.FC = () => {
   };
 
   const handleUploadLogs = () => {
-    sounds.playCoin();
-    setToastMessage('جاري رفع السجلات...');
-    setTimeout(() => {
-      setToastMessage('تم رفع السجلات بنجاح بنسبة 100% ✅');
-      setTimeout(() => setToastMessage(null), 3000);
-    }, 1200);
+    sounds.playClick();
+    setToastMessage('رفع سجلات التشخيص غير متاح حالياً. لم يتم إرسال أي بيانات.');
+    setTimeout(() => setToastMessage(null), 3000);
   };
 
   const handleInvite = () => {
