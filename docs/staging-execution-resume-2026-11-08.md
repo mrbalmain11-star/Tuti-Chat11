@@ -19,6 +19,7 @@ Scope: code and Staging only. No APK build. Voice/music engines and Android pack
 | Direct-message policy | Replaced `staging_send_dm` on Staging: mutual follows are unrestricted; otherwise at most three accepted messages per recipient per UTC day. Per-pair advisory locking and nonce idempotency prevent races/retry double-counts. Blocking and OTP checks remain. | Applied to Staging and definition/RLS/execute grants re-read; account and concurrent scenario tests pending |
 | Login screen | Removed the phone-login entry point; Google login and current email OTP flow were not changed. | Implemented, needs device QA |
 | Gift chooser | Recolored gift cards to the green and gold visual identity and made each selectable gift a keyboard and screen-reader button with its real name and price. Existing server-backed send and debit path is unchanged. | Implemented, needs device QA |
+| Profile data display | Removed fixed Iraqi flag and fixed age/gender sample from the profile; show the account's country and age only when present, hide missing game levels, and avoid showing visitor wealth/charm levels until the Staging status RPC returns. | Implemented, needs device and data QA |
 
 ## Remaining work and gates
 
