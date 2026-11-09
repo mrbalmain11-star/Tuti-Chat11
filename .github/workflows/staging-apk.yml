@@ -231,6 +231,13 @@ jobs:
           unzip -t "$APK" | tail -n 2
           unzip -Z1 "$APK" | grep -qx "AndroidManifest.xml"
           jarsigner -verify "$APK"
+          # Android Package Manager validates APK signing schemes, not just JAR signatures.
+          # Fail the build rather than publish an APK rejected on Android 14.
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)"
+          test -x "$APKSIGNER"
+          "$APKSIGNER" verify --verbose --print-certs --min-sdk-version 34 "$APK"
+          AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -n 1)"
+          "$AAPT" dump badging "$APK" | grep -E '^(package:|sdkVersion:|targetSdkVersion:|native-code:)' || true
           sha256sum "$APK" | tee android/app/build/outputs/apk/debug/app-debug.apk.sha256
           ls -lh "$APK"
       # Do not publish the GitHub Actions ZIP artifact: Android users must
