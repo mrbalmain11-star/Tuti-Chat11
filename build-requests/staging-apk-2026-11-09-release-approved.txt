@@ -1,0 +1,8 @@
+TotiChat Staging APK build request
+
+Owner approval: received in ChatGPT on 2026-11-09.
+Target branch: integration/legacy-backend-staging
+Source commit before request: bcaa882f41c0676c46743f08377a393fc618fa81
+Build method: existing .github/workflows/staging-apk.yml only.
+Preserve package identity, staging signing cache, Android manifest/audio permission setup, and packaging steps.
+Do not modify Main or Production.
