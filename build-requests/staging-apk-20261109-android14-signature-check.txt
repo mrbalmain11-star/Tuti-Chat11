@@ -1,0 +1,1 @@
+Rebuild with Android 14 APK signature verification gate. Prior staging APKs rejected by device as invalid package. Do not publish unless apksigner verification succeeds.
