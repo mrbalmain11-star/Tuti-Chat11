@@ -1,0 +1,2 @@
+Requested new TotiChat staging APK build on 2026-11-09.
+Use latest staging branch updates. Verify APK installation on Android before release where possible.
