@@ -189,7 +189,8 @@ export const VoiceRoomModal: React.FC = () => {
       y: Math.max(0, Math.min(window.innerHeight - 72, drag.y - dy)),
     });
   };
-  const onBubblePointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+  const onBubblePointerUp = (event: React.PointerEvent<HTMLDi���z��
+�)�֧u�ݢ�i��k�G��*^vElement>) => {
     const drag = bubbleDragRef.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
     bubbleDragRef.current = null;
@@ -1032,7 +1033,8 @@ export const VoiceRoomModal: React.FC = () => {
       return 'border-cyan-400/50 shadow-[0_0_12px_rgba(6,182,212,0.3)]';
     }
     if (activeRoom?.roomFrameTheme === 'ruby') {
-      return 'border-rose-400/50 shadow-[0_0_12px_rgba(244,63,94,0.3)]';
+      return 'border-rose-400/50 shadow-[0_���z��
+�)�֧u�ݢ�i��k�G��*^0_12px_rgba(244,63,94,0.3)]';
     }
     return 'border-purple-400/35 shadow-[0_0_12px_rgba(168,85,247,0.25)]';
   };
@@ -1167,7 +1169,8 @@ export const VoiceRoomModal: React.FC = () => {
       const anchor = chatAnchorRef.current;
       const anchorElement = anchor
         ? Array.from(container.querySelectorAll<HTMLElement>('[data-room-message-id]'))
-            .find(element => element.dataset.roomMessageId === anchor.id)
+            .find(element => element.dataset.roomMes���z��
+�)�֧u�ݢ�i��k�G��*^sageId === anchor.id)
         : null;
       if (anchorElement && anchor) {
         container.scrollTop = anchorElement.offsetTop - container.offsetTop - anchor.offset;
@@ -1469,7 +1472,8 @@ export const VoiceRoomModal: React.FC = () => {
                 </div>
 
                 {/* Room Info: Name & Host Account ID */}
-                <div className="flex flex-col text-right leading-tight">
+                <���z��
+�)�֧u�ݢ�i��k�G��*^div className="flex flex-col text-right leading-tight">
                   <div className="flex items-center gap-1">
                     <span className="text-xs font-black text-white tracking-wide max-w-[120px] truncate">
                       {activeRoom.title || 'العراق الع...'}
@@ -1898,7 +1902,8 @@ export const VoiceRoomModal: React.FC = () => {
                 sounds.playClick();
                 setShowEmojiPicker(!showEmojiPicker);
               }}
-              className="w-10 h-10 rounded-full bg-[#241747]/90 hover:bg-[#342263] border border-purple-400/25 text-white flex items-center justify-center transition active:scale-95 shadow-md cursor-pointer"
+              className="w-10 h-10 rounded-full bg-[#241747]/90 hover:bg-[#342263] border border-purple-400/25 text-white flex items-center justify-center transition active:scale-95 shad���z��
+�)�֧u�ݢ�i��k�G��*^ow-md cursor-pointer"
               title="التعبيرات والرموز التفاعلية"
             >
               <Smile className="w-5 h-5 text-white stroke-[2]" />
@@ -2322,7 +2327,8 @@ export const VoiceRoomModal: React.FC = () => {
             2. بإذن المالك فقط (عضوية أو إشراف)
             ========================================================================= */}
         {showRoomModeModal && (
-          <div
+          ���z��
+�)�֧u�ݢ�i��k�G��*^<div
             onClick={() => setShowRoomModeModal(false)}
             className="fixed inset-0 z-60 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in"
           >
@@ -2577,9 +2583,11 @@ export const VoiceRoomModal: React.FC = () => {
 
               {/* Circular Avatar popping up out of the top edge */}
               <button type="button" onClick={() => { const target = selectedMicUser.user; setSelectedMicUser(null); handleOpenUserProfile(target); }} aria-label="فتح الملف الشخصي الكامل" className="relative -mt-9 mx-auto block w-20 h-20 sm:w-22 sm:h-22 rounded-full border-2 border-white/90 overflow-hidden shadow-2xl bg-slate-900">
+                <CircleUserRound className="absolute inset-0 m-auto h-10 w-10 text-slate-400" aria-hidden="true" />
                 <img
                   src={selectedMicUser.user.avatar}
                   alt={selectedMicUser.user.name}
+                  onError={event => { event.currentTarget.style.display = 'none'; }}
                   className="w-full h-full object-cover"
                 />
               </button>
@@ -2592,8 +2600,9 @@ export const VoiceRoomModal: React.FC = () => {
               {selectedMicAgencyName && <p className="mt-1 text-center text-[11px] font-bold text-red-400">{selectedMicAgencyName}</p>}
               <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-xs font-bold" aria-live="polite">
                 {selectedMicVerifiedStatus?.userId === selectedMicUser.user.id ? <>
-                  <span className="rounded-full bg-amber-500/15 border border-amber-400/40 px-3 py-1 text-amber-200">خبرة الثروة: {selectedMicVerifiedStatus.wealthExp.toLocaleString()}</span>
-                  <span className="rounded-full bg-fuchsia-500/15 border border-fuchsia-400/40 px-3 py-1 text-fuchsia-200">خبرة السحر: {selectedMicVerifiedStatus.charmExp.toLocaleString()}</span>
+                  <span className="rounded-full bg-amber-500/15 border border-amber-400/40 px-3 py-1 text-amber-200">إجمالي خبرة الثروة: {selectedMicVerifiedStatus.wealthExp.toLocaleString()}</span>
+                  <span className="rounded-full bg-fuchsia-500/15 border border-fuchsia-400/40 px-3 py-1 text-fuchsia-200">إجمالي خبرة السحر: {selectedMicVerifiedStatus.charmExp.toLocaleString()}</span>
+                  <span className="rounded-full border border-slate-500/40 bg-slate-700/30 px-3 py-1 text-slate-300">المستوى الرسمي غير متاح</span>
                   {selectedMicVerifiedStatus.vipLevel > 0 && <span className="rounded-full border border-yellow-400/50 bg-yellow-500/15 px-3 py-1 text-yellow-200">VIP {selectedMicVerifiedStatus.vipLevel}</span>}
                   {selectedMicVerifiedStatus.loadFailed && <span className="text-slate-400">تعذر التحقق من المستويات</span>}
                 </> : <span className="text-slate-400">جارٍ التحقق من بيانات الحساب…</span>}
@@ -2603,7 +2612,7 @@ export const VoiceRoomModal: React.FC = () => {
                 if (error || !data) { showToast('تعذر فتح ملف الشريك'); return; }
                 const avatar = data.avatar_url ? (/^(https?:\/\/|data:image\/)/i.test(data.avatar_url) ? data.avatar_url : stagingBackend.storage.from('profile-avatars').getPublicUrl(data.avatar_url).data.publicUrl) : '';
                 setSelectedMicUser(null);
-                handleOpenUserProfile({ ...currentUser, id: data.id, name: data.display_name || 'مستخدم', nickname: data.display_name || 'مستخدم', avatar, country: '', countryCode: '', countryFlag: '', birthdate: '', age: null, friendsCount: 0, followersCount: 0, followingCount: 0, fansCount: 0, visitorsCount: 0, hearts: 0, gameLevel: 0, gameExp: 0, cover: '', bio: '', album: [], vipExpiry: '', specialIdBadge: undefined, isBanned: false, banReason: undefined, isNameBanned: false, isAvatarBanned: false, wealthExp: 0, charmExp: 0, wealthLevel: 0, charmLevel: 0, coins: 0, diamonds: 0, vipLevel: 0, isSuperAdmin: false, isRechargeAgent: false, isHost: false, isSpecialId: false, permissions: [], agencyRole: undefined, agencyName: undefined, rechargeCoins: 0, hasWelcomeBanner: false });
+                handleOpenUserProfile({ ...currentUser, id: data.id, name: data.display_name || 'مستخدم', nickname: data.display_name || 'مستخدم', avatar, country: '', countryCode: '', countryFlag: '', birthdate: '', age: null, friendsCount: 0, followersCount: 0, followingCount: 0, fansCount: 0, visitorsCount: 0���¸�y�뢰k�G��*^, hearts: 0, gameLevel: 0, gameExp: 0, cover: '', bio: '', album: [], vipExpiry: '', specialIdBadge: undefined, isBanned: false, banReason: undefined, isNameBanned: false, isAvatarBanned: false, wealthExp: 0, charmExp: 0, wealthLevel: 0, charmLevel: 0, coins: 0, diamonds: 0, vipLevel: 0, isSuperAdmin: false, isRechargeAgent: false, isHost: false, isSpecialId: false, permissions: [], agencyRole: undefined, agencyName: undefined, rechargeCoins: 0, hasWelcomeBanner: false });
               })().catch(() => showToast('تعذر فتح ملف الشريك')); }} compact />
               <button type="button" onClick={() => { const target = selectedMicUser.user; setSelectedMicUser(null); handleOpenUserProfile(target); }} className="mx-auto mt-4 flex min-h-12 w-[min(100%,340px)] items-center justify-center gap-2 rounded-full bg-gradient-to-l from-emerald-400 via-green-400 to-teal-500 px-5 py-3 text-base font-black text-emerald-950 shadow-[0_8px_22px_rgba(16,185,129,.28)] transition active:scale-[.98]">
                 <CircleUserRound className="h-5 w-5" /> المزيد

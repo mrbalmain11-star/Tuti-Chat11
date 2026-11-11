@@ -659,24 +659,14 @@ export const VipModal: React.FC = () => {
                 {/* 1. VIP Beast Badge */}
                 <VipBadge vipLevel={activeTier.level} size="compact" />
 
-                {/* 2. Level Badge (Lv.101 / wealth level) */}
-                <div className="px-2 py-0.5 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-black text-[10px] flex items-center gap-0.5 shadow-xs">
-                  <span>🌸</span>
-                  <span>
-                    {currentUser.wealthLevel && currentUser.wealthLevel > 1
-                      ? currentUser.wealthLevel
-                      : 101}
-                  </span>
-                </div>
-
-                {/* 3. Gender & Age */}
-                <div className="px-2 py-0.5 rounded-full bg-cyan-600 text-white font-bold text-[10px] flex items-center gap-0.5">
-                  <span>{currentUser.gender === 'أنثى' ? '♀' : '♂'}</span>
-                  <span>{currentUser.gender === 'أنثى' ? '24' : '27'}</span>
-                </div>
-
-                {/* 4. Country Flag */}
-                <span className="text-sm select-none">{currentUser.countryFlag || '🇮🇶'}</span>
+                {/* Profile details appear only when verified data exists. */}
+                {currentUser.age && currentUser.age > 0 && (
+                  <div className="px-2 py-0.5 rounded-full bg-cyan-600 text-white font-bold text-[10px] flex items-center gap-0.5">
+                    <span>{currentUser.gender === 'أنثى' ? '♀' : currentUser.gender === 'ذكر' ? '♂' : ''}</span>
+                    <span>{currentUser.age}</span>
+                  </div>
+                )}
+                {currentUser.countryFlag && <span className="text-sm select-none">{currentUser.countryFlag}</span>}
               </div>
 
               {/* ID Row with copy */}

@@ -12,12 +12,10 @@ export const TopRoomsPodium: React.FC<{ rooms: VoiceRoom[] }> = ({ rooms }) => {
       <div className="grid grid-cols-3 items-end gap-2 sm:gap-3">
         {ranked.map(({ rank, room }) => (
           <div key={rank} className={`min-w-0 ${rank === 1 ? 'relative -translate-y-3 z-10' : 'relative z-0'}`}>
-            {room ? <RoomCard room={room} /> : (
-              <div className="aspect-square rounded-2xl border border-amber-200/60 bg-amber-50/40" aria-label={`المركز ${rank} غير محدد`} />
-            )}
-            <div className={`mt-1 text-center text-xs font-black ${rank === 1 ? 'text-amber-700' : rank === 2 ? 'text-sky-700' : 'text-rose-700'}`}>
+            {room ? <RoomCard room={room} /> : <div className="aspect-square" aria-hidden="true" />}
+            {room && <div className={`mt-1 text-center text-xs font-black ${rank === 1 ? 'text-amber-700' : rank === 2 ? 'text-sky-700' : 'text-rose-700'}`}>
               TOP {rank}
-            </div>
+            </div>}
           </div>
         ))}
       </div>

@@ -13,7 +13,6 @@ import {
   Pencil,
   X,
   LogOut,
-  Crown,
   ShieldCheck,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
@@ -358,9 +357,6 @@ export const ProfileView: React.FC = () => {
                     }}
                   />
                   <div className="absolute -inset-1.5 rounded-full border-2 border-[#fff1a8] pointer-events-none" />
-                  <div className="absolute -top-5 left-1/2 -translate-x-1/2 z-20 text-amber-300 drop-shadow-[0_2px_3px_#4a044e] pointer-events-none">
-                    <Crown className="w-7 h-7 fill-amber-400 stroke-amber-100" />
-                  </div>
                   <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 z-20 rounded-full bg-gradient-to-r from-amber-600 via-[#ffde87] to-amber-600 px-2 py-0.5 text-[9px] font-black text-[#40130c] border border-amber-100 shadow-lg whitespace-nowrap pointer-events-none">
                     VIP {currentUser.vipLevel}
                   </span>
@@ -381,6 +377,7 @@ export const ProfileView: React.FC = () => {
                     '/placeholder-avatar.svg'
                   }
                   alt={currentUser.name}
+                  onError={event => { event.currentTarget.src = '/placeholder-avatar.svg'; }}
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -461,15 +458,13 @@ export const ProfileView: React.FC = () => {
                 {/* Flag */}
                 {currentUser.countryFlag && <span className="text-base leading-none">{currentUser.countryFlag}</span>}
 
-                {/* Only verified profile values are displayed. */}
-                {/* Charm / Experience Level Badge */}
-                <button type="button" onClick={() => { sounds.playClick(); setLevelsModalTab('charm'); setOpenLevelsModal(true); }} className="rounded-full border border-purple-200 bg-purple-50 px-2 py-1 text-[10px] font-bold text-purple-800">مستوى السحر: —</button>
+                {/* Gift totals are verified by the server; do not present them as levels. */}
+                <button type="button" onClick={() => { sounds.playClick(); setLevelsModalTab('charm'); setOpenLevelsModal(true); }} className="max-w-full truncate rounded-full border border-purple-200 bg-purple-50 px-2 py-1 text-[10px] font-bold text-purple-800">خبرة السحر: {(currentUser.charmExp || 0).toLocaleString()}</button>
+                <button type="button" onClick={() => { sounds.playClick(); setLevelsModalTab('wealth'); setOpenLevelsModal(true); }} className="max-w-full truncate rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-[10px] font-bold text-amber-900">خبرة الثروة: {(currentUser.wealthExp || 0).toLocaleString()}</button>
 
-                {/* Wealth Level Badge */}
-                <button type="button" onClick={() => { sounds.playClick(); setLevelsModalTab('wealth'); setOpenLevelsModal(true); }} className="rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-[10px] font-bold text-amber-900">مستوى الثروة: —</button>
-
-                {/* Games Level Badge (مستوى الألعاب) */}
-                <button type="button" onClick={() => { sounds.playClick(); setLevelsModalTab('games'); setOpenLevelsModal(true); }} className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-900">مستوى الألعاب: —</button>
+                {(currentUser.gameLevel || 0) > 0 && (
+                  <button type="button" onClick={() => { sounds.playClick(); setLevelsModalTab('games'); setOpenLevelsModal(true); }} className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-900">مستوى الألعاب: {currentUser.gameLevel}</button>
+                )}
 
                 {/* VIP Level Badge (إشارة VIP واحدة فقط في الملف الشخصي) */}
                 {currentUser.vipLevel > 0 && (

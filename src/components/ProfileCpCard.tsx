@@ -120,17 +120,18 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
         <div key={link.typeId + link.partnerId} className="rounded-xl border border-amber-300/50 bg-[#2c142b]/75 p-1.5 text-amber-50 backdrop-blur-sm">
           <div className="grid grid-cols-[minmax(0,1fr)_minmax(56px,76px)_minmax(0,1fr)] items-center gap-1">
             <div className="flex min-w-0 flex-col items-center gap-1 text-center">
-              <div className="relative h-[clamp(42px,14vw,58px)] w-[clamp(42px,14vw,58px)] shrink-0">
+              <div className={`relative shrink-0 ${compact ? 'h-11 w-11' : 'h-[clamp(42px,14vw,58px)] w-[clamp(42px,14vw,58px)]'}`}>
                 <div className="absolute inset-[8px] overflow-hidden rounded-full bg-[#5c3048]">
-                {userAvatar ? <img src={userAvatar} alt={userName || 'صاحب الملف'} className="h-full w-full rounded-full object-cover" /> : <CircleUserRound className="h-full w-full text-amber-200" />}
+                <CircleUserRound className="absolute inset-0 h-full w-full p-2 text-amber-200" aria-hidden="true" />
+                {userAvatar && <img src={userAvatar} alt={userName || 'صاحب الملف'} onError={event => { event.currentTarget.style.display = 'none'; }} className="relative h-full w-full rounded-full object-cover" />}
                 </div>
                 <RoyalCpAvatarFrame />
               </div>
-              <span className="w-full truncate text-[11px] font-bold">{userName || 'صاحب الملف'}</span>
+              <span className="min-h-7 w-full break-words text-[11px] font-bold leading-3.5 line-clamp-2">{userName || 'صاحب الملف'}</span>
             </div>
             <div className="flex min-w-0 flex-col items-center gap-1 text-center">
               {Number.isFinite(Number(link.level)) && Number(link.level) > 0 ? (
-                <div className="relative flex h-[clamp(42px,14vw,58px)] w-[clamp(42px,14vw,58px)] items-center justify-center" aria-label={`مستوى العلاقة ${link.level}`}>
+                <div className={`relative flex items-center justify-center ${compact ? 'h-11 w-11' : 'h-[clamp(42px,14vw,58px)] w-[clamp(42px,14vw,58px)]'}`} aria-label={`مستوى العلاقة ${link.level}`}>
                   {link.typeId === 'love' ? <RoyalCpHeart /> : <span className="absolute inset-2 rounded-full border-2 border-amber-200 bg-gradient-to-br from-[#6d3b15] via-[#e9ba64] to-[#67310e]" />}
                   <span className="relative z-10 mt-1 rounded-md bg-[#54132d]/60 px-1 text-sm font-black text-white drop-shadow-[0_1px_2px_#33051b]">{link.level}</span>
                 </div>
@@ -138,13 +139,14 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
               <span className="max-w-[90px] break-words text-[10px] font-bold text-amber-100">{link.typeLabel}</span>
             </div>
             <div className="flex min-w-0 flex-col items-center gap-1 text-center">
-              <button type="button" disabled={!onPartnerClick} onClick={() => onPartnerClick?.(link.partnerId)} aria-label={`فتح ملف ${link.partnerName || 'الشريك'}`} className="relative h-[clamp(42px,14vw,58px)] w-[clamp(42px,14vw,58px)] shrink-0 disabled:cursor-default enabled:active:scale-95">
+              <button type="button" disabled={!onPartnerClick} onClick={() => onPartnerClick?.(link.partnerId)} aria-label={`فتح ملف ${link.partnerName || 'الشريك'}`} className={`relative shrink-0 disabled:cursor-default enabled:active:scale-95 ${compact ? 'h-11 w-11' : 'h-[clamp(42px,14vw,58px)] w-[clamp(42px,14vw,58px)]'}`}>
                 <div className="absolute inset-[8px] overflow-hidden rounded-full bg-[#5c3048]">
-                {link.partnerAvatar ? <img src={link.partnerAvatar} alt={link.partnerName || 'الشريك'} className="h-full w-full rounded-full object-cover" /> : <CircleUserRound className="h-full w-full text-amber-200" />}
+                <CircleUserRound className="absolute inset-0 h-full w-full p-2 text-amber-200" aria-hidden="true" />
+                {link.partnerAvatar && <img src={link.partnerAvatar} alt={link.partnerName || 'الشريك'} onError={event => { event.currentTarget.style.display = 'none'; }} className="relative h-full w-full rounded-full object-cover" />}
                 </div>
                 <RoyalCpAvatarFrame />
               </button>
-              <span className="w-full truncate text-[11px] font-bold">{link.partnerName || 'الشريك'}</span>
+              <span className="min-h-7 w-full break-words text-[11px] font-bold leading-3.5 line-clamp-2">{link.partnerName || 'الشريك'}</span>
             </div>
           </div>
           {link.partnerPublicId != null && <p className="mt-1 text-center text-[10px] text-amber-100/75">ID {link.partnerPublicId}</p>}

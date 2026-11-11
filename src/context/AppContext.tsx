@@ -131,7 +131,8 @@ interface AppContextType {
   selectedGiftReceiver: { id: string; name: string; avatar?: string } | null;
   setSelectedGiftReceiver: (receiver: { id: string; name: string; avatar?: string } | null) => void;
   openProfileForUser: (user: Partial<UserProfile> | { id: string; name: string; avatar?: string }) => void;
-  deleteRoom: (roomId: string) => void;
+  deleteRoom: (roomId: string) => vo���z��
+�)�֧u�ݢ�i��k�G��*^id;
   isLoggedIn: boolean;
   setIsLoggedIn: (logged: boolean) => void;
   language: Language;
@@ -290,6 +291,66 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (stop) void stop().catch(() => console.warn('Push cleanup unavailable'));
     };
   }, [isLoggedIn]);
+
+  // Gift totals are server-owned. Listen only for rows where this signed-in user
+  // is a sender or recipient; the gift_events participant RLS policy enforces
+  // that boundary, and the totals themselves are re-read through authenticated RPCs.
+  useEffect(() => {
+    if (!isLoggedIn || !stagingBackend || !currentUser.id) return;
+    let active = true;
+    let inFlight = false;
+    let refreshAgain = false;
+    const refreshGiftTotals = async () => {
+      if (inFlight) { refreshAgain = true; return; }
+      inFlight = true;
+      try {
+        do {
+          refreshAgain = false;
+          const [wealth, charm] = await Promise.all([
+            stagingBackend!.rpc('staging_my_wealth_exp'),
+            stagingBackend!.rpc('staging_my_charm_exp'),
+          ]);
+          if (wealth.error) throw wealth.error;
+          if (charm.error) throw charm.error;
+          const wealthExp = Number(wealth.data);
+          const charmExp = Number(charm.data);
+          if (active && Number.isSafeInteger(wealthExp) && wealthExp >= 0 &&
+              Number.isSafeInteger(charmExp) && charmExp >= 0) {
+            setCurrentUser(prev => ({ ...prev, wealthExp, charmExp }));
+          }
+        } while (active && refreshAgain);
+      } catch (error) {
+        console.error('Verified gift totals refresh failed:', error);
+      } finally {
+        inFlight = false;
+      }
+    };
+    const userFilter = currentUser.id;
+    const channel = stagingBackend.channel('staging-my-gift-totals-' + userFilter)
+      .on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'gift_events', filter: 'sender_id=eq.' + userFilter,
+      }, () => { void refreshGiftTotals(); })
+      .on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'gift_events', filter: 'recipient_id=eq.' + userFilter,
+      }, () => { void refreshGiftTotals(); })
+      .subscribe(status => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          console.error('Gift totals realtime subscription:', status);
+        }
+      });
+    const onConfirmedGift = () => { void refreshGiftTotals(); };
+    const onVisible = () => { if (document.visibilityState === 'visible') void refreshGiftTotals(); };
+    window.addEventListener('totichat:room-gift-confirmed', onConfirmedGift);
+    window.addEventListener('focus', onVisible);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      active = false;
+      window.removeEventListener('totichat:room-gift-confirmed', onConfirmedGift);
+      window.removeEventListener('focus', onVisible);
+      document.removeEventListener('visibilitychange', onVisible);
+      void stagingBackend!.removeChannel(channel);
+    };
+  }, [isLoggedIn, currentUser.id]);
 
   // Keep the authenticated profile synchronized without requiring app restart.
   useEffect(() => {
@@ -643,7 +704,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const ping = () => {
       void Promise.resolve(stagingBackend!.rpc('staging_presence_ping'))
         .then(({ error }) => { if (error) throw error; })
-        .catch(error => console.error('Presence heartbeat failed:', error));
+        .catch(er���z��
+�)�֧u�ݢ�i��k�G��*^ror => console.error('Presence heartbeat failed:', error));
     };
     ping();
     const timer = window.setInterval(() => { if (document.visibilityState === 'visible') ping(); }, 30000);
@@ -1968,7 +2030,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const createAgency = (name: string, description: string): void => {
     if (!stagingBackend || name.trim().length < 2 || name.trim().length > 80 ||
         description.trim().length < 3 || description.trim().length > 500) {
-      alert('أدخل اسم الوكالة وسبب الطلب بصورة صحيحة.');
+      alert('أدخل اص��¸�y�뢰k�G��*^�م الوكالة وسبب الطلب بصورة صحيحة.');
       return;
     }
     void Promise.resolve(stagingBackend.rpc('phase4_agency_action', {

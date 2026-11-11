@@ -23,7 +23,6 @@ import {
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
 import { VipName } from './VipName';
-import { WealthBadge, CharmBadge } from './LevelBadgeIcons';
 import { UserProfile, WealthSupporter } from '../types';
 
 export interface CharmLeaderboardItem {
@@ -374,10 +373,6 @@ export const WealthLeaderboardModal: React.FC = () => {
                         className="text-xs font-black max-w-[85px] mt-1 text-center"
                       />
 
-                      <div className="flex items-center justify-center mt-1">
-                        <WealthBadge level={topWealth2.user.wealthLevel} size="xs" />
-                      </div>
-
                       <div className="mt-1 flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-300 text-amber-950 text-[10px] font-bold shadow-2xs font-sans">
                         <span>{topWealth2.supportAmount.toLocaleString()}</span>
                         <span>🪙</span>
@@ -411,10 +406,6 @@ export const WealthLeaderboardModal: React.FC = () => {
                         fallbackColor="text-amber-950"
                         className="text-sm font-black max-w-[100px] mt-1 text-center"
                       />
-
-                      <div className="flex items-center justify-center mt-1">
-                        <WealthBadge level={topWealth1.user.wealthLevel} size="xs" />
-                      </div>
 
                       <div className="mt-1.5 flex items-center gap-1 px-3 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 border border-amber-500 text-slate-950 text-xs font-black shadow-xs font-sans">
                         <span>{topWealth1.supportAmount.toLocaleString()}</span>
@@ -454,10 +445,6 @@ export const WealthLeaderboardModal: React.FC = () => {
                         fallbackColor="text-slate-900"
                         className="text-xs font-black max-w-[85px] mt-1 text-center"
                       />
-
-                      <div className="flex items-center justify-center mt-1">
-                        <WealthBadge level={topWealth3.user.wealthLevel} size="xs" />
-                      </div>
 
                       <div className="mt-1 flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-300 text-amber-950 text-[10px] font-bold shadow-2xs font-sans">
                         <span>{topWealth3.supportAmount.toLocaleString()}</span>
@@ -515,7 +502,6 @@ export const WealthLeaderboardModal: React.FC = () => {
                             className="text-xs font-black truncate max-w-[130px]"
                           />
                           <div className="flex items-center gap-1.5 mt-0.5">
-                            <WealthBadge level={supporter.user.wealthLevel} size="xs" />
                             <span className="text-[9px] text-slate-500 font-mono">
                               ID:{supporter.user.id}
                             </span>
@@ -586,10 +572,6 @@ export const WealthLeaderboardModal: React.FC = () => {
                       />
 
                       {/* مستوى السحر (Magic Level Badge) */}
-                      <div className="flex items-center justify-center mt-1">
-                        <CharmBadge level={topCharm2.user.charmLevel} size="xs" />
-                      </div>
-
                       {/* قيمة المرمي للحساب (Received Gifts Value) */}
                       <div className="mt-1 flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-300 text-amber-950 text-[10px] font-bold shadow-2xs font-sans">
                         <span>{topCharm2.charmReceived.toLocaleString()}</span>
@@ -627,10 +609,6 @@ export const WealthLeaderboardModal: React.FC = () => {
                       />
 
                       {/* مستوى السحر (Magic Level Badge) */}
-                      <div className="flex items-center justify-center mt-1">
-                        <CharmBadge level={topCharm1.user.charmLevel} size="xs" />
-                      </div>
-
                       {/* قيمة المرمي للحساب */}
                       <div className="mt-1.5 flex items-center gap-1 px-3 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 border border-amber-500 text-slate-950 text-xs font-black shadow-xs font-sans">
                         <span>{topCharm1.charmReceived.toLocaleString()}</span>
@@ -672,10 +650,6 @@ export const WealthLeaderboardModal: React.FC = () => {
                       />
 
                       {/* مستوى السحر (Magic Level Badge) */}
-                      <div className="flex items-center justify-center mt-1">
-                        <CharmBadge level={topCharm3.user.charmLevel} size="xs" />
-                      </div>
-
                       {/* قيمة المرمي للحساب */}
                       <div className="mt-1 flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-300 text-amber-950 text-[10px] font-bold shadow-2xs font-sans">
                         <span>{topCharm3.charmReceived.toLocaleString()}</span>
@@ -736,8 +710,6 @@ export const WealthLeaderboardModal: React.FC = () => {
                             className="text-xs font-black truncate max-w-[130px]"
                           />
                           <div className="flex items-center gap-1.5 mt-0.5">
-                            {/* مستوى السحر */}
-                            <CharmBadge level={item.user.charmLevel} size="xs" />
                             <span className="text-[9px] text-slate-500 font-mono">
                               ID:{item.user.id}
                             </span>
@@ -906,7 +878,8 @@ export const WealthLeaderboardModal: React.FC = () => {
                     <div
                       key={room.id}
                       onClick={() => handleEnterRoom(room.id)}
-                      className="p-2.5 rounded-2xl bg-white/95 hover:bg-amber-50/80 border border-amber-200/90 shadow-xs flex items-center justify-between gap-2.5 cursor-pointer active:scale-98 transition group"
+                      className="p-2.5 rounded-2xl bg-white/95 hover:bg-amber-50/80 borde���z��
+�)�֧u�ݢ�i��k�G��*^r border-amber-200/90 shadow-xs flex items-center justify-between gap-2.5 cursor-pointer active:scale-98 transition group"
                     >
                       {/* Right: Rank + صورة الروم + اسم الروم + المضيف */}
                       <div className="flex items-center gap-2.5 min-w-0">
@@ -977,25 +950,16 @@ export const WealthLeaderboardModal: React.FC = () => {
               {leaderboardTab === 'wealth' && (
                 <>
                   <span className="text-[10px] text-slate-500 font-bold block">
-                    مستوى دعمك الحالي:
+                    إجمالي دعمك:
                   </span>
                   <div className="flex items-center gap-1 text-xs font-black text-amber-900 font-sans">
                     <span>{(currentUser.wealthExp || 0).toLocaleString()} 🪙</span>
-                    <span className="text-[10px] text-slate-400">
-                      (مستوى {currentUser.wealthLevel || 1})
-                    </span>
                   </div>
                 </>
               )}
 
               {leaderboardTab === 'charm' && (
                 <>
-                  <div className="flex items-center gap-1">
-                    <span className="text-[10px] text-slate-500 font-bold">
-                      مستوى السحر:
-                    </span>
-                    <CharmBadge level={currentUser.charmLevel || 1} size="xs" />
-                  </div>
                   <div className="flex items-center gap-1 text-xs font-black text-amber-950 font-sans">
                     <span>مرمي لك: {(currentUser.charmExp || 0).toLocaleString()} 💎</span>
                   </div>

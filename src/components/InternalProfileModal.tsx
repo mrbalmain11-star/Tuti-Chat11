@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+���¸�y�뢰k�G��*^import React, { useState, useRef, useEffect } from 'react';
 import {
   ChevronRight,
   Copy,
@@ -134,7 +134,7 @@ export const InternalProfileModal: React.FC = () => {
     return () => { active = false; };
   }, [openInternalProfileModal, isSelf, currentUser.id]);
   const [savedCover, setSavedCover] = useState<string>('');
-  const [visitorStatus, setVisitorStatus] = useState<{ userId: string; vipLevel: number } | null>(null);
+  const [visitorStatus, setVisitorStatus] = useState<{ userId: string; vipLevel: number; wealthExp: number; charmExp: number } | null>(null);
   useEffect(() => {
     let active = true;
     setVisitorStatus(null);
@@ -146,6 +146,8 @@ export const InternalProfileModal: React.FC = () => {
         setVisitorStatus({
           userId: user.id,
           vipLevel: Number.isFinite(Number(data.vip_tier)) ? Math.max(0, Math.trunc(Number(data.vip_tier))) : 0,
+          wealthExp: Number.isSafeInteger(Number(data.wealth_exp)) && Number(data.wealth_exp) >= 0 ? Number(data.wealth_exp) : 0,
+          charmExp: Number.isSafeInteger(Number(data.charm_exp)) && Number(data.charm_exp) >= 0 ? Number(data.charm_exp) : 0,
         });
       }).catch(error => console.error('Visitor levels load failed:', error));
     return () => { active = false; };
@@ -153,6 +155,8 @@ export const InternalProfileModal: React.FC = () => {
   const displayedUser = openInternalProfileModal && !isSelf && visitorStatus?.userId === user.id ? { ...user, ...visitorStatus } : user;
   // Staging returns experience totals, not official level fields; never derive a level in the client.
   const hasVerifiedProfileLevels = false;
+  const profileWealthExp = isSelf ? Number(currentUser.wealthExp || 0) : visitorStatus?.userId === user.id ? visitorStatus.wealthExp : null;
+  const profileCharmExp = isSelf ? Number(currentUser.charmExp || 0) : visitorStatus?.userId === user.id ? visitorStatus.charmExp : null;
   const [visitorAssets, setVisitorAssets] = useState<{ userId: string; publicId: string; cover: string; avatar: string; bio: string; name: string } | null>(null);
   const visitorAssetsForUser = openInternalProfileModal && !isSelf && visitorAssets?.userId === user.id ? visitorAssets : null;
   const visitorPublicId = visitorAssetsForUser?.publicId || '';
@@ -854,8 +858,11 @@ export const InternalProfileModal: React.FC = () => {
             >
               {/* Text on Right in RTL */}
               <div className="text-right">
-                <span className="text-xl font-black text-amber-950 block font-sans tracking-wide">
-                  {hasVerifiedProfileLevels ? `Lv. ${displayedUser.wealthLevel || 1}` : '—'}
+                <span className="text-sm font-black text-amber-950 block font-sans tracking-wide">
+                  {hasVerifiedProfileLevels ? `Lv. ${displayedUser.wealthLevel}` : 'المستوى الرسمي غير متاح'}
+                </span>
+                <span className="mt-1 block text-[10px] font-bold text-amber-800">
+                  إجمالي الخبرة الموثقة: {profileWealthExp === null ? 'غير متاحة' : profileWealthExp.toLocaleString()}
                 </span>
                 <span className="text-xs text-amber-800 font-black mt-0.5 block flex items-center gap-1">
                   <span>👑</span>
@@ -894,8 +901,11 @@ export const InternalProfileModal: React.FC = () => {
             >
               {/* Text on Right in RTL */}
               <div className="text-right">
-                <span className="text-xl font-black text-purple-950 block font-sans tracking-wide">
-                  {hasVerifiedProfileLevels ? `Lv. ${displayedUser.charmLevel || 1}` : '—'}
+                <span className="text-sm font-black text-purple-950 block font-sans tracking-wide">
+                  {hasVerifiedProfileLevels ? `Lv. ${displayedUser.charmLevel}` : 'المستوى الرسمي غير متاح'}
+                </span>
+                <span className="mt-1 block text-[10px] font-bold text-purple-800">
+                  إجمالي الخبرة الموثقة: {profileCharmExp === null ? 'غير متاحة' : profileCharmExp.toLocaleString()}
                 </span>
                 <span className="text-xs text-purple-800 font-black mt-0.5 block flex items-center gap-1">
                   <span>✨</span>
