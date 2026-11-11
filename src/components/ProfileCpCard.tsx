@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { CircleUserRound } from 'lucide-react';
 import { RoyalCpAvatarFrame, RoyalCpHeart, RoyalCpOrnament } from './RoyalCpArtwork';
 import { stagingBackend } from '../services/stagingBackend';
+import { imageUrl } from '../services/imageUrl';
 import { useApp } from '../context/AppContext';
 
 type CpLink = { typeId: string; typeLabel: string; level: number; partnerId: string; partnerName: string; partnerAvatar?: string | null; partnerPublicId?: number; accepted: boolean };
@@ -28,6 +29,7 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
   const endingRef = useRef(false);
   const activeProfileIdRef = useRef(userId);
   activeProfileIdRef.current = userId;
+  const resolvedUserAvatar = imageUrl(userAvatar, 'profile-avatars');
   // Keep asynchronous refreshes connected to the latest parent callback.
   const onLinksChangeRef = useRef(onLinksChange);
   onLinksChangeRef.current = onLinksChange;
@@ -123,7 +125,7 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
               <div className={`relative shrink-0 ${compact ? 'h-11 w-11' : 'h-[clamp(42px,14vw,58px)] w-[clamp(42px,14vw,58px)]'}`}>
                 <div className="absolute inset-[8px] overflow-hidden rounded-full bg-[#5c3048]">
                 <CircleUserRound className="absolute inset-0 h-full w-full p-2 text-amber-200" aria-hidden="true" />
-                {userAvatar && <img src={userAvatar} alt={userName || 'صاحب الملف'} onError={event => { event.currentTarget.style.display = 'none'; }} className="relative h-full w-full rounded-full object-cover" />}
+                {resolvedUserAvatar && <img src={resolvedUserAvatar} alt={userName || 'صاحب الملف'} onError={event => { event.currentTarget.style.display = 'none'; }} className="relative h-full w-full rounded-full object-cover" />}
                 </div>
                 <RoyalCpAvatarFrame />
               </div>
@@ -142,7 +144,7 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
               <button type="button" disabled={!onPartnerClick} onClick={() => onPartnerClick?.(link.partnerId)} aria-label={`فتح ملف ${link.partnerName || 'الشريك'}`} className={`relative shrink-0 disabled:cursor-default enabled:active:scale-95 ${compact ? 'h-11 w-11' : 'h-[clamp(42px,14vw,58px)] w-[clamp(42px,14vw,58px)]'}`}>
                 <div className="absolute inset-[8px] overflow-hidden rounded-full bg-[#5c3048]">
                 <CircleUserRound className="absolute inset-0 h-full w-full p-2 text-amber-200" aria-hidden="true" />
-                {link.partnerAvatar && <img src={link.partnerAvatar} alt={link.partnerName || 'الشريك'} onError={event => { event.currentTarget.style.display = 'none'; }} className="relative h-full w-full rounded-full object-cover" />}
+                {imageUrl(link.partnerAvatar, 'profile-avatars') && <img src={imageUrl(link.partnerAvatar, 'profile-avatars')} alt={link.partnerName || 'الشريك'} onError={event => { event.currentTarget.style.display = 'none'; }} className="relative h-full w-full rounded-full object-cover" />}
                 </div>
                 <RoyalCpAvatarFrame />
               </button>

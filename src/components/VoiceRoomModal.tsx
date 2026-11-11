@@ -189,8 +189,7 @@ export const VoiceRoomModal: React.FC = () => {
       y: Math.max(0, Math.min(window.innerHeight - 72, drag.y - dy)),
     });
   };
-  const onBubblePointerUp = (event: React.PointerEvent<HTMLDiµ¨¥zºè¯
-â¶)à²Ö§uªİ¢ëiºĞk¢G§¦*^vElement>) => {
+  const onBubblePointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
     const drag = bubbleDragRef.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
     bubbleDragRef.current = null;
@@ -1033,8 +1032,7 @@ export const VoiceRoomModal: React.FC = () => {
       return 'border-cyan-400/50 shadow-[0_0_12px_rgba(6,182,212,0.3)]';
     }
     if (activeRoom?.roomFrameTheme === 'ruby') {
-      return 'border-rose-400/50 shadow-[0_µ¨¥zºè¯
-â¶)à²Ö§uªİ¢ëiºĞk¢G§¦*^0_12px_rgba(244,63,94,0.3)]';
+      return 'border-rose-400/50 shadow-[0_0_12px_rgba(244,63,94,0.3)]';
     }
     return 'border-purple-400/35 shadow-[0_0_12px_rgba(168,85,247,0.25)]';
   };
@@ -1169,8 +1167,7 @@ export const VoiceRoomModal: React.FC = () => {
       const anchor = chatAnchorRef.current;
       const anchorElement = anchor
         ? Array.from(container.querySelectorAll<HTMLElement>('[data-room-message-id]'))
-            .find(element => element.dataset.roomMesµ¨¥zºè¯
-â¶)à²Ö§uªİ¢ëiºĞk¢G§¦*^sageId === anchor.id)
+            .find(element => element.dataset.roomMessageId === anchor.id)
         : null;
       if (anchorElement && anchor) {
         container.scrollTop = anchorElement.offsetTop - container.offsetTop - anchor.offset;
@@ -1472,8 +1469,7 @@ export const VoiceRoomModal: React.FC = () => {
                 </div>
 
                 {/* Room Info: Name & Host Account ID */}
-                <µ¨¥zºè¯
-â¶)à²Ö§uªİ¢ëiºĞk¢G§¦*^div className="flex flex-col text-right leading-tight">
+                <div className="flex flex-col text-right leading-tight">
                   <div className="flex items-center gap-1">
                     <span className="text-xs font-black text-white tracking-wide max-w-[120px] truncate">
                       {activeRoom.title || 'Ø§Ù„Ø¹Ø±Ø§Ù‚ Ø§Ù„Ø¹...'}
@@ -1902,8 +1898,7 @@ export const VoiceRoomModal: React.FC = () => {
                 sounds.playClick();
                 setShowEmojiPicker(!showEmojiPicker);
               }}
-              className="w-10 h-10 rounded-full bg-[#241747]/90 hover:bg-[#342263] border border-purple-400/25 text-white flex items-center justify-center transition active:scale-95 shadµ¨¥zºè¯
-â¶)à²Ö§uªİ¢ëiºĞk¢G§¦*^ow-md cursor-pointer"
+              className="w-10 h-10 rounded-full bg-[#241747]/90 hover:bg-[#342263] border border-purple-400/25 text-white flex items-center justify-center transition active:scale-95 shadow-md cursor-pointer"
               title="Ø§Ù„ØªØ¹Ø¨ÙŠØ±Ø§Øª ÙˆØ§Ù„Ø±Ù…ÙˆØ² Ø§Ù„ØªÙØ§Ø¹Ù„ÙŠØ©"
             >
               <Smile className="w-5 h-5 text-white stroke-[2]" />
@@ -2327,8 +2322,7 @@ export const VoiceRoomModal: React.FC = () => {
             2. Ø¨Ø¥Ø°Ù† Ø§Ù„Ù…Ø§Ù„Ùƒ ÙÙ‚Ø· (Ø¹Ø¶ÙˆÙŠØ© Ø£Ùˆ Ø¥Ø´Ø±Ø§Ù)
             ========================================================================= */}
         {showRoomModeModal && (
-          µ¨¥zºè¯
-â¶)à²Ö§uªİ¢ëiºĞk¢G§¦*^<div
+          <div
             onClick={() => setShowRoomModeModal(false)}
             className="fixed inset-0 z-60 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in"
           >
@@ -2612,7 +2606,7 @@ export const VoiceRoomModal: React.FC = () => {
                 if (error || !data) { showToast('ØªØ¹Ø°Ø± ÙØªØ­ Ù…Ù„Ù Ø§Ù„Ø´Ø±ÙŠÙƒ'); return; }
                 const avatar = data.avatar_url ? (/^(https?:\/\/|data:image\/)/i.test(data.avatar_url) ? data.avatar_url : stagingBackend.storage.from('profile-avatars').getPublicUrl(data.avatar_url).data.publicUrl) : '';
                 setSelectedMicUser(null);
-                handleOpenUserProfile({ ...currentUser, id: data.id, name: data.display_name || 'Ù…Ø³ØªØ®Ø¯Ù…', nickname: data.display_name || 'Ù…Ø³ØªØ®Ø¯Ù…', avatar, country: '', countryCode: '', countryFlag: '', birthdate: '', age: null, friendsCount: 0, followersCount: 0, followingCount: 0, fansCount: 0, visitorsCount: 0µ¨¥Â¸­yêë¢°k¢G§¦*^, hearts: 0, gameLevel: 0, gameExp: 0, cover: '', bio: '', album: [], vipExpiry: '', specialIdBadge: undefined, isBanned: false, banReason: undefined, isNameBanned: false, isAvatarBanned: false, wealthExp: 0, charmExp: 0, wealthLevel: 0, charmLevel: 0, coins: 0, diamonds: 0, vipLevel: 0, isSuperAdmin: false, isRechargeAgent: false, isHost: false, isSpecialId: false, permissions: [], agencyRole: undefined, agencyName: undefined, rechargeCoins: 0, hasWelcomeBanner: false });
+                handleOpenUserProfile({ ...currentUser, id: data.id, name: data.display_name || 'Ù…Ø³ØªØ®Ø¯Ù…', nickname: data.display_name || 'Ù…Ø³ØªØ®Ø¯Ù…', avatar, country: '', countryCode: '', countryFlag: '', birthdate: '', age: null, friendsCount: 0, followersCount: 0, followingCount: 0, fansCount: 0, visitorsCount: 0, hearts: 0, gameLevel: 0, gameExp: 0, cover: '', bio: '', album: [], vipExpiry: '', specialIdBadge: undefined, isBanned: false, banReason: undefined, isNameBanned: false, isAvatarBanned: false, wealthExp: 0, charmExp: 0, wealthLevel: 0, charmLevel: 0, coins: 0, diamonds: 0, vipLevel: 0, isSuperAdmin: false, isRechargeAgent: false, isHost: false, isSpecialId: false, permissions: [], agencyRole: undefined, agencyName: undefined, rechargeCoins: 0, hasWelcomeBanner: false });
               })().catch(() => showToast('ØªØ¹Ø°Ø± ÙØªØ­ Ù…Ù„Ù Ø§Ù„Ø´Ø±ÙŠÙƒ')); }} compact />
               <button type="button" onClick={() => { const target = selectedMicUser.user; setSelectedMicUser(null); handleOpenUserProfile(target); }} className="mx-auto mt-4 flex min-h-12 w-[min(100%,340px)] items-center justify-center gap-2 rounded-full bg-gradient-to-l from-emerald-400 via-green-400 to-teal-500 px-5 py-3 text-base font-black text-emerald-950 shadow-[0_8px_22px_rgba(16,185,129,.28)] transition active:scale-[.98]">
                 <CircleUserRound className="h-5 w-5" /> Ø§Ù„Ù…Ø²ÙŠØ¯

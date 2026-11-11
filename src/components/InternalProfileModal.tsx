@@ -1,4 +1,4 @@
-µ¨¥Â¸­yêë¢°k¢G§¦*^import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   ChevronRight,
   Copy,

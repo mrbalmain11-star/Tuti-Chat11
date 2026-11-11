@@ -710,6 +710,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                             className="text-xs font-black truncate max-w-[130px]"
                           />
                           <div className="flex items-center gap-1.5 mt-0.5">
+                            {/* مستوى السحر */}
                             <span className="text-[9px] text-slate-500 font-mono">
                               ID:{item.user.id}
                             </span>
@@ -878,8 +879,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                     <div
                       key={room.id}
                       onClick={() => handleEnterRoom(room.id)}
-                      className="p-2.5 rounded-2xl bg-white/95 hover:bg-amber-50/80 borde���z��
-�)�֧u�ݢ�i��k�G��*^r border-amber-200/90 shadow-xs flex items-center justify-between gap-2.5 cursor-pointer active:scale-98 transition group"
+                      className="p-2.5 rounded-2xl bg-white/95 hover:bg-amber-50/80 border border-amber-200/90 shadow-xs flex items-center justify-between gap-2.5 cursor-pointer active:scale-98 transition group"
                     >
                       {/* Right: Rank + صورة الروم + اسم الروم + المضيف */}
                       <div className="flex items-center gap-2.5 min-w-0">

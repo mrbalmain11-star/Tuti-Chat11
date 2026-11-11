@@ -131,8 +131,7 @@ interface AppContextType {
   selectedGiftReceiver: { id: string; name: string; avatar?: string } | null;
   setSelectedGiftReceiver: (receiver: { id: string; name: string; avatar?: string } | null) => void;
   openProfileForUser: (user: Partial<UserProfile> | { id: string; name: string; avatar?: string }) => void;
-  deleteRoom: (roomId: string) => vo���z��
-�)�֧u�ݢ�i��k�G��*^id;
+  deleteRoom: (roomId: string) => void;
   isLoggedIn: boolean;
   setIsLoggedIn: (logged: boolean) => void;
   language: Language;
@@ -294,7 +293,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Gift totals are server-owned. Listen only for rows where this signed-in user
   // is a sender or recipient; the gift_events participant RLS policy enforces
-  // that boundary, and the totals themselves are re-read through authenticated RPCs.
+  // that boundary, and totals are re-read through authenticated RPCs.
   useEffect(() => {
     if (!isLoggedIn || !stagingBackend || !currentUser.id) return;
     let active = true;
@@ -704,8 +703,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const ping = () => {
       void Promise.resolve(stagingBackend!.rpc('staging_presence_ping'))
         .then(({ error }) => { if (error) throw error; })
-        .catch(er���z��
-�)�֧u�ݢ�i��k�G��*^ror => console.error('Presence heartbeat failed:', error));
+        .catch(error => console.error('Presence heartbeat failed:', error));
     };
     ping();
     const timer = window.setInterval(() => { if (document.visibilityState === 'visible') ping(); }, 30000);
@@ -2030,7 +2028,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const createAgency = (name: string, description: string): void => {
     if (!stagingBackend || name.trim().length < 2 || name.trim().length > 80 ||
         description.trim().length < 3 || description.trim().length > 500) {
-      alert('أدخل اص��¸�y�뢰k�G��*^�م الوكالة وسبب الطلب بصورة صحيحة.');
+      alert('أدخل اسم الوكالة وسبب الطلب بصورة صحيحة.');
       return;
     }
     void Promise.resolve(stagingBackend.rpc('phase4_agency_action', {
