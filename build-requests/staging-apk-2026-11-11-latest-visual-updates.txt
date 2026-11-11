@@ -1,0 +1,1 @@
+Owner-approved build request: create a new Android Staging APK with all current commits on integration/legacy-backend-staging, including 2026-11-11 visual review and backend changes. Preserve audio/music engines and existing packaging. Verify APK signing and installability before claiming it is ready.
