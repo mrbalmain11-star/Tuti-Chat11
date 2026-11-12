@@ -1,0 +1,1 @@
+Owner requested a fresh staging APK after repeated Android 'package appears invalid' errors. This build must include the new Android 14 emulator install smoke test and must not publish an APK if installation fails. Preserve audio/music and application features.
