@@ -240,6 +240,30 @@ jobs:
           "$AAPT" dump badging "$APK" | grep -E '^(package:|sdkVersion:|targetSdkVersion:|native-code:)' || true
           sha256sum "$APK" | tee android/app/build/outputs/apk/debug/app-debug.apk.sha256
           ls -lh "$APK"
+      - name: Check APK alignment and Android package metadata
+        run: |
+          set -euo pipefail
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          ZIPALIGN="$(find "$ANDROID_HOME/build-tools" -name zipalign -type f | sort -V | tail -n 1)"
+          "$ZIPALIGN" -c -v 4 "$APK"
+          AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -n 1)"
+          "$AAPT" dump badging "$APK" | tee /tmp/staging-apk-badging.txt
+          grep -q "^package: name='com.numyar.totichat.staging'" /tmp/staging-apk-badging.txt
+      - name: Verify APK actually installs on Android 14 emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_5
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: |
+            set -e
+            adb wait-for-device
+            adb shell getprop sys.boot_completed
+            adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+            adb shell pm path com.numyar.totichat.staging
+            adb shell monkey -p com.numyar.totichat.staging 1
       # Do not publish the GitHub Actions ZIP artifact: Android users must
       # download the original APK directly from the release below.
       - name: Publish directly downloadable staging APK
