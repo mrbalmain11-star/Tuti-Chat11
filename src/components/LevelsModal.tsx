@@ -138,7 +138,7 @@ export const LevelsModal: React.FC = () => {
                 </button>
                 {equipError && <p role="alert" className="mt-2 text-red-200">{equipError}</p>}
               </>}
-            </div>}
+            </div>
             <div className="mt-4 rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm">
               <span className="text-slate-300">{isWealth ? 'نقاط خبرة الثروة' : isCharm ? 'نقاط خبرة السحر' : 'خبرة الغرفة'}</span>
               <strong className="mt-1 block font-mono text-lg text-amber-200" dir="ltr">{xpError ?? (experience === null || experience === undefined ? 'جارٍ التحميل / غير متاحة' : BigInt(experience).toLocaleString('en-US'))}</strong>
