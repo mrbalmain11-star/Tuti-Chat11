@@ -35,6 +35,8 @@ No confirmed critical or high-severity exploit was established in the checks bel
 - Current counts: **35 profiles, 21 rooms, 3 room memberships**; matching the earlier figures supplied in the request.
 - Integrity checks returned **0 orphan room memberships, 0 orphan wallets, 0 negative wallets, 0 gift events with an orphan sender, and 0 gift events with an orphan non-null recipient**.
 - The database has 3 `phase3.admin_access` rows, 0 `phase3.support_staff` rows, 0 `phase3.support_requests` rows, and 193 `public.security_audit` rows. No account identifiers or message contents were exported.
+- Direct grants: `anon` has only `SELECT` on `public.home_banners` among public tables; no anonymous table DML was found. `authenticated` has no direct `INSERT`/`UPDATE`/`DELETE` grant on wallets, wallet ledger, financial operations or gift events.
+- Storage metadata and policies reviewed: public image buckets are limited to WebP and 2 MiB (banners 500 KiB); voice messages (private, 10 MiB) and report evidence (private, 5 MiB) have authenticated, path/owner or access-function scoped policies. This was a policy review, not a direct adversarial upload/delete test.
 - Supabase migration and Edge Function inventory completed. Six active functions were listed; deployed OTP and DM push functions use JWT verification. This does not replace code review or runtime endpoint tests.
 
 ### Supabase Advisors
@@ -98,7 +100,7 @@ Server-side rules and tests are not sufficiently evidenced to certify any comple
 
 No application or database security change was made in this pass: the checked role-denial paths rejected the simulated principal, and no safe, confirmed exploitable defect was established. Removing grants, changing RLS, or altering Auth settings without complete behavior tests would risk breaking authorized flows or staging authentication. No database migration was applied.
 
-This report is the only intended repository change from this pass. The initial report commit on this branch is `78439541fa52a776ab91bdf74b2daa309d7348c6`. The metadata follow-up is `dcd780b184f5029ef5c76e7f6cab300e25ed48fa`; the present update adds catalog-wide definer triage. Existing untracked image files are excluded from these commits.
+This report is the only intended repository change from this pass. The initial report commit on this branch is `78439541fa52a776ab91bdf74b2daa309d7348c6`. The metadata follow-up is `dcd780b184f5029ef5c76e7f6cab300e25ed48fa`; catalog triage was recorded in `9ef5b213a6240cc36e5a976e8453c842832d7a26`; this update records database grants and storage policy findings. Existing untracked image files are excluded from these commits.
 
 ## Release gate
 
