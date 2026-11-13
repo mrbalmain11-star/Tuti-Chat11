@@ -1488,9 +1488,49 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.error('Room join or membership fetch failed:', error);
       const joinError = error as { code?: string; message?: string } | null;
       const banned = joinError?.message?.includes('ROOM_BANNED') === true;
-      alert(banned
-        ? 'أنت محظور من هذه الغرفة. لا يمكنك الدخول إلا بعد أن ترفع الإدارة الحظر.'
-        : 'تعذر تأكيد دخول الغرفة من الخادم.');
+      if (banned) {
+        const wantsAppeal = window.confirm('أنت محظور من هذه الغرفة. هل تريد تقديم اعتراض إلى مالك الغرفة؟');
+        if (wantsAppeal) {
+          const appealReason = window.prompt('اكتب سبب الاعتراض (10 أحرف على الأقل):');
+          if (!appealReason || appealReason.trim().length < 10 || appealReason.trim().length > 1500) {
+            alert('لم يُرسل الاعتراض. يجب أن يكون السبب بين 10 و1500 حرف.');
+          } else if (!stagingBackend) {
+            alert('الخادم غير متصل؛ تعذر إرسال الاعتراض.');
+          } else {
+            void (async () => {
+              try {
+                const { data, error: appealError } = await stagingBackend.rpc('phase2_room_ban_appeal_action', {
+                  p_action: 'submit', p_room_id: roomId, p_reason: appealReason.trim(),
+                  p_request_id: crypto.randomUUID(),
+                });
+                if (appealError) throw appealError;
+                const appeal = data as { appealId?: string; status?: string } | null;
+                const appealId = appeal?.appealId;
+                if (!appealId) throw new Error('لم يؤكد الخادم رقم الاعتراض');
+                if (appeal.status === 'owner_rejected' && window.confirm('رفض مالك الغرفة الاعتراض. هل تريد تصعيده إلى إدارة TotiChat؟')) {
+                  const { data: escalation, error: escalationError } = await stagingBackend.rpc('phase2_room_ban_appeal_action', {
+                    p_action: 'escalate', p_appeal_id: appealId, p_request_id: crypto.randomUUID(),
+                  });
+                  if (escalationError) throw escalationError;
+                  if ((escalation as { status?: string } | null)?.status !== 'escalated') throw new Error('لم يؤكد الخادم التصعيد');
+                  alert(`تم تصعيد الاعتراض إلى إدارة TotiChat. رقم الاعتراض: ${appealId}`);
+                  return;
+                }
+                if (appeal.status === 'owner_rejected') {
+                  alert(`رفض مالك الغرفة الاعتراض. أعد محاولة الدخول إلى الغرفة لاحقاً لتصعيده. الرقم: ${appealId}`);
+                  return;
+                }
+                alert(`تم تسجيل الاعتراض وإحالته إلى مالك الغرفة. رقم الاعتراض: ${appealId}`);
+              } catch (appealError) {
+                console.error('Room ban appeal failed:', appealError);
+                alert('تعذر تسجيل الاعتراض. تأكد من أنك تستخدم الحساب المحظور في هذه الغرفة.');
+              }
+            })();
+          }
+        }
+      } else {
+        alert('تعذر تأكيد دخول الغرفة من الخادم.');
+      }
     });
   };
 
