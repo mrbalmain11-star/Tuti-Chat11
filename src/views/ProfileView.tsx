@@ -23,6 +23,7 @@ import { VipBadge } from '../components/VipBadge';
 import { fetchMyProfile, fetchMyAdminAccess, saveMyProfile, uploadMyAvatar, uploadMyCover, getMyAvatarUrl, type AdminAccess, stagingBackend } from '../services/stagingBackend';
 import { AdminCenterView } from './AdminCenterView';
 import { AgencyProfileCard } from '../components/AgencyProfileCard';
+import { RoyalProfileFrame } from '../components/RoyalProfileFrame';
 
 export const ProfileView: React.FC = () => {
   const {
@@ -342,6 +343,7 @@ export const ProfileView: React.FC = () => {
           <div className="flex items-center gap-3.5 min-w-0 flex-1">
             {/* Avatar Circle with Camera upload button */}
             <div className={`relative w-18 h-18 rounded-full shrink-0 group ${currentUser.vipLevel > 0 ? 'isolate' : ''}`}>
+              <RoyalProfileFrame />
               {currentUser.vipLevel > 0 && (
                 <>
                   <div
