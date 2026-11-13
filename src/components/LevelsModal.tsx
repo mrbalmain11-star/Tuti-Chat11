@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { fetchMyVerifiedRoyalXp, type VerifiedRoyalXp } from '../services/royalXp';
+import { royalProgress, ROYAL_CURVE_VERSION } from '../utils/royalLevels';
 import { ArrowRight, Crown, Sparkles, Gamepad2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
@@ -31,6 +32,7 @@ export const LevelsModal: React.FC = () => {
   const isWealth = levelsModalTab === 'wealth';
   const isCharm = levelsModalTab === 'charm';
   const experience = isWealth ? verifiedXp?.wealth_lifetime_xp : isCharm ? verifiedXp?.charm_lifetime_xp : null;
+  const verifiedProgress = experience !== null && experience !== undefined ? royalProgress(BigInt(experience)) : null;
   const activeTab = levelTabs.find(tab => tab.id === levelsModalTab) ?? levelTabs[0];
   const ActiveIcon = activeTab.Icon;
 
@@ -54,7 +56,22 @@ export const LevelsModal: React.FC = () => {
           <div className="rounded-2xl border border-emerald-300/20 bg-white/[0.04] p-5 text-center">
             <ActiveIcon className="mx-auto h-10 w-10 text-amber-300" aria-hidden="true" />
             <h3 className="mt-3 text-sm font-black">خبرة الهدايا الموثقة من الخادم</h3>
-            <p className="mt-2 text-xs leading-6 text-slate-300">تم ربط خبرة الثروة والسحر بسجلات الهدايا المكتملة في Staging. عرض المستوى والإطارات ينتظر اعتماد منحنى الـ200 مستوى وترحيل المكافآت الموثقة.</p>
+            <p className="mt-2 text-xs leading-6 text-slate-300">المستوى محسوب من خبرة الهدايا المكتملة وفق جدول الـ200 مستوى. الشارات والإطارات ستظهر بعد تفعيل سجل المكافآت الموثق.</p>
+            {verifiedProgress && (
+              <div className="mt-4 rounded-xl border border-amber-300/25 bg-amber-300/10 p-3" aria-label="تقدم المستوى الموثق">
+                <div className="flex items-center justify-between text-sm font-bold">
+                  <span>المستوى {verifiedProgress.level} / 200</span>
+                  <span>{verifiedProgress.progressPercent.toFixed(1)}%</span>
+                </div>
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-black/40" role="progressbar" aria-valuenow={verifiedProgress.progressPercent} aria-valuemin={0} aria-valuemax={100}>
+                  <div className="h-full rounded-full bg-gradient-to-l from-amber-300 to-emerald-400" style={{ width: `${verifiedProgress.progressPercent}%` }} />
+                </div>
+                <p className="mt-2 text-xs text-amber-100">
+                  {verifiedProgress.xpToNextLevel === null ? 'وصلت للحد الأعلى — الخبرة مستمرة للتصنيفات' : `المتبقي للمستوى التالي: ${verifiedProgress.xpToNextLevel.toLocaleString('en-US')} XP`}
+                </p>
+                <p className="mt-1 text-[10px] text-slate-400">جدول {ROYAL_CURVE_VERSION} · الخبرة من الهدايا المكتملة فقط</p>
+              </div>
+            )}
             <div className="mt-4 rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm">
               <span className="text-slate-300">{isWealth ? 'نقاط خبرة الثروة' : isCharm ? 'نقاط خبرة السحر' : 'خبرة الألعاب'}</span>
               <strong className="mt-1 block font-mono text-lg text-amber-200" dir="ltr">{xpError ?? (experience === null || experience === undefined ? 'جارٍ التحميل / غير متاحة' : BigInt(experience).toLocaleString('en-US'))}</strong>
