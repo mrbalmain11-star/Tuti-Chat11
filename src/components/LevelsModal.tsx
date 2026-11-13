@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { fetchMyOwnedRoyalRooms, fetchMyVerifiedRoyalXp, type VerifiedRoyalXp } from '../services/royalXp';
 import { RoyalRankings } from './RoyalRankings';
 import { RoyalLevelEmblem } from './RoyalLevelEmblem';
+import { equipEarnedRoyalFrame, fetchMyEquippedRoyalFrame, type EquippedRoyalFrame } from '../services/royalEquipment';
 import { fetchMyRoyalEntitlements, fetchOwnedRoomRoyalEntitlements, type RoyalEntitlement } from '../services/royalRewards';
 import { royalProgress, ROYAL_CURVE_VERSION } from '../utils/royalLevels';
 import { ArrowRight, Crown, Sparkles, House } from 'lucide-react';
@@ -22,6 +23,9 @@ export const LevelsModal: React.FC = () => {
   const [ownedRooms, setOwnedRooms] = useState<{ id: string; title: string; lifetimeXp: string }[]>([]);
   const [roomId, setRoomId] = useState('');
   const [roomError, setRoomError] = useState('');
+  const [equipped, setEquipped] = useState<EquippedRoyalFrame | null>(null);
+  const [equipError, setEquipError] = useState('');
+  const [equipping, setEquipping] = useState(false);
   useEffect(() => {
     if (!openLevelsModal) return;
     let active = true;
@@ -54,6 +58,26 @@ export const LevelsModal: React.FC = () => {
     }).catch(() => { if (active) setRewards([]); });
     return () => { active = false; };
   }, [openLevelsModal, levelsModalTab, roomId, currentUser.id]);
+  useEffect(() => {
+    if (!openLevelsModal || (levelsModalTab === 'room' && !roomId)) { setEquipped(null); return; }
+    let active = true;
+    setEquipped(null); setEquipError('');
+    void fetchMyEquippedRoyalFrame(levelsModalTab === 'room' ? roomId : undefined)
+      .then(value => { if (active) setEquipped(value); })
+      .catch(() => { if (active) setEquipError('تعذر قراءة الإطار المختار'); });
+    return () => { active = false; };
+  }, [openLevelsModal, levelsModalTab, roomId, currentUser.id]);
+  const equipTopFrame = async () => {
+    if (!rewards.length || equipping) return;
+    const track = levelsModalTab === 'room' ? 'room' : levelsModalTab === 'charm' ? 'charm' : 'wealth';
+    setEquipping(true); setEquipError('');
+    try {
+      const value = await equipEarnedRoyalFrame(track, rewards[0].level, track === 'room' ? roomId : undefined);
+      setEquipped(value);
+    } catch {
+      setEquipError('تعذر تجهيز الإطار. تأكد من امتلاك المكافأة وصلاحية الغرفة.');
+    } finally { setEquipping(false); }
+  };
   if (!openLevelsModal) return null;
 
   const isWealth = levelsModalTab === 'wealth';
@@ -109,6 +133,10 @@ export const LevelsModal: React.FC = () => {
                   <div className="flex flex-col items-center gap-1"><RoyalLevelEmblem track={levelsModalTab === 'wealth' ? 'wealth' : levelsModalTab === 'charm' ? 'charm' : 'room'} level={rewards[0].level} kind="badge" /><span>شارة المستوى</span></div>
                   <div className="flex flex-col items-center gap-1"><RoyalLevelEmblem track={levelsModalTab === 'wealth' ? 'wealth' : 'charm'} level={rewards[0].level} kind="frame" /><span>الإطار المتحرك</span></div>
                 </div>
+                <button type="button" disabled={equipping || (equipped?.track === (levelsModalTab === 'room' ? 'room' : levelsModalTab === 'charm' ? 'charm' : 'wealth') && equipped?.level === rewards[0].level)} onClick={() => { void equipTopFrame(); }} className="mt-3 min-h-10 rounded-lg border border-amber-300/50 bg-amber-300/15 px-4 text-amber-100 disabled:opacity-50">
+                  {equipping ? 'جارٍ تجهيز الإطار...' : equipped?.level === rewards[0].level && equipped?.track === levelsModalTab ? 'الإطار مجهز' : 'تجهيز إطار المستوى'}
+                </button>
+                {equipError && <p role="alert" className="mt-2 text-red-200">{equipError}</p>}
               </>}
             </div>}
             <div className="mt-4 rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm">
