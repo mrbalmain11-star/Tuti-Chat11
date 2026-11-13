@@ -45,7 +45,7 @@ No confirmed critical or high-severity exploit was established in the checks bel
 | Performance | 11 unindexed foreign keys, 79 unused indexes, 1 multiple-permissive-policy warning on `room_members` SELECT | Performance findings require query/workload review; unused indexes were not removed. The two room roster SELECT policies are scoped to self or an already-joined room; no policy was changed. |
 | Health | 0 findings | Advisor health checks were clean at review time. |
 
-The sampled catalog entries use an empty `search_path`; `anon` had no execute privilege for the sampled definer functions. The reviewed high-impact examples included `manage_recharge_offer` (owner/admin check), owner dashboard/badge RPCs (owner check), room roster RPCs (membership check), OTP helpers, daily rewards and gift RPCs. A complete manual review and adversarial test of all 51 functions is **not complete**.
+The catalog-wide triage covered all 51 authenticated-executable definer functions: `anon` execute grants 0/51; empty `search_path` 51/51; `auth.uid()` present in 50 and `phase3.actor()` in 1; explicit OTP guard marker in 46; role/owner/support table references in 23; financial ledger/audit references in 8; and none lacked a recognized principal-binding marker. These are syntactic catalog checks, not proof of the correctness of each authorization branch. High-impact examples reviewed included `manage_recharge_offer` (owner/admin check), owner dashboard/badge RPCs (owner check), room roster RPCs (membership check), OTP helpers, daily rewards and gift RPCs. Full manual branch-by-branch review and adversarial tests are **not complete**.
 
 ### Staging authorization assertions
 
@@ -98,7 +98,7 @@ Server-side rules and tests are not sufficiently evidenced to certify any comple
 
 No application or database security change was made in this pass: the checked role-denial paths rejected the simulated principal, and no safe, confirmed exploitable defect was established. Removing grants, changing RLS, or altering Auth settings without complete behavior tests would risk breaking authorized flows or staging authentication. No database migration was applied.
 
-This report is the only intended repository change from this pass. The initial report commit on this branch is `78439541fa52a776ab91bdf74b2daa309d7348c6`; this follow-up records that SHA. Existing untracked image files are excluded from both commits.
+This report is the only intended repository change from this pass. The initial report commit on this branch is `78439541fa52a776ab91bdf74b2daa309d7348c6`. The metadata follow-up is `dcd780b184f5029ef5c76e7f6cab300e25ed48fa`; the present update adds catalog-wide definer triage. Existing untracked image files are excluded from these commits.
 
 ## Release gate
 
