@@ -64,3 +64,13 @@ The first delivery attempt, run [43471030593](https://github.com/mrbalmain11-sta
 ## Final status
 
 Room-ban duration plumbing and the server permission boundary are implemented. Full room-ban behavior still needs isolated positive/negative/revocation/expiry tests. App-wide sanctions, appeals, content moderation, image scanning and the remaining role/economy audits are open. **TotiChat is not ready for final acceptance or publication.**
+
+## Room-ban appeals follow-up — 2026-11-13
+
+- Added and applied migration `room_ban_appeals_20261113200000` on Staging. It creates restricted appeal, event-history, and idempotency tables and the server RPC `phase2_room_ban_appeal_action`.
+- The banned account can submit a reason while attempting to join its room. The room owner can accept and lift or reject and uphold the ban. After rejection, the submitter can escalate to the platform owner/main partner for a final decision. Decision records are retained separately from the active ban row.
+- The admin center now has an appeals panel for a room. It loads server data and submits decisions through the authorization-checked RPC.
+- Checks passed: `anon` cannot execute the RPC; `authenticated` can call the RPC but cannot read the private appeal table; the RPC is SECURITY DEFINER with empty search path; a synthetic nonexistent identity was rejected. Staging has no current room bans or appeals, so there were no positive live identity cases to exercise.
+- GitHub Actions [43476982841](https://github.com/mrbalmain11-star/Tuti-Chat11/actions/runs/43476982841) passed TypeScript and the existing 200-level progression test. No APK was built. Feature commit: `366e3ccf72cb68f5e21a4e8722265be0b6e5a5cd`.
+- **Status: منفذ ويحتاج فحصاً.** Live owner decisions, owner-first escalation, reviewer removal/revocation, and end-to-end status retrieval need isolated role fixtures. The appeal flow currently uses a native prompt after room-entry denial; a dedicated status/history screen is not yet implemented.
+- The proposal of automatic escalation after a fixed response window remains disabled because the suggested 24/48-hour values were not finalized. No scheduled process is configured. App-wide ban appeals via a newly created account and the owner's customer-service room are separate and still unimplemented.
