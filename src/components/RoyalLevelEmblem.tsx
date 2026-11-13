@@ -35,7 +35,12 @@ export const RoyalLevelEmblem: React.FC<Props> = ({ track, level, kind, size = 8
         return <path key={i} d={`M ${x} ${y - 4} l 3 4 -3 4 -3 -4 Z`} fill={palette.glow} />;
       })}
       {kind === 'badge' && <text x="50" y="66" fontSize={level >= 100 ? 26 : 32} fontWeight="900" textAnchor="middle" fill={palette.primary}>{level}</text>}
-      {kind === 'frame' && <path d="M37 12 L42 6 L50 12 L58 6 L63 12 L61 20 L39 20 Z" fill={palette.primary} stroke={palette.glow} strokeWidth="1" />}
+      {kind === 'frame' && <>
+        <path d="M37 12 L42 6 L50 12 L58 6 L63 12 L61 20 L39 20 Z" fill={palette.primary} stroke={palette.glow} strokeWidth="1" />
+        <rect x="36" y="83" width="28" height="13" rx="5" fill={palette.secondary} stroke={palette.glow} strokeWidth="1.5" />
+        <text x="50" y="92.5" fontSize="9" fontWeight="900" textAnchor="middle" fill={palette.glow}>{level}</text>
+      </>}
+
     </svg>
     {kind === 'badge' && <Icon className="absolute top-0 h-4 w-4" color={palette.glow} aria-hidden="true" />}
     {level >= 150 && <Sparkles className="absolute -right-1 top-1 h-4 w-4 motion-safe:animate-pulse" color={palette.glow} aria-hidden="true" />}
