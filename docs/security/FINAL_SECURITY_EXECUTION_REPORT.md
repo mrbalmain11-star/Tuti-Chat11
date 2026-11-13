@@ -130,3 +130,9 @@ This report is the only intended repository change from this pass. The initial r
 - The application still needs a private quarantine upload flow, server-side file-signature/dimension checks, restricted reviewer UI, controlled publication, appeals/retention cleanup, and a reviewed image/logo classifier or an explicit manual-review operating model.
 - The separate permissions are recognized by the database guard, but owner-only grant/revoke UI and audit records for permission changes remain unimplemented. Link or competitor app names without a URL are not comprehensively classified by this migration.
 - The full role matrix, complete 51-function source review, economy tests, leaked-password configuration, and role-isolated fixtures remain open. Overall release/acceptance status remains **غير جاهز**.
+
+### CI and Advisor refresh after the text guard
+
+- GitHub Actions run [43450892118](https://github.com/mrbalmain11-star/Tuti-Chat11/actions/runs/43450892118) passed the Staging TypeScript check on migration commit `1c8f6b1054471ac93c15e00aee213c54b893dbb8`.
+- GitHub Actions run [43451199835](https://github.com/mrbalmain11-star/Tuti-Chat11/actions/runs/43451199835) passed the same check on report commit `4304f42bf699b1d8e192684548e0d07cd7bd9e18`. Neither run built an APK.
+- Latest Supabase Advisor read after the migration: 63 `rls_enabled_no_policy` INFO findings (up from 62 because `content_policy_terms` intentionally has RLS enabled and no grants/policies), 51 authenticated-executable SECURITY DEFINER warnings, and the leaked-password protection warning remains. Performance remains 11 unindexed foreign keys and 79 unused indexes; Health returned 0 findings. No database grants or existing rows were changed to address these advisories.
