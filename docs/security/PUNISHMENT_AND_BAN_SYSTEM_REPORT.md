@@ -74,3 +74,10 @@ Room-ban duration plumbing and the server permission boundary are implemented. F
 - GitHub Actions [43476982841](https://github.com/mrbalmain11-star/Tuti-Chat11/actions/runs/43476982841) passed TypeScript and the existing 200-level progression test. No APK was built. Feature commit: `366e3ccf72cb68f5e21a4e8722265be0b6e5a5cd`.
 - **Status: منفذ ويحتاج فحصاً.** Live owner decisions, owner-first escalation, reviewer removal/revocation, and end-to-end status retrieval need isolated role fixtures. The appeal flow currently uses a native prompt after room-entry denial; a dedicated status/history screen is not yet implemented.
 - The proposal of automatic escalation after a fixed response window remains disabled because the suggested 24/48-hour values were not finalized. No scheduled process is configured. App-wide ban appeals via a newly created account and the owner's customer-service room are separate and still unimplemented.
+
+## App-ban appeal intake through customer service — 2026-11-13
+
+- Built a separate server-side appeal intake path for an alternate verified account contacting support in the app owner's configured personal room. Support-room staff submit the banned account's six-digit ID, claimed name, and case summary. The backend resolves the ID, requires an active Auth ban, and links the case to the actual account UUID.
+- The app owner alone can configure a room they own. Only the room owner/current moderators can submit cases. Administrative staff authorized by `phase3.admin_room_authorized()` can review them. Cases and audit details remain private; direct table access is revoked, actions are idempotent, and duplicate active appeals for one target are rejected.
+- The UI is wired in the support room and Admin Center; the admin review action does not itself lift a ban. Applied migration, CI, security checks, and positive isolated-role tests are still pending.
+- **Status: منفذ جزئياً.** No application-wide ban lifecycle, in-app appeal status/notifications, account limit of five, or proof using isolated support identities is included. This flow is not acceptance-ready until those dependencies and tests are addressed.
