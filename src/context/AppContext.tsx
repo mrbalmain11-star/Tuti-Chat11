@@ -83,8 +83,8 @@ interface AppContextType {
   setOpenRechargeModal: (open: boolean) => void;
   openLevelsModal: boolean;
   setOpenLevelsModal: (open: boolean) => void;
-  levelsModalTab: 'wealth' | 'charm' | 'games';
-  setLevelsModalTab: (tab: 'wealth' | 'charm' | 'games') => void;
+  levelsModalTab: 'wealth' | 'charm' | 'games' | 'room';
+  setLevelsModalTab: (tab: 'wealth' | 'charm' | 'games' | 'room') => void;
   addGameExp: (amount: number) => void;
   openVipModal: boolean;
   setOpenVipModal: (open: boolean) => void;
@@ -910,7 +910,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [openGiftStore, setOpenGiftStore] = useState(false);
   const [openRechargeModal, setOpenRechargeModal] = useState(false);
   const [openLevelsModal, setOpenLevelsModal] = useState(false);
-  const [levelsModalTab, setLevelsModalTab] = useState<'wealth' | 'charm' | 'games'>('wealth');
+  const [levelsModalTab, setLevelsModalTab] = useState<'wealth' | 'charm' | 'games' | 'room'>('wealth');
   const [openVipModal, setOpenVipModal] = useState(false);
   const [vipModalInitialPopup, setVipModalInitialPopup] = useState<'badge' | 'headframe' | 'mic' | 'nickname' | null>(null);
   const [openAgencyModal, setOpenAgencyModal] = useState(false);
