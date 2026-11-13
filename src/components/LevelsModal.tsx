@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { fetchMyVerifiedRoyalXp, type VerifiedRoyalXp } from '../services/royalXp';
+import { RoyalRankings } from './RoyalRankings';
 import { royalProgress, ROYAL_CURVE_VERSION } from '../utils/royalLevels';
 import { ArrowRight, Crown, Sparkles, Gamepad2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
@@ -77,6 +78,7 @@ export const LevelsModal: React.FC = () => {
               <strong className="mt-1 block font-mono text-lg text-amber-200" dir="ltr">{xpError ?? (experience === null || experience === undefined ? 'جارٍ التحميل / غير متاحة' : BigInt(experience).toLocaleString('en-US'))}</strong>
             </div>
           </div>
+          <RoyalRankings />
         </div>
       </section>
     </div>
