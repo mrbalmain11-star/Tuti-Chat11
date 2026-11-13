@@ -9,7 +9,7 @@ type Case = {
   supportRoomId: string;
   submittedBy: string;
   details: string;
-  status: 'pending_admin' | 'under_review' | 'needs_info' | 'reviewed' | 'dismissed';
+  status: 'pending_admin' | 'under_review' | 'needs_info' | 'reviewed' | 'dismissed' | 'ban_lifted' | 'ban_upheld';
   reviewerNote?: string | null;
   createdAt: string;
 };
@@ -60,8 +60,10 @@ export const AdminCustomerServicePanel: React.FC<Props> = ({ isOwner }) => {
     finally { setBusy(false); }
   };
 
-  const decide = async (item: Case, status: 'under_review' | 'needs_info' | 'reviewed' | 'dismissed') => {
+  const decide = async (item: Case, status: 'under_review' | 'needs_info' | 'reviewed' | 'dismissed' | 'lift_ban' | 'uphold_ban') => {
     if (!stagingBackend) return;
+    if (status === 'lift_ban' && !window.confirm(`تأكيد رفع الباند العام عن الحساب ${item.targetPublicId}؟`)) return;
+    if (status === 'uphold_ban' && !window.confirm(`تأكيد تثبيت الباند العام على الحساب ${item.targetPublicId}؟`)) return;
     const reviewerNote = note.trim();
     if (reviewerNote.length < 5 || reviewerNote.length > 1000) { setError('سبب القرار يجب أن يكون بين 5 و1000 حرف'); return; }
     setBusy(true); setError(''); setNotice('');
@@ -79,11 +81,12 @@ export const AdminCustomerServicePanel: React.FC<Props> = ({ isOwner }) => {
   const statusLabel: Record<Case['status'], string> = {
     pending_admin: 'بانتظار الإدارة', under_review: 'قيد المراجعة',
     needs_info: 'مطلوب استكمال المعلومات', reviewed: 'اكتملت المراجعة', dismissed: 'أُغلق الطلب',
+    ban_lifted: 'تم رفع الباند', ban_upheld: 'تم تثبيت الباند',
   };
 
   return <section className="rounded-2xl border border-amber-200 bg-white p-4 space-y-3">
     <h2 className="font-black text-lg">طلبات اعتراض الباند العام</h2>
-    <p className="text-xs text-slate-600">الحساب المحظور يتواصل من حساب آخر داخل غرفة خدمة العملاء. مشرف الغرفة يرفع الطلب، والإدارة تراجعه. تسجيل المراجعة لا يرفع الباند تلقائياً.</p>
+    <p className="text-xs text-slate-600">الحساب المحظور يتواصل من حساب آخر داخل غرفة خدمة العملاء. مشرف الغرفة يرفع الطلب، والإدارة تراجع ثم تختار الإجراء. رفع الباند متاح فقط إذا ظل الباند نفسه فعالاً منذ تقديم الاعتراض.</p>
     {isOwner && <div className="rounded-xl border border-slate-200 p-3">
       <label className="block text-sm font-bold">غرفة خدمة العملاء (غرفتك الشخصية)</label>
       <div className="mt-2 flex gap-2"><input dir="ltr" value={roomId} onChange={e => setRoomId(e.target.value)} className="min-w-0 flex-1 rounded-xl border p-2" placeholder="Room UUID"/><button disabled={busy} onClick={() => void saveRoom()} className="rounded-xl bg-emerald-800 px-3 text-white">تعيين</button></div>
@@ -100,7 +103,8 @@ export const AdminCustomerServicePanel: React.FC<Props> = ({ isOwner }) => {
         <div className="flex flex-wrap gap-2">
           <button disabled={busy} onClick={() => void decide(item,'under_review')} className="rounded-lg bg-blue-700 px-3 py-2 text-white">بدء المراجعة</button>
           <button disabled={busy} onClick={() => void decide(item,'needs_info')} className="rounded-lg bg-amber-600 px-3 py-2 text-white">طلب معلومات إضافية</button>
-          <button disabled={busy} onClick={() => void decide(item,'reviewed')} className="rounded-lg bg-emerald-700 px-3 py-2 text-white">تسجيل اكتمال المراجعة</button>
+          <button disabled={busy} onClick={() => void decide(item,'lift_ban')} className="rounded-lg bg-emerald-700 px-3 py-2 text-white">قبول الاعتراض ورفع الباند</button>
+          <button disabled={busy} onClick={() => void decide(item,'uphold_ban')} className="rounded-lg bg-red-700 px-3 py-2 text-white">رفض الاعتراض وتثبيت الباند</button>
           <button disabled={busy} onClick={() => void decide(item,'dismissed')} className="rounded-lg bg-slate-700 px-3 py-2 text-white">إغلاق الطلب</button>
         </div>
       </>}
