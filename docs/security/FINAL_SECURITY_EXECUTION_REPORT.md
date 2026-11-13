@@ -151,3 +151,28 @@ This report is the only intended repository change from this pass. The initial r
 - Post-migration read confirmed 35 profiles, 21 rooms, 3 room memberships, and 0 negative wallets. No user data was modified.
 - Database privilege check confirmed `anon` cannot execute any new helper; `authenticated` may call only `content_has_permission` and the pure text normalizer. The validator and trigger function are not directly executable by either `anon` or `authenticated`.
 - GitHub Actions [43452228884](https://github.com/mrbalmain11-star/Tuti-Chat11/actions/runs/43452228884) passed TypeScript on `e8103cf69deac451b44f8ad8cea21f01f0ff045d`. This does not execute SQL-specific integration tests or build an APK.
+
+## Room sanctions and timed room bans — 2026-11-13 follow-up
+
+### Implemented on Staging
+
+- Migration `room_timed_bans_20261113180000` was applied successfully to Supabase Staging. It adds `expires_at` to `public.room_bans`; existing records remain permanent (`NULL` expiry), so no users, bans or balances were deleted or rewritten.
+- `phase2_room_moderate_voice_relay_v2` accepts only room `ban` and `unban`, validates the verified session and current owner/moderator membership, validates the fixed duration allowlist, serializes requests, and binds each idempotency key to the duration and target. Only `service_role` can execute it; `anon` and `authenticated` grants are false. A smoke call carrying authenticated claims was rejected as expected.
+- Room durations exposed in the current action are permanent, 10m, 30m, 1h, 6h, 12h, 24h, 3d, 7d and 30d. The database, not the Android/UI value, calculates the expiry. A room-join trigger rejects only active bans; the room-ban list omits expired records and returns expiry for active temporary bans.
+- Room moderators may remove only a ban they issued; the room owner may remove room bans in their room. The protected account rules and original room moderation RPC remain in force. Platform-staff room bans explicitly remain permanent. Existing kick/mute/seat actions keep using the previous relay path; no voice or music engine code was changed.
+- Edge Function `phase2-voice-moderate` is active at deployed version 10 (`verify_jwt=true`). It routes only `ban` through the new duration RPC; other supported actions continue through the existing RPC and LiveKit path.
+
+### Verification and commits
+
+- Database assertions passed for the expiry column, active-ban join predicate, permanent platform-staff bans, and the private idempotency-table policy. Function grants verified: `anon=false`, `authenticated=false`, `service_role=true`. A rollback-free authorization smoke call using synthetic UUID claims verified that an authenticated caller cannot invoke the privileged relay.
+- Actions run [43471030593](https://github.com/mrbalmain11-star/Tuti-Chat11/actions/runs/43471030593) failed because the large UI source file was accidentally truncated while transferring the first commit. The complete file was restored in commit `ef316df2ee9d0cc02161af3fe8e33705f806f78f`; its UTF-16 character and line counts were checked against the local source. Actions run [43471897167](https://github.com/mrbalmain11-star/Tuti-Chat11/actions/runs/43471897167) then passed TypeScript and the 200-level progression test. No APK was built.
+- Implementation commit: `4ef4b6855bc3dc83e1f04a1ad674617ece0f578b`; repair commit/current branch head: `ef316df2ee9d0cc02161af3fe8e33705f806f78f`.
+- Latest Supabase Advisor snapshot: 62 RLS-without-policy INFO findings, 52 authenticated-callable SECURITY DEFINER WARN findings, 1 leaked-password protection WARN; performance has 11 unindexed-FK INFO, 80 unused-index INFO and 1 multiple-permissive-policy WARN; Health has no findings. These are not cleared by the room-ban migration.
+
+### Status and remaining gaps
+
+- **Room temporary/permanent ban backend:** منفذ ويحتاج فحصاً. The database denial and relay grant checks passed, but no isolated owner/moderator/member identities are available to safely run the positive owner and moderator cases against real Staging identities.
+- **Room ban revocation, expiry, cross-room scope and concurrency:** منفذ ويحتاج فحصاً. Expiry is enforced on membership creation and the RPC has locking/idempotency, but no concurrent isolated integration test or actual expiry wait test was run.
+- **Full punishment system:** منفذ جزئياً. Application-wide warnings, restrictions and bans; duration mutes; immutable sanction history; appeals/escalation; and the admin punishment center are not implemented in this change.
+- **Image moderation and logo/competitor detection:** غير منفذ. Public image upload paths are not quarantined; no paid or free classifier, reviewer queue, appeal workflow, or publication gate is active.
+- **Role matrix, remaining SECURITY DEFINER/RLS review, economy tests and leaked-password setting:** still open as listed above. Overall readiness remains **غير جاهز**.
