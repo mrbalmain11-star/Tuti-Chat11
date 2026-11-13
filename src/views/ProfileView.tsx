@@ -31,6 +31,7 @@ export const ProfileView: React.FC = () => {
     updateUserProfile,
     setOpenVipModal,
     setVipModalInitialPopup,
+    openLevelsModal,
     setOpenLevelsModal,
     setLevelsModalTab,
     setOpenAgencyModal,
@@ -343,7 +344,7 @@ export const ProfileView: React.FC = () => {
           <div className="flex items-center gap-3.5 min-w-0 flex-1">
             {/* Avatar Circle with Camera upload button */}
             <div className={`relative w-18 h-18 rounded-full shrink-0 group ${currentUser.vipLevel > 0 ? 'isolate' : ''}`}>
-              <RoyalProfileFrame />
+              <RoyalProfileFrame refreshKey={openLevelsModal} />
               {currentUser.vipLevel > 0 && (
                 <>
                   <div
