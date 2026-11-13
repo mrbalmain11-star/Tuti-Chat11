@@ -3,7 +3,7 @@
 **Review date:** 2026-11-13 (Asia/Baghdad)  
 **Repository:** `mrbalmain11-star/Tuti-Chat11`  
 **Branch:** `integration/legacy-backend-staging`  
-**Reviewed checkout HEAD:** `4444dd6` (`docs: update visual review verification`)  
+**Local checkout HEAD:** `4444dd6` (`docs: update visual review verification`); this checkout differed from the GitHub Staging branch snapshot reviewed by Actions.  
 **Backend:** Supabase Staging project `rziaedugbdwefbefcxjt`  
 **Overall decision:** **غير جاهز للنشر؛ جاهز لمتابعة التدقيق واختبار قبول محدود فقط.**
 
@@ -61,9 +61,8 @@ The first two show explicit role enforcement; the third shows the fake, unverifi
 
 ### Local code checks
 
-- `npm run lint` — passed (`tsc --noEmit`).
-- `node --test tests/treasury.test.mjs` — **5 passed, 0 failed**.
-- `npm run build` — passed. This built the web bundle only, not an APK.
+- On the local checkout at `4444dd6`, `npm run lint` passed (`tsc --noEmit`), `node --test tests/treasury.test.mjs` passed (**5/5**), and `npm run build` passed. This older checkout did not contain the current remote `LevelsModal.tsx`, so these results did not validate the exact GitHub branch snapshot.
+- On GitHub branch commit `f37ba29896daa8dc74a7f93eb9d52257749c822c`, Actions run 379 passed the TypeScript check and the royal 200-level progression test. No APK was built.
 - Build warnings remain: Vite `__dirname` compatibility warning; the main JS chunk is about 2.03 MB minified; a dynamic import of `stagingBackend.ts` is ineffective due to other static imports; RollDown reports `eval` in the third-party `lottie-web` player. These are not release-blocking findings established by this review, but should be triaged.
 - Targeted text scan found explicit UI comments indicating real backend data for room membership and rankings; it was not a complete proof that every screen has no hardcoded/demo data.
 
@@ -98,9 +97,9 @@ Server-side rules and tests are not sufficiently evidenced to certify any comple
 
 ## Remediation and commit record
 
-No application or database security change was made in this pass: the checked role-denial paths rejected the simulated principal, and no safe, confirmed exploitable defect was established. Removing grants, changing RLS, or altering Auth settings without complete behavior tests would risk breaking authorized flows or staging authentication. No database migration was applied.
+One confirmed syntax/build defect was fixed: an extra `}` at `src/components/LevelsModal.tsx:141` caused `TS1381` in the GitHub Staging TypeScript workflow. The fix commit is `f37ba29896daa8dc74a7f93eb9d52257749c822c`; run 379 then passed TypeScript and the 200-level progression test. No database security change or migration was made because no exploitable database authorization defect was confirmed, and broader behavior tests are still outstanding.
 
-This report is the only intended repository change from this pass. The initial report commit on this branch is `78439541fa52a776ab91bdf74b2daa309d7348c6`. The metadata follow-up is `dcd780b184f5029ef5c76e7f6cab300e25ed48fa`; catalog triage was recorded in `9ef5b213a6240cc36e5a976e8453c842832d7a26`; this update records database grants and storage policy findings. Existing untracked image files are excluded from these commits.
+This report is the only intended repository change from this pass. The initial report commit on this branch is `78439541fa52a776ab91bdf74b2daa309d7348c6`. The metadata follow-up is `dcd780b184f5029ef5c76e7f6cab300e25ed48fa`; catalog triage was recorded in `9ef5b213a6240cc36e5a976e8453c842832d7a26`; database grant/storage findings were recorded in `84b6078243b5547b1840d70bc6ce6aff45215a4e`; code fix: `f37ba29896daa8dc74a7f93eb9d52257749c822c`. Existing untracked image files are excluded from these commits.
 
 ## Release gate
 
