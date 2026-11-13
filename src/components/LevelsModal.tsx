@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { fetchMyVerifiedRoyalXp, type VerifiedRoyalXp } from '../services/royalXp';
 import { RoyalRankings } from './RoyalRankings';
+import { fetchMyRoyalEntitlements, type RoyalEntitlement } from '../services/royalRewards';
 import { royalProgress, ROYAL_CURVE_VERSION } from '../utils/royalLevels';
 import { ArrowRight, Crown, Sparkles, Gamepad2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
@@ -16,6 +17,7 @@ export const LevelsModal: React.FC = () => {
   const { openLevelsModal, setOpenLevelsModal, levelsModalTab, setLevelsModalTab, currentUser } = useApp();
   const [verifiedXp, setVerifiedXp] = useState<VerifiedRoyalXp | null>(null);
   const [xpError, setXpError] = useState<string | null>(null);
+  const [rewards, setRewards] = useState<RoyalEntitlement[]>([]);
   useEffect(() => {
     if (!openLevelsModal) return;
     let active = true;
@@ -28,6 +30,15 @@ export const LevelsModal: React.FC = () => {
     });
     return () => { active = false; };
   }, [openLevelsModal, currentUser.id]);
+  useEffect(() => {
+    if (!openLevelsModal || levelsModalTab === 'games') { setRewards([]); return; }
+    let active = true;
+    setRewards([]);
+    void fetchMyRoyalEntitlements(levelsModalTab).then(items => {
+      if (active) setRewards(items);
+    }).catch(() => { if (active) setRewards([]); });
+    return () => { active = false; };
+  }, [openLevelsModal, levelsModalTab, currentUser.id]);
   if (!openLevelsModal) return null;
 
   const isWealth = levelsModalTab === 'wealth';
@@ -73,6 +84,11 @@ export const LevelsModal: React.FC = () => {
                 <p className="mt-1 text-[10px] text-slate-400">جدول {ROYAL_CURVE_VERSION} · الخبرة من الهدايا المكتملة فقط</p>
               </div>
             )}
+            {(isWealth || isCharm) && <div className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3 text-xs">
+              <div className="flex justify-between"><span>المستويات المفتوحة والمحفوظة</span><strong className="text-amber-200">{rewards.length}</strong></div>
+              <p className="mt-1 text-slate-400">كل مستوى محفوظ يمنح استحقاق شارة وإطار. تظهر التصاميم بعد نشر ملفاتها الأصلية المعتمدة.</p>
+              {rewards.length > 0 && <p className="mt-2 text-emerald-200">أعلى مستوى مكافأة محفوظ: {rewards[0].level}</p>}
+            </div>}
             <div className="mt-4 rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm">
               <span className="text-slate-300">{isWealth ? 'نقاط خبرة الثروة' : isCharm ? 'نقاط خبرة السحر' : 'خبرة الألعاب'}</span>
               <strong className="mt-1 block font-mono text-lg text-amber-200" dir="ltr">{xpError ?? (experience === null || experience === undefined ? 'جارٍ التحميل / غير متاحة' : BigInt(experience).toLocaleString('en-US'))}</strong>
