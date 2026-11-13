@@ -88,3 +88,28 @@ export function xpToReachRoyalLevel(level: number): bigint {
   }
   return ROYAL_TRANSITIONS.slice(0, level - 1).reduce((sum, cost) => sum + cost, 0n);
 }
+
+/** Only metadata, not fabricated artwork. Real badge/frame assets must be
+ * approved, licensed, and published to the catalog before they can be equipped.
+ */
+export type RoyalReward = {
+  track: RoyalTrack;
+  level: number;
+  badgeKey: string;
+  frameKey: string;
+};
+export function royalUnlockedRewards(track: RoyalTrack, highestLegitimateLevel: number): RoyalReward[] {
+  if (!['wealth', 'charm', 'room'].includes(track) ||
+      !Number.isInteger(highestLegitimateLevel) ||
+      highestLegitimateLevel < 1 || highestLegitimateLevel > ROYAL_MAX_LEVEL) {
+    throw new Error('Invalid reward track or level');
+  }
+  return Array.from({ length: highestLegitimateLevel }, (_, i) => {
+    const level = i + 1;
+    return {
+      track, level,
+      badgeKey: `royal/${track}/badge/${level}`,
+      frameKey: `royal/${track}/frame/${level}`,
+    };
+  });
+}
