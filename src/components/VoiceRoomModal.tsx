@@ -1009,6 +1009,39 @@ export const VoiceRoomModal: React.FC = () => {
     }
   };
 
+  const handleRoomWarning = async (userId: string) => {
+    if (!activeRoom || !stagingBackend || (!isOwner && !isModerator)) {
+      showToast('التحذير متاح لمالك الغرفة والمشرف فقط.');
+      return;
+    }
+    if (userId === currentUser.id || userId === activeRoom.hostId) {
+      showToast('لا يمكن تحذير المالك أو نفسك.');
+      return;
+    }
+    const reason = window.prompt('سبب التحذير (5 أحرف على الأقل):');
+    if (!reason || reason.trim().length < 5 || reason.trim().length > 500) return;
+    if (moderationPendingRef.current.has(userId)) return;
+    moderationPendingRef.current.add(userId);
+    setModerationBusy(true);
+    try {
+      const { data, error } = await stagingBackend.rpc('phase2_room_warn_member', {
+        p_room_id: activeRoom.id,
+        p_target: userId,
+        p_reason: reason.trim(),
+        p_request_id: crypto.randomUUID(),
+      });
+      if (error) throw error;
+      if (!(data as { warningId?: string } | null)?.warningId) throw new Error('Warning not confirmed');
+      showToast('تم تسجيل التحذير في سجل الغرفة');
+    } catch (error) {
+      console.error('Room warning failed:', error);
+      showToast('رفض الخادم التحذير أو تعذر تسجيله.');
+    } finally {
+      moderationPendingRef.current.delete(userId);
+      setModerationBusy(moderationPendingRef.current.size > 0);
+    }
+  };
+
   const handleKickMember = (userId: string, _userName: string) => {
     void handleVoiceModeration(userId, 'kick');
   };
@@ -3225,6 +3258,7 @@ export const VoiceRoomModal: React.FC = () => {
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                             {(isOwner || isModerator) && <button type="button" disabled={moderationBusy} onClick={() => void handleVoiceModeration(user.id, 'ban')} className="rounded-lg bg-red-800/50 px-2 py-1.5 text-[10px] font-bold text-red-200" title="حظر مؤقت أو دائم من الغرفة">حظر الغرفة</button>}
+                            {(isOwner || (isModerator && !isMod)) && <button type="button" disabled={moderationBusy} onClick={() => void handleRoomWarning(user.id)} className="rounded-lg bg-amber-700/60 px-2 py-1.5 text-[10px] font-bold text-amber-100">تحذير</button>}
                             <button type="button" onClick={() => void setPersonalBlock(user.id, !personalBlocks.some(item => item.userId === user.id))} className="rounded-lg bg-slate-700 px-2 py-1.5 text-[10px] text-white">{personalBlocks.some(item => item.userId === user.id) ? 'فك الحظر الشخصي' : 'حظر شخصي'}</button>
                           </div>
                         )}
