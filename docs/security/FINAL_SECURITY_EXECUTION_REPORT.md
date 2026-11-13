@@ -98,7 +98,7 @@ Server-side rules and tests are not sufficiently evidenced to certify any comple
 
 No application or database security change was made in this pass: the checked role-denial paths rejected the simulated principal, and no safe, confirmed exploitable defect was established. Removing grants, changing RLS, or altering Auth settings without complete behavior tests would risk breaking authorized flows or staging authentication. No database migration was applied.
 
-This report is the only intended repository change from this pass. Its final commit SHA must be filled after the report is committed. Existing untracked image files are excluded from that commit.
+This report is the only intended repository change from this pass. The initial report commit on this branch is `78439541fa52a776ab91bdf74b2daa309d7348c6`; this follow-up records that SHA. Existing untracked image files are excluded from both commits.
 
 ## Release gate
 
