@@ -143,3 +143,11 @@ This report is the only intended repository change from this pass. The initial r
 - Migration `20261113170000_content_policy_terms_deny` was applied on Staging and committed at `cc71b84783da9b5593985945c0f89000b70fcbd2`. It adds an explicit `FOR ALL TO public USING (false) WITH CHECK (false)` policy to the policy-term table; table grants remain revoked. This removed the extra Advisor no-policy finding introduced by the configuration table.
 - After the deny policy, rollback-only SQL assertions again passed for an unassigned synthetic identity, reserved-brand rejection, and natural Toti mention in profile text.
 - Actions [43451620628](https://github.com/mrbalmain11-star/Tuti-Chat11/actions/runs/43451620628) passed TypeScript on `cc71b84783da9b5593985945c0f89000b70fcbd2`; [43451485822](https://github.com/mrbalmain11-star/Tuti-Chat11/actions/runs/43451485822) passed on report commit `8bce2923e4ef119933a71b9f6dc1fe2f45c4e305`. These were TypeScript-only workflows; neither built an APK.
+
+### Arabic normalization regression check
+
+- Migration `20261113171000_content_arabic_normalization_fix` was applied to Staging and committed at `e8103cf69deac451b44f8ad8cea21f01f0ff045d`.
+- It normalizes Arabic ta marbuta (`ة`) to ha (`ه`) to match common variants in explicit high-signal prohibited terms. SQL assertions passed for `إباحية` normalization and rejection; a natural profile mention of Toti remained allowed.
+- Post-migration read confirmed 35 profiles, 21 rooms, 3 room memberships, and 0 negative wallets. No user data was modified.
+- Database privilege check confirmed `anon` cannot execute any new helper; `authenticated` may call only `content_has_permission` and the pure text normalizer. The validator and trigger function are not directly executable by either `anon` or `authenticated`.
+- GitHub Actions [43452228884](https://github.com/mrbalmain11-star/Tuti-Chat11/actions/runs/43452228884) passed TypeScript on `e8103cf69deac451b44f8ad8cea21f01f0ff045d`. This does not execute SQL-specific integration tests or build an APK.
