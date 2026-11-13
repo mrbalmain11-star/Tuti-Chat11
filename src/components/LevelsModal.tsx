@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { fetchMyVerifiedRoyalXp, type VerifiedRoyalXp } from '../services/royalXp';
 import { RoyalRankings } from './RoyalRankings';
+import { RoyalLevelEmblem } from './RoyalLevelEmblem';
 import { fetchMyRoyalEntitlements, type RoyalEntitlement } from '../services/royalRewards';
 import { royalProgress, ROYAL_CURVE_VERSION } from '../utils/royalLevels';
 import { ArrowRight, Crown, Sparkles, Gamepad2 } from 'lucide-react';
@@ -87,7 +88,13 @@ export const LevelsModal: React.FC = () => {
             {(isWealth || isCharm) && <div className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3 text-xs">
               <div className="flex justify-between"><span>المستويات المفتوحة والمحفوظة</span><strong className="text-amber-200">{rewards.length}</strong></div>
               <p className="mt-1 text-slate-400">كل مستوى محفوظ يمنح استحقاق شارة وإطار. تظهر التصاميم بعد نشر ملفاتها الأصلية المعتمدة.</p>
-              {rewards.length > 0 && <p className="mt-2 text-emerald-200">أعلى مستوى مكافأة محفوظ: {rewards[0].level}</p>}
+              {rewards.length > 0 && <>
+                <p className="mt-2 text-emerald-200">أعلى مستوى مكافأة محفوظ: {rewards[0].level}</p>
+                <div className="mt-3 flex items-center justify-center gap-5">
+                  <div className="flex flex-col items-center gap-1"><RoyalLevelEmblem track={levelsModalTab === 'wealth' ? 'wealth' : 'charm'} level={rewards[0].level} kind="badge" /><span>شارة المستوى</span></div>
+                  <div className="flex flex-col items-center gap-1"><RoyalLevelEmblem track={levelsModalTab === 'wealth' ? 'wealth' : 'charm'} level={rewards[0].level} kind="frame" /><span>الإطار المتحرك</span></div>
+                </div>
+              </>}
             </div>}
             <div className="mt-4 rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm">
               <span className="text-slate-300">{isWealth ? 'نقاط خبرة الثروة' : isCharm ? 'نقاط خبرة السحر' : 'خبرة الألعاب'}</span>
