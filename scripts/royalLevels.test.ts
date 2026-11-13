@@ -24,7 +24,7 @@ assert.throws(() => royalGiftXp(0n, true));
 assert.throws(() => validateRoyalCurve(curve.slice(0, -1)));
 assert.throws(() => validateRoyalCurve([1n, ...curve.slice(1)]));
 assert.throws(() => calculateRoyalProgress(-1n, curve));
-console.log('Royal progression core checks passed (illustrative unapproved late-level curve).');
+console.log('Illustrative legacy curve regression checks passed.');
 
 validateRoyalCurve(ROYAL_TRANSITIONS);
 assert.equal(ROYAL_TRANSITIONS.length, 199);
