@@ -57,3 +57,34 @@ export function royalGiftXp(amount: bigint, hasVerifiedRoom: boolean) {
   if (amount <= 0n) throw new Error('Gift amount must be positive');
   return { wealth: amount, charm: amount, room: hasVerifiedRoom ? amount : 0n };
 }
+
+/** Calibrated v1 curve. Each number is the cost of L -> L+1.
+ * Keep lifetime XP independent of level progress. Never mutate balances.
+ */
+export const ROYAL_CURVE_VERSION = 'royal-200-v1' as const;
+export const ROYAL_TRANSITIONS: readonly bigint[] = (() => {
+  const costs: bigint[] = [...APPROVED_EARLY_TRANSITIONS];
+  let last = costs[costs.length - 1];
+  for (let level = 23; level <= 199; level++) {
+    const increment = level <= 40 ? 25000n
+      : level <= 60 ? 35000n
+      : level <= 80 ? 50000n
+      : level <= 100 ? 75000n
+      : level <= 120 ? 100000n
+      : level <= 140 ? 150000n
+      : level <= 160 ? 200000n
+      : level <= 180 ? 300000n : 500000n;
+    last += increment;
+    costs.push(last);
+  }
+  return Object.freeze(costs);
+})();
+export function royalProgress(lifetimeXp: bigint): RoyalProgress {
+  return calculateRoyalProgress(lifetimeXp, ROYAL_TRANSITIONS);
+}
+export function xpToReachRoyalLevel(level: number): bigint {
+  if (!Number.isInteger(level) || level < 1 || level > ROYAL_MAX_LEVEL) {
+    throw new Error('Invalid royal level');
+  }
+  return ROYAL_TRANSITIONS.slice(0, level - 1).reduce((sum, cost) => sum + cost, 0n);
+}
