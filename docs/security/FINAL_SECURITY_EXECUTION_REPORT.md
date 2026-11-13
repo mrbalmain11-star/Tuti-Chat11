@@ -104,3 +104,29 @@ This report is the only intended repository change from this pass. The initial r
 ## Release gate
 
 **Decision: not ready for final acceptance or publication.** The current evidence is insufficient to certify the full role matrix, all 51 definer functions, Auth leaked-password protection, storage policies, real financial concurrency, all app workflows, or CI. No APK was built, and stable audio/music code was not changed.
+
+## Content Moderation & Brand Protection — 2026-11-13 follow-up
+
+### Server-side text protection
+
+- **Status:** منفذ ويحتاج فحصاً.
+- Migration `20261113160000_content_text_brand_guard` was applied to Supabase Staging and committed on the allowed branch at `1c8f6b1054471ac93c15e00aee213c54b893dbb8`.
+- Database triggers now validate changed profile display names/bios, room titles/welcome messages, agency names, and agency registration names. The existing text is not rewritten or deleted.
+- Normalization covers Arabic alef variants, Arabic/Persian digits, diacritics, tatweel, zero-width characters, punctuation/spacing, and common Latin leetspeak substitutions. Configured high-signal explicit terms and reserved TotiChat spellings are blocked in these identity fields. Identity reservation applies to account/room/agency display names, not ordinary conversation mentions. URLs/invite patterns in public identity/profile fields require the explicit `external_app_promotion` permission; TotiChat identity requires `brand_identity_use`.
+- These permission names are checked against the authenticated account's live `phase3.admin_access.permissions` row. A synthetic unassigned UUID test returned false for both permissions and the reserved-brand attempt was rejected. No real account was given a role or permission.
+- No existing user records or balances were changed. Trigger tests against actual profiles/rooms were avoided because Staging contains real user data. A direct rollback-only SQL test exercised normalization and validation functions, not the full authenticated mobile RPC path.
+
+### Test results
+
+- SQL assertion suite passed: Latin separators normalize to `totichat`; Arabic diacritics normalize to `توتيشات`; reserved TotiChat name, explicit `PornHub`, and promotional URL were rejected; natural Arabic profile text and ordinary app-comparison/welcome text passed.
+- Rollback-only permission check passed: an unassigned synthetic user cannot use either exceptional permission.
+- `npm run lint` in an isolated checkout could not start because its dependencies were absent (`tsc: not found`); no dependencies were installed. The GitHub combined status for the new commit must be checked before treating TypeScript/CI as passed.
+- The Content Protection migration is server-side text enforcement only. It does not include admin settings UI, grant/revoke RPCs, audit events, appeals, competitor-name inventory, or automated semantic classifiers.
+
+### Images, logos, and outstanding scope
+
+- **Image filtering status:** غير منفذ. User image uploads still have direct paths into the existing public avatar and room-image buckets. No image classifier, logo-similarity check, quarantine/review queue, or fail-closed image publication flow was activated. No paid provider was selected or enabled.
+- The earlier draft image migration was not applied because it would have blocked existing upload paths before those paths were migrated and tested. Existing images were not scanned or deleted.
+- The application still needs a private quarantine upload flow, server-side file-signature/dimension checks, restricted reviewer UI, controlled publication, appeals/retention cleanup, and a reviewed image/logo classifier or an explicit manual-review operating model.
+- The separate permissions are recognized by the database guard, but owner-only grant/revoke UI and audit records for permission changes remain unimplemented. Link or competitor app names without a URL are not comprehensively classified by this migration.
+- The full role matrix, complete 51-function source review, economy tests, leaked-password configuration, and role-isolated fixtures remain open. Overall release/acceptance status remains **غير جاهز**.
