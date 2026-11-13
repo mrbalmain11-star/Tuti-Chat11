@@ -135,4 +135,11 @@ This report is the only intended repository change from this pass. The initial r
 
 - GitHub Actions run [43450892118](https://github.com/mrbalmain11-star/Tuti-Chat11/actions/runs/43450892118) passed the Staging TypeScript check on migration commit `1c8f6b1054471ac93c15e00aee213c54b893dbb8`.
 - GitHub Actions run [43451199835](https://github.com/mrbalmain11-star/Tuti-Chat11/actions/runs/43451199835) passed the same check on report commit `4304f42bf699b1d8e192684548e0d07cd7bd9e18`. Neither run built an APK.
-- Latest Supabase Advisor read after the migration: 63 `rls_enabled_no_policy` INFO findings (up from 62 because `content_policy_terms` intentionally has RLS enabled and no grants/policies), 51 authenticated-executable SECURITY DEFINER warnings, and the leaked-password protection warning remains. Performance remains 11 unindexed foreign keys and 79 unused indexes; Health returned 0 findings. No database grants or existing rows were changed to address these advisories.
+- Latest Supabase Advisor read after the follow-up deny policy: 62 `rls_enabled_no_policy` INFO findings, 51 authenticated-executable SECURITY DEFINER warnings, and the leaked-password protection warning remains. Performance remains 11 unindexed foreign keys and 79 unused indexes; Health returned 0 findings. No database grants or existing rows were changed to address these advisories.
+
+
+### Explicit deny policy and final CI check
+
+- Migration `20261113170000_content_policy_terms_deny` was applied on Staging and committed at `cc71b84783da9b5593985945c0f89000b70fcbd2`. It adds an explicit `FOR ALL TO public USING (false) WITH CHECK (false)` policy to the policy-term table; table grants remain revoked. This removed the extra Advisor no-policy finding introduced by the configuration table.
+- After the deny policy, rollback-only SQL assertions again passed for an unassigned synthetic identity, reserved-brand rejection, and natural Toti mention in profile text.
+- Actions [43451620628](https://github.com/mrbalmain11-star/Tuti-Chat11/actions/runs/43451620628) passed TypeScript on `cc71b84783da9b5593985945c0f89000b70fcbd2`; [43451485822](https://github.com/mrbalmain11-star/Tuti-Chat11/actions/runs/43451485822) passed on report commit `8bce2923e4ef119933a71b9f6dc1fe2f45c4e305`. These were TypeScript-only workflows; neither built an APK.
