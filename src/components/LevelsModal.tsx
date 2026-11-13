@@ -46,10 +46,10 @@ export const LevelsModal: React.FC = () => {
     return () => { active = false; };
   }, [openLevelsModal, currentUser.id]);
   useEffect(() => {
-    if (!openLevelsModal || (levelsModalTab === 'room' && !roomId)) { setRewards([]); return; }
+    if (!openLevelsModal || levelsModalTab === 'games' || (levelsModalTab === 'room' && !roomId)) { setRewards([]); return; }
     let active = true;
     setRewards([]);
-    void (levelsModalTab === 'room' ? fetchOwnedRoomRoyalEntitlements(roomId) : fetchMyRoyalEntitlements(levelsModalTab)).then(items => {
+    void (levelsModalTab === 'room' ? fetchOwnedRoomRoyalEntitlements(roomId) : fetchMyRoyalEntitlements(levelsModalTab === 'charm' ? 'charm' : 'wealth')).then(items => {
       if (active) setRewards(items);
     }).catch(() => { if (active) setRewards([]); });
     return () => { active = false; };
