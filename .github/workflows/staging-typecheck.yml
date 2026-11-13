@@ -22,3 +22,5 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Check TypeScript without building APK
         run: npm run lint
+      - name: Test royal 200-level progression (no APK)
+        run: npx --no-install tsx scripts/royalLevels.test.ts
