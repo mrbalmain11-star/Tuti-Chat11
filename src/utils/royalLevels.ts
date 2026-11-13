@@ -1,6 +1,6 @@
 /** TotiChat 200-level progression core (staging). No wallet/audio side effects.
  * Thresholds are the XP needed to advance FROM level L to L+1.
- * A final 199-entry curve must be approved after economic calibration.
+ * Version royal-200-v1 is fixed here; changing it requires explicit migration.
  */
 export const ROYAL_MAX_LEVEL = 200 as const;
 export type RoyalTrack = 'wealth' | 'charm' | 'room';
