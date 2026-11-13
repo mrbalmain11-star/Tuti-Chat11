@@ -34,3 +34,8 @@ export async function equipEarnedRoyalFrame(track: RoyalTrack, level: number, ro
   if (error) throw error;
   return data as EquippedRoyalFrame;
 }
+
+export async function fetchMyEquippedRoyalFrame(roomId?: string): Promise<EquippedRoyalFrame | null> {
+  const userId = await currentId();
+  return fetchEquippedRoyalFrame(roomId ? 'room' : 'personal', roomId ?? userId);
+}
