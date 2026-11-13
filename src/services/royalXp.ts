@@ -31,3 +31,21 @@ export async function fetchVerifiedRoomRoyalXp(roomId: string): Promise<string> 
   if (!data || !/^\d+$/.test(String(data.room_lifetime_xp))) throw new Error('Invalid room XP response');
   return String(data.room_lifetime_xp);
 }
+
+/** Return the signed-in user's owned rooms with verified lifetime room XP.
+ * Do not substitute a public 6-digit room ID for the UUID required by the RPC.
+ */
+export async function fetchMyOwnedRoyalRooms(): Promise<{ id: string; title: string; lifetimeXp: string }[]> {
+  if (!stagingBackend) throw new Error('Staging backend not configured');
+  const { data: auth, error: authError } = await stagingBackend.auth.getUser();
+  if (authError) throw authError;
+  if (!auth.user) throw new Error('Authentication required');
+  const { data: rooms, error } = await stagingBackend.from('rooms')
+    .select('id,title').eq('owner_id', auth.user.id).order('created_at', { ascending: true });
+  if (error) throw error;
+  return Promise.all((rooms ?? []).map(async (room) => ({
+    id: room.id as string,
+    title: String(room.title ?? 'غرفتي'),
+    lifetimeXp: await fetchVerifiedRoomRoyalXp(room.id as string),
+  })));
+}
