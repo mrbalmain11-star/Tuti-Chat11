@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { fetchMyVerifiedRoyalXp, type VerifiedRoyalXp } from '../services/royalXp';
 import { ArrowRight, Crown, Sparkles, Gamepad2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
@@ -11,11 +12,25 @@ const levelTabs = [
 
 export const LevelsModal: React.FC = () => {
   const { openLevelsModal, setOpenLevelsModal, levelsModalTab, setLevelsModalTab, currentUser } = useApp();
+  const [verifiedXp, setVerifiedXp] = useState<VerifiedRoyalXp | null>(null);
+  const [xpError, setXpError] = useState<string | null>(null);
+  useEffect(() => {
+    if (!openLevelsModal) return;
+    let active = true;
+    setVerifiedXp(null);
+    setXpError(null);
+    void fetchMyVerifiedRoyalXp().then(data => {
+      if (active) setVerifiedXp(data);
+    }).catch(() => {
+      if (active) setXpError('تعذر تحميل الخبرة الموثقة من الخادم');
+    });
+    return () => { active = false; };
+  }, [openLevelsModal, currentUser.id]);
   if (!openLevelsModal) return null;
 
   const isWealth = levelsModalTab === 'wealth';
   const isCharm = levelsModalTab === 'charm';
-  const experience = isWealth ? currentUser.wealthExp : isCharm ? currentUser.charmExp : null;
+  const experience = isWealth ? verifiedXp?.wealth_lifetime_xp : isCharm ? verifiedXp?.charm_lifetime_xp : null;
   const activeTab = levelTabs.find(tab => tab.id === levelsModalTab) ?? levelTabs[0];
   const ActiveIcon = activeTab.Icon;
 
@@ -38,11 +53,11 @@ export const LevelsModal: React.FC = () => {
         <div className="overflow-y-auto p-4">
           <div className="rounded-2xl border border-emerald-300/20 bg-white/[0.04] p-5 text-center">
             <ActiveIcon className="mx-auto h-10 w-10 text-amber-300" aria-hidden="true" />
-            <h3 className="mt-3 text-sm font-black">قواعد المستوى الرسمية غير متاحة حالياً</h3>
-            <p className="mt-2 text-xs leading-6 text-slate-300">يعرض الخادم نقاط الخبرة، لكنه لا يرسل مستوى موثقاً وجدول الحدود الكامل غير معتمد بعد. لذلك لا نحسب مستوى أو نسبة تقدم تقديرية من التطبيق.</p>
+            <h3 className="mt-3 text-sm font-black">خبرة الهدايا الموثقة من الخادم</h3>
+            <p className="mt-2 text-xs leading-6 text-slate-300">تم ربط خبرة الثروة والسحر بسجلات الهدايا المكتملة في Staging. عرض المستوى والإطارات ينتظر اعتماد منحنى الـ200 مستوى وترحيل المكافآت الموثقة.</p>
             <div className="mt-4 rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm">
               <span className="text-slate-300">{isWealth ? 'نقاط خبرة الثروة' : isCharm ? 'نقاط خبرة السحر' : 'خبرة الألعاب'}</span>
-              <strong className="mt-1 block font-mono text-lg text-amber-200" dir="ltr">{experience === null ? 'غير متاحة من الخادم' : Number(experience).toLocaleString('en-US')}</strong>
+              <strong className="mt-1 block font-mono text-lg text-amber-200" dir="ltr">{xpError ?? (experience === null || experience === undefined ? 'جارٍ التحميل / غير متاحة' : BigInt(experience).toLocaleString('en-US'))}</strong>
             </div>
           </div>
         </div>
