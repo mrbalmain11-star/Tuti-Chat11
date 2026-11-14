@@ -249,6 +249,26 @@ jobs:
           AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -n 1)"
           "$AAPT" dump badging "$APK" | tee /tmp/staging-apk-badging.txt
           grep -q "^package: name='com.numyar.totichat.staging'" /tmp/staging-apk-badging.txt
+      - name: Check physical ARM Android 14 compatibility metadata
+        run: |
+          set -euo pipefail
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -n 1)"
+          "$AAPT" dump badging "$APK" | tee /tmp/totichat-device-compatibility.txt
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          s = Path("/tmp/totichat-device-compatibility.txt").read_text()
+          pkg = re.search(r"^package: name='([^']+)'", s, re.M)
+          sdk = re.search(r"^sdkVersion:'(\\d+)'", s, re.M)
+          native = re.search(r"^native-code: (.*)$", s, re.M)
+          assert pkg and pkg.group(1) == "com.numyar.totichat.staging", "Wrong application ID"
+          assert sdk and int(sdk.group(1)) <= 34, "Minimum Android SDK exceeds Android 14"
+          if native:
+              abis = re.findall(r"'([^']+)'", native.group(1))
+              assert "arm64-v8a" in abis or "armeabi-v7a" in abis, f"APK has no ARM native libraries: {abis}"
+          print("Android 14 package and ARM ABI metadata compatible (device installation still requires physical test)")
+          PY
       - name: Verify APK actually installs on Android 14 emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
