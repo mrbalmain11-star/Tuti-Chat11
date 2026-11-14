@@ -260,7 +260,7 @@ jobs:
           from pathlib import Path
           s = Path("/tmp/totichat-device-compatibility.txt").read_text()
           pkg = re.search(r"^package: name='([^']+)'", s, re.M)
-          sdk = re.search(r"^sdkVersion:'(\\d+)'", s, re.M)
+          sdk = re.search(r"^sdkVersion:'(\d+)'", s, re.M)
           native = re.search(r"^native-code: (.*)$", s, re.M)
           assert pkg and pkg.group(1) == "com.numyar.totichat.staging", "Wrong application ID"
           assert sdk and int(sdk.group(1)) <= 34, "Minimum Android SDK exceeds Android 14"
