@@ -1,0 +1,4 @@
+TotiChat Staging APK build request — 2026-11-14
+Purpose: Build the latest committed staging source using the existing GitHub Actions staging-apk.yml pipeline.
+Scope: staging only. Do not change audio/music engine, build packaging, Main or Production. Publish APK only after Android 14 emulator install/signature/integrity checks pass.
+Requested by application owner through ChatGPT.
