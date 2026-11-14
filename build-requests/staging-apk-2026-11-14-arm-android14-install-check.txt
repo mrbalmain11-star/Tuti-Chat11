@@ -1,0 +1,4 @@
+Requested new Staging APK build after physical TECNO Android 14 install failure.
+Build from latest staging source; require ARM ABI and Android 14 compatibility metadata check before publish.
+Keep current signing, packaging, audio/music unchanged. Emulator install validation remains mandatory.
+Physical-device installation remains unverified until owner tests it.
