@@ -1,0 +1,1 @@
+Rebuild TotiChat staging APK after fixing SDK parser regex. Existing Android SDK minimum is 23 and target 35. Preserve audio, music, signing and packaging. Verify ARM compatibility and Android emulator installation before release.
