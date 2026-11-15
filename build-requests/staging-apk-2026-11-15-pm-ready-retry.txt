@@ -1,0 +1,1 @@
+Rebuild after fixing transient Android emulator Package Manager startup failures. Wait for sys.boot_completed and package service, verify pm list packages, retry only transient adb install service errors. Preserve signing, APK packaging, audio and music. Require successful emulator installation and launch before release.
