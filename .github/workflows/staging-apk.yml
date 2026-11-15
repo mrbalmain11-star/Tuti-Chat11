@@ -277,61 +277,7 @@ jobs:
           target: google_apis
           profile: pixel_5
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
-          script: |
-            set -e
-            adb wait-for-device
-            # Boot-complete alone is insufficient: package service can still be
-            # restarting on hosted emulators, causing 'Broken pipe (32)'.
-            for attempt in $(seq 1 90); do
-              BOOT="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)"
-              PM="$(adb shell service check package 2>/dev/null || true)"
-              if [ "$BOOT" = "1" ] && echo "$PM" | grep -q 'found'; then
-                echo "Android package manager ready on attempt $attempt"
-                break
-              fi
-              if [ "$attempt" = "90" ]; then
-                echo "::error::Android emulator package service did not become ready"
-                exit 1
-              fi
-              sleep 3
-            done
-            # Wait for package manager to answer real queries before install.
-            for attempt in $(seq 1 20); do
-              if adb shell pm list packages >/dev/null 2>&1; then
-                break
-              fi
-              if [ "$attempt" = "20" ]; then
-                echo "::error::Android package manager did not respond"
-                exit 1
-              fi
-              sleep 3
-            done
-            # Non-streaming install still performs Android package verification.
-            # Retry only transient emulator service failures, never a rejected APK.
-            for attempt in 1 2 3; do
-              set +e
-              OUTPUT="$(adb install --no-streaming -r android/app/build/outputs/apk/debug/app-debug.apk 2>&1)"
-              RESULT=$?
-              set -e
-              echo "$OUTPUT"
-              if [ "$RESULT" -eq 0 ] && echo "$OUTPUT" | grep -q 'Success'; then
-                echo "APK installed successfully"
-                break
-              fi
-              if ! echo "$OUTPUT" | grep -Eiq 'Broken pipe|service package|device offline|device not found|timed out'; then
-                echo "::error::Non-transient APK install failure"
-                exit 1
-              fi
-              if [ "$attempt" = "3" ]; then
-                echo "::error::APK installation failed after transient retries"
-                exit 1
-              fi
-              echo "Transient emulator package service failure; waiting before retry"
-              sleep 20
-              adb wait-for-device
-            done
-            adb shell pm path com.numyar.totichat.staging
-            adb shell monkey -p com.numyar.totichat.staging 1
+          script: bash .github/scripts/verify-staging-emulator-install.sh
       # Do not publish the GitHub Actions ZIP artifact: Android users must
       # download the original APK directly from the release below.
       - name: Publish directly downloadable staging APK
