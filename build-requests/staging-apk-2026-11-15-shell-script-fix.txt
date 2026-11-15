@@ -1,0 +1,1 @@
+Build latest staging APK with emulator install script invoked as one bash command. This fixes android-emulator-runner v2 executing each script line separately and breaking multiline loops. Preserve APK signing, packaging, audio and music. Publish only after successful emulator install and launch.
