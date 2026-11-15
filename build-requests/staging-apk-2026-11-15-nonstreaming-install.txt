@@ -1,0 +1,1 @@
+Request new staging Android APK build after emulator streamed-install integrity verification timeout. Emulator test now uses adb install --no-streaming, retaining Android package verification. No changes to audio, music, signing, or APK packaging. Physical TECNO device installation still requires user validation.
