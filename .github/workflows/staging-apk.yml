@@ -1,4 +1,4 @@
-name: Build TotiChat Staging APK V011
+name: Build TotiChat Staging APK V012
 on:
   workflow_dispatch: {}
   push:
@@ -208,7 +208,22 @@ jobs:
               -dname "CN=Android Debug,O=Android,C=US"
           fi
           keytool -list -v -keystore "$HOME/.android/debug.keystore" -storepass android | grep 'SHA256:' | head -n 1
-      - name: Build Android debug APK
+      - name: Configure installable non-debuggable release APK with stable staging signature
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p = Path("android/app/build.gradle")
+          s = p.read_text()
+          # The generated Capacitor release variant is normally unsigned.
+          # Reuse the existing stable staging debug keystore for this test release.
+          s, count = re.subn(r'(release\s*\{)', r'\1\n            signingConfig signingConfigs.debug', s, count=1)
+          assert count == 1, "Generated Android release build type not found"
+          p.write_text(s)
+          print("Release variant configured with stable staging signing identity")
+          PY
+      - name: Build Android release APK
         env:
           JAVA_HOME: ${{ env.JAVA_HOME_21_X64 }}
         working-directory: android
@@ -216,17 +231,28 @@ jobs:
           test -f gradle/wrapper/gradle-wrapper.jar
           test -f gradle/wrapper/gradle-wrapper.properties
           chmod +x gradlew
-          ./gradlew --no-daemon assembleDebug
+          ./gradlew --no-daemon assembleRelease
+      - name: Confirm APK is a non-debuggable release build
+        run: |
+          set -euo pipefail
+          APK="android/app/build/outputs/apk/release/app-release.apk"
+          AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -n 1)"
+          "$AAPT" dump xmltree "$APK" AndroidManifest.xml > /tmp/staging-manifest-tree.txt
+          if grep -E 'android:debuggable.*0xffffffff' /tmp/staging-manifest-tree.txt; then
+            echo "::error::Release APK is debuggable"
+            exit 1
+          fi
+          echo "Release APK generated without debug build variant"
       - name: Verify microphone permission is packaged
         run: |
           set -euo pipefail
           AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -n 1)"
-          "$AAPT" dump permissions android/app/build/outputs/apk/debug/app-debug.apk | tee /tmp/staging-permissions.txt
+          "$AAPT" dump permissions android/app/build/outputs/apk/release/app-release.apk | tee /tmp/staging-permissions.txt
           grep -q 'android.permission.RECORD_AUDIO' /tmp/staging-permissions.txt
       - name: Verify generated APK integrity and signature
         run: |
           set -euo pipefail
-          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          APK="android/app/build/outputs/apk/release/app-release.apk"
           test -s "$APK"
           unzip -t "$APK" | tail -n 2
           unzip -Z1 "$APK" | grep -qx "AndroidManifest.xml"
@@ -238,12 +264,12 @@ jobs:
           "$APKSIGNER" verify --verbose --print-certs --min-sdk-version 34 "$APK"
           AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -n 1)"
           "$AAPT" dump badging "$APK" | grep -E '^(package:|sdkVersion:|targetSdkVersion:|native-code:)' || true
-          sha256sum "$APK" | tee android/app/build/outputs/apk/debug/app-debug.apk.sha256
+          sha256sum "$APK" | tee android/app/build/outputs/apk/release/app-release.apk.sha256
           ls -lh "$APK"
       - name: Check APK alignment and Android package metadata
         run: |
           set -euo pipefail
-          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          APK="android/app/build/outputs/apk/release/app-release.apk"
           ZIPALIGN="$(find "$ANDROID_HOME/build-tools" -name zipalign -type f | sort -V | tail -n 1)"
           "$ZIPALIGN" -c -v 4 "$APK"
           AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -n 1)"
@@ -252,7 +278,7 @@ jobs:
       - name: Check physical ARM Android 14 compatibility metadata
         run: |
           set -euo pipefail
-          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          APK="android/app/build/outputs/apk/release/app-release.apk"
           AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -n 1)"
           "$AAPT" dump badging "$APK" | tee /tmp/totichat-device-compatibility.txt
           python3 - <<'PY'
@@ -285,7 +311,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          APK="android/app/build/outputs/apk/release/app-release.apk"
           test -s "$APK"
           cp "$APK" "TotiChat-Staging-${GITHUB_SHA:0:8}.apk"
           TAG="staging-apk-${GITHUB_SHA:0:8}"
@@ -293,5 +319,5 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
             --title "TotiChat Staging APK ${GITHUB_SHA:0:8}" \
-            --notes "Android staging debug APK for testing. Direct APK download; no ZIP extraction needed." \
+            --notes "Android staging non-debuggable signed release APK for testing. Direct APK download; no ZIP extraction needed." \
             --prerelease
