@@ -24,6 +24,9 @@ import { fetchMyProfile, fetchMyAdminAccess, saveMyProfile, uploadMyAvatar, uplo
 import { AdminCenterView } from './AdminCenterView';
 import { AgencyProfileCard } from '../components/AgencyProfileCard';
 import { RoyalProfileFrame } from '../components/RoyalProfileFrame';
+import { CharmBadge, WealthBadge } from '../components/LevelBadgeIcons';
+import { fetchMyVerifiedRoyalXp, type VerifiedRoyalXp } from '../services/royalXp';
+import { royalProgress } from '../utils/royalLevels';
 
 export const ProfileView: React.FC = () => {
   const {
@@ -50,6 +53,18 @@ export const ProfileView: React.FC = () => {
     agencyMemberCount,
   } = useApp();
 
+  const [verifiedLevelXp, setVerifiedLevelXp] = useState<VerifiedRoyalXp | null>(null);
+  useEffect(() => {
+    let active = true;
+    setVerifiedLevelXp(null);
+    if (!currentUser.id) return;
+    void fetchMyVerifiedRoyalXp().then(value => {
+      if (active) setVerifiedLevelXp(value);
+    }).catch(() => { if (active) setVerifiedLevelXp(null); });
+    return () => { active = false; };
+  }, [currentUser.id]);
+  const verifiedWealthLevel = verifiedLevelXp ? royalProgress(BigInt(verifiedLevelXp.wealth_lifetime_xp)).level : null;
+  const verifiedCharmLevel = verifiedLevelXp ? royalProgress(BigInt(verifiedLevelXp.charm_lifetime_xp)).level : null;
   const [agencyLoadError, setAgencyLoadError] = useState<string | null>(null);
   const [verifiedAgency, setVerifiedAgency] = useState<{ name: string; public_id: number; member_count: number; role: string } | null>(null);
   useEffect(() => {
@@ -461,10 +476,10 @@ export const ProfileView: React.FC = () => {
                 {/* Flag */}
                 {currentUser.countryFlag && <span className="text-base leading-none">{currentUser.countryFlag}</span>}
 
-                {/* Gift totals are verified by the server; do not present them as levels. */}
-                <button type="button" onClick={() => { sounds.playClick(); setLevelsModalTab('charm'); setOpenLevelsModal(true); }} className="max-w-full truncate rounded-full border border-purple-200 bg-purple-50 px-2 py-1 text-[10px] font-bold text-purple-800">خبرة السحر: {(currentUser.charmExp || 0).toLocaleString()}</button>
-                <button type="button" onClick={() => { sounds.playClick(); setLevelsModalTab('wealth'); setOpenLevelsModal(true); }} className="max-w-full truncate rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-[10px] font-bold text-amber-900">خبرة الثروة: {(currentUser.wealthExp || 0).toLocaleString()}</button>
-
+                {/* Only authenticated, server-verified gift XP is shown as a level. */}
+                {verifiedCharmLevel !== null && <CharmBadge level={verifiedCharmLevel} size="compact" onClick={() => { sounds.playClick(); setLevelsModalTab('charm'); setOpenLevelsModal(true); }} />}
+                {verifiedWealthLevel !== null && <WealthBadge level={verifiedWealthLevel} size="compact" onClick={() => { sounds.playClick(); setLevelsModalTab('wealth'); setOpenLevelsModal(true); }} />}
+                {verifiedLevelXp === null && <span className="text-[10px] text-slate-500">المستويات قيد التحميل أو غير متاحة</span>}
                 {(currentUser.gameLevel || 0) > 0 && (
                   <button type="button" onClick={() => { sounds.playClick(); setLevelsModalTab('games'); setOpenLevelsModal(true); }} className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-900">مستوى الألعاب: {currentUser.gameLevel}</button>
                 )}
