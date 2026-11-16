@@ -218,7 +218,7 @@ jobs:
           s = p.read_text()
           # The generated Capacitor release variant is normally unsigned.
           # Reuse the existing stable staging debug keystore for this test release.
-          s, count = re.subn(r'(release\s*\{)', r'\1\n            signingConfig signingConfigs.debug', s, count=1)
+          s, count = re.subn(r'(release\s*\{)', r'\1\n            signingConfig signingConfigs.debug\n            v1SigningEnabled true\n            v2SigningEnabled true', s, count=1)
           assert count == 1, "Generated Android release build type not found"
           p.write_text(s)
           print("Release variant configured with stable staging signing identity")
@@ -261,7 +261,9 @@ jobs:
           # Fail the build rather than publish an APK rejected on Android 14.
           APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)"
           test -x "$APKSIGNER"
-          "$APKSIGNER" verify --verbose --print-certs --min-sdk-version 34 "$APK"
+          "$APKSIGNER" verify --verbose --print-certs --min-sdk-version 34 "$APK" | tee /tmp/staging-signing-verify.txt
+          grep -q "Verified using v1 scheme (JAR signing): true" /tmp/staging-signing-verify.txt
+          grep -q "Verified using v2 scheme (APK Signature Scheme v2): true" /tmp/staging-signing-verify.txt
           AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -n 1)"
           "$AAPT" dump badging "$APK" | grep -E '^(package:|sdkVersion:|targetSdkVersion:|native-code:)' || true
           sha256sum "$APK" | tee android/app/build/outputs/apk/release/app-release.apk.sha256
