@@ -1,0 +1,1 @@
+Verify v1 on API 23 and v2 on API 34, rather than requiring v1 on Android 14. Build and install test before release.
