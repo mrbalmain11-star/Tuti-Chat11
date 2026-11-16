@@ -1,0 +1,1 @@
+Build dual-signed APK with apksigner --min-sdk-version 23 to force actual v1+v2 signatures, then verify both and Android 14 emulator installation.
