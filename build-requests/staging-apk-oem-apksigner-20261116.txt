@@ -1,0 +1,1 @@
+Rebuild staging APK with explicit post-build v1 and v2 signing using existing stable keystore. Verify both schemes and Android 14 install.
