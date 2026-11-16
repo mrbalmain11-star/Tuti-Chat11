@@ -39,6 +39,8 @@ import { VipBadge, VIP_BEAST_METADATA } from './VipBadge';
 import { AgencyProfileCard } from './AgencyProfileCard';
 import { CpSearchModal } from './CpSearchModal';
 import { ProfileCpCard } from './ProfileCpCard';
+import { fetchMyVerifiedRoyalXp, type VerifiedRoyalXp } from '../services/royalXp';
+import { royalProgress } from '../utils/royalLevels';
 import { ProfileReportForm } from './ProfileReportForm';
 
 export const InternalProfileModal: React.FC = () => {
@@ -153,8 +155,20 @@ export const InternalProfileModal: React.FC = () => {
     return () => { active = false; };
   }, [openInternalProfileModal, isSelf, user.id]);
   const displayedUser = openInternalProfileModal && !isSelf && visitorStatus?.userId === user.id ? { ...user, ...visitorStatus } : user;
-  // Staging returns experience totals, not official level fields; never derive a level in the client.
-  const hasVerifiedProfileLevels = false;
+  const [verifiedProfileXp, setVerifiedProfileXp] = useState<VerifiedRoyalXp | null>(null);
+  useEffect(() => {
+    let active = true;
+    setVerifiedProfileXp(null);
+    if (!openInternalProfileModal || !isSelf || !currentUser.id) return;
+    void fetchMyVerifiedRoyalXp().then(value => {
+      if (active) setVerifiedProfileXp(value);
+    }).catch(() => { if (active) setVerifiedProfileXp(null); });
+    return () => { active = false; };
+  }, [openInternalProfileModal, isSelf, currentUser.id]);
+  // The visitor-status RPC exposes XP totals but does not certify the royal
+  // gift-event ledger. Do not fabricate an official level for other accounts.
+  const verifiedWealthLevel = isSelf && verifiedProfileXp ? royalProgress(BigInt(verifiedProfileXp.wealth_lifetime_xp)).level : null;
+  const verifiedCharmLevel = isSelf && verifiedProfileXp ? royalProgress(BigInt(verifiedProfileXp.charm_lifetime_xp)).level : null;
   const profileWealthExp = isSelf ? Number(currentUser.wealthExp || 0) : visitorStatus?.userId === user.id ? visitorStatus.wealthExp : null;
   const profileCharmExp = isSelf ? Number(currentUser.charmExp || 0) : visitorStatus?.userId === user.id ? visitorStatus.charmExp : null;
   const [visitorAssets, setVisitorAssets] = useState<{ userId: string; publicId: string; cover: string; avatar: string; bio: string; name: string } | null>(null);
@@ -586,8 +600,8 @@ export const InternalProfileModal: React.FC = () => {
             )}
 
             {/* Charm / Magic Level Badge (مستوى السحر) */}
-            {hasVerifiedProfileLevels && <CharmBadge
-              level={displayedUser.charmLevel || 1}
+            {verifiedCharmLevel !== null && <CharmBadge
+              level={verifiedCharmLevel ?? 1}
               size="compact"
               onClick={() => {
                 sounds.playClick();
@@ -598,8 +612,8 @@ export const InternalProfileModal: React.FC = () => {
             />}
 
             {/* Wealth Level Badge (مستوى الثروة) */}
-            {hasVerifiedProfileLevels && <WealthBadge
-              level={displayedUser.wealthLevel || 1}
+            {verifiedWealthLevel !== null && <WealthBadge
+              level={verifiedWealthLevel ?? 1}
               size="compact"
               onClick={() => {
                 sounds.playClick();
@@ -859,7 +873,7 @@ export const InternalProfileModal: React.FC = () => {
               {/* Text on Right in RTL */}
               <div className="text-right">
                 <span className="text-sm font-black text-amber-950 block font-sans tracking-wide">
-                  {hasVerifiedProfileLevels ? `Lv. ${displayedUser.wealthLevel}` : 'المستوى الرسمي غير متاح'}
+                  {verifiedWealthLevel !== null ? `Lv. ${verifiedWealthLevel}` : 'المستوى الرسمي غير متاح'}
                 </span>
                 <span className="mt-1 block text-[10px] font-bold text-amber-800">
                   إجمالي الخبرة الموثقة: {profileWealthExp === null ? 'غير متاحة' : profileWealthExp.toLocaleString()}
@@ -902,7 +916,7 @@ export const InternalProfileModal: React.FC = () => {
               {/* Text on Right in RTL */}
               <div className="text-right">
                 <span className="text-sm font-black text-purple-950 block font-sans tracking-wide">
-                  {hasVerifiedProfileLevels ? `Lv. ${displayedUser.charmLevel}` : 'المستوى الرسمي غير متاح'}
+                  {verifiedCharmLevel !== null ? `Lv. ${verifiedCharmLevel}` : 'المستوى الرسمي غير متاح'}
                 </span>
                 <span className="mt-1 block text-[10px] font-bold text-purple-800">
                   إجمالي الخبرة الموثقة: {profileCharmExp === null ? 'غير متاحة' : profileCharmExp.toLocaleString()}
