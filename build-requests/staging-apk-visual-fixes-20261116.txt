@@ -1,0 +1,1 @@
+Validate frontend-only profile level and CP visual fixes; build existing signed release APK without changing build/signing/audio/backend.
