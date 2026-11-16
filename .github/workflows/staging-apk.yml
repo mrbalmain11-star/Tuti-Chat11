@@ -220,11 +220,6 @@ jobs:
           # Reuse the existing stable staging debug keystore for this test release.
           s, count = re.subn(r'(release\s*\{)', r'\1\n            signingConfig signingConfigs.debug', s, count=1)
           assert count == 1, "Generated Android release build type not found"
-          # Configure signature schemes on SigningConfig, not BuildType (AGP 8.x).
-          s, signing_count = re.subn(r"(signingConfigs\s*\{\s*debug\s*\{)", r"\1\n            enableV1Signing true\n            enableV2Signing true", s, count=1)
-          if signing_count == 0:
-              # Capacitor defaults to Android Gradle Plugin debug signing configuration.
-              s = s.replace("signingConfig signingConfigs.debug", "signingConfig signingConfigs.debug\n            signingConfigs.debug.enableV1Signing = true\n            signingConfigs.debug.enableV2Signing = true", 1)
           p.write_text(s)
           print("Release variant configured with stable staging signing identity and v1/v2 schemes")
           PY
@@ -237,6 +232,21 @@ jobs:
           test -f gradle/wrapper/gradle-wrapper.properties
           chmod +x gradlew
           ./gradlew --no-daemon assembleRelease
+      - name: Sign APK for OEM compatibility with both v1 and v2
+        run: |
+          set -euo pipefail
+          APK="android/app/build/outputs/apk/release/app-release.apk"
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)"
+          "$APKSIGNER" sign \
+            --ks "$HOME/.android/debug.keystore" \
+            --ks-key-alias androiddebugkey \
+            --ks-pass pass:android \
+            --key-pass pass:android \
+            --v1-signing-enabled true \
+            --v2-signing-enabled true \
+            --v3-signing-enabled false \
+            --out "${APK}.dual-signed" "$APK"
+          mv "${APK}.dual-signed" "$APK"
       - name: Confirm APK is a non-debuggable release build
         run: |
           set -euo pipefail
