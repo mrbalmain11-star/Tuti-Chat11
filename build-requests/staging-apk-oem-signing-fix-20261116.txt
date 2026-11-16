@@ -1,0 +1,1 @@
+Rebuild after correcting AGP SigningConfig v1/v2 signing configuration.
