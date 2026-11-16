@@ -1,0 +1,1 @@
+Rebuild with Android v1+v2 signature verification for OEM install compatibility. Preserve existing stable keystore and release packaging.
