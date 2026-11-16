@@ -24,7 +24,7 @@ for attempt in $(seq 1 20); do
 done
 for attempt in 1 2 3; do
   set +e
-  OUTPUT="$(adb install --no-streaming -r android/app/build/outputs/apk/debug/app-debug.apk 2>&1)"
+  OUTPUT="$(adb install --no-streaming -r android/app/build/outputs/apk/release/app-release.apk 2>&1)"
   RESULT=$?
   set -e
   echo "$OUTPUT"
