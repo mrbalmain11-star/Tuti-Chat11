@@ -1,0 +1,1 @@
+Build staging Android release APK with incremented versionCode. Validate APK signature, ZIP integrity, alignment and package metadata. Physical installation remains to be confirmed.
