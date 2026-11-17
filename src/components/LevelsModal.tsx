@@ -105,8 +105,13 @@ export const LevelsModal: React.FC = () => {
 
         <div className="overflow-y-auto p-4">
           <div className="rounded-2xl border border-emerald-300/20 bg-white/[0.04] p-5 text-center">
-            <ActiveIcon className="mx-auto h-10 w-10 text-amber-300" aria-hidden="true" />
-            <h3 className="mt-3 text-sm font-black">خبرة الهدايا الموثقة من الخادم</h3>
+            {verifiedProgress ? (
+              <div className="flex flex-col items-center gap-2" aria-label={`شارة المستوى الحالي ${verifiedProgress.level}`}>
+                <RoyalLevelEmblem track={isWealth ? 'wealth' : isCharm ? 'charm' : 'room'} level={verifiedProgress.level} kind="badge" size={96} animated={false} />
+                <span className="text-sm font-black text-amber-200">المستوى الحالي {verifiedProgress.level}</span>
+              </div>
+            ) : <ActiveIcon className="mx-auto h-10 w-10 text-amber-300" aria-hidden="true" />}
+            <h3 className="mt-3 text-sm font-black">شارة المستوى الموثق</h3>
             <p className="mt-2 text-xs leading-6 text-slate-300">المستوى محسوب من خبرة الهدايا المكتملة وفق جدول الـ200 مستوى. الشارات والإطارات الأصلية تُرسم برمجياً عند وجود استحقاق محفوظ.</p>
             {verifiedProgress && (
               <div className="mt-4 rounded-xl border border-amber-300/25 bg-amber-300/10 p-3" aria-label="تقدم المستوى الموثق">
