@@ -29,7 +29,7 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
     const image = new Image();
     image.onload = () => { if (active) setRoyalArtReady(true); };
     image.onerror = () => { if (active) setRoyalArtReady(false); };
-    image.src = '/assets/cp/royal-cp-v3.png';
+    image.src = '/cp/royal-cp-v3.png';
     return () => { active = false; };
   }, []);
   const [loading, setLoading] = useState(true);
