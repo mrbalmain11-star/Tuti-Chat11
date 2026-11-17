@@ -1,0 +1,1 @@
+Build the latest staging APK. Emulator boot timeout should not block publication after APK signature, ZIP integrity, zipalign and compatibility checks pass. Physical device install remains unverified.
