@@ -1,0 +1,1 @@
+Build staging APK after CP V3 asset URL fix and confirmed relationship rendering fix. Preserve signing, audio and music. Test on device for visual acceptance.
