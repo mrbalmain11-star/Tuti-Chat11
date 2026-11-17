@@ -29,7 +29,7 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
     const image = new Image();
     image.onload = () => { if (active) setRoyalArtReady(true); };
     image.onerror = () => { if (active) setRoyalArtReady(false); };
-    image.src = '/cp/royal-cp-v3.png';
+    image.src = '/assets/cp/royal-cp-v3.png';
     return () => { active = false; };
   }, []);
   const [loading, setLoading] = useState(true);
@@ -129,9 +129,10 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
     {error && <div role="status" className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-rose-200"><span>{links.length > 0 ? 'تعذر تحديث العلاقات، تُعرض آخر بيانات مؤكدة.' : 'تعذر تحميل العلاقات. تحقق من الاتصال وحاول مجدداً.'}</span><button type="button" disabled={loading || endingPartner !== null} onClick={() => setRetryNonce(n => n + 1)} className="rounded-lg border border-amber-300/70 px-3 py-1 font-bold text-amber-100 disabled:opacity-50">إعادة المحاولة</button></div>}
     {loading && <p role="status" className="mt-2 text-xs text-amber-100/70">جارٍ تحديث العلاقات...</p>}
     {links.length > 0 && <div className="mt-1 space-y-1.5">{links.map(link => (
-        <div key={link.typeId + link.partnerId} className="rounded-xl border border-amber-300/50 bg-[#2c142b]/75 p-1.5 text-amber-50 backdrop-blur-sm">
-          {royalArtReady && link.typeId === 'love' && <RoyalCpAnimatedV3 leftAvatar={resolvedUserAvatar} rightAvatar={imageUrl(link.partnerAvatar, 'profile-avatars')} leftName={userName} rightName={link.partnerName} onRightClick={onPartnerClick ? () => onPartnerClick(link.partnerId) : undefined} />}
-          {(!royalArtReady || link.typeId !== 'love') && <>
+        <div key={link.typeId + link.partnerId} className={royalArtReady ? "relative rounded-xl bg-transparent px-0 py-1 text-amber-50" : "rounded-xl border border-amber-300/50 bg-[#2c142b]/75 p-1.5 text-amber-50 backdrop-blur-sm"}>
+          {royalArtReady && <RoyalCpAnimatedV3 leftAvatar={resolvedUserAvatar} rightAvatar={imageUrl(link.partnerAvatar, 'profile-avatars')} leftName={userName} rightName={link.partnerName} onRightClick={onPartnerClick ? () => onPartnerClick(link.partnerId) : undefined} />}
+          {royalArtReady && <div className="flex items-center justify-between gap-2 px-2 text-center text-[11px] font-bold text-amber-100"><span className="min-w-0 flex-1 truncate">{userName || 'صاحب الملف'}</span><span className="shrink-0 rounded-full bg-[#6b1f4d]/80 px-2 py-0.5" aria-label={`مستوى العلاقة ${link.level}`}>{link.typeLabel} · {link.level}</span><span className="min-w-0 flex-1 truncate">{link.partnerName}</span></div>}
+          {!royalArtReady && <>
           <div className="grid grid-cols-[minmax(0,1fr)_minmax(56px,76px)_minmax(0,1fr)] items-center gap-1">
             <div className="flex min-w-0 flex-col items-center gap-1 text-center">
               <div className={`relative shrink-0 ${compact ? 'h-11 w-11' : 'h-[clamp(42px,14vw,58px)] w-[clamp(42px,14vw,58px)]'}`}>
