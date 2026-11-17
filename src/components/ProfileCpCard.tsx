@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { CircleUserRound } from 'lucide-react';
+import { RoyalCpAnimatedV3 } from './RoyalCpAnimatedV3';
 import { RoyalCpAvatarFrame, RoyalCpHeart, RoyalCpOrnament } from './RoyalCpArtwork';
 import { stagingBackend } from '../services/stagingBackend';
 import { imageUrl } from '../services/imageUrl';
@@ -22,6 +23,15 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
   const [endingPartner, setEndingPartner] = useState<string | null>(null);
   const [links, setLinks] = useState<CpLink[]>([]);
   const [error, setError] = useState(false);
+  const [royalArtReady, setRoyalArtReady] = useState(false);
+  useEffect(() => {
+    let active = true;
+    const image = new Image();
+    image.onload = () => { if (active) setRoyalArtReady(true); };
+    image.onerror = () => { if (active) setRoyalArtReady(false); };
+    image.src = '/assets/cp/royal-cp-v3.png';
+    return () => { active = false; };
+  }, []);
   const [loading, setLoading] = useState(true);
   const [retryNonce, setRetryNonce] = useState(0);
   const previousUserId = useRef(userId);
@@ -120,6 +130,8 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
     {loading && <p role="status" className="mt-2 text-xs text-amber-100/70">جارٍ تحديث العلاقات...</p>}
     {links.length > 0 && <div className="mt-1 space-y-1.5">{links.map(link => (
         <div key={link.typeId + link.partnerId} className="rounded-xl border border-amber-300/50 bg-[#2c142b]/75 p-1.5 text-amber-50 backdrop-blur-sm">
+          {royalArtReady && link.typeId === 'love' && <RoyalCpAnimatedV3 leftAvatar={resolvedUserAvatar} rightAvatar={imageUrl(link.partnerAvatar, 'profile-avatars')} leftName={userName} rightName={link.partnerName} onRightClick={onPartnerClick ? () => onPartnerClick(link.partnerId) : undefined} />}
+          {(!royalArtReady || link.typeId !== 'love') && <>
           <div className="grid grid-cols-[minmax(0,1fr)_minmax(56px,76px)_minmax(0,1fr)] items-center gap-1">
             <div className="flex min-w-0 flex-col items-center gap-1 text-center">
               <div className={`relative shrink-0 ${compact ? 'h-11 w-11' : 'h-[clamp(42px,14vw,58px)] w-[clamp(42px,14vw,58px)]'}`}>
@@ -150,7 +162,7 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
               </button>
               <span className="min-h-7 w-full break-words text-[11px] font-bold leading-3.5 line-clamp-2">{link.partnerName || 'الشريك'}</span>
             </div>
-          </div>
+          </div></>
           {link.partnerPublicId != null && <p className="mt-1 text-center text-[10px] text-amber-100/75">ID {link.partnerPublicId}</p>}
           {/* CP progress is intentionally hidden until the authenticated RPC exposes gift_gold and the next level threshold. */}
           {userId === currentUser.id && (
