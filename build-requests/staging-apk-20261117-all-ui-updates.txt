@@ -1,0 +1,4 @@
+Build requested by app owner on 2026-11-17.
+Branch: integration/legacy-backend-staging
+Include all latest committed changes: CP V3 frame, animated wings, level badges, compact OTP, compact daily rewards.
+Use existing staging APK workflow and established signing/packaging. Verify APK integrity, signatures, and Android 14 installation where runner supports it.
