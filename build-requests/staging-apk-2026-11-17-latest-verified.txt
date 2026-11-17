@@ -1,0 +1,2 @@
+TotiChat staging APK build request 2026-11-17.
+Build latest integration/legacy-backend-staging with existing direct APK packaging, Android 14 emulator install and APK signing/integrity checks. Do not modify audio or music.
