@@ -162,7 +162,7 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
               </button>
               <span className="min-h-7 w-full break-words text-[11px] font-bold leading-3.5 line-clamp-2">{link.partnerName || 'الشريك'}</span>
             </div>
-          </div></>
+          </div></>}
           {link.partnerPublicId != null && <p className="mt-1 text-center text-[10px] text-amber-100/75">ID {link.partnerPublicId}</p>}
           {/* CP progress is intentionally hidden until the authenticated RPC exposes gift_gold and the next level threshold. */}
           {userId === currentUser.id && (
