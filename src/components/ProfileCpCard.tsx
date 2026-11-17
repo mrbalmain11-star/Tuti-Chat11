@@ -122,16 +122,15 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
   // Do not render a placeholder CP rectangle for profiles without a confirmed link.
   // Hide only a confirmed empty state. On fetch errors the retry control must remain reachable.
   if (links.length === 0 && !error) return null;
-  return <section className={compact ? 'relative isolate mx-2 mt-2 overflow-hidden rounded-[22px] border border-amber-400/70 bg-gradient-to-b from-[#4b173c] via-[#7d2c54] to-[#301327] px-3 py-2 shadow-[0_2px_12px_rgba(0,0,0,.2)]' : 'relative isolate mx-3 my-2 overflow-hidden rounded-[22px] border border-amber-500/70 bg-gradient-to-b from-[#4b173c] via-[#7d2c54] to-[#301327] px-3 py-2 shadow-[0_2px_12px_rgba(0,0,0,.2)]'} dir="rtl">
-    <RoyalCpOrnament />
+  return <section className={compact ? 'relative isolate mx-2 mt-2 rounded-[16px] px-1 py-1' : 'relative isolate mx-3 my-2 rounded-[16px] px-1 py-1'} dir="rtl">
     <div className="relative z-10">
-    <div className="flex items-center justify-center gap-2 rounded-lg border border-pink-200/40 bg-gradient-to-l from-[#6b1f4d]/90 via-[#b33d78]/85 to-[#6b1f4d]/90 px-2 py-0.5 text-amber-100"><span className="relative block h-5 w-5 shrink-0" aria-hidden="true"><RoyalCpHeart /></span><span className="text-sm font-black">علاقات CP</span><span className="relative block h-5 w-5 shrink-0" aria-hidden="true"><RoyalCpHeart /></span></div>
+    <div className="mx-auto flex w-fit items-center justify-center gap-2 rounded-full border border-[#f5a5c9] bg-gradient-to-b from-[#ff84ba] via-[#d83e85] to-[#a52266] px-5 py-1 text-white shadow-[0_2px_8px_rgba(220,55,125,.3)]"><span className="text-pink-100" aria-hidden="true">♡</span><span className="text-sm font-black">علاقات CP</span><span className="text-pink-100" aria-hidden="true">♡</span></div>
     {error && <div role="status" className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-rose-200"><span>{links.length > 0 ? 'تعذر تحديث العلاقات، تُعرض آخر بيانات مؤكدة.' : 'تعذر تحميل العلاقات. تحقق من الاتصال وحاول مجدداً.'}</span><button type="button" disabled={loading || endingPartner !== null} onClick={() => setRetryNonce(n => n + 1)} className="rounded-lg border border-amber-300/70 px-3 py-1 font-bold text-amber-100 disabled:opacity-50">إعادة المحاولة</button></div>}
     {loading && <p role="status" className="mt-2 text-xs text-amber-100/70">جارٍ تحديث العلاقات...</p>}
-    {links.length > 0 && <div className="mt-1 space-y-1.5">{links.map(link => (
-        <div key={link.typeId + link.partnerId} className={royalArtReady ? "relative rounded-xl bg-transparent px-0 py-1 text-amber-50" : "rounded-xl border border-amber-300/50 bg-[#2c142b]/75 p-1.5 text-amber-50 backdrop-blur-sm"}>
+    {links.length > 0 && <div className="mt-0 space-y-1">{links.map(link => (
+        <div key={link.typeId + link.partnerId} className={royalArtReady ? "relative rounded-xl bg-gradient-to-b from-[#fff1f7]/90 via-[#ffe4ef]/85 to-[#fff5f8]/90 px-1 py-1 text-[#892451] shadow-[0_3px_14px_rgba(214,80,137,.12)]" : "rounded-xl border border-amber-300/50 bg-[#2c142b]/75 p-1.5 text-amber-50 backdrop-blur-sm"}>
           {royalArtReady && <RoyalCpAnimatedV3 leftAvatar={resolvedUserAvatar} rightAvatar={imageUrl(link.partnerAvatar, 'profile-avatars')} leftName={userName} rightName={link.partnerName} onRightClick={onPartnerClick ? () => onPartnerClick(link.partnerId) : undefined} />}
-          {royalArtReady && <div className="flex items-center justify-between gap-2 px-2 text-center text-[11px] font-bold text-amber-100"><span className="min-w-0 flex-1 truncate">{userName || 'صاحب الملف'}</span><span className="shrink-0 rounded-full bg-[#6b1f4d]/80 px-2 py-0.5" aria-label={`مستوى العلاقة ${link.level}`}>{link.typeLabel} · {link.level}</span><span className="min-w-0 flex-1 truncate">{link.partnerName}</span></div>}
+          {royalArtReady && <div className="flex items-center justify-between gap-2 px-2 text-center text-[11px] font-bold text-[#9c245f]"><span className="min-w-0 flex-1 truncate">{userName || 'صاحب الملف'}</span><span className="shrink-0 rounded-full border border-[#f5a4c9] bg-gradient-to-r from-[#d84387] to-[#a52666] px-2 py-0.5 text-white" aria-label={`مستوى العلاقة ${link.level}`}>{link.typeLabel} · {link.level}</span><span className="min-w-0 flex-1 truncate">{link.partnerName}</span></div>}
           {!royalArtReady && <>
           <div className="grid grid-cols-[minmax(0,1fr)_minmax(56px,76px)_minmax(0,1fr)] items-center gap-1">
             <div className="flex min-w-0 flex-col items-center gap-1 text-center">
@@ -164,10 +163,10 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
               <span className="min-h-7 w-full break-words text-[11px] font-bold leading-3.5 line-clamp-2">{link.partnerName || 'الشريك'}</span>
             </div>
           </div></>}
-          {link.partnerPublicId != null && <p className="mt-1 text-center text-[10px] text-amber-100/75">ID {link.partnerPublicId}</p>}
+          {link.partnerPublicId != null && <p className="mt-1 text-center text-[10px] text-[#a14c72]">ID {link.partnerPublicId}</p>}
           {/* CP progress is intentionally hidden until the authenticated RPC exposes gift_gold and the next level threshold. */}
           {userId === currentUser.id && (
-            <button type="button" disabled={endingPartner !== null} onClick={() => void endRelationship(link)} className="mx-auto mt-1 block rounded-lg border border-amber-300/70 bg-[#39172e]/90 px-3 py-1 text-[11px] font-bold text-amber-100 disabled:opacity-50">
+            <button type="button" disabled={endingPartner !== null} onClick={() => void endRelationship(link)} className="mx-auto mt-1 block rounded-full border border-[#eaa3c1] bg-[#fff1f7] px-3 py-1 text-[11px] font-bold text-[#a52c66] disabled:opacity-50">
               {endingPartner === link.partnerId ? 'جارٍ الفك...' : 'فك العلاقة'}
             </button>
           )}
