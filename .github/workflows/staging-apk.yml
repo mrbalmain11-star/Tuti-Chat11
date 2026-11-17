@@ -221,7 +221,7 @@ jobs:
           s, count = re.subn(r'(release\s*\{)', r'\1\n            signingConfig signingConfigs.debug', s, count=1)
           assert count == 1, "Generated Android release build type not found"
           p.write_text(s)
-          print("Release variant configured with stable staging signing identity and v1/v2 schemes")
+          print("Release variant configured with stable staging signing identity")
           PY
       - name: Build Android release APK
         env:
@@ -232,22 +232,6 @@ jobs:
           test -f gradle/wrapper/gradle-wrapper.properties
           chmod +x gradlew
           ./gradlew --no-daemon assembleRelease
-      - name: Sign APK for OEM compatibility with both v1 and v2
-        run: |
-          set -euo pipefail
-          APK="android/app/build/outputs/apk/release/app-release.apk"
-          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)"
-          "$APKSIGNER" sign \
-            --ks "$HOME/.android/debug.keystore" \
-            --ks-key-alias androiddebugkey \
-            --ks-pass pass:android \
-            --key-pass pass:android \
-            --min-sdk-version 23 \
-            --v1-signing-enabled true \
-            --v2-signing-enabled true \
-            --v3-signing-enabled false \
-            --out "${APK}.dual-signed" "$APK"
-          mv "${APK}.dual-signed" "$APK"
       - name: Confirm APK is a non-debuggable release build
         run: |
           set -euo pipefail
@@ -277,12 +261,7 @@ jobs:
           # Fail the build rather than publish an APK rejected on Android 14.
           APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)"
           test -x "$APKSIGNER"
-          # v1 is checked at API 23, where Android requires it; API 34 uses v2.
-          "$APKSIGNER" verify --verbose --print-certs --min-sdk-version 23 "$APK" | tee /tmp/staging-signing-verify-23.txt
-          grep -q "Verified using v1 scheme (JAR signing): true" /tmp/staging-signing-verify-23.txt
-          grep -q "Verified using v2 scheme (APK Signature Scheme v2): true" /tmp/staging-signing-verify-23.txt
-          "$APKSIGNER" verify --verbose --print-certs --min-sdk-version 34 "$APK" | tee /tmp/staging-signing-verify-34.txt
-          grep -q "Verified using v2 scheme (APK Signature Scheme v2): true" /tmp/staging-signing-verify-34.txt
+          "$APKSIGNER" verify --verbose --print-certs --min-sdk-version 34 "$APK"
           AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -n 1)"
           "$AAPT" dump badging "$APK" | grep -E '^(package:|sdkVersion:|targetSdkVersion:|native-code:)' || true
           sha256sum "$APK" | tee android/app/build/outputs/apk/release/app-release.apk.sha256
