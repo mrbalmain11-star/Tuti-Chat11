@@ -1,0 +1,1 @@
+Owner approved staging APK rebuild to test integrated approved animated royal CP design. Preserve all existing functional systems. Require lint, Android 14 emulator install, APK signature verification, and release asset byte comparison. Do not claim physical device installation confirmed.
