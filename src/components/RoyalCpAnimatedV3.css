@@ -8,3 +8,9 @@
 
 /* Server-confirmed CP level overlays the decorative sample artwork. */
 .royal-cp-v3-live-level{position:absolute;z-index:5;left:46.4%;top:35%;width:7.2%;height:19%;display:flex;align-items:center;justify-content:center;color:#fff8de;font-weight:900;font-size:clamp(9px,2.7vw,19px);text-shadow:0 1px 3px #692444;background:radial-gradient(ellipse,#a72e72 35%,#7e245c 78%,transparent 100%);border-radius:45%;pointer-events:none}
+
+/* Ensure authenticated profile photos are visible above the decorative PNG, which contains sample photos. */
+.royal-cp-v3-avatar{z-index:4;box-shadow:0 0 0 2px #f7c4d9,0 1px 7px #7b235e;background:#b47d9e}
+.royal-cp-v3-live-level{z-index:6}
+.royal-cp-v3-live-name{position:absolute;z-index:6;bottom:-2%;max-width:33%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;font-size:clamp(9px,2.1vw,13px);font-weight:800;color:#922a62;text-shadow:0 1px #fff;pointer-events:none}
+.royal-cp-v3-live-name.left{left:5%;width:33%}.royal-cp-v3-live-name.right{right:5%;width:33%}
