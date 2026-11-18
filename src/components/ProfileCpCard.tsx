@@ -128,7 +128,7 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
     {loading && <p role="status" className="mt-2 text-xs text-amber-100/70">جارٍ تحديث العلاقات...</p>}
     {links.length > 0 && <div className="mt-0 space-y-1">{links.map(link => (
         <div key={link.typeId + link.partnerId} className={royalArtReady ? "relative bg-transparent p-0 text-[#892451]" : "rounded-xl border border-amber-300/50 bg-[#2c142b]/75 p-1.5 text-amber-50 backdrop-blur-sm"}>
-          {royalArtReady && <RoyalCpAnimatedV3 leftAvatar={resolvedUserAvatar} rightAvatar={imageUrl(link.partnerAvatar, 'profile-avatars')} leftName={userName} rightName={link.partnerName} onRightClick={onPartnerClick ? () => onPartnerClick(link.partnerId) : undefined} />}
+          {royalArtReady && <RoyalCpAnimatedV3 leftAvatar={resolvedUserAvatar} rightAvatar={imageUrl(link.partnerAvatar, 'profile-avatars')} leftName={userName} rightName={link.partnerName} level={link.level} onRightClick={onPartnerClick ? () => onPartnerClick(link.partnerId) : undefined} />}
           {!royalArtReady && <>
           <div className="grid grid-cols-[minmax(0,1fr)_minmax(56px,76px)_minmax(0,1fr)] items-center gap-1">
             <div className="flex min-w-0 flex-col items-center gap-1 text-center">
