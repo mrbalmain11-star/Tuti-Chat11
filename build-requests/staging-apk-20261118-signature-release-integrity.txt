@@ -1,0 +1,1 @@
+Owner requested rebuild after invalid package on Android phone. Require minSdk 28 signature verification, emulator install and launch, and byte-for-byte GitHub Release asset verification. Do not claim physical device install success.
