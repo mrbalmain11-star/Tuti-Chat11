@@ -246,6 +246,30 @@ jobs:
           test -f gradle/wrapper/gradle-wrapper.properties
           chmod +x gradlew
           ./gradlew --no-daemon assembleRelease
+      - name: Normalize and explicitly sign installable APK with v1 v2 v3
+        run: |
+          set -euo pipefail
+          APK="android/app/build/outputs/apk/release/app-release.apk"
+          test -s "$APK"
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)"
+          ZIPALIGN="$(find "$ANDROID_HOME/build-tools" -name zipalign -type f | sort -V | tail -n 1)"
+          test -x "$APKSIGNER"
+          test -x "$ZIPALIGN"
+          # Repackage and align before signing; do not modify the APK after signing.
+          cp "$APK" /tmp/totichat-unsigned-original.apk
+          "$ZIPALIGN" -f -p 4 /tmp/totichat-unsigned-original.apk /tmp/totichat-aligned.apk
+          "$APKSIGNER" sign \
+            --ks "$HOME/.android/debug.keystore" \
+            --ks-key-alias androiddebugkey \
+            --ks-pass pass:android \
+            --key-pass pass:android \
+            --v1-signing-enabled true \
+            --v2-signing-enabled true \
+            --v3-signing-enabled true \
+            --out "$APK" /tmp/totichat-aligned.apk
+          "$APKSIGNER" verify --verbose --print-certs --min-sdk-version 28 "$APK"
+          "$APKSIGNER" verify --verbose --print-certs --min-sdk-version 34 "$APK"
+          "$ZIPALIGN" -c -v 4 "$APK"
       - name: Confirm APK is a non-debuggable release build
         run: |
           set -euo pipefail
