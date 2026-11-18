@@ -2689,10 +2689,11 @@ export const VoiceRoomModal: React.FC = () => {
               {selectedMicAgencyName && <p className="mt-1 text-center text-[11px] font-bold text-red-400">{selectedMicAgencyName}</p>}
               <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-xs font-bold" aria-live="polite">
                 {selectedMicVerifiedStatus?.userId === selectedMicUser.user.id ? <>
-                  <span className="rounded-full bg-amber-500/15 border border-amber-400/40 px-3 py-1 text-amber-200">إجمالي خبرة الثروة: {selectedMicVerifiedStatus.wealthExp.toLocaleString()}</span>
-                  <span className="rounded-full bg-fuchsia-500/15 border border-fuchsia-400/40 px-3 py-1 text-fuchsia-200">إجمالي خبرة السحر: {selectedMicVerifiedStatus.charmExp.toLocaleString()}</span>
-                  <span className="rounded-full border border-slate-500/40 bg-slate-700/30 px-3 py-1 text-slate-300">المستوى الرسمي غير متاح</span>
-                  {selectedMicVerifiedStatus.vipLevel > 0 && <span className="rounded-full border border-yellow-400/50 bg-yellow-500/15 px-3 py-1 text-yellow-200">VIP {selectedMicVerifiedStatus.vipLevel}</span>}
+                  {!selectedMicVerifiedStatus.loadFailed && <>
+                    <span title={`خبرة الثروة المؤكدة: ${selectedMicVerifiedStatus.wealthExp.toLocaleString()}`} aria-label="شارة الثروة" className="inline-flex items-center gap-1 rounded-xl border border-amber-300/60 bg-gradient-to-br from-amber-950 via-amber-700 to-yellow-400 px-3 py-1.5 text-amber-50 shadow-[0_0_12px_rgba(245,158,11,.25)]"><span aria-hidden="true">👑</span><span>شارة الثروة</span></span>
+                    <span title={`خبرة السحر المؤكدة: ${selectedMicVerifiedStatus.charmExp.toLocaleString()}`} aria-label="شارة السحر" className="inline-flex items-center gap-1 rounded-xl border border-fuchsia-300/60 bg-gradient-to-br from-purple-950 via-fuchsia-800 to-pink-500 px-3 py-1.5 text-white shadow-[0_0_12px_rgba(217,70,239,.25)]"><span aria-hidden="true">💎</span><span>شارة السحر</span></span>
+                  </>}
+                  {selectedMicVerifiedStatus.vipLevel > 0 && !selectedMicVerifiedStatus.loadFailed && <span className="inline-flex items-center gap-1 rounded-xl border border-yellow-300/70 bg-gradient-to-r from-amber-950 via-yellow-700 to-amber-500 px-3 py-1.5 text-yellow-50 shadow-lg"><span aria-hidden="true">✦</span><span>VIP {selectedMicVerifiedStatus.vipLevel}</span></span>}
                   {selectedMicVerifiedStatus.loadFailed && <span className="text-slate-400">تعذر التحقق من المستويات</span>}
                 </> : <span className="text-slate-400">جارٍ التحقق من بيانات الحساب…</span>}
               </div>
