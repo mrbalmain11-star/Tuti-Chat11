@@ -1,0 +1,1 @@
+Owner-authorized APK rebuild after repeated physical-device 'package appears invalid' failures. Build must use final aligned APK signed with v1/v2/v3 by apksigner, verify APK at minSDK 28 and 34, install on Android 14 emulator, and compare release bytes. Preserve existing audio and music. Physical TECNO installation still requires user test.
