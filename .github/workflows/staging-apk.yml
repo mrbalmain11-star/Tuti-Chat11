@@ -218,7 +218,7 @@ jobs:
           s = p.read_text()
           # The generated Capacitor release variant is normally unsigned.
           # Reuse the existing stable staging debug keystore for this test release.
-          s, count = re.subn(r'(release\s*\{)', r'\1\n            signingConfig signingConfigs.debug\n            enableV1Signing true\n            enableV2Signing true\n            enableV3Signing true', s, count=1)
+          s, count = re.subn(r'(release\s*\{)', r'\1\n            signingConfig signingConfigs.debug', s, count=1)
           assert count == 1, "Generated Android release build type not found"
           p.write_text(s)
           print("Release variant configured with stable staging signing identity")
