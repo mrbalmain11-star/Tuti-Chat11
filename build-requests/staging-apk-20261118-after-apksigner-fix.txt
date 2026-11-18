@@ -1,0 +1,1 @@
+Owner-authorized rebuild after correcting invalid jarsigner check and shell newline in staging-apk.yml. Build from latest integration/legacy-backend-staging. Require TypeScript, Gradle release build, apksigner, Android 14 emulator installation, verified Release APK bytes. Never mark successful until workflow actually passes.
