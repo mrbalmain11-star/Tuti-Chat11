@@ -320,8 +320,18 @@ jobs:
           profile: pixel_5
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048
           script: bash .github/scripts/verify-staging-emulator-install.sh
-      # Do not publish the GitHub Actions ZIP artifact: Android users must
-      # download the original APK directly from the release below.
+      # Keep a GitHub Actions artifact for a visible download on the run page.
+      # The Release asset below remains the direct .apk download (no ZIP extraction).
+      - name: Upload verified APK to workflow Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: TotiChat-Staging-APK
+          path: android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+      - name: Confirm verified APK is ready for release
+        run: test -s android/app/build/outputs/apk/release/app-release.apk
       - name: Publish directly downloadable staging APK
         env:
           GH_TOKEN: ${{ github.token }}
