@@ -1,0 +1,3 @@
+Request new staging APK after restoring GitHub Actions artifact publishing.
+Branch: integration/legacy-backend-staging
+Verify Android 14 install, signing, zip integrity, then publish both workflow artifact and direct release APK.
