@@ -1,0 +1,1 @@
+Rebuild the latest TotiChat Staging APK after pinning the stable staging signing certificate. Require existing ZIP integrity, apksigner and aapt checks, Android 14 emulator install and launch, then verify the Release download matches the tested APK byte for byte. Do not change production or alter audio and music behavior.
