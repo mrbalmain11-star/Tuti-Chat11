@@ -1,0 +1,1 @@
+Rebuild latest TotiChat Staging APK. Before package install, wait for Android activity and storage services plus mounted emulated volume; retry only transient emulator service failures. Require all APK integrity, signing, metadata, Android 14 install/launch and release byte-match checks before publishing.
