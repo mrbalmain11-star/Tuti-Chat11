@@ -1,0 +1,1 @@
+Build TotiChat staging APK with latest CP black background removal and minimal royal CP layout. Preserve established signing, packaging, audio and music. Requested 2026-11-18.
