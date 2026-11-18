@@ -1,0 +1,1 @@
+Requested by owner: build staging APK after CP artwork integration. Preserve existing APK packaging, signing, Android 14 emulator installation gate and real Supabase staging data. Do not publish if checks fail.
