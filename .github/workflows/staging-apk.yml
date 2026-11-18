@@ -309,18 +309,16 @@ jobs:
               assert "arm64-v8a" in abis or "armeabi-v7a" in abis, f"APK has no ARM native libraries: {abis}"
           print("Android 14 package and ARM ABI metadata compatible (device installation still requires physical test)")
           PY
-      # The runner can time out before Android boots even when the APK is valid.
-      # Preserve the emulator test result, but still publish an APK that passed
-      # ZIP integrity, Android signature, zipalign and package compatibility checks.
+      # A successful build is NOT a successful install. Do not publish unless
+      # the package manager installs and launches the exact release APK.
       - name: Verify APK actually installs on Android 14 emulator
-        continue-on-error: true
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
           arch: x86_64
           target: google_apis
           profile: pixel_5
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048
           script: bash .github/scripts/verify-staging-emulator-install.sh
       # Do not publish the GitHub Actions ZIP artifact: Android users must
       # download the original APK directly from the release below.
@@ -337,5 +335,5 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
             --title "TotiChat Staging APK ${GITHUB_SHA:0:8}" \
-            --notes "Android staging non-debuggable signed release APK for testing. Direct APK download; no ZIP extraction needed. APK integrity/signature/metadata checked; emulator boot test may be inconclusive." \
+            --notes "Android staging non-debuggable signed release APK for testing. Direct APK download; no ZIP extraction needed. APK integrity/signature/metadata checked; Android 14 emulator install and launch required to pass." \
             --prerelease
