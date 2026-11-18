@@ -1,0 +1,1 @@
+Build and validate staging APK with mandatory Android 14 emulator installation and launch test. Do not publish if install fails.
