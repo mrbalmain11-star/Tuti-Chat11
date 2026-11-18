@@ -1,0 +1,1 @@
+Owner approved rebuild to address Android OEM invalid-package installation. Enable explicit APK v1/v2/v3 signing, verify minSdk 28 and Android 14, preserve staging and other stable functionality. Do not claim phone install passed without real-device test.
