@@ -1,0 +1,1 @@
+Build Staging APK with SVG animated royal level emblems in room profile and levels view. Run web build, signature verification and Android 14 emulator install before publishing. Preserve audio/music and production.
