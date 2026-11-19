@@ -15,6 +15,7 @@ const palettes: Record<RoyalTrack, { primary: string; secondary: string; glow: s
  */
 export const RoyalLevelEmblem: React.FC<Props> = ({ track, level, kind, size = 88, animated = true }) => {
   const palette = palettes[track];
+  animated = kind === 'frame' ? animated : false;
   const id = useId().replace(/:/g, '');
   const tier = level >= 180 ? 5 : level >= 140 ? 4 : level >= 100 ? 3 : level >= 20 ? 2 : level >= 6 ? 1 : 0;
   const ornaments = Math.min(12, 3 + Math.floor(level / 20));
@@ -29,7 +30,7 @@ export const RoyalLevelEmblem: React.FC<Props> = ({ track, level, kind, size = 8
           <stop offset="100%" stopColor={palette.secondary} />
         </linearGradient>
       </defs>
-      {kind === 'badge' && <>
+      {kind === 'badge' && track === 'wealth' && <>
         <g className="royal-emblem-wings" fill={`url(#${id}-metal)`} stroke={palette.secondary} strokeWidth="1.1">
           <path d="M31 32 Q12 7 4 28 Q8 28 12 37 Q3 33 5 46 Q13 43 21 53 L35 61 Z" />
           <path d="M69 32 Q88 7 96 28 Q92 28 88 37 Q97 33 95 46 Q87 43 79 53 L65 61 Z" />
@@ -47,6 +48,12 @@ export const RoyalLevelEmblem: React.FC<Props> = ({ track, level, kind, size = 8
         <text x="50" y="48" fontSize={level >= 100 ? 12 : 14} fontWeight="800" textAnchor="middle" fill="#fff4ce" fontFamily="Georgia,serif">Lv.</text>
         <text x="50" y="66" fontSize={level >= 100 ? 23 : 27} fontWeight="900" textAnchor="middle" fill="#ffe5a2" fontFamily="Georgia,serif">{level}</text>
         <path className="royal-emblem-shine" d="M22 26 L39 19 L35 27 L20 36 Z" fill="white" opacity=".18"/>
+      </>}
+      {kind === 'badge' && track !== 'wealth' && <>
+        <circle cx="50" cy="50" r="44" fill="#15182e" stroke={`url(#${id}-metal)`} strokeWidth="6" />
+        <circle cx="50" cy="50" r="36" fill="none" stroke={palette.glow} strokeWidth="2" />
+        <text x="50" y="47" textAnchor="middle" fontSize="13" fill={palette.glow} fontWeight="bold">{track === 'charm' ? 'السحر' : 'الغرفة'}</text>
+        <text x="50" y="70" textAnchor="middle" fontSize="28" fill={palette.primary} fontWeight="900">{level}</text>
       </>}
       {kind === 'frame' && <>
         <path d="M37 12 L42 6 L50 12 L58 6 L63 12 L61 20 L39 20 Z" fill={palette.primary} stroke={palette.glow} strokeWidth="1" />

@@ -107,7 +107,7 @@ export const LevelsModal: React.FC = () => {
           <div className="rounded-2xl border border-emerald-300/20 bg-white/[0.04] p-5 text-center">
             {verifiedProgress ? (
               <div className="flex flex-col items-center gap-2" aria-label={`شارة المستوى الحالي ${verifiedProgress.level}`}>
-                <RoyalLevelEmblem track={isWealth ? 'wealth' : isCharm ? 'charm' : 'room'} level={verifiedProgress.level} kind="badge" size={96} animated />
+                <RoyalLevelEmblem track={isWealth ? 'wealth' : isCharm ? 'charm' : 'room'} level={verifiedProgress.level} kind="badge" size={96} animated={false} />
                 <span className="text-sm font-black text-amber-200">المستوى الحالي {verifiedProgress.level}</span>
               </div>
             ) : <ActiveIcon className="mx-auto h-10 w-10 text-amber-300" aria-hidden="true" />}
@@ -135,7 +135,7 @@ export const LevelsModal: React.FC = () => {
               {rewards.length > 0 && <>
                 <p className="mt-2 text-emerald-200">أعلى مستوى مكافأة محفوظ: {rewards[0].level}</p>
                 <div className="mt-3 flex items-center justify-center gap-5">
-                  <div className="flex flex-col items-center gap-1"><RoyalLevelEmblem track={levelsModalTab === 'wealth' ? 'wealth' : levelsModalTab === 'charm' ? 'charm' : 'room'} level={rewards[0].level} kind="badge" /><span>شارة المستوى</span></div>
+                  <div className="flex flex-col items-center gap-1"><RoyalLevelEmblem track={levelsModalTab === 'wealth' ? 'wealth' : levelsModalTab === 'charm' ? 'charm' : 'room'} level={rewards[0].level} kind="badge" animated={false} /><span>شارة المستوى</span></div>
                   <div className="flex flex-col items-center gap-1"><RoyalLevelEmblem track={levelsModalTab === 'wealth' ? 'wealth' : 'charm'} level={rewards[0].level} kind="frame" /><span>الإطار المتحرك</span></div>
                 </div>
                 <button type="button" disabled={equipping || (equipped?.track === (levelsModalTab === 'room' ? 'room' : levelsModalTab === 'charm' ? 'charm' : 'wealth') && equipped?.level === rewards[0].level)} onClick={() => { void equipTopFrame(); }} className="mt-3 min-h-10 rounded-lg border border-amber-300/50 bg-amber-300/15 px-4 text-amber-100 disabled:opacity-50">
