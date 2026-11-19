@@ -1,0 +1,1 @@
+Build after single-signing fix. Require full signing, ZIP integrity, emulator installation and launch gates before publishing. Do not change audio/music or app features.
