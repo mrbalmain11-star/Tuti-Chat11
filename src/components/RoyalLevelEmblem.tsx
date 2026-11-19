@@ -19,6 +19,10 @@ export const RoyalLevelEmblem: React.FC<Props> = ({ track, level, kind, size = 8
   const id = useId().replace(/:/g, '');
   const tier = level >= 180 ? 5 : level >= 140 ? 4 : level >= 100 ? 3 : level >= 20 ? 2 : level >= 6 ? 1 : 0;
   const ornaments = Math.min(12, 3 + Math.floor(level / 20));
+  const crops:Record<number,[number,number,number,number]>={1:[0,0,217,174],2:[217,0,217,174],3:[434,0,217,174],4:[651,0,217,174],5:[868,0,217,174],6:[1085,0,217,174],7:[1302,0,217,174],8:[1519,0,217,174],9:[1736,0,217,174],10:[1953,0,219,174],20:[0,174,217,201],30:[217,174,217,201],40:[434,174,217,201],50:[651,174,217,201],60:[868,174,217,201],70:[1085,174,217,201],80:[1302,174,217,201],90:[1519,174,217,201],100:[1736,174,436,201],120:[0,375,355,349],140:[355,375,355,349],160:[710,375,390,349],180:[1100,375,430,349],200:[1530,375,642,349]};
+  const crop=kind==='badge'&&track==='wealth'?crops[level]:undefined;
+  if(crop){const [x,y,w,h]=crop;const z=Math.min(size/w,size/h);return <span role="img" aria-label={`شارة الثروة مستوى ${level}`} className="relative inline-block shrink-0" style={{width:size,height:size}}><span aria-hidden="true" className="absolute overflow-hidden" style={{width:w*z,height:h*z,left:(size-w*z)/2,top:(size-h*z)/2,backgroundImage:"url('/assets/levels/wealth/file_00000000fdf4820aab3743b119988a10.png')",backgroundRepeat:'no-repeat',backgroundSize:`${2172*z}px ${724*z}px`,backgroundPosition:`-${x*z}px -${y*z}px`}}/></span>}
+
 
   return <div className={`royal-emblem relative inline-flex shrink-0 items-center justify-center ${animated ? "royal-emblem-animated" : ""}`} style={{ width: size, height: size }} aria-label={`${kind === 'badge' ? 'شارة' : 'إطار'} ${track} مستوى ${level}`}>
     {animated && <span aria-hidden="true" className="absolute inset-1 rounded-full opacity-30 motion-safe:animate-pulse" style={{ boxShadow: `0 0 18px 3px ${palette.glow}` }} />}
