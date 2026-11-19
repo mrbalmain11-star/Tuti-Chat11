@@ -211,21 +211,6 @@ jobs:
             exit 1
           fi
           echo "Stable staging signing identity verified: $ACTUAL_CERT_SHA256"
-      - name: Configure installable non-debuggable release APK with stable staging signature
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
-          p = Path("android/app/build.gradle")
-          s = p.read_text()
-          # The generated Capacitor release variant is normally unsigned.
-          # Reuse the existing stable staging debug keystore for this test release.
-          s, count = re.subn(r'(release\s*\{)', r'\1\n            signingConfig signingConfigs.debug', s, count=1)
-          assert count == 1, "Generated Android release build type not found"
-          p.write_text(s)
-          print("Release variant configured with stable staging signing identity")
-          PY
       - name: Assign monotonically increasing Android version code
         run: |
           set -euo pipefail
@@ -258,9 +243,9 @@ jobs:
           ZIPALIGN="$(find "$ANDROID_HOME/build-tools" -name zipalign -type f | sort -V | tail -n 1)"
           test -x "$APKSIGNER"
           test -x "$ZIPALIGN"
-          # Repackage and align before signing; do not modify the APK after signing.
-          cp "$APK" /tmp/totichat-unsigned-original.apk
-          "$ZIPALIGN" -f -p 4 /tmp/totichat-unsigned-original.apk /tmp/totichat-aligned.apk
+          # Gradle assembleRelease is unsigned. Align once, sign once.
+          # Never repackage a pre-signed APK.
+          if unzip -Z1 "$APK" | grep -Eq '^META-INF/[^/]+\.(RSA|DSA|EC)
           "$APKSIGNER" sign \
             --ks "$HOME/.android/debug.keystore" \
             --ks-key-alias androiddebugkey \
@@ -270,7 +255,7 @@ jobs:
             --v2-signing-enabled true \
             --v3-signing-enabled true \
             --out "$APK" /tmp/totichat-aligned.apk
-          "$APKSIGNER" verify --verbose --print-certs --min-sdk-version 28 "$APK"
+          "$APKSIGNER" verify --verbose --print-certs --min-sdk-version 24 "$APK"
           "$APKSIGNER" verify --verbose --print-certs --min-sdk-version 34 "$APK"
           "$ZIPALIGN" -c -v 4 "$APK"
       - name: Confirm APK is a non-debuggable release build
@@ -302,7 +287,137 @@ jobs:
           # Fail the build rather than publish an APK rejected on Android 14.
           APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)"
           test -x "$APKSIGNER"
-          "$APKSIGNER" verify --verbose --print-certs --min-sdk-version 28 "$APK"
+          "$APKSIGNER" verify --verbose --print-certs --min-sdk-version 24 "$APK"
+          "$APKSIGNER" verify --verbose --print-certs --min-sdk-version 34 "$APK"
+          AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -n 1)"
+          "$AAPT" dump badging "$APK" | grep -E '^(package:|sdkVersion:|targetSdkVersion:|native-code:)' || true
+          sha256sum "$APK" | tee android/app/build/outputs/apk/release/app-release.apk.sha256
+          ls -lh "$APK"
+      - name: Check APK alignment and Android package metadata
+        run: |
+          set -euo pipefail
+          APK="android/app/build/outputs/apk/release/app-release.apk"
+          ZIPALIGN="$(find "$ANDROID_HOME/build-tools" -name zipalign -type f | sort -V | tail -n 1)"
+          "$ZIPALIGN" -c -v 4 "$APK"
+          AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -n 1)"
+          "$AAPT" dump badging "$APK" | tee /tmp/staging-apk-badging.txt
+          grep -q "^package: name='com.numyar.totichat.staging'" /tmp/staging-apk-badging.txt
+      - name: Check physical ARM Android 14 compatibility metadata
+        run: |
+          set -euo pipefail
+          APK="android/app/build/outputs/apk/release/app-release.apk"
+          AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -n 1)"
+          "$AAPT" dump badging "$APK" | tee /tmp/totichat-device-compatibility.txt
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          s = Path("/tmp/totichat-device-compatibility.txt").read_text()
+          pkg = re.search(r"^package: name='([^']+)'", s, re.M)
+          sdk = re.search(r"^sdkVersion:'(\d+)'", s, re.M)
+          native = re.search(r"^native-code: (.*)$", s, re.M)
+          assert pkg and pkg.group(1) == "com.numyar.totichat.staging", "Wrong application ID"
+          assert sdk and int(sdk.group(1)) <= 34, "Minimum Android SDK exceeds Android 14"
+          if native:
+              abis = re.findall(r"'([^']+)'", native.group(1))
+              assert "arm64-v8a" in abis or "armeabi-v7a" in abis, f"APK has no ARM native libraries: {abis}"
+          print("Android 14 package and ARM ABI metadata compatible (device installation still requires physical test)")
+          PY
+      # A successful build is NOT a successful install. Do not publish unless
+      # the package manager installs and launches the exact release APK.
+      - name: Verify APK actually installs on Android 14 emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_5
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048
+          disable-animations: false
+          script: bash .github/scripts/verify-staging-emulator-install.sh
+      # Keep a GitHub Actions artifact for a visible download on the run page.
+      # The Release asset below remains the direct .apk download (no ZIP extraction).
+      - name: Upload verified APK to workflow Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: TotiChat-Staging-APK
+          path: android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+      - name: Confirm verified APK is ready for release
+        run: test -s android/app/build/outputs/apk/release/app-release.apk
+      - name: Publish directly downloadable staging APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          APK="android/app/build/outputs/apk/release/app-release.apk"
+          test -s "$APK"
+          cp "$APK" "TotiChat-Staging-${GITHUB_SHA:0:8}.apk"
+          TAG="staging-apk-${GITHUB_SHA:0:8}"
+          gh release create "$TAG" "TotiChat-Staging-${GITHUB_SHA:0:8}.apk" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "TotiChat Staging APK ${GITHUB_SHA:0:8}" \
+            --notes "Android staging non-debuggable signed release APK for testing. Direct APK download; no ZIP extraction needed. APK integrity/signature/metadata checked; Android 14 emulator install and launch required to pass." \
+            --prerelease
+      - name: Verify release APK bytes match the emulator-tested APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/totichat-release-verify
+          gh release download "staging-apk-${GITHUB_SHA:0:8}" --repo "$GITHUB_REPOSITORY" --pattern '*.apk' --dir /tmp/totichat-release-verify
+          cmp android/app/build/outputs/apk/release/app-release.apk "/tmp/totichat-release-verify/TotiChat-Staging-${GITHUB_SHA:0:8}.apk"
+          echo "Release download is byte-for-byte identical to APK verified by apksigner and Android emulator"
+; then
+            echo "::error::Unexpected pre-signed APK"
+            exit 1
+          fi
+          cp "$APK" /tmp/totichat-unsigned-original.apk
+          "$ZIPALIGN" -f -p 4 /tmp/totichat-unsigned-original.apk /tmp/totichat-aligned.apk
+          "$APKSIGNER" sign \
+            --ks "$HOME/.android/debug.keystore" \
+            --ks-key-alias androiddebugkey \
+            --ks-pass pass:android \
+            --key-pass pass:android \
+            --v1-signing-enabled true \
+            --v2-signing-enabled true \
+            --v3-signing-enabled true \
+            --out "$APK" /tmp/totichat-aligned.apk
+          "$APKSIGNER" verify --verbose --print-certs --min-sdk-version 24 "$APK"
+          "$APKSIGNER" verify --verbose --print-certs --min-sdk-version 34 "$APK"
+          "$ZIPALIGN" -c -v 4 "$APK"
+      - name: Confirm APK is a non-debuggable release build
+        run: |
+          set -euo pipefail
+          APK="android/app/build/outputs/apk/release/app-release.apk"
+          AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -n 1)"
+          "$AAPT" dump xmltree "$APK" AndroidManifest.xml > /tmp/staging-manifest-tree.txt
+          if grep -E 'android:debuggable.*0xffffffff' /tmp/staging-manifest-tree.txt; then
+            echo "::error::Release APK is debuggable"
+            exit 1
+          fi
+          echo "Release APK generated without debug build variant"
+      - name: Verify microphone permission is packaged
+        run: |
+          set -euo pipefail
+          AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -n 1)"
+          "$AAPT" dump permissions android/app/build/outputs/apk/release/app-release.apk | tee /tmp/staging-permissions.txt
+          grep -q 'android.permission.RECORD_AUDIO' /tmp/staging-permissions.txt
+      - name: Verify generated APK integrity and signature
+        run: |
+          set -euo pipefail
+          APK="android/app/build/outputs/apk/release/app-release.apk"
+          test -s "$APK"
+          unzip -t "$APK" | tail -n 2
+          unzip -Z1 "$APK" | grep -qx "AndroidManifest.xml"
+          # Modern APKs may use v2/v3 signatures without JAR (v1) signatures.
+          # Android Package Manager validates APK signing schemes, not just JAR signatures.
+          # Fail the build rather than publish an APK rejected on Android 14.
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)"
+          test -x "$APKSIGNER"
+          "$APKSIGNER" verify --verbose --print-certs --min-sdk-version 24 "$APK"
           "$APKSIGNER" verify --verbose --print-certs --min-sdk-version 34 "$APK"
           AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -n 1)"
           "$AAPT" dump badging "$APK" | grep -E '^(package:|sdkVersion:|targetSdkVersion:|native-code:)' || true
