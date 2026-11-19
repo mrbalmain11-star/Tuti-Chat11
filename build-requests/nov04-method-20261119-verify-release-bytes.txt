@@ -1,0 +1,1 @@
+Verify Android 14 install and byte-for-byte GitHub Release download signature after publication.
