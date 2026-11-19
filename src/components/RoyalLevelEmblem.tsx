@@ -1,5 +1,7 @@
-import React from 'react';
-import { Crown, Gem, Sparkles, Castle } from 'lucide-react';
+import React, { useId } from 'react';
+import './RoyalLevelEmblem.css';
+
+import { Sparkles } from 'lucide-react';
 import type { RoyalTrack } from '../utils/royalLevels';
 
 type Props = { track: RoyalTrack; level: number; kind: 'badge' | 'frame'; size?: number; animated?: boolean };
@@ -13,10 +15,11 @@ const palettes: Record<RoyalTrack, { primary: string; secondary: string; glow: s
  */
 export const RoyalLevelEmblem: React.FC<Props> = ({ track, level, kind, size = 88, animated = true }) => {
   const palette = palettes[track];
-  const id = `royal-${track}-${kind}-${level}`;
+  const id = useId().replace(/:/g, '');
+  const tier = level >= 180 ? 5 : level >= 140 ? 4 : level >= 100 ? 3 : level >= 20 ? 2 : level >= 6 ? 1 : 0;
   const ornaments = Math.min(12, 3 + Math.floor(level / 20));
-  const Icon = track === 'wealth' ? Crown : track === 'charm' ? Gem : Castle;
-  return <div className="relative inline-flex shrink-0 items-center justify-center" style={{ width: size, height: size }} aria-label={`${kind === 'badge' ? 'شارة' : 'إطار'} ${track} مستوى ${level}`}>
+
+  return <div className={`royal-emblem relative inline-flex shrink-0 items-center justify-center ${animated ? "royal-emblem-animated" : ""}`} style={{ width: size, height: size }} aria-label={`${kind === 'badge' ? 'شارة' : 'إطار'} ${track} مستوى ${level}`}>
     {animated && <span aria-hidden="true" className="absolute inset-1 rounded-full opacity-30 motion-safe:animate-pulse" style={{ boxShadow: `0 0 18px 3px ${palette.glow}` }} />}
     <svg viewBox="0 0 100 100" width={size} height={size} role="img" aria-label={`Royal ${track} level ${level}`}>
       <defs>
@@ -26,15 +29,25 @@ export const RoyalLevelEmblem: React.FC<Props> = ({ track, level, kind, size = 8
           <stop offset="100%" stopColor={palette.secondary} />
         </linearGradient>
       </defs>
-      <circle cx="50" cy="50" r="44" fill={kind === 'badge' ? '#10241d' : 'transparent'} stroke={`url(#${id}-metal)`} strokeWidth={kind === 'badge' ? 6 : 8} />
-      <circle cx="50" cy="50" r="36" fill="none" stroke={palette.glow} strokeWidth="1.4" strokeDasharray={level >= 100 ? '2 3' : '6 5'} />
-      {Array.from({ length: ornaments }, (_, i) => {
-        const angle = (i * 2 * Math.PI) / ornaments - Math.PI / 2;
-        const x = 50 + 43 * Math.cos(angle);
-        const y = 50 + 43 * Math.sin(angle);
-        return <path key={i} d={`M ${x} ${y - 4} l 3 4 -3 4 -3 -4 Z`} fill={palette.glow} />;
-      })}
-      {kind === 'badge' && <text x="50" y="66" fontSize={level >= 100 ? 26 : 32} fontWeight="900" textAnchor="middle" fill={palette.primary}>{level}</text>}
+      {kind === 'badge' && <>
+        <g className="royal-emblem-wings" fill={`url(#${id}-metal)`} stroke={palette.secondary} strokeWidth="1.1">
+          <path d="M31 32 Q12 7 4 28 Q8 28 12 37 Q3 33 5 46 Q13 43 21 53 L35 61 Z" />
+          <path d="M69 32 Q88 7 96 28 Q92 28 88 37 Q97 33 95 46 Q87 43 79 53 L65 61 Z" />
+          {tier >= 2 && <><path d="M26 36 Q4 5 2 18 Q6 38 24 56 Z" /><path d="M74 36 Q96 5 98 18 Q94 38 76 56 Z" /></>}
+        </g>
+        <path d="M50 4 L64 13 L78 13 L89 28 L86 63 L71 82 L50 96 L29 82 L14 63 L11 28 L22 13 L36 13 Z" fill={`url(#${id}-metal)`} stroke={palette.glow} strokeWidth="1.5" />
+        <path d="M50 12 L64 20 L75 20 L81 32 L78 60 L65 76 L50 87 L35 76 L22 60 L19 32 L25 20 L36 20 Z" fill="#081713" stroke="#176c4c" strokeWidth="2.5" />
+        <path d="M50 12 L64 20 L75 20 L81 32 L78 60 L65 76 L50 87 L35 76 L22 60 L19 32 L25 20 L36 20 Z" fill="none" stroke={palette.glow} strokeWidth=".8" />
+        {tier >= 1 && <path d="M31 18 L35 5 L43 13 L50 2 L57 13 L65 5 L69 18 Z" fill={`url(#${id}-metal)`} stroke={palette.glow} strokeWidth="1" />}
+        {tier >= 3 && <g fill={palette.primary} stroke={palette.glow} strokeWidth=".6"><path d="M9 57 Q1 70 17 77 L30 81 L21 68 Z" /><path d="M91 57 Q99 70 83 77 L70 81 L79 68 Z" /></g>}
+        {tier >= 4 && <g fill={palette.glow}><circle cx="13" cy="38" r="2.5"/><circle cx="87" cy="38" r="2.5"/></g>}
+        {tier >= 5 && <g fill={palette.primary}><path d="M0 63 L15 69 L26 85 L9 78 Z"/><path d="M100 63 L85 69 L74 85 L91 78 Z"/></g>}
+        <path className="royal-emblem-gem" d="M50 79 L57 86 L50 94 L43 86 Z" fill="#19e4a4" stroke={palette.glow} strokeWidth="1.2" />
+        <path d="M50 80 L50 93 L44 86 Z" fill="#a7ffe6" opacity=".8"/>
+        <text x="50" y="48" fontSize={level >= 100 ? 12 : 14} fontWeight="800" textAnchor="middle" fill="#fff4ce" fontFamily="Georgia,serif">Lv.</text>
+        <text x="50" y="66" fontSize={level >= 100 ? 23 : 27} fontWeight="900" textAnchor="middle" fill="#ffe5a2" fontFamily="Georgia,serif">{level}</text>
+        <path className="royal-emblem-shine" d="M22 26 L39 19 L35 27 L20 36 Z" fill="white" opacity=".18"/>
+      </>}
       {kind === 'frame' && <>
         <path d="M37 12 L42 6 L50 12 L58 6 L63 12 L61 20 L39 20 Z" fill={palette.primary} stroke={palette.glow} strokeWidth="1" />
         <rect x="36" y="83" width="28" height="13" rx="5" fill={palette.secondary} stroke={palette.glow} strokeWidth="1.5" />
@@ -42,7 +55,7 @@ export const RoyalLevelEmblem: React.FC<Props> = ({ track, level, kind, size = 8
       </>}
 
     </svg>
-    {kind === 'badge' && <Icon className="absolute top-0 h-4 w-4" color={palette.glow} aria-hidden="true" />}
+
     {level >= 150 && <Sparkles className="absolute -right-1 top-1 h-4 w-4 motion-safe:animate-pulse" color={palette.glow} aria-hidden="true" />}
   </div>;
 };

@@ -1,0 +1,7 @@
+.royal-emblem-animated .royal-emblem-gem{transform-box:fill-box;transform-origin:center;animation:royal-gem-pulse 2.7s ease-in-out infinite}
+.royal-emblem-animated .royal-emblem-wings{transform-box:fill-box;transform-origin:center;animation:royal-wings-breathe 3.4s ease-in-out infinite}
+.royal-emblem-animated .royal-emblem-shine{animation:royal-metal-shine 3.1s ease-in-out infinite}
+@keyframes royal-gem-pulse{0%,100%{opacity:.65;filter:drop-shadow(0 0 1px #0ef)}50%{opacity:1;filter:drop-shadow(0 0 6px #24ffc6)}}
+@keyframes royal-wings-breathe{0%,100%{transform:scaleX(.97)}50%{transform:scaleX(1.035)}}
+@keyframes royal-metal-shine{0%,100%{opacity:.08}50%{opacity:.45}}
+@media(prefers-reduced-motion:reduce){.royal-emblem-animated .royal-emblem-gem,.royal-emblem-animated .royal-emblem-wings,.royal-emblem-animated .royal-emblem-shine{animation:none}}
