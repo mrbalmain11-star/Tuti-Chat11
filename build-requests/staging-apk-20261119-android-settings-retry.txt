@@ -1,0 +1,2 @@
+Rebuild current staging APK with wealth/charm badge mapping and CP profile sizing changes.
+The Android 14 emulator booted, but the runner's optional animation settings command failed with a broken settings service before APK installation could run. Disable only the optional animation setup and keep APK install/launch verification enabled.
