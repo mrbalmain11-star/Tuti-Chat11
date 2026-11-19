@@ -68,5 +68,32 @@ for attempt in 1 2 3; do
   adb wait-for-device
   wait_for_android_install_services
 done
-adb shell pm path com.numyar.totichat.staging
-adb shell monkey -p com.numyar.totichat.staging 1
+PKG="com.numyar.totichat.staging"
+ACTIVITY="$PKG/.MainActivity"
+adb shell pm path "$PKG"
+adb shell am force-stop "$PKG"
+adb logcat -c
+START_OUTPUT="$(adb shell am start -W -n "$ACTIVITY" 2>&1 | tr -d '\r')"
+echo "$START_OUTPUT"
+if ! echo "$START_OUTPUT" | grep -q "Status: ok"; then
+  echo "::error::Android did not start TotiChat MainActivity"
+  exit 1
+fi
+sleep 8
+RESUMED="$(adb shell dumpsys activity activities 2>/dev/null | tr -d '\r' | grep -E 'mResumedActivity|topResumedActivity' | head -n 2 || true)"
+echo "$RESUMED"
+if ! echo "$RESUMED" | grep -q "$PKG"; then
+  echo "::error::TotiChat MainActivity did not remain in the foreground"
+  exit 1
+fi
+if ! adb shell pidof "$PKG" >/dev/null 2>&1; then
+  echo "::error::TotiChat process exited after launch"
+  exit 1
+fi
+APP_FATAL="$(adb logcat -d -t 1200 2>/dev/null | grep -E 'FATAL EXCEPTION|Fatal signal' | grep -F "$PKG" || true)"
+if [[ -n "$APP_FATAL" ]]; then
+  echo "$APP_FATAL"
+  echo "::error::TotiChat reported a fatal error after launch"
+  exit 1
+fi
+echo "TotiChat MainActivity launched and remained in the foreground"
