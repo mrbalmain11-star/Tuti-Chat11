@@ -230,8 +230,16 @@ jobs:
             adb shell getprop sys.boot_completed
             adb install -r android/app/build/outputs/apk/debug/app-debug.apk
             adb shell pm path com.numyar.totichat.staging
-            adb shell am start -n com.numyar.totichat.staging/.MainActivity
+            adb logcat -c
+            adb shell am start -W -n com.numyar.totichat.staging/.MainActivity
             sleep 8
+            echo "=== APP PROCESS ==="
+            adb shell pidof com.numyar.totichat.staging || true
+            echo "=== FOREGROUND ACTIVITY ==="
+            adb shell dumpsys activity activities | grep -E 'topResumedActivity|mResumedActivity|com.numyar.totichat' | head -n 35 || true
+            echo "=== ANDROID CRASH LOGS ==="
+            adb logcat -d -t 2500 | grep -E -A 45 -B 12 'FATAL EXCEPTION|AndroidRuntime|Fatal signal|Process: com.numyar.totichat.staging|com.numyar.totichat.staging' | tail -n 240 || true
+            echo "=== CHECK APP PROCESS AFTER LAUNCH ==="
             adb shell pidof com.numyar.totichat.staging
       # Do not upload Actions artifacts: GitHub wraps them in ZIP files.
       # The single user-facing download is the direct .apk under Releases.
