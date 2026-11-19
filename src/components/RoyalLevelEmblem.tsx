@@ -24,6 +24,24 @@ export const RoyalLevelEmblem: React.FC<Props> = ({ track, level, kind, size = 8
   if(crop){const [x,y,w,h]=crop;const z=Math.min(size/w,size/h);return <span role="img" aria-label={`شارة الثروة مستوى ${level}`} className="relative inline-block shrink-0" style={{width:size,height:size}}><span aria-hidden="true" className="absolute overflow-hidden" style={{width:w*z,height:h*z,left:(size-w*z)/2,top:(size-h*z)/2,backgroundImage:"url('/assets/levels/wealth/file_00000000fdf4820aab3743b119988a10.png')",backgroundRepeat:'no-repeat',backgroundSize:`${2172*z}px ${724*z}px`,backgroundPosition:`-${x*z}px -${y*z}px`}}/></span>}
 
 
+  if (kind === 'badge' && (track === 'wealth' || track === 'charm')) {
+    const milestones = [1,2,3,4,5,6,7,8,9,10,20,30,40,50,60,70,80,90,100,120,140,160,180,200];
+    const milestone = [...milestones].reverse().find(n => level >= n) ?? 1;
+    const index = milestones.indexOf(milestone);
+    const lastRow = index >= 19;
+    const column = lastRow ? index - 19 : index % 10;
+    const row = lastRow ? 2 : Math.floor(index / 10);
+    const sheet = track === 'wealth'
+      ? '/assets/levels/wealth/file_00000000fdf4820aab3743b119988a10.png'
+      : '/assets/levels/charm/file_000000000cb082109d892cd030b6ce6d.png';
+    return <div role="img" aria-label={`شارة ${track === 'wealth' ? 'الثروة' : 'الجاذبية'} تصميم مستوى ${milestone}`}
+      title={`المستوى الفعلي ${level}، تصميم الشارة ${milestone}`}
+      className="relative inline-flex shrink-0 overflow-hidden"
+      style={{width:size,height:size,backgroundImage:`url("${sheet}")`,
+        backgroundRepeat:'no-repeat',backgroundColor:'#000',
+        backgroundSize:lastRow?'500% 300%':'1000% 300%',
+        backgroundPosition:`${lastRow ? column * 25 : column * (100/9)}% ${row*50}%`}} />;
+  }
   return <div className={`royal-emblem relative inline-flex shrink-0 items-center justify-center ${animated ? "royal-emblem-animated" : ""}`} style={{ width: size, height: size }} aria-label={`${kind === 'badge' ? 'شارة' : 'إطار'} ${track} مستوى ${level}`}>
     {animated && <span aria-hidden="true" className="absolute inset-1 rounded-full opacity-30 motion-safe:animate-pulse" style={{ boxShadow: `0 0 18px 3px ${palette.glow}` }} />}
     <svg viewBox="0 0 100 100" width={size} height={size} role="img" aria-label={`Royal ${track} level ${level}`}>
