@@ -1,4 +1,5 @@
 import React from 'react';
+import { approvedBadgeIndex } from '../utils/approvedBadgeRanges';
 
 export interface BadgeProps {
   level: number;
@@ -75,6 +76,23 @@ export const OfficialScreenshotBadge: React.FC<BadgeProps> = ({
   onClick,
   overrideDisplayNumber,
 }) => {
+  if (variant === 'wealth' || variant === 'charm') {
+    const badgeNumber = String(approvedBadgeIndex(level)).padStart(2, '0');
+    const badgeSrc = `/assets/levels/${variant}/${variant}_${badgeNumber}.png`;
+    const displayLevel = overrideDisplayNumber ?? Math.min(200, Math.max(1, Math.floor(level || 1)));
+    const badgeHeight = size === 'xs' ? 16 : size === 'sm' || size === 'compact' ? 20 : size === 'lg' ? 32 : 24;
+    return (
+      <span
+        onClick={onClick}
+        className={`inline-flex shrink-0 items-center gap-1 align-middle ${className}`}
+        title={`${variant === 'wealth' ? 'مستوى الثروة' : 'مستوى الجاذبية'}: ${displayLevel}`}
+        dir="ltr"
+      >
+        <img src={badgeSrc} alt={variant === 'wealth' ? 'شارة الثروة' : 'شارة الجاذبية'} height={badgeHeight} style={{ height: badgeHeight, width: 'auto', maxWidth: badgeHeight * 2, objectFit: 'contain' }} loading="lazy" />
+        <span className="text-[10px] font-black text-white tabular-nums">{displayLevel}</span>
+      </span>
+    );
+  }
   const tier = getTierIndex(level);
   const displayNum = overrideDisplayNumber ?? Math.max(1, Math.floor(level || 1));
   const isWealth = variant === 'wealth';
