@@ -169,8 +169,9 @@ export const InternalProfileModal: React.FC = () => {
   // gift-event ledger. Do not fabricate an official level for other accounts.
   const verifiedWealthLevel = isSelf && verifiedProfileXp ? royalProgress(BigInt(verifiedProfileXp.wealth_lifetime_xp)).level : null;
   const verifiedCharmLevel = isSelf && verifiedProfileXp ? royalProgress(BigInt(verifiedProfileXp.charm_lifetime_xp)).level : null;
-  const profileWealthExp = isSelf ? Number(currentUser.wealthExp || 0) : visitorStatus?.userId === user.id ? visitorStatus.wealthExp : null;
-  const profileCharmExp = isSelf ? Number(currentUser.charmExp || 0) : visitorStatus?.userId === user.id ? visitorStatus.charmExp : null;
+  // Never mix unverified profile totals with the verified gift-event ledger.
+  const wealthProgress = isSelf && verifiedProfileXp ? royalProgress(BigInt(verifiedProfileXp.wealth_lifetime_xp)) : null;
+  const charmProgress = isSelf && verifiedProfileXp ? royalProgress(BigInt(verifiedProfileXp.charm_lifetime_xp)) : null;
   const [visitorAssets, setVisitorAssets] = useState<{ userId: string; publicId: string; cover: string; avatar: string; bio: string; name: string } | null>(null);
   const visitorAssetsForUser = openInternalProfileModal && !isSelf && visitorAssets?.userId === user.id ? visitorAssets : null;
   const visitorPublicId = visitorAssetsForUser?.publicId || '';
@@ -876,8 +877,14 @@ export const InternalProfileModal: React.FC = () => {
                   {verifiedWealthLevel !== null ? `Lv. ${verifiedWealthLevel}` : 'المستوى الرسمي غير متاح'}
                 </span>
                 <span className="mt-1 block text-[10px] font-bold text-amber-800">
-                  إجمالي الخبرة الموثقة: {profileWealthExp === null ? 'غير متاحة' : profileWealthExp.toLocaleString()}
+                  إجمالي الخبرة الموثقة: {wealthProgress ? wealthProgress.lifetimeXp.toLocaleString() : 'غير متاحة'}
                 </span>
+                {wealthProgress && <div className="mt-2" aria-label="تقدم مستوى الثروة">
+                  <div className="h-2 overflow-hidden rounded-full border border-amber-400/60 bg-amber-950/20">
+                    <div className="h-full rounded-full bg-gradient-to-l from-yellow-200 via-amber-400 to-amber-600 transition-[width]" style={{width: `${wealthProgress.progressPercent}%`}} />
+                  </div>
+                  <span className="mt-1 block text-[9px] font-bold text-amber-900" dir="ltr">{wealthProgress.xpToNextLevel === null ? 'MAX 200' : `${wealthProgress.progressPercent.toFixed(1)}% · ${wealthProgress.xpToNextLevel.toLocaleString()} XP remaining`}</span>
+                </div>}
                 <span className="text-xs text-amber-800 font-black mt-0.5 block flex items-center gap-1">
                   <span>👑</span>
                   <span>مستوى الثروة</span>
@@ -919,8 +926,14 @@ export const InternalProfileModal: React.FC = () => {
                   {verifiedCharmLevel !== null ? `Lv. ${verifiedCharmLevel}` : 'المستوى الرسمي غير متاح'}
                 </span>
                 <span className="mt-1 block text-[10px] font-bold text-purple-800">
-                  إجمالي الخبرة الموثقة: {profileCharmExp === null ? 'غير متاحة' : profileCharmExp.toLocaleString()}
+                  إجمالي الخبرة الموثقة: {charmProgress ? charmProgress.lifetimeXp.toLocaleString() : 'غير متاحة'}
                 </span>
+                {charmProgress && <div className="mt-2" aria-label="تقدم مستوى الجاذبية">
+                  <div className="h-2 overflow-hidden rounded-full border border-fuchsia-400/60 bg-purple-950/20">
+                    <div className="h-full rounded-full bg-gradient-to-l from-pink-200 via-fuchsia-400 to-purple-600 transition-[width]" style={{width: `${charmProgress.progressPercent}%`}} />
+                  </div>
+                  <span className="mt-1 block text-[9px] font-bold text-purple-900" dir="ltr">{charmProgress.xpToNextLevel === null ? 'MAX 200' : `${charmProgress.progressPercent.toFixed(1)}% · ${charmProgress.xpToNextLevel.toLocaleString()} XP remaining`}</span>
+                </div>}
                 <span className="text-xs text-purple-800 font-black mt-0.5 block flex items-center gap-1">
                   <span>✨</span>
                   <span>مستوى السحر</span>
