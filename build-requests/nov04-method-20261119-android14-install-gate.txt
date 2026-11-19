@@ -1,0 +1,1 @@
+Build latest staging via Nov 4 method; verify apksigner, zipalign, install and launch on Android 14 emulator before release. No app feature changes.
