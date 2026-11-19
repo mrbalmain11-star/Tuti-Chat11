@@ -1,0 +1,1 @@
+Rebuild the latest staging source and run Android 14 installation plus asynchronous MainActivity launch/foreground verification. The emulator's am start -W timed out waiting for display; use am start without -W, then observe the activity/process for up to 120 seconds and report diagnostics on failure.
