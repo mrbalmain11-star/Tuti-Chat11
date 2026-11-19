@@ -32,10 +32,15 @@ export const RoyalLevelEmblem: React.FC<Props> = ({ track, level, kind, size = 8
       100:[1736,174,436,201],120:[0,375,355,349],140:[355,375,355,349],160:[710,375,390,349],
       180:[1100,375,430,349],200:[1530,375,642,349]
     };
-    const charmCrop: [number,number,number,number] = index < 10
-      ? [index*153.6,0,153.6,128]
-      : index < 19 ? [(index-10)*153.6,128,153.6,128]
-      : [(index-19)*307.2,256,307.2,256];
+    // Charm sheet: 10 small badges per top row; final row contains five larger badges.
+    // Use explicit third-row bounds so wings and crowns are not clipped.
+    const charmBottom: [number,number,number,number][] = [
+      [0,256,255,256], [255,256,280,256], [535,256,300,256],
+      [835,256,320,256], [1155,256,381,256]
+    ];
+    const charmCrop: [number,number,number,number] = index < 20
+      ? [Math.floor((index % 10)*153.6), Math.floor(index/10)*128, 154, 128]
+      : charmBottom[index-20];
     const [x,y,w,h] = track === 'wealth' ? wealthCrops[milestone] : charmCrop;
     const sheet = track === 'wealth'
       ? '/assets/levels/wealth/file_00000000fdf4820aab3743b119988a10.png'
