@@ -1,0 +1,1 @@
+Run lightweight integrity diagnosis of the rejected 62b58e43 APK against phone SHA256.
