@@ -205,6 +205,33 @@ jobs:
           jarsigner -verify "$APK"
           sha256sum "$APK" | tee android/app/build/outputs/apk/debug/app-debug.apk.sha256
           ls -lh "$APK"
+      - name: Verify Android APK signing schemes and package metadata
+        run: |
+          set -euo pipefail
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)"
+          AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -n 1)"
+          ZIPALIGN="$(find "$ANDROID_HOME/build-tools" -name zipalign -type f | sort -V | tail -n 1)"
+          "$APKSIGNER" verify --verbose --print-certs --min-sdk-version 34 "$APK"
+          "$ZIPALIGN" -c -v 4 "$APK"
+          "$AAPT" dump badging "$APK" | head -n 20
+      - name: Install and launch the exact APK on Android 14 emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_4
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          script: |
+            adb wait-for-device
+            adb shell getprop sys.boot_completed
+            adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+            adb shell pm path com.numyar.totichat.staging
+            adb shell am start -n com.numyar.totichat.staging/.MainActivity
+            sleep 8
+            adb shell pidof com.numyar.totichat.staging
       # Do not upload Actions artifacts: GitHub wraps them in ZIP files.
       # The single user-facing download is the direct .apk under Releases.
       - name: Publish directly downloadable staging APK
