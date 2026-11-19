@@ -1,0 +1,1 @@
+Build current staging with CP real progress, royal artwork, and level changes. Do not change audio or music. Require emulator installation, signature validation and published-byte comparison.
