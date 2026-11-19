@@ -1,0 +1,1 @@
+Build current integration/legacy-backend-staging code with Nov 4 assembleDebug APK packaging. Preserve all latest app changes; use original workflow signing and direct GitHub Release APK.
