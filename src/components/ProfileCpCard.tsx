@@ -6,7 +6,7 @@ import { stagingBackend } from '../services/stagingBackend';
 import { imageUrl } from '../services/imageUrl';
 import { useApp } from '../context/AppContext';
 
-type CpLink = { typeId: string; typeLabel: string; level: number; partnerId: string; partnerName: string; partnerAvatar?: string | null; partnerPublicId?: number; accepted: boolean; gift_gold?: number | null; next_level_threshold?: number | null };
+type CpLink = { typeId: string; typeLabel: string; level: number; partnerId: string; partnerName: string; partnerAvatar?: string | null; partnerPublicId?: number; accepted: boolean; progress_points?: number | null; next_level_points?: number | null };
 
 const isConfirmedCpLink = (value: unknown): value is CpLink => {
   if (!value || typeof value !== 'object') return false;
@@ -119,7 +119,7 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
       }
     }
   };
-  // Progress renders only when the CP RPC returns real numeric gift_gold and next_level_threshold.\n  // Do not render a placeholder CP rectangle for profiles without a confirmed link.
+  // Progress renders only when the CP RPC returns real numeric progress_points and next_level_points.\n  // Do not render a placeholder CP rectangle for profiles without a confirmed link.
   // Hide only a confirmed empty state. On fetch errors the retry control must remain reachable.
   if (links.length === 0 && !error) return null;
   return <section className={compact ? 'relative isolate mx-2 mt-2 rounded-[16px] px-1 py-1' : 'relative isolate mx-3 my-2 rounded-[16px] px-0 py-1'} dir="rtl">
@@ -128,7 +128,7 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
     {loading && <p role="status" className="mt-2 text-xs text-amber-100/70">جارٍ تحديث العلاقات...</p>}
     {links.length > 0 && <div className="mt-0 space-y-1">{links.map(link => (
         <div key={link.typeId + link.partnerId} className={royalArtReady ? "relative bg-transparent p-0 text-[#892451]" : "rounded-xl border border-amber-300/50 bg-[#2c142b]/75 p-1.5 text-amber-50 backdrop-blur-sm"}>
-          {royalArtReady && <RoyalCpAnimatedV3 leftAvatar={resolvedUserAvatar} rightAvatar={imageUrl(link.partnerAvatar, 'profile-avatars')} leftName={userName} rightName={link.partnerName} level={link.level} progressPoints={typeof link.gift_gold === 'number' && Number.isFinite(link.gift_gold) ? link.gift_gold : null} nextLevelPoints={typeof link.next_level_threshold === 'number' && Number.isFinite(link.next_level_threshold) ? link.next_level_threshold : null} onRightClick={onPartnerClick ? () => onPartnerClick(link.partnerId) : undefined} />}
+          {royalArtReady && <RoyalCpAnimatedV3 leftAvatar={resolvedUserAvatar} rightAvatar={imageUrl(link.partnerAvatar, 'profile-avatars')} leftName={userName} rightName={link.partnerName} level={link.level} progressPoints={typeof link.progress_points === 'number' && Number.isFinite(link.progress_points) ? link.progress_points : null} nextLevelPoints={typeof link.next_level_points === 'number' && Number.isFinite(link.next_level_points) ? link.next_level_points : null} onRightClick={onPartnerClick ? () => onPartnerClick(link.partnerId) : undefined} />}
           {!royalArtReady && <>
           <div className="grid grid-cols-[minmax(0,1fr)_minmax(56px,76px)_minmax(0,1fr)] items-center gap-1">
             <div className="flex min-w-0 flex-col items-center gap-1 text-center">
@@ -161,7 +161,7 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
               <span className="min-h-7 w-full break-words text-[11px] font-bold leading-3.5 line-clamp-2">{link.partnerName || 'الشريك'}</span>
             </div>
           </div></>}
-          {/* CP progress is intentionally hidden until the authenticated RPC exposes gift_gold and the next level threshold. */}
+          {/* CP progress is intentionally hidden until the authenticated RPC exposes progress_points and the next level threshold. */}
           {userId === currentUser.id && (
             <button type="button" disabled={endingPartner !== null} onClick={() => void endRelationship(link)} className="absolute bottom-0 right-0 z-20 rounded-full border border-[#eaa3c1] bg-[#fff1f7]/95 px-2 py-0.5 text-[9px] font-bold text-[#a52c66] shadow-sm disabled:opacity-50">
               {endingPartner === link.partnerId ? 'جارٍ الفك...' : 'فك العلاقة'}
