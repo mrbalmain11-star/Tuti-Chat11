@@ -1,0 +1,40 @@
+name: Diagnose previously rejected TotiChat APK
+on:
+  workflow_dispatch: {}
+  push:
+    branches:
+      - integration/legacy-backend-staging
+    paths:
+      - 'build-requests/diagnose-rejected-apk-*.txt'
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download exact previously rejected APK from GitHub Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release download staging-apk-62b58e43 --repo "$GITHUB_REPOSITORY" --pattern 'TotiChat-Staging-62b58e43.apk' --dir .
+          test -s TotiChat-Staging-62b58e43.apk
+      - name: Compare GitHub release SHA-256 with actual TECNO phone download
+        run: |
+          set -euo pipefail
+          APK=TotiChat-Staging-62b58e43.apk
+          PHONE_SHA=85c0572a5c40af8c48b6b78cc44d82a21fb814c06b17ff14e7dd4c771f771680
+          RELEASE_SHA="$(sha256sum "$APK" | cut -d' ' -f1)"
+          echo "PHONE_SHA256=$PHONE_SHA"
+          echo "GITHUB_RELEASE_SHA256=$RELEASE_SHA"
+          if [ "$PHONE_SHA" = "$RELEASE_SHA" ]; then
+            echo "::notice::PHONE AND GITHUB RELEASE BYTES MATCH. Published APK signature is suspect."
+          else
+            echo "::error::PHONE AND GITHUB RELEASE BYTES DIFFER. APK was altered in transit or after download."
+          fi
+          echo "APK_BYTES=$(stat -c %s "$APK")"
+          echo "=== ZIP CHECK ==="
+          unzip -t "$APK" | tail -n 3
+          echo "=== APK SIGNATURE SCHEMES ==="
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)"
+          "$APKSIGNER" verify --verbose --print-certs --min-sdk-version 34 "$APK"
