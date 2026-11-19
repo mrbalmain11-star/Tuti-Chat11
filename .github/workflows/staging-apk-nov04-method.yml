@@ -258,3 +258,18 @@ jobs:
             --title "TotiChat Staging APK ${GITHUB_SHA:0:8}" \
             --notes "Android staging debug APK for testing. Direct APK download; no ZIP extraction needed." \
             --prerelease
+      - name: Verify published APK bytes and v2 signature after GitHub download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          TAG="staging-apk-${GITHUB_SHA:0:8}"
+          NAME="TotiChat-Staging-${GITHUB_SHA:0:8}.apk"
+          mkdir -p /tmp/totichat-published
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern "$NAME" --dir /tmp/totichat-published
+          cmp "$APK" "/tmp/totichat-published/$NAME"
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)"
+          "$APKSIGNER" verify --verbose --min-sdk-version 34 "/tmp/totichat-published/$NAME"
+          sha256sum "$APK" "/tmp/totichat-published/$NAME"
+          echo "Published APK is byte-identical and signature-valid."
