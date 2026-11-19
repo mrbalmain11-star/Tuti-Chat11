@@ -166,15 +166,29 @@ jobs:
           test -s "$RES/mipmap-xxxhdpi/ic_launcher.webp"
       - name: Register Google OAuth callback
         run: node scripts/configure-android-oauth.mjs
+      - name: Set up Gradle dependency cache
+        uses: gradle/actions/setup-gradle@v4
       - name: Build Android debug APK
         env:
           JAVA_HOME: ${{ env.JAVA_HOME_21_X64 }}
         working-directory: android
         run: |
+          set -euo pipefail
           test -f gradle/wrapper/gradle-wrapper.jar
           test -f gradle/wrapper/gradle-wrapper.properties
           chmod +x gradlew
-          ./gradlew --no-daemon assembleDebug
+          for attempt in 1 2 3; do
+            echo "Gradle build attempt $attempt/3"
+            if ./gradlew --no-daemon --stacktrace assembleDebug; then
+              test -s app/build/outputs/apk/debug/app-debug.apk
+              exit 0
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "::error::Gradle build failed after 3 attempts"
+              exit 1
+            fi
+            sleep $((attempt * 20))
+          done
       - name: Verify microphone permission is packaged
         run: |
           set -euo pipefail
