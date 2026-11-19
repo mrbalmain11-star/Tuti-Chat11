@@ -36,3 +36,13 @@
 .royal-cp-v3-progress-track>span{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#ffce62,#fff2b1 55%,#d79535);box-shadow:0 0 5px #f9ce74;transition:width .35s ease}
 .royal-cp-v3-progress-unavailable{margin:0;text-align:center;font-size:10px;font-weight:700;color:#884d6a}
 @media(max-width:380px){.royal-cp-v3-shell .royal-cp-v3{aspect-ratio:2.8/1}}
+
+/* Approved CP image: fully static; preserve avatar clicks and real relationship data. */
+.royal-cp-v3-shell .royal-cp-v3{aspect-ratio:3/1}
+.royal-cp-v3-shell .royal-cp-v3-art{object-fit:fill}
+.royal-cp-v3-shell .royal-cp-v3-avatar{top:24%;width:17.45%;height:52%;z-index:4}
+.royal-cp-v3-shell .royal-cp-v3-left{left:13.25%}
+.royal-cp-v3-shell .royal-cp-v3-right{left:69.25%}
+.royal-cp-v3-shell .royal-cp-v3-live-level{left:46.3%;top:69%;height:13%;font-size:clamp(10px,2.5vw,16px)}
+.royal-cp-v3-shell .royal-cp-v3-wings,.royal-cp-v3-shell .royal-cp-v3-wing-glow,.royal-cp-v3-shell .royal-cp-v3-gem{display:none;animation:none}
+@media(max-width:380px){.royal-cp-v3-shell .royal-cp-v3{aspect-ratio:3/1}}
