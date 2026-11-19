@@ -38,9 +38,9 @@ export const RoyalLevelEmblem: React.FC<Props> = ({ track, level, kind, size = 8
       [0,256,255,256], [255,256,280,256], [535,256,300,256],
       [835,256,320,256], [1155,256,381,256]
     ];
-    const charmCrop: [number,number,number,number] = index < 20
+    const charmCrop: [number,number,number,number] = index < 19
       ? [Math.floor((index % 10)*153.6), Math.floor(index/10)*128, 154, 128]
-      : charmBottom[index-20];
+      : charmBottom[index-19];
     const [x,y,w,h] = track === 'wealth' ? wealthCrops[milestone] : charmCrop;
     const sheet = track === 'wealth'
       ? '/assets/levels/wealth/file_00000000fdf4820aab3743b119988a10.png'
