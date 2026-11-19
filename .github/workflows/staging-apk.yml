@@ -347,6 +347,7 @@ jobs:
           target: google_apis
           profile: pixel_5
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048
+          disable-animations: false
           script: bash .github/scripts/verify-staging-emulator-install.sh
       # Keep a GitHub Actions artifact for a visible download on the run page.
       # The Release asset below remains the direct .apk download (no ZIP extraction).
