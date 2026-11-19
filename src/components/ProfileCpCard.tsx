@@ -122,7 +122,7 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
   // Do not render a placeholder CP rectangle for profiles without a confirmed link.
   // Hide only a confirmed empty state. On fetch errors the retry control must remain reachable.
   if (links.length === 0 && !error) return null;
-  return <section className={compact ? 'relative isolate mx-2 mt-2 rounded-[16px] px-1 py-1' : 'relative isolate mx-3 my-2 rounded-[16px] px-1 py-1'} dir="rtl">
+  return <section className={compact ? 'relative isolate mx-2 mt-2 rounded-[16px] px-1 py-1' : 'relative isolate mx-3 my-2 rounded-[16px] px-0 py-1'} dir="rtl">
     <div className="relative z-10">
     {error && <div role="status" className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-rose-200"><span>{links.length > 0 ? 'تعذر تحديث العلاقات، تُعرض آخر بيانات مؤكدة.' : 'تعذر تحميل العلاقات. تحقق من الاتصال وحاول مجدداً.'}</span><button type="button" disabled={loading || endingPartner !== null} onClick={() => setRetryNonce(n => n + 1)} className="rounded-lg border border-amber-300/70 px-3 py-1 font-bold text-amber-100 disabled:opacity-50">إعادة المحاولة</button></div>}
     {loading && <p role="status" className="mt-2 text-xs text-amber-100/70">جارٍ تحديث العلاقات...</p>}
