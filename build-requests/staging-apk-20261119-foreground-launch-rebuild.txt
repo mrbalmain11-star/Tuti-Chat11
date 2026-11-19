@@ -1,0 +1,1 @@
+Build a new staging APK from current branch updates. Preserve the verified checksum/signing and Android 14 install checks. For launch verification, start MainActivity directly and assert the app process stays alive in foreground; do not rely on monkey's random event launcher.
