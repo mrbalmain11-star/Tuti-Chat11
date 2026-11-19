@@ -1,0 +1,1 @@
+Rebuild after fixing unsigned APK input path for apksigner. Require complete validation and release checks.
