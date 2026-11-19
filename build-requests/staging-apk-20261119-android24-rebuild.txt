@@ -1,0 +1,3 @@
+Rebuild staging APK from the latest branch, including the wealth/charm badge mapping and CP profile sizing changes.
+Android emulator runner pinned to Ubuntu 24.04 after ADB/platform services failed on Ubuntu 26.04.
+Keep staging signing and APK packaging unchanged; verify Android 14 install and launch before release.
