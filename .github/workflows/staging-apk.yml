@@ -238,14 +238,15 @@ jobs:
         run: |
           set -euo pipefail
           APK="android/app/build/outputs/apk/release/app-release.apk"
-          test -s "$APK"
+          UNSIGNED="android/app/build/outputs/apk/release/app-release-unsigned.apk"
+          test -s "$UNSIGNED" || { echo "::error::Unsigned Gradle release APK missing"; ls -lah android/app/build/outputs/apk/release/; exit 1; }
           APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)"
           ZIPALIGN="$(find "$ANDROID_HOME/build-tools" -name zipalign -type f | sort -V | tail -n 1)"
           test -x "$APKSIGNER"
           test -x "$ZIPALIGN"
           # Gradle assembleRelease is unsigned. Align once, sign once.
           # Never repackage a pre-signed APK.
-          if unzip -Z1 "$APK" | grep -Eq '^META-INF/[^/]+\.(RSA|DSA|EC)
+          if unzip -Z1 "$UNSIGNED" | grep -Eq '^META-INF/[^/]+\.(RSA|DSA|EC)
           "$APKSIGNER" sign \
             --ks "$HOME/.android/debug.keystore" \
             --ks-key-alias androiddebugkey \
