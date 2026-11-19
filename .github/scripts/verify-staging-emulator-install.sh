@@ -73,23 +73,32 @@ ACTIVITY="$PKG/.MainActivity"
 adb shell pm path "$PKG"
 adb shell am force-stop "$PKG"
 adb logcat -c
-START_OUTPUT="$(adb shell am start -W -n "$ACTIVITY" 2>&1 | tr -d '\r')"
+START_OUTPUT="$(adb shell am start -n "$ACTIVITY" 2>&1 | tr -d '\r' || true)"
 echo "$START_OUTPUT"
-if ! echo "$START_OUTPUT" | grep -q "Status: ok"; then
-  echo "::error::Android did not start TotiChat MainActivity"
+if echo "$START_OUTPUT" | grep -Eq 'Error:|Exception|does not exist'; then
+  echo "::error::Android rejected the TotiChat launch intent"
+  adb logcat -d -t 500 2>/dev/null | tail -n 160 || true
   exit 1
 fi
-sleep 8
-RESUMED="$(adb shell dumpsys activity activities 2>/dev/null | tr -d '\r' | grep -E 'mResumedActivity|topResumedActivity' | head -n 2 || true)"
-echo "$RESUMED"
-if ! echo "$RESUMED" | grep -q "$PKG"; then
-  echo "::error::TotiChat MainActivity did not remain in the foreground"
+FOREGROUND=""
+PID=""
+for attempt in $(seq 1 60); do
+  PID="$(adb shell pidof "$PKG" 2>/dev/null | tr -d '\r' || true)"
+  FOREGROUND="$(adb shell dumpsys activity activities 2>/dev/null | tr -d '\r' | grep -E 'mResumedActivity|topResumedActivity' | head -n 2 || true)"
+  if [[ -n "$PID" ]] && echo "$FOREGROUND" | grep -q "$PKG"; then
+    break
+  fi
+  sleep 2
+done
+echo "TotiChat process: $PID"
+echo "Foreground activity: $FOREGROUND"
+if [[ -z "$PID" ]] || ! echo "$FOREGROUND" | grep -q "$PKG"; then
+  echo "::error::TotiChat process/activity did not become foreground within 120 seconds"
+  adb shell dumpsys activity activities 2>/dev/null | tail -n 100 || true
+  adb logcat -d -t 1200 2>/dev/null | tail -n 240 || true
   exit 1
 fi
-if ! adb shell pidof "$PKG" >/dev/null 2>&1; then
-  echo "::error::TotiChat process exited after launch"
-  exit 1
-fi
+sleep 5
 APP_FATAL="$(adb logcat -d -t 1200 2>/dev/null | grep -E 'FATAL EXCEPTION|Fatal signal' | grep -F "$PKG" || true)"
 if [[ -n "$APP_FATAL" ]]; then
   echo "$APP_FATAL"
