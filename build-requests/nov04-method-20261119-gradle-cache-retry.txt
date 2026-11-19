@@ -1,0 +1,1 @@
+Build latest staging with November 4 debug packaging, Gradle cache and dependency retry. Publish only direct APK to Releases on successful verification.
