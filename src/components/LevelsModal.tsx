@@ -107,7 +107,7 @@ export const LevelsModal: React.FC = () => {
           <div className="rounded-2xl border border-emerald-300/20 bg-white/[0.04] p-5 text-center">
             {verifiedProgress ? (
               <div className="flex flex-col items-center gap-2" aria-label={`شارة المستوى الحالي ${verifiedProgress.level}`}>
-                <RoyalLevelEmblem track={isWealth ? 'wealth' : isCharm ? 'charm' : 'room'} level={verifiedProgress.level} kind="badge" size={96} animated={false} />
+                <RoyalLevelEmblem track={isWealth ? 'wealth' : isCharm ? 'charm' : 'room'} level={verifiedProgress.level} kind="badge" size={96} animated />
                 <span className="text-sm font-black text-amber-200">المستوى الحالي {verifiedProgress.level}</span>
               </div>
             ) : <ActiveIcon className="mx-auto h-10 w-10 text-amber-300" aria-hidden="true" />}

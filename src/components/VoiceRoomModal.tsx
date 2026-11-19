@@ -67,6 +67,8 @@ import { sounds } from '../utils/audio';
 import { VipName } from './VipName';
 import { VipBadge } from './VipBadge';
 import { ProfileCpCard } from './ProfileCpCard';
+import { RoyalLevelEmblem } from './RoyalLevelEmblem';
+import { royalProgress } from '../utils/royalLevels';
 
 
 const PRESET_BACKGROUNDS = [
@@ -2690,8 +2692,8 @@ export const VoiceRoomModal: React.FC = () => {
               <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-xs font-bold" aria-live="polite">
                 {selectedMicVerifiedStatus?.userId === selectedMicUser.user.id ? <>
                   {!selectedMicVerifiedStatus.loadFailed && <>
-                    <span title={`خبرة الثروة المؤكدة: ${selectedMicVerifiedStatus.wealthExp.toLocaleString()}`} aria-label="شارة الثروة" className="inline-flex items-center gap-1 rounded-xl border border-amber-300/60 bg-gradient-to-br from-amber-950 via-amber-700 to-yellow-400 px-3 py-1.5 text-amber-50 shadow-[0_0_12px_rgba(245,158,11,.25)]"><span aria-hidden="true">👑</span><span>شارة الثروة</span></span>
-                    <span title={`خبرة السحر المؤكدة: ${selectedMicVerifiedStatus.charmExp.toLocaleString()}`} aria-label="شارة السحر" className="inline-flex items-center gap-1 rounded-xl border border-fuchsia-300/60 bg-gradient-to-br from-purple-950 via-fuchsia-800 to-pink-500 px-3 py-1.5 text-white shadow-[0_0_12px_rgba(217,70,239,.25)]"><span aria-hidden="true">💎</span><span>شارة السحر</span></span>
+                    <span className="inline-flex items-center gap-1 rounded-xl bg-slate-900/70 px-1 py-1 text-amber-50"><RoyalLevelEmblem track="wealth" level={royalProgress(BigInt(selectedMicVerifiedStatus.wealthExp)).level} kind="badge" size={62} animated /><span className="text-xs">الثروة {royalProgress(BigInt(selectedMicVerifiedStatus.wealthExp)).level}</span></span>
+                    <span className="inline-flex items-center gap-1 rounded-xl bg-slate-900/70 px-1 py-1 text-amber-50"><RoyalLevelEmblem track="charm" level={royalProgress(BigInt(selectedMicVerifiedStatus.charmExp)).level} kind="badge" size={62} animated /><span className="text-xs">السحر {royalProgress(BigInt(selectedMicVerifiedStatus.charmExp)).level}</span></span>
                   </>}
                   {selectedMicVerifiedStatus.vipLevel > 0 && !selectedMicVerifiedStatus.loadFailed && <span className="inline-flex items-center gap-1 rounded-xl border border-yellow-300/70 bg-gradient-to-r from-amber-950 via-yellow-700 to-amber-500 px-3 py-1.5 text-yellow-50 shadow-lg"><span aria-hidden="true">✦</span><span>VIP {selectedMicVerifiedStatus.vipLevel}</span></span>}
                   {selectedMicVerifiedStatus.loadFailed && <span className="text-slate-400">تعذر التحقق من المستويات</span>}
