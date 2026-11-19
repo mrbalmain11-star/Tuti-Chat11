@@ -1,0 +1,1 @@
+Run Android 14 emulator installation and capture app startup crash logs for debugging.
