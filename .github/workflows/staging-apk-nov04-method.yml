@@ -1,6 +1,11 @@
 name: Build TotiChat Staging APK - Nov 4 Method
 on:
   workflow_dispatch: {}
+  push:
+    branches:
+      - integration/legacy-backend-staging
+    paths:
+      - 'build-requests/nov04-method-*.txt'
 permissions:
   contents: write
 jobs:
