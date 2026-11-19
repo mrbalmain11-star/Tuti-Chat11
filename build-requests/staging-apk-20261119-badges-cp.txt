@@ -1,0 +1,3 @@
+Build staging APK after wealth/charm badge artwork integration and CP profile sizing changes.
+Source commit: 69f3fd7ffb530cf69d4c33a2c2a0c1269db8bd24
+Do not modify production.
