@@ -29,7 +29,7 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
     const image = new Image();
     image.onload = () => { if (active) setRoyalArtReady(true); };
     image.onerror = () => { if (active) setRoyalArtReady(false); };
-    image.src = '/assets/cp/a_png_cutout_of_the_same_ornate_cp_relationship_ba(1).png';
+    image.src = '/assets/cp/file_00000000020c82468cf757971387776b.png';
     return () => { active = false; };
   }, []);
   const [loading, setLoading] = useState(true);
