@@ -1,5 +1,6 @@
 import React, { useId } from 'react';
 import './RoyalLevelEmblem.css';
+import { approvedBadgeIndex } from '../utils/approvedBadgeRanges';
 
 import { Sparkles } from 'lucide-react';
 import type { RoyalTrack } from '../utils/royalLevels';
@@ -19,39 +20,11 @@ export const RoyalLevelEmblem: React.FC<Props> = ({ track, level, kind, size = 8
   const id = useId().replace(/:/g, '');
   const tier = level >= 180 ? 5 : level >= 140 ? 4 : level >= 100 ? 3 : level >= 20 ? 2 : level >= 6 ? 1 : 0;
   const ornaments = Math.min(12, 3 + Math.floor(level / 20));
-  // Each source image is a contact sheet. Crop by milestone without animating or recoloring.
   if (kind === 'badge' && (track === 'wealth' || track === 'charm')) {
-    const milestones = [1,2,3,4,5,6,7,8,9,10,20,30,40,50,60,70,80,90,100,120,140,160,180,200];
-    const milestone = [...milestones].reverse().find(n => level >= n) ?? 1;
-    const index = milestones.indexOf(milestone);
-    const wealthCrops: Record<number,[number,number,number,number]> = {
-      1:[0,0,217,174],2:[217,0,217,174],3:[434,0,217,174],4:[651,0,217,174],5:[868,0,217,174],
-      6:[1085,0,217,174],7:[1302,0,217,174],8:[1519,0,217,174],9:[1736,0,217,174],10:[1953,0,219,174],
-      20:[0,174,217,201],30:[217,174,217,201],40:[434,174,217,201],50:[651,174,217,201],
-      60:[868,174,217,201],70:[1085,174,217,201],80:[1302,174,217,201],90:[1519,174,217,201],
-      100:[1736,174,436,201],120:[0,375,355,349],140:[355,375,355,349],160:[710,375,390,349],
-      180:[1100,375,430,349],200:[1530,375,642,349]
-    };
-    // Charm sheet: 10 small badges per top row; final row contains five larger badges.
-    // Use explicit third-row bounds so wings and crowns are not clipped.
-    const charmBottom: [number,number,number,number][] = [
-      [0,256,255,256], [255,256,280,256], [535,256,300,256],
-      [835,256,320,256], [1155,256,381,256]
-    ];
-    const charmCrop: [number,number,number,number] = index < 19
-      ? [Math.floor((index % 10)*153.6), Math.floor(index/10)*128, 154, 128]
-      : charmBottom[index-19];
-    const [x,y,w,h] = track === 'wealth' ? wealthCrops[milestone] : charmCrop;
-    const sheet = track === 'wealth'
-      ? '/assets/levels/wealth/file_00000000fdf4820aab3743b119988a10.png'
-      : '/assets/levels/charm/file_000000000cb082109d892cd030b6ce6d.png';
-    const [sheetW,sheetH] = track === 'wealth' ? [2172,724] : [1536,512];
-    return <span className="relative inline-flex shrink-0 items-center justify-center" style={{width:size,height:size}}
-      title={`المستوى الفعلي ${level}، تصميم الشارة ${milestone}`}>
-      <svg width={size} height={size} viewBox={`${x} ${y} ${w} ${h}`} role="img"
-        aria-label={`شارة ${track === 'wealth' ? 'الثروة' : 'الجاذبية'}، المستوى ${level}، تصميم ${milestone}`}>
-        <image href={sheet} x="0" y="0" width={sheetW} height={sheetH} />
-      </svg>
+    const badgeNumber = String(approvedBadgeIndex(level)).padStart(2, '0');
+    const src = `/assets/levels/${track}/${track}_${badgeNumber}.png`;
+    return <span className="relative inline-flex shrink-0 items-center justify-center" style={{ width: size, height: size }} title={`شارة ${track === 'wealth' ? 'الثروة' : 'الجاذبية'}، المستوى ${level}`}>
+      <img src={src} alt={`شارة ${track === 'wealth' ? 'الثروة' : 'الجاذبية'} للمستوى ${level}`} style={{ width: size, height: size, objectFit: 'contain' }} />
     </span>;
   }
   return <div className={`royal-emblem relative inline-flex shrink-0 items-center justify-center ${animated ? "royal-emblem-animated" : ""}`} style={{ width: size, height: size }} aria-label={`${kind === 'badge' ? 'شارة' : 'إطار'} ${track} مستوى ${level}`}>
