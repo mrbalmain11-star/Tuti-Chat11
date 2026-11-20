@@ -90,7 +90,7 @@ export const OfficialScreenshotBadge: React.FC<BadgeProps> = ({
       >
         <span className="relative inline-flex shrink-0 items-center justify-center" style={{ height: badgeHeight, width: badgeHeight * 1.6, maxWidth: badgeHeight * 2 }}>
           <img src={badgeSrc} alt={variant === 'wealth' ? 'شارة الثروة' : 'شارة الجاذبية'} style={{ height: '100%', width: '100%', objectFit: 'contain' }} loading="lazy" />
-          <span aria-hidden="true" className="absolute inset-x-0 bottom-[12%] text-center font-black text-white tabular-nums leading-none" style={{ fontSize: Math.max(9, Math.round(badgeHeight * 0.36)), textShadow: '0 1px 3px #000, 0 0 3px #000' }}>{displayLevel}</span>
+          <span aria-hidden="true" className="absolute inset-x-[12%] bottom-[9%] flex items-center justify-center text-center font-black text-white tabular-nums leading-none" style={{ fontSize: Math.max(9, Math.round(badgeHeight * 0.34)), textShadow: '0 1px 3px #000, 0 0 3px #000', fontVariantNumeric: 'tabular-nums' }}>{displayLevel}</span>
         </span>
       </span>
     );
