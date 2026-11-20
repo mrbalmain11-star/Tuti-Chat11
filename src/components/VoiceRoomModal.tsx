@@ -1,4 +1,5 @@
 import { VipMessageFrame } from './VipMessageFrame';
+import { WealthBadge, CharmBadge } from './LevelBadgeIcons';
 import { stagingBackend } from '../services/stagingBackend';
 import { RoomManagementPanel } from './RoomManagementPanel';
 import { App as CapacitorApp } from '@capacitor/app';
@@ -1834,6 +1835,8 @@ export const VoiceRoomModal: React.FC = () => {
                     <div key={msg.id} data-room-message-id={msg.id} className="flex min-w-0 items-start justify-end gap-1.5">
                       <VipMessageFrame level={msg.senderId === currentUser.id ? currentUser.vipLevel : (msg.vipLevel ?? 0)}>
                         <span className="text-amber-300 font-bold ml-1">{msg.senderName}:</span>
+                        {msg.senderId === currentUser.id && Number.isFinite(currentUser.wealthLevel) && currentUser.wealthLevel > 0 && <WealthBadge level={currentUser.wealthLevel} size="xs" />}
+                        {msg.senderId === currentUser.id && Number.isFinite(currentUser.charmLevel) && currentUser.charmLevel > 0 && <CharmBadge level={currentUser.charmLevel} size="xs" />}
                         {(msg.senderId === currentUser.id ? currentUser.vipLevel : (msg.vipLevel ?? 0)) >= 1 && (
                           <span className="inline-flex align-middle rounded-full border border-amber-200/50 bg-black/25 px-1.5 py-0.5 text-[9px] font-black text-amber-100 ml-1" aria-label={`مستوى VIP ${(msg.senderId === currentUser.id ? currentUser.vipLevel : (msg.vipLevel ?? 0))}`}>
                             VIP {(msg.senderId === currentUser.id ? currentUser.vipLevel : (msg.vipLevel ?? 0))}
