@@ -1,3 +1,5 @@
+import { CpWingAvatarFrame } from './CpWingAvatarFrame';
+import { useConfirmedCpFrame, getCpFramePreference, setCpFramePreference } from '../services/cpFramePreference';
 import React, { useState, useRef, useEffect } from 'react';
 import {
   ChevronRight,
@@ -84,6 +86,7 @@ export const InternalProfileModal: React.FC = () => {
   const [cpPartnerAvatar, setCpPartnerAvatar] = useState<string | null>(null);
   const [cpPartnerImageFailed, setCpPartnerImageFailed] = useState(false);
   const resolvedCpPartnerAvatar = imageUrl(cpPartnerAvatar, 'profile-avatars');
+  const cpAvatarFrameEnabled = useConfirmedCpFrame(user.id, cpRefreshKey);
   const [cpPartnerId, setCpPartnerId] = useState<string | null>(null);
   const [hasConfirmedCp, setHasConfirmedCp] = useState(false);
   useEffect(() => {
@@ -562,6 +565,7 @@ export const InternalProfileModal: React.FC = () => {
                 </div>
               )}
             </div>
+            <CpWingAvatarFrame enabled={cpAvatarFrameEnabled} name={user.name} />
           </div>
         </div>
 
