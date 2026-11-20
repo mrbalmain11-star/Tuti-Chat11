@@ -88,8 +88,10 @@ export const OfficialScreenshotBadge: React.FC<BadgeProps> = ({
         title={`${variant === 'wealth' ? 'مستوى الثروة' : 'مستوى الجاذبية'}: ${displayLevel}`}
         dir="ltr"
       >
-        <img src={badgeSrc} alt={variant === 'wealth' ? 'شارة الثروة' : 'شارة الجاذبية'} height={badgeHeight} style={{ height: badgeHeight, width: 'auto', maxWidth: badgeHeight * 2, objectFit: 'contain' }} loading="lazy" />
-        <span className="text-[10px] font-black text-white tabular-nums">{displayLevel}</span>
+        <span className="relative inline-flex shrink-0 items-center justify-center" style={{ height: badgeHeight, width: badgeHeight, maxWidth: badgeHeight * 2 }}>
+          <img src={badgeSrc} alt={variant === 'wealth' ? 'شارة الثروة' : 'شارة الجاذبية'} style={{ height: '100%', width: '100%', objectFit: 'contain' }} loading="lazy" />
+          <span aria-hidden="true" className="absolute inset-x-0 bottom-[12%] text-center font-black text-white tabular-nums leading-none" style={{ fontSize: Math.max(9, Math.round(badgeHeight * 0.36)), textShadow: '0 1px 3px #000, 0 0 3px #000' }}>{displayLevel}</span>
+        </span>
       </span>
     );
   }
