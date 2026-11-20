@@ -40,6 +40,26 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
   const activeProfileIdRef = useRef(userId);
   activeProfileIdRef.current = userId;
   const resolvedUserAvatar = imageUrl(userAvatar, 'profile-avatars');
+  // The CP RPC may omit partnerAvatar. Resolve the confirmed partner's current
+  // profile photo separately, without fabricating relationship or avatar data.
+  const [partnerAvatars, setPartnerAvatars] = useState<Record<string, string>>({});
+  useEffect(() => {
+    let active = true;
+    setPartnerAvatars({});
+    const ids = [...new Set(links.filter(link => link.accepted && link.partnerId).map(link => link.partnerId))];
+    if (!stagingBackend || ids.length === 0) return () => { active = false; };
+    void stagingBackend.from('profiles').select('id,avatar_url').in('id', ids).then(({ data, error }) => {
+      if (!active || error || !data) return;
+      const avatars: Record<string, string> = {};
+      for (const profile of data) {
+        if (typeof profile.id === 'string' && typeof profile.avatar_url === 'string' && profile.avatar_url.trim()) {
+          avatars[profile.id] = profile.avatar_url;
+        }
+      }
+      setPartnerAvatars(avatars);
+    });
+    return () => { active = false; };
+  }, [userId, links]);
   // Keep asynchronous refreshes connected to the latest parent callback.
   const onLinksChangeRef = useRef(onLinksChange);
   onLinksChangeRef.current = onLinksChange;
@@ -128,7 +148,7 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
     {loading && <p role="status" className="mt-2 text-xs text-amber-100/70">جارٍ تحديث العلاقات...</p>}
     {links.length > 0 && <div className="mt-0 space-y-1">{links.map(link => (
         <div key={link.typeId + link.partnerId} className={royalArtReady ? "relative bg-transparent p-0 text-[#892451]" : "rounded-xl border border-amber-300/50 bg-[#2c142b]/75 p-1.5 text-amber-50 backdrop-blur-sm"}>
-          {royalArtReady && <RoyalCpAnimatedV3 leftAvatar={resolvedUserAvatar} rightAvatar={imageUrl(link.partnerAvatar, 'profile-avatars')} leftName={userName} rightName={link.partnerName} level={link.level} progressPoints={typeof link.progress_points === 'number' && Number.isFinite(link.progress_points) ? link.progress_points : null} nextLevelPoints={typeof link.next_level_points === 'number' && Number.isFinite(link.next_level_points) ? link.next_level_points : null} onRightClick={onPartnerClick ? () => onPartnerClick(link.partnerId) : undefined} />}
+          {royalArtReady && <RoyalCpAnimatedV3 leftAvatar={resolvedUserAvatar} rightAvatar={imageUrl(partnerAvatars[link.partnerId] || link.partnerAvatar, 'profile-avatars')} leftName={userName} rightName={link.partnerName} level={link.level} progressPoints={typeof link.progress_points === 'number' && Number.isFinite(link.progress_points) ? link.progress_points : null} nextLevelPoints={typeof link.next_level_points === 'number' && Number.isFinite(link.next_level_points) ? link.next_level_points : null} onRightClick={onPartnerClick ? () => onPartnerClick(link.partnerId) : undefined} />}
           {!royalArtReady && <>
           <div className="grid grid-cols-[minmax(0,1fr)_minmax(56px,76px)_minmax(0,1fr)] items-center gap-1">
             <div className="flex min-w-0 flex-col items-center gap-1 text-center">
@@ -154,7 +174,7 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
               <button type="button" disabled={!onPartnerClick} onClick={() => onPartnerClick?.(link.partnerId)} aria-label={`فتح ملف ${link.partnerName || 'الشريك'}`} className={`relative shrink-0 disabled:cursor-default enabled:active:scale-95 ${compact ? 'h-11 w-11' : 'h-[clamp(42px,14vw,58px)] w-[clamp(42px,14vw,58px)]'}`}>
                 <div className="absolute inset-[8px] overflow-hidden rounded-full bg-[#5c3048]">
                 <CircleUserRound className="absolute inset-0 h-full w-full p-2 text-amber-200" aria-hidden="true" />
-                {imageUrl(link.partnerAvatar, 'profile-avatars') && <img src={imageUrl(link.partnerAvatar, 'profile-avatars')} alt={link.partnerName || 'الشريك'} onError={event => { event.currentTarget.style.display = 'none'; }} className="relative h-full w-full rounded-full object-cover" />}
+                {imageUrl(partnerAvatars[link.partnerId] || link.partnerAvatar, 'profile-avatars') && <img src={imageUrl(partnerAvatars[link.partnerId] || link.partnerAvatar, 'profile-avatars')} alt={link.partnerName || 'الشريك'} onError={event => { event.currentTarget.style.display = 'none'; }} className="relative h-full w-full rounded-full object-cover" />}
                 </div>
                 <RoyalCpAvatarFrame />
               </button>
