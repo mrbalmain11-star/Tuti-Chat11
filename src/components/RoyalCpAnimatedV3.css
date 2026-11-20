@@ -46,3 +46,8 @@
 .royal-cp-v3-shell .royal-cp-v3-live-level{left:46.3%;top:69%;height:13%;font-size:clamp(10px,2.5vw,16px)}
 .royal-cp-v3-shell .royal-cp-v3-wings,.royal-cp-v3-shell .royal-cp-v3-wing-glow,.royal-cp-v3-shell .royal-cp-v3-gem{display:none;animation:none}
 @media(max-width:380px){.royal-cp-v3-shell .royal-cp-v3{aspect-ratio:3/1}}
+
+/* CP refinement: enlarge artwork and visually remove the black matte on light profile backgrounds. */
+.royal-cp-v3-shell{width:calc(100% + 16px);max-width:650px;margin-inline:-8px;padding:0;background:transparent}
+.royal-cp-v3-shell .royal-cp-v3{isolation:auto;background:transparent;aspect-ratio:3/1}
+.royal-cp-v3-shell .royal-cp-v3-art{mix-blend-mode:screen;object-fit:fill}
