@@ -603,7 +603,7 @@ export const InternalProfileModal: React.FC = () => {
             {/* Charm / Magic Level Badge (مستوى السحر) */}
             {verifiedCharmLevel !== null && <CharmBadge
               level={verifiedCharmLevel ?? 1}
-              size="compact"
+              size="xs"
               onClick={() => {
                 sounds.playClick();
                 setLevelsModalTab('charm');
@@ -615,7 +615,7 @@ export const InternalProfileModal: React.FC = () => {
             {/* Wealth Level Badge (مستوى الثروة) */}
             {verifiedWealthLevel !== null && <WealthBadge
               level={verifiedWealthLevel ?? 1}
-              size="compact"
+              size="xs"
               onClick={() => {
                 sounds.playClick();
                 setLevelsModalTab('wealth');
