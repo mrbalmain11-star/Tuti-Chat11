@@ -1,4 +1,4 @@
-.cp-wing-avatar-frame{position:absolute;inset:-35%;pointer-events:none;z-index:20;display:block;aspect-ratio:1;isolation:isolate}
+.cp-wing-avatar-frame{position:absolute;inset:-12%;pointer-events:none;z-index:20;display:block;aspect-ratio:1;isolation:isolate}
 .cp-wing-avatar-layer{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none}
 .cp-wing-avatar-base{z-index:1}
 .cp-wing-layer-w1,.cp-wing-layer-w2,.cp-wing-layer-w3,.cp-wing-layer-w4{z-index:2;will-change:transform;animation-duration:11s;animation-iteration-count:infinite;animation-timing-function:ease-in-out}
