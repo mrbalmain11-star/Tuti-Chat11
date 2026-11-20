@@ -39,6 +39,7 @@ import { VipBadge, VIP_BEAST_METADATA } from './VipBadge';
 import { AgencyProfileCard } from './AgencyProfileCard';
 import { CpSearchModal } from './CpSearchModal';
 import { ProfileCpCard } from './ProfileCpCard';
+import { imageUrl } from '../services/imageUrl';
 import { fetchMyVerifiedRoyalXp, type VerifiedRoyalXp } from '../services/royalXp';
 import { royalProgress } from '../utils/royalLevels';
 import { ProfileReportForm } from './ProfileReportForm';
@@ -81,10 +82,13 @@ export const InternalProfileModal: React.FC = () => {
   const [showCpSearch,setShowCpSearch] = useState(false);
   const [cpRefreshKey, setCpRefreshKey] = useState(0);
   const [cpPartnerAvatar, setCpPartnerAvatar] = useState<string | null>(null);
+  const [cpPartnerImageFailed, setCpPartnerImageFailed] = useState(false);
+  const resolvedCpPartnerAvatar = imageUrl(cpPartnerAvatar, 'profile-avatars');
   const [cpPartnerId, setCpPartnerId] = useState<string | null>(null);
   const [hasConfirmedCp, setHasConfirmedCp] = useState(false);
   useEffect(() => {
     setCpPartnerAvatar(null);
+    setCpPartnerImageFailed(false);
     setCpPartnerId(null);
     setHasConfirmedCp(false);
   }, [user.id]);
@@ -499,7 +503,7 @@ export const InternalProfileModal: React.FC = () => {
             if (error || !data) { showToast('تعذر فتح ملف الشريك'); return; }
             const avatar = data.avatar_url ? (/^(https?:\/\/|data:image\/)/i.test(data.avatar_url) ? data.avatar_url : stagingBackend.storage.from('profile-avatars').getPublicUrl(data.avatar_url).data.publicUrl) : '';
             setInternalProfileUser({ ...currentUser, id: data.id, name: data.display_name || 'مستخدم', nickname: data.display_name || 'مستخدم', avatar, country: '', countryCode: '', countryFlag: '', birthdate: '', age: null, friendsCount: 0, followersCount: 0, followingCount: 0, fansCount: 0, visitorsCount: 0, hearts: 0, gameLevel: 0, gameExp: 0, cover: '', bio: '', album: [], vipExpiry: '', specialIdBadge: undefined, isBanned: false, banReason: undefined, isNameBanned: false, isAvatarBanned: false, wealthExp: 0, charmExp: 0, wealthLevel: 0, charmLevel: 0, coins: 0, diamonds: 0, vipLevel: 0, isSuperAdmin: false, isRechargeAgent: false, isHost: false, isSpecialId: false, permissions: [], agencyRole: undefined, agencyName: undefined, rechargeCoins: 0, hasWelcomeBanner: false });
-          })().catch(() => showToast('تعذر فتح ملف الشريك')); }} className="w-13 h-13 rounded-full border-2 border-amber-200 bg-amber-100 flex items-center justify-center overflow-hidden disabled:opacity-60" aria-label="فتح ملف شريك CP">{cpPartnerAvatar ? <img src={cpPartnerAvatar} alt="شريك CP" className="w-full h-full object-cover" /> : <Heart className="w-6 h-6 text-rose-500" />}</button></div>}
+          })().catch(() => showToast('تعذر فتح ملف الشريك')); }} className="w-13 h-13 rounded-full border-2 border-amber-200 bg-amber-100 flex items-center justify-center overflow-hidden disabled:opacity-60" aria-label="فتح ملف شريك CP">{resolvedCpPartnerAvatar && !cpPartnerImageFailed ? <img src={resolvedCpPartnerAvatar} alt="شريك CP" onError={() => setCpPartnerImageFailed(true)} className="w-full h-full object-cover" /> : <Heart className="w-6 h-6 text-rose-500" />}</button></div>}
           {!hasConfirmedCp && <div className="flex flex-col items-center gap-1.5 mb-1">
             {/* Glass Orb with "+" icon */}
             <div
@@ -510,7 +514,7 @@ export const InternalProfileModal: React.FC = () => {
               className="w-13 h-13 rounded-full bg-gradient-to-b from-amber-400 to-amber-600 border-2 border-amber-200 shadow-[0_0_15px_rgba(245,158,11,0.4)] flex items-center justify-center cursor-pointer active:scale-95 transition backdrop-blur-md relative overflow-hidden group"
             >
               <div className="absolute inset-0 bg-gradient-to-tr from-white/30 via-transparent to-transparent opacity-80" />
-              {cpPartnerAvatar ? <img src={cpPartnerAvatar} alt="شريك CP" className="h-full w-full rounded-full object-cover" /> : <Plus className="w-6 h-6 text-slate-950 stroke-[2.5] group-hover:scale-110 transition" />}
+              {resolvedCpPartnerAvatar && !cpPartnerImageFailed ? <img src={resolvedCpPartnerAvatar} alt="شريك CP" onError={() => setCpPartnerImageFailed(true)} className="h-full w-full rounded-full object-cover" /> : <Plus className="w-6 h-6 text-slate-950 stroke-[2.5] group-hover:scale-110 transition" />}
             </div>
 
             {/* Pill Button: ابحث عن CP */}
@@ -704,7 +708,7 @@ export const InternalProfileModal: React.FC = () => {
             if (error || !data) { showToast('تعذر فتح ملف الشريك'); return; }
             const avatar = data.avatar_url ? (/^https?:\/\//.test(data.avatar_url) ? data.avatar_url : stagingBackend.storage.from('profile-avatars').getPublicUrl(data.avatar_url).data.publicUrl) : '';
             setInternalProfileUser({ ...currentUser, id: data.id, name: data.display_name || 'مستخدم', nickname: data.display_name || 'مستخدم', avatar, country: '', countryCode: '', countryFlag: '', birthdate: '', age: null, friendsCount: 0, followersCount: 0, followingCount: 0, fansCount: 0, visitorsCount: 0, hearts: 0, gameLevel: 0, gameExp: 0, cover: '', bio: '', album: [], vipExpiry: '', specialIdBadge: undefined, isBanned: false, banReason: undefined, isNameBanned: false, isAvatarBanned: false, wealthExp: 0, charmExp: 0, wealthLevel: 0, charmLevel: 0, coins: 0, diamonds: 0, vipLevel: 0, isSuperAdmin: false, isRechargeAgent: false, isHost: false, isSpecialId: false, permissions: [], agencyRole: undefined, agencyName: undefined, rechargeCoins: 0, hasWelcomeBanner: false });
-          })().catch(() => showToast('تعذر فتح ملف الشريك')); }} refreshKey={cpRefreshKey} onLinksChange={links => { const confirmed = links.find(link => link.accepted); setCpPartnerAvatar(confirmed?.partnerAvatar || null); setCpPartnerId(confirmed?.partnerId || null); setHasConfirmedCp(Boolean(confirmed)); }} />
+          })().catch(() => showToast('تعذر فتح ملف الشريك')); }} refreshKey={cpRefreshKey} onLinksChange={links => { const confirmed = links.find(link => link.accepted); setCpPartnerAvatar(confirmed?.partnerAvatar || null); setCpPartnerImageFailed(false); setCpPartnerId(confirmed?.partnerId || null); setHasConfirmedCp(Boolean(confirmed)); }} />
           {/* Realistic Dynamic Agency Rectangle (مستطيل الوكالة الفعلي مطابق للصورة تماماً) */}
           {verifiedAgency && (
             <AgencyProfileCard
