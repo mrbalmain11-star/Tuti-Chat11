@@ -1428,7 +1428,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const transition = ++roomTransitionVersion.current;
     void queueMembershipTransition(async () => {
       if (transition !== roomTransitionVersion.current) return;
+      // Switch membership transactionally: retain the current room when the target
+      // rejects entry, and never activate two room audio sessions in the UI.
+      const previousRoomId = activeRoom?.id;
+      if (previousRoomId === roomId) return;
       await joinRoomMembership(roomId);
+      if (previousRoomId && previousRoomId !== roomId) {
+        try {
+          await leaveRoomMembership(previousRoomId);
+        } catch (error) {
+          // Roll back the newly joined room if leaving the old one fails.
+          try { await leaveRoomMembership(roomId); } catch (rollbackError) {
+            console.error('Room switch rollback failed:', rollbackError);
+          }
+          throw error;
+        }
+      }
     }).then(async () => {
       if (transition !== roomTransitionVersion.current) return;
       setActiveRoom(room);
