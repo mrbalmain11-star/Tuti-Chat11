@@ -215,7 +215,10 @@ jobs:
           "$APKSIGNER" verify --verbose --print-certs --min-sdk-version 34 "$APK"
           "$ZIPALIGN" -c -v 4 "$APK"
           "$AAPT" dump badging "$APK" | head -n 20
+      # GitHub hosted Linux runners can lack /dev/kvm; opt into software TCG when necessary.
       - name: Install and launch the exact APK on Android 14 emulator
+        env:
+          ANDROID_I_WANT_MY_TCG: 'yes'
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
@@ -224,6 +227,7 @@ jobs:
           profile: pixel_4
           disable-animations: true
           emulator-boot-timeout: 900
+          disable-linux-hw-accel: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot -no-metrics
           script: |
             adb wait-for-device
