@@ -1,0 +1,4 @@
+Build-only request for current Staging APK.
+Source baseline: d3062bbb75b3b4a3198b96fb3ef384711a170723
+No application feature changes requested.
+Use existing Nov 4 workflow and validate APK output.
