@@ -9,18 +9,44 @@ type Announcement = {
 
 /** Read-only, server-issued announcements. Never derives global events from local sends. */
 export const GlobalGiftBanner: React.FC = () => {
-  const { isLoggedIn, enterRoom } = useApp();
+  const { isLoggedIn, enterRoom, activeRoom, rooms } = useApp();
   const [announcement, setAnnouncement] = useState<Announcement | null>(null);
   const [avatars, setAvatars] = useState({ sender: '', recipient: '' });
   const cursor = useRef<string | null>(null);
+  const pending = useRef<Announcement[]>([]);
   const seen = useRef(new Set<string>());
   const displayedId = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!isLoggedIn || !stagingBackend) { cursor.current = null; displayedId.current = null; seen.current.clear(); setAnnouncement(null); return; }
+    if (!isLoggedIn || !stagingBackend) { cursor.current = null; pending.current = []; displayedId.current = null; seen.current.clear(); setAnnouncement(null); return; }
     let active = true;
     let busy = false;
     let hideTimer: ReturnType<typeof setTimeout> | undefined;
+    const showNext = () => {
+      if (!active || displayedId.current || !pending.current.length) return;
+      const next = pending.current.shift()!;
+      displayedId.current = next.id;
+      setAnnouncement(next);
+      setAvatars({ sender: '', recipient: '' });
+      void stagingBackend!.from('profiles').select('id,avatar_url')
+        .in('id', [next.sender_id, next.recipient_id])
+        .then(({ data: profiles, error: profileError }) => {
+          if (!active || profileError || displayedId.current !== next.id) return;
+          const avatarFor = (id: string) => {
+            const path = profiles?.find(profile => profile.id === id)?.avatar_url;
+            if (!path) return '';
+            return /^https?:\/\//.test(path) ? path : stagingBackend!.storage.from('profile-avatars').getPublicUrl(path).data.publicUrl;
+          };
+          setAvatars({ sender: avatarFor(next.sender_id), recipient: avatarFor(next.recipient_id) });
+        });
+      if (hideTimer) clearTimeout(hideTimer);
+      hideTimer = setTimeout(() => {
+        if (!active || displayedId.current !== next.id) return;
+        displayedId.current = null;
+        setAnnouncement(null);
+        showNext();
+      }, 5300);
+    };
     const poll = async () => {
       if (busy || !active) return;
       busy = true;
@@ -37,27 +63,12 @@ export const GlobalGiftBanner: React.FC = () => {
         }
         const fresh = rows.filter(row => row.created_at > cursor.current! && !seen.current.has(row.id));
         if (rows[0]?.created_at && rows[0].created_at > cursor.current) cursor.current = rows[0].created_at;
-        const next = fresh.find(row => row.total_coins >= 7000 && !!row.room_id);
-        if (next) {
-          fresh.forEach(row => seen.current.add(row.id));
-          if (seen.current.size > 100) seen.current = new Set([next.id]);
-          displayedId.current = next.id;
-          setAnnouncement(next);
-          setAvatars({ sender: '', recipient: '' });
-          void stagingBackend!.from('profiles').select('id,avatar_url')
-            .in('id', [next.sender_id, next.recipient_id])
-            .then(({ data: profiles, error: profileError }) => {
-              if (!active || profileError || displayedId.current !== next.id) return;
-              const avatarFor = (id: string) => {
-                const path = profiles?.find(profile => profile.id === id)?.avatar_url;
-                if (!path) return '';
-                return path.startsWith('https://') || path.startsWith('http://') ? path : stagingBackend!.storage.from('profile-avatars').getPublicUrl(path).data.publicUrl;
-              };
-              setAvatars({ sender: avatarFor(next.sender_id), recipient: avatarFor(next.recipient_id) });
-            });
-          if (hideTimer) clearTimeout(hideTimer);
-          hideTimer = setTimeout(() => { if (active && displayedId.current === next.id) { displayedId.current = null; setAnnouncement(null); } }, 6500);
-        }
+        const eligible = fresh.filter(row => row.total_coins >= 7000 && !!row.room_id && !seen.current.has(row.id));
+        fresh.forEach(row => seen.current.add(row.id));
+        if (seen.current.size > 500) seen.current = new Set(rows.map(row => row.id));
+        pending.current.push(...eligible.reverse());
+        if (pending.current.length > 30) pending.current.splice(0, pending.current.length - 30);
+        showNext();
       } catch (error) {
         console.error('Global gift announcement unavailable:', error);
       } finally { busy = false; }
@@ -68,11 +79,31 @@ export const GlobalGiftBanner: React.FC = () => {
   }, [isLoggedIn]);
 
   if (!announcement) return null;
-  return <button type="button" dir="rtl" onClick={() => { enterRoom(announcement.room_id); setAnnouncement(null); }}
-    className="fixed top-[max(64px,env(safe-area-inset-top))] inset-x-4 z-[95] mx-auto flex max-w-sm flex-col items-center rounded-2xl border-2 border-amber-300 bg-gradient-to-r from-[#063d32] via-[#0a634b] to-[#073629] px-4 py-3 text-center shadow-[0_8px_30px_rgba(203,155,53,.45)]"
-    aria-label="فتح غرفة الهدية">
-    <span className="flex w-full items-center justify-center gap-2 text-xs font-black text-amber-100"><span className="truncate">{announcement.sender_name}</span>{avatars.sender && <img src={avatars.sender} alt="" className="h-8 w-8 shrink-0 rounded-full border border-amber-300 object-cover" />}<span className="shrink-0">أهدى إلى</span>{avatars.recipient && <img src={avatars.recipient} alt="" className="h-8 w-8 shrink-0 rounded-full border border-amber-300 object-cover" />}<span className="truncate">{announcement.recipient_name}</span></span>
-    <span className="mt-1 w-full truncate text-sm font-black text-[#ffe6a0]">{announcement.gift_name} ×{announcement.quantity} · {announcement.total_coins.toLocaleString('ar-IQ')} عملة</span>
-    <span className="mt-1 text-[10px] text-emerald-100">اضغط للدخول إلى الغرفة</span>
+  const openRoom = () => {
+    const room = rooms.find(item => item.id === announcement.room_id);
+    if (activeRoom?.id === announcement.room_id) { setAnnouncement(null); return; }
+    if (room) {
+      enterRoom(room.id);
+    } else {
+      // Never navigate to an unverified room. Fetch server-backed room metadata.
+      void import('../services/stagingBackend').then(({ fetchRealRooms }) => fetchRealRooms())
+        .then(async rows => {
+          const found = rows.find(item => item.id === announcement.room_id);
+          if (!found) { alert('الغرفة غير متاحة أو لا تملك صلاحية الدخول إليها.'); return; }
+          const { mapRoomToUi } = await import('../services/mapRoomToUi');
+          enterRoom(found.id, mapRoomToUi(found));
+        }).catch(() => alert('تعذر التحقق من الغرفة. حاول مرة أخرى.'));
+    }
+    setAnnouncement(null);
+  };
+  return <button type="button" dir="rtl" onClick={openRoom}
+    className="pointer-events-auto fixed top-[max(72px,env(safe-area-inset-top))] left-0 z-[150] w-[min(94vw,420px)] overflow-visible text-center"
+    style={{ animation: 'totichat-royal-cross 5.3s linear both' }} aria-label="فتح غرفة الإعلان">
+    <style>{`@keyframes totichat-royal-cross { from { transform: translateX(-110%); left: 0; } to { transform: translateX(0); left: 100%; } }`}</style>
+    <div className="relative flex min-h-20 items-center justify-center rounded-[28px] border-2 border-amber-300 bg-gradient-to-r from-[#32113f] via-[#8a2555] to-[#4d1739] px-12 py-3 shadow-[0_8px_30px_rgba(203,155,53,.55)]">
+      <span className="absolute left-2 top-1/2 -translate-y-1/2 flex h-12 w-12 items-center justify-center rounded-full border-[3px] border-amber-300 bg-[#291b35] shadow-[0_0_12px_#e9b55e]">{avatars.sender ? <img src={avatars.sender} alt="" className="h-full w-full rounded-full object-cover" /> : <span className="text-amber-200">★</span>}</span>
+      <span className="min-w-0 flex-1 text-sm font-black leading-5 text-[#fff1c4] drop-shadow-[0_2px_3px_#210819]"><span className="block truncate">{announcement.sender_name} أهدى إلى {announcement.recipient_name}</span><span className="block truncate text-xs">{announcement.gift_name} ×{announcement.quantity} · {announcement.total_coins.toLocaleString('ar-IQ')} عملة</span></span>
+      <span className="absolute right-2 top-1/2 -translate-y-1/2 flex h-12 w-12 items-center justify-center rounded-full border-[3px] border-amber-300 bg-[#291b35] shadow-[0_0_12px_#e9b55e]">{avatars.recipient ? <img src={avatars.recipient} alt="" className="h-full w-full rounded-full object-cover" /> : <span className="text-amber-200">★</span>}</span>
+    </div>
   </button>;
 };
