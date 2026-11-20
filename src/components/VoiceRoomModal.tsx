@@ -1,3 +1,4 @@
+import { CpFrameForUser } from './CpFrameForUser';
 import { VipMessageFrame } from './VipMessageFrame';
 import { WealthBadge, CharmBadge } from './LevelBadgeIcons';
 import { fetchMyVerifiedRoyalXp } from '../services/royalXp';
@@ -1660,6 +1661,7 @@ export const VoiceRoomModal: React.FC = () => {
                           loading="eager"
                           onError={e => { e.currentTarget.style.display = 'none'; }}
                         /> : null}
+                        <CpFrameForUser userId={seat.user.id} name={seat.user.name} />
                         {seat.isSpeaking && !seat.isMuted && (
                           <div role="status" aria-label="يتحدث الآن" className="absolute -inset-1 z-20 rounded-full border-[3px] border-emerald-400/90 shadow-[0_0_12px_rgba(52,211,153,0.75)] pointer-events-none motion-safe:animate-pulse" />
                         )}
@@ -2701,6 +2703,8 @@ export const VoiceRoomModal: React.FC = () => {
                   className="w-full h-full object-cover"
                 />
               </button>
+
+              <div className="relative mx-auto -mt-20 mb-20 w-20 h-0 pointer-events-none"><CpFrameForUser userId={selectedMicUser.user.id} name={selectedMicUser.user.name} /></div>
 
               {/* User Name in large, bold, clear white text */}
               <h3 className="text-xl sm:text-2xl font-black text-white text-center mt-2.5 tracking-wide flex items-center justify-center gap-1">
