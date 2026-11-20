@@ -1,0 +1,13 @@
+.cp-wing-avatar-frame{position:absolute;inset:-35%;pointer-events:none;z-index:20;display:block;aspect-ratio:1;isolation:isolate}
+.cp-wing-avatar-layer{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none}
+.cp-wing-avatar-base{z-index:1}
+.cp-wing-layer-w1,.cp-wing-layer-w2,.cp-wing-layer-w3,.cp-wing-layer-w4{z-index:2;will-change:transform;animation-duration:11s;animation-iteration-count:infinite;animation-timing-function:ease-in-out}
+.cp-wing-layer-w1{transform-origin:22% 41%;animation-name:cp-wing-left}
+.cp-wing-layer-w2{transform-origin:78% 41%;animation-name:cp-wing-right}
+.cp-wing-layer-w3{transform-origin:40% 81%;animation-name:cp-wing-small-left}
+.cp-wing-layer-w4{transform-origin:60% 81%;animation-name:cp-wing-small-right}
+@keyframes cp-wing-left{0%,100%{transform:rotate(0) scaleX(1)}30%{transform:rotate(-7deg) scaleX(.965)}60%{transform:rotate(3deg) scaleX(1.025)}}
+@keyframes cp-wing-right{0%,100%{transform:rotate(0) scaleX(1)}30%{transform:rotate(7deg) scaleX(.965)}60%{transform:rotate(-3deg) scaleX(1.025)}}
+@keyframes cp-wing-small-left{0%,100%{transform:rotate(0)}35%{transform:rotate(6deg)}65%{transform:rotate(-4deg)}}
+@keyframes cp-wing-small-right{0%,100%{transform:rotate(0)}35%{transform:rotate(-6deg)}65%{transform:rotate(4deg)}}
+@media(prefers-reduced-motion:reduce){.cp-wing-avatar-frame img{animation:none!important}}
