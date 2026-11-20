@@ -1,0 +1,1 @@
+Retry staging APK after Android 14 emulator failed without hardware CPU acceleration. Use TCG software fallback, retain install/launch validation and existing APK packaging.
