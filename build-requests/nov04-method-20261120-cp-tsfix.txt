@@ -1,0 +1,1 @@
+Rebuild staging APK after fixing TypeScript TS2367 in LevelBadgeIcons. Preserve approved Nov 4 packaging.
