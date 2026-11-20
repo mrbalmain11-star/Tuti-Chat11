@@ -95,7 +95,8 @@ export const OfficialScreenshotBadge: React.FC<BadgeProps> = ({
   }
   const tier = getTierIndex(level);
   const displayNum = overrideDisplayNumber ?? Math.max(1, Math.floor(level || 1));
-  const isWealth = variant === 'wealth';
+  // Wealth and charm return above; this legacy branch renders games only.
+  const isWealth = false;
 
   // Size variations
   const isCompact = size === 'compact' || size === 'sm';
