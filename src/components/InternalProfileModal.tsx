@@ -136,7 +136,7 @@ export const InternalProfileModal: React.FC = () => {
     let active = true;
     setVerifiedIdentity(null);
     if (!openInternalProfileModal || !user.id || !stagingBackend) return;
-    void stagingBackend.rpc('staging_profile_identity_badge', { p_user_id: user.id })
+    void Promise.resolve(stagingBackend.rpc('staging_profile_identity_badge', { p_user_id: user.id }))
       .then(({ data, error }) => {
         if (error) throw error;
         if (active) setVerifiedIdentity({ userId: user.id, kind: data === 'admin' || data === 'special' ? data : 'normal' });
