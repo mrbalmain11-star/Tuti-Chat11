@@ -27,6 +27,7 @@ import { RoyalProfileFrame } from '../components/RoyalProfileFrame';
 import { CharmBadge, WealthBadge } from '../components/LevelBadgeIcons';
 import { fetchMyVerifiedRoyalXp, type VerifiedRoyalXp } from '../services/royalXp';
 import { royalProgress } from '../utils/royalLevels';
+import { IdentityBadge } from '../components/IdentityBadge';
 
 export const ProfileView: React.FC = () => {
   const {
@@ -278,6 +279,10 @@ export const ProfileView: React.FC = () => {
     setOpenInviteModal(true);
   };
 
+  const identityBadgeKind = adminAccess && ['owner', 'super_admin', 'admin'].includes(adminAccess.role)
+    ? 'admin'
+    : specialId ? 'special' : 'normal';
+
   return (
     <div
       className="min-h-screen pb-28 profile-android-safe font-['Cairo',sans-serif] bg-gradient-to-b from-[#FDFBF7] via-[#FAF6ED] to-[#F5EFE0] text-slate-800 select-none relative overflow-x-hidden"
@@ -466,6 +471,7 @@ export const ProfileView: React.FC = () => {
                 ) : (
                   <Copy className="w-3.5 h-3.5 text-amber-600" />
                 )}
+                <IdentityBadge kind={identityBadgeKind} size={22} />
                 <span className="font-semibold tracking-wider">
                   ID: {specialId || publicId || '—'}
                 </span>
