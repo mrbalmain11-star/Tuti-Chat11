@@ -320,22 +320,22 @@ export const AgencyModal: React.FC = () => {
             </div>
           </div>
         ) : activeSubView === 'agent_data_details' ? (
-          <div className="relative z-30 flex h-full w-full flex-col overflow-hidden bg-[#F6F7F9] text-slate-800 animate-in fade-in duration-200">
-            <div className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 py-3 shadow-xs">
-              <button type="button" onClick={() => { sounds.playClick(); setActiveSubView(null); }} aria-label="العودة إلى مركز الوكالة" className="flex h-9 w-9 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100"><ChevronRight className="h-6 w-6" /></button>
-              <h2 className="text-base font-black text-slate-900">مركز بيانات الوكالة</h2>
+          <div className="relative z-30 flex h-full w-full flex-col overflow-hidden bg-[#090f1c] text-amber-100 animate-in fade-in duration-200">
+            <div className="flex shrink-0 items-center justify-between border-b border-amber-400/50 bg-[#11192c]/95 px-4 py-3 shadow-xs">
+              <button type="button" onClick={() => { sounds.playClick(); setActiveSubView(null); }} aria-label="العودة إلى مركز الوكالة" className="flex h-9 w-9 items-center justify-center rounded-full text-amber-100 hover:bg-amber-500/15"><ChevronRight className="h-6 w-6" /></button>
+              <h2 className="text-base font-black text-amber-100">مركز بيانات الوكالة</h2>
               <span className="w-9" />
             </div>
-            <div className="flex flex-1 flex-col overflow-y-auto p-5 gap-4">
-              {agencyStatisticsLoading ? <p role="status" className="text-center text-slate-600">جارٍ تحميل إحصائيات الوكالة من الخادم...</p> : agencyStatisticsError ? <div role="alert" className="rounded-2xl bg-white p-5 text-center text-red-700">تعذر تحميل إحصائيات الوكالة: {agencyStatisticsError}</div> : agencyStatistics ? (
+            <div className="relative flex flex-1 flex-col overflow-y-auto p-5 gap-4 bg-[linear-gradient(180deg,rgba(7,14,29,.62),rgba(4,9,20,.92)),url(/agency-no-data-bg.jpg)] bg-cover bg-center">
+              {agencyStatisticsLoading ? <p role="status" className="text-center text-amber-100">جارٍ تحميل إحصائيات الوكالة من الخادم...</p> : agencyStatisticsError ? <div role="alert" className="rounded-2xl bg-white p-5 text-center text-red-700">تعذر تحميل إحصائيات الوكالة: {agencyStatisticsError}</div> : agencyStatistics ? (
                 <>
                   <div className="grid grid-cols-2 gap-3">
                     {([['الوكالات النشطة', agencyStatistics.agencies], ['أعضاء الوكالة', agencyStatistics.members], ['طلبات الانضمام المعلقة', agencyStatistics.pending]] as const).map(([label, count]) => (
-                      <div key={label} className="rounded-2xl border border-amber-200 bg-white p-4 text-center shadow-sm"><div className="text-2xl font-black text-emerald-800">{count}</div><div className="mt-2 text-xs font-bold text-slate-700">{label}</div></div>
+                      <div key={label} className="rounded-2xl border border-amber-400/60 bg-[#14203a]/90 p-4 text-center shadow-sm"><div className="text-2xl font-black text-amber-300">{count}</div><div className="mt-2 text-xs font-bold text-amber-100">{label}</div></div>
                     ))}
                   </div>
-                  <div className="rounded-2xl border border-amber-200 bg-white p-4"><h3 className="font-black text-slate-900">الوكالات التابعة لك</h3>{agencyStatistics.agencyNames.length ? agencyStatistics.agencyNames.map((name, index) => <p key={index} className="mt-2 text-sm text-slate-700">{name}</p>) : <p className="mt-2 text-sm text-slate-500">لا توجد وكالة نشطة مرتبطة بحسابك.</p>}</div>
-                  <div className="rounded-2xl border border-slate-200 bg-white p-4"><h3 className="font-black text-slate-900">الرواتب والأهداف وساعات النشاط</h3><p className="mt-2 text-xs leading-6 text-slate-500">هذه المؤشرات تنتظر سجلات مالية ونشاط موثقة من الخادم. لا تُعرض أرقام تقديرية.</p></div>
+                  <div className="rounded-2xl border border-amber-400/60 bg-[#14203a]/90 p-4"><h3 className="font-black text-amber-100">الوكالات التابعة لك</h3>{agencyStatistics.agencyNames.length ? agencyStatistics.agencyNames.map((name, index) => <p key={index} className="mt-2 text-sm text-amber-100">{name}</p>) : <p className="mt-2 text-sm text-amber-100/75">لا توجد وكالة نشطة مرتبطة بحسابك.</p>}</div>
+                  <div className="rounded-2xl border border-amber-400/40 bg-[#14203a]/90 p-4"><h3 className="font-black text-amber-100">الرواتب والأهداف وساعات النشاط</h3><p className="mt-2 text-xs leading-6 text-amber-100/75">هذه المؤشرات تنتظر سجلات مالية ونشاط موثقة من الخادم. لا تُعرض أرقام تقديرية.</p></div>
                 </>
               ) : null}
             </div>
