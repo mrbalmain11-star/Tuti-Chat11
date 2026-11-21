@@ -54,19 +54,41 @@ const GiftAssetStage: React.FC<{ url: string; name: string }> = ({ url, name }) 
   );
 };
 
+// Original cinematic videos uploaded to the Staging branch. A failed remote load falls back to the existing effect.
+const cinematicVideoForGift = (name: string): string | null => {
+  const normalized = name.trim().toLocaleLowerCase();
+  const filename = normalized.includes('التنين الأسطوري') || normalized.includes('legendary dragon')
+    ? 'Chinese dragon in water drawing _ Chinese golden fantasy_ Chinese dragon water painting_ Aircraft images(MP4).mp4'
+    : normalized.includes('الأسد') || normalized.includes('lion') || normalized.includes('الاسد')
+      ? 'Flaming Lion Artwork _ Löwe hintergrundbild_ Bewegliche hintergrundbilder_ Brüllender löwe(MP4).mp4'
+      : null;
+  return filename ? 'https://raw.githubusercontent.com/mrbalmain11-star/Tuti-Chat11/integration/legacy-backend-staging/' + encodeURIComponent(filename) : null;
+};
+
+const CinematicGiftVideo: React.FC<{ src: string; label: string; onDone: () => void; onFailure: () => void }> = ({ src, label, onDone, onFailure }) => (
+  <div className="fixed inset-0 z-[100] pointer-events-none flex items-center justify-center bg-black/85" role="status" aria-label={label}>
+    <video key={src} src={src} autoPlay playsInline preload="auto" onEnded={onDone} onError={onFailure} className="h-full w-full object-contain" />
+  </div>
+);
+
 export const GiftAnimationOverlay: React.FC = () => {
   const { activeGiftAnimation, clearGiftAnimation } = useApp();
+  const [cinematicFailed, setCinematicFailed] = useState(false);
+  useEffect(() => { setCinematicFailed(false); }, [activeGiftAnimation?.gift.id, activeGiftAnimation?.sender, activeGiftAnimation?.receiver]);
   useEffect(() => {
     if (!activeGiftAnimation) return;
     const name = activeGiftAnimation.gift.name;
     const isEpic = getEpicStyle(name) !== null && activeGiftAnimation.gift.price >= 10000;
     const hasOriginalJson = activeGiftAnimation.gift.assetFormat === 'json' && !!activeGiftAnimation.gift.assetUrl;
-    const timer = window.setTimeout(clearGiftAnimation, (isEpic || hasOriginalJson) ? 7000 : 3500);
+    const hasCinematic = !!cinematicVideoForGift(name);
+    const timer = window.setTimeout(clearGiftAnimation, hasCinematic ? 17000 : (isEpic || hasOriginalJson) ? 7000 : 3500);
     return () => window.clearTimeout(timer);
   }, [activeGiftAnimation, clearGiftAnimation]);
 
   if (!activeGiftAnimation) return null;
   const { gift, sender, receiver, count, senderAvatar, receiverAvatar } = activeGiftAnimation;
+  const cinematicUrl = cinematicVideoForGift(gift.name);
+  if (cinematicUrl && !cinematicFailed) return <CinematicGiftVideo src={cinematicUrl} label={`${sender} أهدى ${gift.name} إلى ${receiver} ×${count}`} onDone={clearGiftAnimation} onFailure={() => setCinematicFailed(true)} />;
   const epic = gift.price >= 10000 ? getEpicStyle(gift.name) : null;
   const style = epic ? epicStyles[epic] : null;
   const confirmedTotal = Number.isSafeInteger(gift.price * count) ? gift.price * count : 0;
