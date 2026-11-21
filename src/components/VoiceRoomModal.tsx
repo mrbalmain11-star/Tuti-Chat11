@@ -1405,11 +1405,11 @@ export const VoiceRoomModal: React.FC = () => {
     >
       {vipEntrance && (
         <div className="toti-vip-entry-track absolute top-20 inset-x-0 z-[90] pointer-events-none overflow-hidden" dir="ltr">
-          <div className={`toti-vip-entry-banner relative flex items-center gap-2 w-max max-w-[82vw] min-h-9 rounded-full border px-3 py-1.5 shadow-lg ${currentUser.vipLevel >= 7 ? 'border-amber-300 bg-gradient-to-r from-[#2b123f] via-[#71325d] to-[#3a1845] text-amber-100 shadow-amber-500/30' : currentUser.vipLevel >= 4 ? 'border-fuchsia-300 bg-gradient-to-r from-[#241238] to-[#542464] text-fuchsia-100' : 'border-emerald-300 bg-gradient-to-r from-[#112e32] to-[#244d47] text-emerald-100'}`} dir="rtl">
-            <Crown className="w-4 h-4 shrink-0 text-amber-300" aria-hidden="true" />
-            <span className="text-[10px] font-black whitespace-nowrap">VIP {currentUser.vipLevel}</span>
-            <span className="text-[11px] font-bold truncate max-w-[42vw]">{currentUser.nickname || currentUser.name || 'عضو VIP'} دخل الغرفة</span>
-            <Sparkles className="w-3.5 h-3.5 shrink-0 text-amber-200" aria-hidden="true" />
+          <div className="toti-vip-entry-banner relative flex items-center justify-center gap-2 w-max max-w-[88vw] min-h-12 rounded-2xl border-2 border-amber-300/90 px-5 py-2 shadow-[0_4px_18px_rgba(251,191,36,.4)] bg-gradient-to-r from-[#351044] via-[#68245c] to-[#351044] text-amber-100" dir="rtl">
+            <Crown className="w-5 h-5 shrink-0 text-amber-300" aria-hidden="true" />
+            <span className="text-[11px] font-black whitespace-nowrap">VIP {currentUser.vipLevel}</span>
+            <span className="text-xs font-black truncate max-w-[45vw]">{currentUser.nickname || currentUser.name || 'عضو VIP'} دخل الغرفة</span>
+            <Sparkles className="w-4 h-4 shrink-0 text-amber-200" aria-hidden="true" />
           </div>
         </div>
       )}
