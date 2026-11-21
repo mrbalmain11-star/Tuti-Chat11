@@ -1856,9 +1856,7 @@ export const VoiceRoomModal: React.FC = () => {
                         {msg.senderId === currentUser.id && verifiedChatLevels && <WealthBadge level={verifiedChatLevels.wealth} size="xs" />}
                         {msg.senderId === currentUser.id && verifiedChatLevels && <CharmBadge level={verifiedChatLevels.charm} size="xs" />}
                         {(msg.senderId === currentUser.id ? currentUser.vipLevel : (msg.vipLevel ?? 0)) >= 1 && (
-                          <span className="inline-flex align-middle rounded-full border border-amber-200/50 bg-black/25 px-1.5 py-0.5 text-[9px] font-black text-amber-100 ml-1" aria-label={`مستوى VIP ${(msg.senderId === currentUser.id ? currentUser.vipLevel : (msg.vipLevel ?? 0))}`}>
-                            VIP {(msg.senderId === currentUser.id ? currentUser.vipLevel : (msg.vipLevel ?? 0))}
-                          </span>
+                          <VipBadge vipLevel={msg.senderId === currentUser.id ? currentUser.vipLevel : (msg.vipLevel ?? 0)} size="xs" className="inline-flex align-middle ml-1" />
                         )}
                         <span>{msg.text}</span>
                       </VipMessageFrame>
