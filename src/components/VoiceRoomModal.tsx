@@ -71,6 +71,7 @@ import { sounds } from '../utils/audio';
 import { VipName } from './VipName';
 import { VipBadge } from './VipBadge';
 import { ProfileCpCard } from './ProfileCpCard';
+import { RoomLevelUpWatcher } from './RoomLevelUpBanner';
 import { RoyalLevelEmblem } from './RoyalLevelEmblem';
 import { royalProgress } from '../utils/royalLevels';
 
@@ -1146,21 +1147,36 @@ export const VoiceRoomModal: React.FC = () => {
   };
 
   // VIP entrance is shown once on a fresh room entry, never on every render.
-  const [vipEntrance, setVipEntrance] = useState(false);
+  const [vipEntrance, setVipEntrance] = useState<{ name: string; vipLevel: number } | null>(null);
   const lastEnteredRoom = useRef<string | null>(null);
   useEffect(() => {
     if (!activeRoom || isRoomMinimized) {
       if (!activeRoom) lastEnteredRoom.current = null;
-      setVipEntrance(false);
+      setVipEntrance(null);
       return;
     }
     if (lastEnteredRoom.current === activeRoom.id) return;
     lastEnteredRoom.current = activeRoom.id;
     if (currentUser.vipLevel < 1) return;
-    setVipEntrance(true);
-    const timer = window.setTimeout(() => setVipEntrance(false), 9000);
-    return () => window.clearTimeout(timer);
+    setVipEntrance({ name: currentUser.nickname || currentUser.name || 'عضو VIP', vipLevel: currentUser.vipLevel });
   }, [activeRoom?.id, isRoomMinimized, currentUser.vipLevel]);
+
+  useEffect(() => {
+    const onVipRoomEntry = (rawEvent: Event) => {
+      const detail = (rawEvent as CustomEvent<{ roomId: string; userId: string; name: string; vipLevel: number }>).detail;
+      if (!detail || detail.roomId !== activeRoom?.id || detail.userId === currentUser.id ||
+          typeof detail.name !== 'string' || !Number.isSafeInteger(detail.vipLevel) || detail.vipLevel < 1) return;
+      setVipEntrance({ name: detail.name, vipLevel: detail.vipLevel });
+    };
+    window.addEventListener('totichat:vip-room-entry', onVipRoomEntry);
+    return () => window.removeEventListener('totichat:vip-room-entry', onVipRoomEntry);
+  }, [activeRoom?.id, currentUser.id]);
+
+  useEffect(() => {
+    if (!vipEntrance) return;
+    const timer = window.setTimeout(() => setVipEntrance(null), 9000);
+    return () => window.clearTimeout(timer);
+  }, [vipEntrance]);
 
   // Android system back must never leave an active voice session abruptly.
   useEffect(() => {
@@ -1405,17 +1421,18 @@ export const VoiceRoomModal: React.FC = () => {
     >
       {vipEntrance && (
         <div className="toti-vip-entry-track absolute top-20 inset-x-0 z-[90] pointer-events-none overflow-hidden" dir="ltr" role="status" aria-live="polite">
-          <div className="toti-vip-entry-banner relative w-[min(94vw,520px)] h-[76px] shrink-0" dir="rtl" aria-label={`دخول ${currentUser.nickname || currentUser.name || 'عضو VIP'} إلى الغرفة، VIP ${currentUser.vipLevel}`}>
+          <div className="toti-vip-entry-banner relative w-[min(94vw,520px)] aspect-[15/4] shrink-0" dir="rtl" aria-label={`دخول ${vipEntrance.name} إلى الغرفة، VIP ${vipEntrance.vipLevel}`}>
             <img src="/assets/banners/04-royal-announcement-orange.png" alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-contain" style={{ mixBlendMode: 'screen' }} />
             <div className="absolute inset-x-[13%] inset-y-[18%] flex items-center justify-center gap-2 text-[#fff2ca] drop-shadow-[0_2px_3px_#1a0829]">
               <Crown className="h-5 w-5 shrink-0 text-amber-300" aria-hidden="true" />
-              <span className="shrink-0 text-[11px] font-black text-amber-200">VIP {currentUser.vipLevel}</span>
-              <span className="min-w-0 truncate text-[clamp(11px,3.3vw,15px)] font-black">{currentUser.nickname || currentUser.name || 'عضو VIP'} دخل الغرفة</span>
+              <span className="shrink-0 text-[11px] font-black text-amber-200">VIP {vipEntrance.vipLevel}</span>
+              <span className="min-w-0 truncate text-[clamp(11px,3.3vw,15px)] font-black">{vipEntrance.name} دخل الغرفة</span>
               <Sparkles className="h-4 w-4 shrink-0 text-amber-200" aria-hidden="true" />
             </div>
           </div>
         </div>
       )}
+      {activeRoom && <RoomLevelUpWatcher roomId={activeRoom.id} roomName={activeRoom.title} active={!isRoomMinimized} />}
 
       {showExitOptions && (
         <div

@@ -1,6 +1,6 @@
 .royal-cp-v3{position:relative;width:100%;aspect-ratio:2.75/1;isolation:isolate;overflow:visible}.royal-cp-v3-art,.royal-cp-v3-wings{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.royal-cp-v3-art{z-index:2;object-fit:contain;filter:none}.royal-cp-v3-wings{z-index:3;overflow:visible}.royal-cp-v3-avatar{position:absolute;z-index:1;top:24.5%;width:17.45%;height:52%;border:0;border-radius:50%;padding:0;overflow:hidden;background:#332c33}.royal-cp-v3-avatar img{width:100%;height:100%;object-fit:cover}.royal-cp-v3-left{left:13.25%}.royal-cp-v3-right{left:69.25%;cursor:pointer}.royal-cp-wing{transform-box:view-box;animation-duration:2.6s;animation-timing-function:ease-in-out;animation-iteration-count:infinite;will-change:transform}.royal-cp-wing.w0{transform-origin:135px 240px;animation-name:royal-left-outer}.royal-cp-wing.w1{transform-origin:617px 232px;animation-name:royal-left-inner;animation-delay:-.25s}.royal-cp-wing.w2{transform-origin:919px 232px;animation-name:royal-right-inner;animation-delay:-.25s}.royal-cp-wing.w3{transform-origin:1401px 240px;animation-name:royal-right-outer}@keyframes royal-left-outer{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(11deg)}}@keyframes royal-left-inner{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(9deg)}}@keyframes royal-right-outer{0%,100%{transform:rotate(3deg)}50%{transform:rotate(-11deg)}}@keyframes royal-right-inner{0%,100%{transform:rotate(3deg)}50%{transform:rotate(-9deg)}}.royal-cp-v3-gem{position:absolute;z-index:4;pointer-events:none;left:44%;top:25%;width:12%;height:40%;border-radius:50%;background:radial-gradient(ellipse,rgba(255,235,255,.17),transparent 70%);mix-blend-mode:screen;animation:royal-gem 3s ease-in-out infinite}@keyframes royal-gem{0%,100%{opacity:.12}45%{opacity:.65}70%{opacity:.2}}@media(prefers-reduced-motion:reduce){.royal-cp-wing,.royal-cp-v3-gem{animation:none}}
-/* The approved V3 PNG contains a black matte. Screen blending removes the matte visually
-   against the light blush CP card without altering the four wing animations. */
+/* The approved V3 composition is alpha-matted at the asset level, so dark jewels
+   and fine shading remain intact on profile backgrounds. */
 .royal-cp-v3{background:transparent}
 .royal-cp-v3-wings{filter:drop-shadow(0 2px 2px rgba(170,44,106,.13))}
 
@@ -50,12 +50,12 @@
 /* CP refinement: enlarge artwork and visually remove the black matte on light profile backgrounds. */
 .royal-cp-v3-shell{width:calc(100% + 16px);max-width:650px;margin-inline:-8px;padding:0;background:transparent}
 .royal-cp-v3-shell .royal-cp-v3{isolation:auto;background:transparent;aspect-ratio:3/1}
-.royal-cp-v3-shell .royal-cp-v3-art{mix-blend-mode:screen;object-fit:fill}
+.royal-cp-v3-shell .royal-cp-v3-art{mix-blend-mode:normal;object-fit:fill}
 
 /* CP banner wing flutter. Each layer is clipped from the approved banner artwork,
    keeping the existing real avatars, names and CP progress untouched. */
 .royal-cp-v3-wing-overlays{position:absolute;inset:0;z-index:5;pointer-events:none;overflow:visible}
-.royal-cp-v3-wing-cutout{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;mix-blend-mode:screen;will-change:transform;animation-duration:3.4s;animation-timing-function:ease-in-out;animation-iteration-count:infinite}
+.royal-cp-v3-wing-cutout{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;mix-blend-mode:normal;will-change:transform;animation-duration:3.4s;animation-timing-function:ease-in-out;animation-iteration-count:infinite}
 .royal-cp-v3-wing-cutout.left-outer{clip-path:polygon(0 22%,7% 10%,15% 16%,23% 38%,25% 67%,16% 77%,4% 59%);transform-origin:22% 66%;animation-name:cp-banner-flutter-left}
 .royal-cp-v3-wing-cutout.left-inner{clip-path:polygon(15% 14%,26% 23%,38% 44%,42% 67%,31% 79%,21% 61%);transform-origin:36% 69%;animation-name:cp-banner-flutter-inner-left;animation-delay:-.35s}
 .royal-cp-v3-wing-cutout.right-inner{clip-path:polygon(85% 14%,74% 23%,62% 44%,58% 67%,69% 79%,79% 61%);transform-origin:64% 69%;animation-name:cp-banner-flutter-inner-right;animation-delay:-.35s}

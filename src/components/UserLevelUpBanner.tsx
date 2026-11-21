@@ -26,5 +26,6 @@ export const UserLevelUpBanner: React.FC = () => {
     return () => window.clearTimeout(timer);
   }, [event]);
 
-    return <ApprovedRoyalBanner asset="/assets/banners/02-level-up-blue.png" headline="تهانينا! ارتفع مستواك" detail={`${event.kind === 'wealth' ? 'مستوى الثروة' : 'مستوى الجاذبية'} ${event.level}`} badge={`LV ${event.level}`} />;
+  if (!event) return null;
+  return <ApprovedRoyalBanner asset="/assets/banners/02-level-up-blue.png" headline="تهانينا! ارتفع مستواك" detail={`${event.kind === 'wealth' ? 'مستوى الثروة' : 'مستوى الجاذبية'} ${event.level}`} badge={`LV ${event.level}`} />;
 };

@@ -24,5 +24,6 @@ export const VipActivationBanner: React.FC = () => {
     return () => window.clearTimeout(timeout);
   }, [tier]);
 
-    return <ApprovedRoyalBanner asset="/assets/banners/03-vip-gold.png" headline="تهانينا! تم تفعيل امتياز VIP" detail={`VIP ${tier}`} badge={`VIP ${tier}`} />;
+  if (tier === null) return null;
+  return <ApprovedRoyalBanner asset="/assets/banners/03-vip-gold.png" headline="تهانينا! تم تفعيل امتياز VIP" detail={`VIP ${tier}`} badge={`VIP ${tier}`} />;
 };

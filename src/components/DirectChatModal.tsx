@@ -50,6 +50,16 @@ export const DirectChatModal: React.FC = () => {
       const {error}=await stagingBackend.rpc('phase4_cp_action',{p_partner_id:cpRequest.partnerId,p_type_id:cpRequest.typeId,p_action:action,p_request_id:crypto.randomUUID()});
       if(error)throw error;
       await refreshCp();
+      if(action==='accept' && openChatThread && !openChatThread.isSystem && !openChatThread.isOfficial){
+        const {data: confirmed,error: confirmedError}=await stagingBackend.rpc('totichat_profile_cp',{p_user_id:currentUser.id});
+        if(confirmedError)throw confirmedError;
+        const relationship=Array.isArray(confirmed)?confirmed.find((item:unknown)=>{
+          if(!item||typeof item!=='object')return false;
+          const link=item as {accepted?:unknown;partnerId?:unknown;partnerName?:unknown;typeLabel?:unknown;level?:unknown};
+          return link.accepted===true&&link.partnerId===openChatThread.userId&&typeof link.partnerName==='string'&&typeof link.typeLabel==='string'&&typeof link.level==='number'&&Number.isFinite(link.level);
+        }) as {partnerName:string;typeLabel:string;level:number}|undefined:undefined;
+        if(relationship)window.dispatchEvent(new CustomEvent('totichat:cp-confirmed',{detail:{leftName:currentUser.nickname||currentUser.name||'أنت',rightName:relationship.partnerName||openChatThread.userName,typeLabel:relationship.typeLabel,level:relationship.level}}));
+      }
     }catch(e){setCpError(e instanceof Error?e.message:'تعذر معالجة CP');}
     finally{setCpBusy(false);}
   };

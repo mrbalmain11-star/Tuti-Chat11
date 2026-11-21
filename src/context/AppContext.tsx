@@ -685,6 +685,82 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, [isLoggedIn]);
 
+  // Every authorized member of the active room receives the server-confirmed
+  // gift event. Senders use their immediate confirmed RPC result above, so they
+  // ignore their own Realtime row to avoid playing the same effect twice.
+  const receivedRoomGiftIds = useRef(new Set<string>());
+  useEffect(() => {
+    const client = stagingBackend;
+    const roomId = activeRoom?.id;
+    if (!isLoggedIn || !client || !roomId || !currentUser.id) return;
+    let active = true;
+    const showRoomGift = async (row: Record<string, unknown>) => {
+      const eventId = typeof row.id === 'string' ? row.id : '';
+      const senderId = typeof row.sender_id === 'string' ? row.sender_id : '';
+      const recipientId = typeof row.recipient_id === 'string' ? row.recipient_id : '';
+      const giftId = typeof row.gift_id === 'string' ? row.gift_id : '';
+      const quantity = Number(row.quantity);
+      if (!eventId || !senderId || !recipientId || !giftId || row.room_id !== roomId ||
+          senderId === currentUser.id || !Number.isSafeInteger(quantity) || quantity < 1 || quantity > 777 ||
+          receivedRoomGiftIds.current.has(eventId)) return;
+      receivedRoomGiftIds.current.add(eventId);
+      if (receivedRoomGiftIds.current.size > 500) receivedRoomGiftIds.current = new Set([...receivedRoomGiftIds.current].slice(-250));
+      try {
+        const [giftResult, profileResult] = await Promise.all([
+          realGifts.some(item => item.id === giftId)
+            ? Promise.resolve({ data: null, error: null })
+            : client.from('gift_catalog').select('id,name,price,icon,category_id,animation_type,rarity,preview_url').eq('id', giftId).maybeSingle(),
+          client.from('profiles').select('id,display_name,avatar_url').in('id', [senderId, recipientId]),
+        ]);
+        if (!active) return;
+        if (profileResult.error) throw profileResult.error;
+        const serverGift = giftResult.data;
+        const catalogGift = realGifts.find(item => item.id === giftId) ?? (serverGift ? {
+          id: String(serverGift.id), name: String(serverGift.name), price: Number(serverGift.price),
+          icon: String(serverGift.icon),
+          assetUrl: typeof serverGift.preview_url === 'string' && /^https:\/\//i.test(serverGift.preview_url) ? serverGift.preview_url : undefined,
+          assetFormat: typeof serverGift.preview_url === 'string' && /\.json(?:[?#]|$)/i.test(serverGift.preview_url) ? 'json' as const : undefined,
+          category: (serverGift.category_id === 'luck' ? 'حظ' : serverGift.category_id === 'cp' ? 'CP' : 'هدية') as GiftItem['category'],
+          animationType: (['lion', 'mosque', 'sword', 'samurai', 'crown', 'car', 'diamond', 'rose'].includes(String(serverGift.animation_type))
+            ? serverGift.animation_type : 'rose') as GiftItem['animationType'],
+          rarity: (['legendary', 'epic', 'rare', 'common'].includes(String(serverGift.rarity))
+            ? serverGift.rarity : 'common') as GiftItem['rarity'],
+        } as GiftItem : null);
+        const profiles = profileResult.data ?? [];
+        const sender = profiles.find(profile => profile.id === senderId);
+        const receiver = profiles.find(profile => profile.id === recipientId);
+        if (!catalogGift || !sender?.display_name || !receiver?.display_name) return;
+        const publicAvatar = (path: string | null) => path && /^https?:\/\//i.test(path)
+          ? path : path ? client.storage.from('profile-avatars').getPublicUrl(path).data.publicUrl : undefined;
+        const animation: GiftAnimationPayload = {
+          gift: catalogGift,
+          sender: sender.display_name,
+          receiver: receiver.display_name,
+          count: quantity,
+          senderAvatar: publicAvatar(sender.avatar_url),
+          receiverAvatar: publicAvatar(receiver.avatar_url),
+        };
+        if (activeGiftAnimationRef.current) pendingGiftAnimations.current.push(animation);
+        else {
+          activeGiftAnimationRef.current = animation;
+          setActiveGiftAnimation(animation);
+        }
+      } catch (error) {
+        console.error('Room gift animation could not be loaded:', error);
+      }
+    };
+    const channel = client.channel(`staging-room-gifts-${roomId}`)
+      .on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'gift_events', filter: `room_id=eq.${roomId}`,
+      }, payload => { void showRoomGift(payload.new as Record<string, unknown>); })
+      .subscribe(status => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          console.error('Room gift realtime subscription:', status);
+        }
+      });
+    return () => { active = false; void client.removeChannel(channel); };
+  }, [isLoggedIn, activeRoom?.id, currentUser.id, realGifts]);
+
   const [conversations, setConversations] = useState<DirectConversation[]>([]);
   const [openChatThread, setOpenChatThreadState] = useState<DirectConversation | null>(null);
   const setOpenChatThread = (thread: DirectConversation | null) => {
@@ -1211,6 +1287,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     let loading = false;
     let pending = false;
     let confirmedMember = false;
+    let previousVipRoomMemberIds: Set<string> | null = null;
     const refreshRoster = async () => {
       if (loading) { pending = true; return; }
       loading = true;
@@ -1222,6 +1299,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const moderatorMutedIds = new Set(rawMembers.filter(m => m.moderation_muted).map(m => m.user_id));
           const { data: moderatorIds, error: moderatorsError } = await roomClient.rpc('totichat_room_moderator_ids', { p_room_id: roomId });
           if (!alive) return;
+          const currentVipRoomMemberIds = new Set(members.map(member => member.user_id));
+          if (previousVipRoomMemberIds) {
+            for (const member of members) {
+              if (previousVipRoomMemberIds.has(member.user_id) || member.user_id === currentUser.id) continue;
+              const vipLevel = Number(member.vip_level);
+              if (Number.isSafeInteger(vipLevel) && vipLevel > 0) {
+                window.dispatchEvent(new CustomEvent('totichat:vip-room-entry', {
+                  detail: { roomId, userId: member.user_id, name: member.display_name, vipLevel },
+                }));
+              }
+            }
+          }
+          previousVipRoomMemberIds = currentVipRoomMemberIds;
           if (moderatorsError) console.error('Room moderator roster refresh failed:', moderatorsError);
           const mine = members.find(m => m.user_id === currentUser.id);
           if (!mine && confirmedMember) {
