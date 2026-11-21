@@ -73,6 +73,34 @@ export const AgencyModal: React.FC = () => {
     'host_data_details' | 'agent_data_details' | 'agent_members' | 'agent_rewards' | null
   >(null);
 
+  // Live agency statistics are derived only from server-authorized agency state.
+  const [agencyStatistics, setAgencyStatistics] = useState<{ agencies: number; members: number; pending: number; agencyNames: string[] } | null>(null);
+  const [agencyStatisticsLoading, setAgencyStatisticsLoading] = useState(false);
+  const [agencyStatisticsError, setAgencyStatisticsError] = useState('');
+  useEffect(() => {
+    if (!openAgencyModal || activeSubView !== 'agent_data_details' || role !== 'agent') return;
+    let active = true;
+    setAgencyStatistics(null);
+    setAgencyStatisticsError('');
+    setAgencyStatisticsLoading(true);
+    void (async () => {
+      const { stagingBackend } = await import('../services/stagingBackend');
+      if (!stagingBackend) throw new Error('خادم الوكالات غير متصل');
+      const { data: auth, error: authError } = await stagingBackend.auth.getUser();
+      if (authError || !auth.user) throw authError ?? new Error('الجلسة غير متاحة');
+      const { data, error } = await stagingBackend.rpc('phase4_agency_state');
+      if (error) throw error;
+      const agencies = (Array.isArray(data?.agencies) ? data.agencies : []).filter((a: { owner_id: string; is_active: boolean }) => a.owner_id === auth.user.id && a.is_active);
+      const ids = new Set<string>(agencies.map((a: { id: string }) => a.id));
+      const members = (Array.isArray(data?.members) ? data.members : []).filter((m: { agency_id: string }) => ids.has(m.agency_id));
+      const requests = (Array.isArray(data?.requests) ? data.requests : []).filter((q: { agency_id: string; status: string }) => ids.has(q.agency_id) && q.status === 'pending_new');
+      if (active) setAgencyStatistics({ agencies: agencies.length, members: new Set(members.map((m: { user_id: string }) => m.user_id)).size, pending: requests.length, agencyNames: agencies.map((a: { name?: string }) => a.name || 'وكالة بدون اسم') });
+    })().catch(error => {
+      if (active) setAgencyStatisticsError(error instanceof Error ? error.message : 'تعذر تحميل الإحصائيات');
+    }).finally(() => { if (active) setAgencyStatisticsLoading(false); });
+    return () => { active = false; };
+  }, [openAgencyModal, activeSubView, role, currentUser.id]);
+
   // Incoming Join Request from an Agent (Available for User role)
   const [pendingAgencyInvite, setPendingAgencyInvite] = useState<{
     id: string;
@@ -298,12 +326,18 @@ export const AgencyModal: React.FC = () => {
               <h2 className="text-base font-black text-slate-900">مركز بيانات الوكالة</h2>
               <span className="w-9" />
             </div>
-            <div className="flex flex-1 items-center justify-center p-6">
-              <div className="w-full max-w-sm rounded-2xl border border-amber-200 bg-white p-6 text-center shadow-xs" role="status">
-                <Database className="mx-auto h-8 w-8 text-amber-600" aria-hidden="true" />
-                <p className="mt-3 text-sm font-black text-slate-800">إحصاءات الوكالة غير متاحة حالياً</p>
-                <p className="mt-2 text-xs leading-6 text-slate-500">لا توجد بيانات موثقة عن الرواتب أو الأهداف أو ساعات النشاط من الخادم. ستبقى هذه الشاشة بلا أرقام حتى يتوفر مصدر بيانات موثوق.</p>
-              </div>
+            <div className="flex flex-1 flex-col overflow-y-auto p-5 gap-4">
+              {agencyStatisticsLoading ? <p role="status" className="text-center text-slate-600">جارٍ تحميل إحصائيات الوكالة من الخادم...</p> : agencyStatisticsError ? <div role="alert" className="rounded-2xl bg-white p-5 text-center text-red-700">تعذر تحميل إحصائيات الوكالة: {agencyStatisticsError}</div> : agencyStatistics ? (
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    {([['الوكالات النشطة', agencyStatistics.agencies], ['أعضاء الوكالة', agencyStatistics.members], ['طلبات الانضمام المعلقة', agencyStatistics.pending]] as const).map(([label, count]) => (
+                      <div key={label} className="rounded-2xl border border-amber-200 bg-white p-4 text-center shadow-sm"><div className="text-2xl font-black text-emerald-800">{count}</div><div className="mt-2 text-xs font-bold text-slate-700">{label}</div></div>
+                    ))}
+                  </div>
+                  <div className="rounded-2xl border border-amber-200 bg-white p-4"><h3 className="font-black text-slate-900">الوكالات التابعة لك</h3>{agencyStatistics.agencyNames.length ? agencyStatistics.agencyNames.map((name, index) => <p key={index} className="mt-2 text-sm text-slate-700">{name}</p>) : <p className="mt-2 text-sm text-slate-500">لا توجد وكالة نشطة مرتبطة بحسابك.</p>}</div>
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4"><h3 className="font-black text-slate-900">الرواتب والأهداف وساعات النشاط</h3><p className="mt-2 text-xs leading-6 text-slate-500">هذه المؤشرات تنتظر سجلات مالية ونشاط موثقة من الخادم. لا تُعرض أرقام تقديرية.</p></div>
+                </>
+              ) : null}
             </div>
           </div>
         ) : (
