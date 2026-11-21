@@ -2,7 +2,8 @@ import { CpFrameForUser } from './CpFrameForUser';
 import { VipMessageFrame } from './VipMessageFrame';
 import { WealthBadge, CharmBadge } from './LevelBadgeIcons';
 import { fetchMyVerifiedRoyalXp } from '../services/royalXp';
-import { stagingBackend } from '../services/stagingBackend';
+import { stagingBackend, fetchMyAdminAccess } from '../services/stagingBackend';
+import { IdentityBadge, type IdentityBadgeKind } from './IdentityBadge';
 import { RoomManagementPanel } from './RoomManagementPanel';
 import { App as CapacitorApp } from '@capacitor/app';
 import { playRoomMusic, pauseRoomMusic, resumeRoomMusic, stopRoomMusic, getRoomMusicProgress, seekRoomMusic, setRoomMusicVolume } from '../services/isolatedRoomMusic';
@@ -1237,6 +1238,23 @@ export const VoiceRoomModal: React.FC = () => {
     return () => { active = false; };
   }, [activeRoom?.id, currentUser.id]);
 
+  // Resolve the signed-in sender's ID badge from server-authorized status only.
+  const [myChatIdentity, setMyChatIdentity] = useState<IdentityBadgeKind>('normal');
+  useEffect(() => {
+    let active = true;
+    setMyChatIdentity('normal');
+    if (!activeRoom?.id || !currentUser.id || !stagingBackend) return;
+    void Promise.all([
+      fetchMyAdminAccess().catch(() => null),
+      stagingBackend.rpc('phase5_special_id_status', { p_target: currentUser.id }).then(({ data, error }) => error ? null : data).catch(() => null),
+    ]).then(([access, special]) => {
+      if (!active) return;
+      const admin = !!access && ['owner', 'super_admin', 'admin'].includes(access.role);
+      setMyChatIdentity(admin ? 'admin' : (special as { assigned?: boolean } | null)?.assigned ? 'special' : 'normal');
+    });
+    return () => { active = false; };
+  }, [activeRoom?.id, currentUser.id]);
+
   // Get current messages
   const currentMessages = activeRoom ? roomMessages[activeRoom.id] || [] : [];
   useEffect(() => {
@@ -1853,6 +1871,7 @@ export const VoiceRoomModal: React.FC = () => {
                     <div key={msg.id} data-room-message-id={msg.id} className="flex min-w-0 items-start justify-end gap-1.5">
                       <VipMessageFrame level={msg.senderId === currentUser.id ? currentUser.vipLevel : (msg.vipLevel ?? 0)}>
                         <span className="text-amber-300 font-bold ml-1">{msg.senderName}:</span>
+                        {msg.senderId === currentUser.id && <IdentityBadge kind={myChatIdentity} size={19} />}
                         {msg.senderId === currentUser.id && verifiedChatLevels && <WealthBadge level={verifiedChatLevels.wealth} size="xs" />}
                         {msg.senderId === currentUser.id && verifiedChatLevels && <CharmBadge level={verifiedChatLevels.charm} size="xs" />}
                         {(msg.senderId === currentUser.id ? currentUser.vipLevel : (msg.vipLevel ?? 0)) >= 1 && (
