@@ -135,3 +135,4 @@ export const GlobalGiftBanner: React.FC = () => {
       </span>
     </button>
   );
+};
