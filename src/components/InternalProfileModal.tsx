@@ -42,6 +42,7 @@ import { AgencyProfileCard } from './AgencyProfileCard';
 import { CpSearchModal } from './CpSearchModal';
 import { ProfileCpCard } from './ProfileCpCard';
 import { imageUrl } from '../services/imageUrl';
+import { IdentityBadge } from './IdentityBadge';
 import { fetchMyVerifiedRoyalXp, type VerifiedRoyalXp } from '../services/royalXp';
 import { royalProgress } from '../utils/royalLevels';
 import { ProfileReportForm } from './ProfileReportForm';
@@ -268,6 +269,10 @@ export const InternalProfileModal: React.FC = () => {
   const [editBioInput, setEditBioInput] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
+
+  const identityBadgeKind = verifiedAdminIdentity?.userId === user.id
+    ? 'admin'
+    : (isSelf ? Boolean(displaySpecialId) : visitorSpecialIdUser === user.id) ? 'special' : 'normal';
 
   if (!openInternalProfileModal) return null;
 
@@ -681,7 +686,7 @@ export const InternalProfileModal: React.FC = () => {
             ) : (
               <Copy className="w-3.5 h-3.5 text-slate-500" />
             )}
-            {isSelf && verifiedAdminIdentity?.userId === user.id ? <Shield className="h-3.5 w-3.5 text-red-700" aria-label="إدارة موثقة" /> : (isSelf ? !!displaySpecialId : visitorSpecialIdUser === user.id) && <Crown className="h-3.5 w-3.5 text-amber-600" aria-hidden="true" />}
+            <IdentityBadge kind={identityBadgeKind} size={22} />
             <span className="font-semibold tracking-wider">
               ID: {isSelf ? (displaySpecialId || myPublicId || '—') : (visitorPublicId || '—')}
             </span>
