@@ -1406,18 +1406,7 @@ export const VoiceRoomModal: React.FC = () => {
       {vipEntrance && (
         <div className="toti-vip-entry-track absolute top-20 inset-x-0 z-[90] pointer-events-none overflow-hidden" dir="ltr" role="status" aria-live="polite">
           <div className="toti-vip-entry-banner relative w-[min(94vw,520px)] h-[76px] shrink-0" dir="rtl" aria-label={`دخول ${currentUser.nickname || currentUser.name || 'عضو VIP'} إلى الغرفة، VIP ${currentUser.vipLevel}`}>
-            <svg className="absolute inset-0 h-full w-full overflow-visible drop-shadow-[0_6px_12px_rgba(15,4,30,.7)]" viewBox="0 0 520 76" preserveAspectRatio="none" aria-hidden="true">
-              <defs>
-                <linearGradient id="totiEntryRoyalFill" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stopColor="#270b41"/><stop offset=".25" stopColor="#6d215e"/><stop offset=".52" stopColor="#351047"/><stop offset=".78" stopColor="#762356"/><stop offset="1" stopColor="#230c3a"/></linearGradient>
-                <linearGradient id="totiEntryRoyalGold" x1="0" y1="0" x2="0" y2="1"><stop stopColor="#fff4bd"/><stop offset=".45" stopColor="#d8a64a"/><stop offset=".8" stopColor="#a36c25"/><stop offset="1" stopColor="#ffe3a1"/></linearGradient>
-              </defs>
-              <path d="M19 38 L39 9 Q43 5 53 7 L467 7 Q477 5 481 9 L501 38 L481 67 Q477 71 467 69 L53 69 Q43 71 39 67 Z" fill="url(#totiEntryRoyalFill)" stroke="url(#totiEntryRoyalGold)" strokeWidth="3"/>
-              <path d="M32 38 L49 15 L471 15 L488 38 L471 61 L49 61 Z" fill="none" stroke="#f6d98a" strokeOpacity=".5"/>
-              <path d="M20 38 L4 23 L15 38 L4 53 Z M500 38 L516 23 L505 38 L516 53 Z" fill="#d5a44c" stroke="#fff1b4"/>
-              <path d="M56 12 Q76 30 56 64 M464 12 Q444 30 464 64" fill="none" stroke="#f9d98d" strokeWidth="2"/>
-              <path d="M65 18 L73 28 L65 38 L57 28 Z M455 18 L463 28 L455 38 L447 28 Z M65 38 L73 48 L65 58 L57 48 Z M455 38 L463 48 L455 58 L447 48 Z" fill="#e9c16c" opacity=".8"/>
-              <path d="M90 10 L260 10 L430 10 M90 66 L260 66 L430 66" stroke="#fff0bd" strokeOpacity=".45" strokeWidth="1"/>
-            </svg>
+            <img src="/assets/banners/04-royal-announcement-orange.png" alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-contain" style={{ mixBlendMode: 'screen' }} />
             <div className="absolute inset-x-[13%] inset-y-[18%] flex items-center justify-center gap-2 text-[#fff2ca] drop-shadow-[0_2px_3px_#1a0829]">
               <Crown className="h-5 w-5 shrink-0 text-amber-300" aria-hidden="true" />
               <span className="shrink-0 text-[11px] font-black text-amber-200">VIP {currentUser.vipLevel}</span>
