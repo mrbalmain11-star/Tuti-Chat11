@@ -30,7 +30,9 @@ export function useConfirmedCpFrame(userId?: string | null, refreshKey = 0): boo
     const refresh = () => { if (!document.hidden) void load().catch(() => { if (active) setEligible(false); }); };
     window.addEventListener('totichat:cp-frame-preference', changed);
     window.addEventListener('focus', refresh);
-    return () => { active = false; window.removeEventListener('totichat:cp-frame-preference', changed); window.removeEventListener('focus', refresh); };
+    // Keep both partners' frames synchronized without opening the other profile.
+    const interval = window.setInterval(refresh, 15000);
+    return () => { active = false; window.removeEventListener('totichat:cp-frame-preference', changed); window.removeEventListener('focus', refresh); window.clearInterval(interval); };
   }, [userId, refreshKey]);
   return eligible && preference !== 'off';
 }
