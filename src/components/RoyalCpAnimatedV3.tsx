@@ -27,6 +27,7 @@ export const RoyalCpAnimatedV3: React.FC<Props> = ({
         <div className="royal-cp-v3-avatar royal-cp-v3-left">{leftAvatar && <img src={leftAvatar} alt={leftName || 'صاحب العلاقة'} />}</div>
         <button className="royal-cp-v3-avatar royal-cp-v3-right" type="button" onClick={onRightClick} disabled={!onRightClick} aria-label={rightName || 'الشريك'}>{rightAvatar && <img src={rightAvatar} alt={rightName || 'الشريك'} />}</button>
         <img className="royal-cp-v3-art" src={root + 'file_00000000020c82468cf757971387776b.png'} alt="" draggable={false} />
+        <div className="royal-cp-v3-wing-overlays" aria-hidden="true">{['left-outer', 'left-inner', 'right-inner', 'right-outer'].map(wing => <img key={wing} className={`royal-cp-v3-wing-cutout ${wing}`} src={root + 'file_00000000020c82468cf757971387776b.png'} alt="" draggable={false} />)}</div>
         {leftName && <span className="royal-cp-v3-live-name left" dir="auto">{leftName}</span>}
         {rightName && <span className="royal-cp-v3-live-name right" dir="auto">{rightName}</span>}
         <span className="royal-cp-v3-live-level" aria-label={`مستوى العلاقة ${Number.isFinite(level) ? level : 'غير متوفر'}`}>{Number.isFinite(level) ? level : '—'}</span>
