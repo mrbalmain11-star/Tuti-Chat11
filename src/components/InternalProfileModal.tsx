@@ -131,18 +131,18 @@ export const InternalProfileModal: React.FC = () => {
   const [myPublicId, setMyPublicId] = useState<number | null>(null);
   const [displaySpecialId, setDisplaySpecialId] = useState<string | null>(null);
   const [visitorSpecialIdUser, setVisitorSpecialIdUser] = useState<string | null>(null);
-  const [verifiedAdminIdentity, setVerifiedAdminIdentity] = useState<{ userId: string; role: string } | null>(null);
+  const [verifiedIdentity, setVerifiedIdentity] = useState<{ userId: string; kind: 'admin' | 'special' | 'normal' } | null>(null);
   useEffect(() => {
     let active = true;
-    setVerifiedAdminIdentity(null);
-    if (!openInternalProfileModal || !isSelf || !stagingBackend) return;
-    void fetchMyAdminAccess().then(access => {
-      if (active && access && ['owner', 'super_admin', 'admin'].includes(access.role)) {
-        setVerifiedAdminIdentity({ userId: currentUser.id, role: access.role });
-      }
-    }).catch(error => console.error('Verified admin badge unavailable:', error));
+    setVerifiedIdentity(null);
+    if (!openInternalProfileModal || !user.id || !stagingBackend) return;
+    void stagingBackend.rpc('staging_profile_identity_badge', { p_user_id: user.id })
+      .then(({ data, error }) => {
+        if (error) throw error;
+        if (active) setVerifiedIdentity({ userId: user.id, kind: data === 'admin' || data === 'special' ? data : 'normal' });
+      }).catch(error => console.error('Verified profile ID badge unavailable:', error));
     return () => { active = false; };
-  }, [openInternalProfileModal, isSelf, currentUser.id]);
+  }, [openInternalProfileModal, user.id]);
   const [savedCover, setSavedCover] = useState<string>('');
   const [visitorStatus, setVisitorStatus] = useState<{ userId: string; vipLevel: number; wealthExp: number; charmExp: number } | null>(null);
   useEffect(() => {
@@ -270,9 +270,7 @@ export const InternalProfileModal: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
 
-  const identityBadgeKind = verifiedAdminIdentity?.userId === user.id
-    ? 'admin'
-    : (isSelf ? Boolean(displaySpecialId) : visitorSpecialIdUser === user.id) ? 'special' : 'normal';
+  const identityBadgeKind = verifiedIdentity?.userId === user.id ? verifiedIdentity.kind : 'normal';
 
   if (!openInternalProfileModal) return null;
 
@@ -678,7 +676,7 @@ export const InternalProfileModal: React.FC = () => {
           {/* ID Line: ❐ ID: 313 */}
           <button
             onClick={handleCopyId}
-            className={`flex items-center gap-1.5 mt-2 rounded-full border px-2.5 py-1 text-xs font-mono transition active:scale-95 cursor-pointer ${isSelf ? (verifiedAdminIdentity?.userId === user.id ? "border-red-400 bg-gradient-to-r from-red-50 via-amber-50 to-amber-100 text-red-900" : displaySpecialId ? "border-pink-300 bg-gradient-to-r from-pink-50 to-amber-100 text-pink-800" : "border-sky-200 bg-sky-50 text-sky-800") : (visitorSpecialIdUser === user.id ? "border-pink-300 bg-gradient-to-r from-pink-50 to-amber-100 text-pink-800" : "border-sky-200 bg-sky-50 text-sky-800")}`}
+            className={`flex items-center gap-1.5 mt-2 rounded-full border px-2.5 py-1 text-xs font-mono transition active:scale-95 cursor-pointer ${identityBadgeKind === 'admin' ? 'border-red-400 bg-gradient-to-r from-red-50 via-amber-50 to-amber-100 text-red-900' : identityBadgeKind === 'special' ? 'border-pink-300 bg-gradient-to-r from-pink-50 to-amber-100 text-pink-800' : 'border-sky-200 bg-sky-50 text-sky-800'}`}
             title="نسخ المعرف"
           >
             {copiedId ? (
