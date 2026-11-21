@@ -68,12 +68,13 @@ const cinematicVideoForGift = (giftId: string): string | null => {
 const CinematicGiftVideo: React.FC<{ src: string; label: string; onDone: () => void; onFailure: () => void }> = ({ src, label, onDone, onFailure }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
+  const playingRef = useRef(false);
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
     let disposed = false;
     // Android WebView can reject autoplay even with muted/playsInline; never leave a native play screen stuck.
-    const watchdog = window.setTimeout(() => { if (!disposed && !playing) onFailure(); }, 3500);
+    const watchdog = window.setTimeout(() => { if (!disposed && !playingRef.current) onFailure(); }, 3500);
     const start = () => {
       video.muted = true;
       video.playsInline = true;
@@ -82,10 +83,10 @@ const CinematicGiftVideo: React.FC<{ src: string; label: string; onDone: () => v
     };
     start();
     return () => { disposed = true; window.clearTimeout(watchdog); video.pause(); };
-  }, [src, onFailure, playing]);
+  }, [src, onFailure]);
   return (
     <div className={playing ? 'fixed inset-0 z-[100] pointer-events-none flex items-center justify-center bg-black/85' : 'fixed inset-0 z-[100] pointer-events-none opacity-0'} role="status" aria-label={label}>
-      <video ref={videoRef} src={src} autoPlay muted playsInline preload="auto" controls={false} disablePictureInPicture onPlaying={() => setPlaying(true)} onEnded={onDone} onError={onFailure} className="h-full w-full object-contain" />
+      <video ref={videoRef} src={src} autoPlay muted playsInline preload="auto" controls={false} disablePictureInPicture onPlaying={() => { playingRef.current = true; setPlaying(true); }} onEnded={onDone} onError={onFailure} className="h-full w-full object-contain" />
     </div>
   );
 };
