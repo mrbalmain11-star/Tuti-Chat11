@@ -89,11 +89,13 @@ export const ProfileCpCard: React.FC<{ userId: string; userName?: string; userAv
     const refresh = () => { if (!document.hidden && !endingRef.current) void load(); };
     window.addEventListener('focus', refresh);
     document.addEventListener('visibilitychange', refresh);
+    const interval = window.setInterval(refresh, 15000);
     return () => {
       active = false;
       ++requestVersion.current;
       window.removeEventListener('focus', refresh);
       document.removeEventListener('visibilitychange', refresh);
+      window.clearInterval(interval);
     };
   }, [userId, refreshKey, retryNonce]);
   const endRelationship = async (link: CpLink) => {
