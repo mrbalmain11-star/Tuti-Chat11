@@ -1,0 +1,1 @@
+Build the latest TotiChat Staging APK from integration/legacy-backend-staging after the GlobalGiftBanner syntax correction. Preserve all current approved updates. Run the configured TypeScript validation, Android 14 install and launch validation, verify APK signature and release bytes, then publish the APK to GitHub Releases.
