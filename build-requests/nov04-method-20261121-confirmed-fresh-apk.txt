@@ -1,0 +1,1 @@
+Build a fresh TotiChat Staging APK from the latest integration/legacy-backend-staging branch head. Include all current updates. Run TypeScript validation, Android 14 exact APK install and launch validation, verify APK signing and downloaded release bytes, then publish a direct APK release.
