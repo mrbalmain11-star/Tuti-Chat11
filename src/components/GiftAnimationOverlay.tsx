@@ -62,7 +62,7 @@ const cinematicVideoForGift = (giftId: string): string | null => {
     : giftId === 'g6'
       ? 'Flaming Lion Artwork _ Löwe hintergrundbild_ Bewegliche hintergrundbilder_ Brüllender löwe(MP4).mp4'
       : null;
-  return filename ? 'https://raw.githubusercontent.com/mrbalmain11-star/Tuti-Chat11/integration/legacy-backend-staging/' + encodeURIComponent(filename) : null;
+  return filename ? '/assets/gifts/' + encodeURIComponent(filename) : null;
 };
 
 const CinematicGiftVideo: React.FC<{ src: string; label: string; onDone: () => void; onFailure: () => void }> = ({ src, label, onDone, onFailure }) => {
