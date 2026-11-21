@@ -96,14 +96,42 @@ export const GlobalGiftBanner: React.FC = () => {
     }
     setAnnouncement(null);
   };
-  return <button type="button" dir="rtl" onClick={openRoom}
-    className="pointer-events-auto fixed top-[max(72px,env(safe-area-inset-top))] left-0 z-[150] w-[min(94vw,420px)] overflow-visible text-center"
-    style={{ animation: 'totichat-royal-cross 5.3s linear both' }} aria-label="فتح غرفة الإعلان">
-    <style>{`@keyframes totichat-royal-cross { from { transform: translateX(-110%); left: 0; } to { transform: translateX(0); left: 100%; } }`}</style>
-    <div className="relative flex min-h-20 items-center justify-center rounded-[28px] border-2 border-amber-300 bg-gradient-to-r from-[#32113f] via-[#8a2555] to-[#4d1739] px-12 py-3 shadow-[0_8px_30px_rgba(203,155,53,.55)]">
-      <span className="absolute left-2 top-1/2 -translate-y-1/2 flex h-12 w-12 items-center justify-center rounded-full border-[3px] border-amber-300 bg-[#291b35] shadow-[0_0_12px_#e9b55e]">{avatars.sender ? <img src={avatars.sender} alt="" className="h-full w-full rounded-full object-cover" /> : <span className="text-amber-200">★</span>}</span>
-      <span className="min-w-0 flex-1 text-sm font-black leading-5 text-[#fff1c4] drop-shadow-[0_2px_3px_#210819]"><span className="block truncate">{announcement.sender_name} أهدى إلى {announcement.recipient_name}</span><span className="block truncate text-xs">{announcement.gift_name} ×{announcement.quantity} · {announcement.total_coins.toLocaleString('ar-IQ')} عملة</span></span>
-      <span className="absolute right-2 top-1/2 -translate-y-1/2 flex h-12 w-12 items-center justify-center rounded-full border-[3px] border-amber-300 bg-[#291b35] shadow-[0_0_12px_#e9b55e]">{avatars.recipient ? <img src={avatars.recipient} alt="" className="h-full w-full rounded-full object-cover" /> : <span className="text-amber-200">★</span>}</span>
-    </div>
-  </button>;
-};
+  return (
+    <button
+      type="button"
+      dir="rtl"
+      onClick={openRoom}
+      className="pointer-events-auto fixed top-[max(72px,env(safe-area-inset-top))] left-0 z-[150] block w-[min(94vw,420px)] overflow-visible"
+      style={{ aspectRatio: '1200 / 352', animation: 'totichat-royal-cross 5.3s linear both' }}
+      aria-label="فتح غرفة الإعلان"
+    >
+      <style>{`@keyframes totichat-royal-cross { from { transform: translateX(-110%); left: 0; } to { transform: translateX(0); left: 100%; } }`}</style>
+      <span className="absolute inset-0 block" aria-hidden="true">
+        <img
+          src="/assets/banners/01-large-gift.png"
+          alt=""
+          draggable={false}
+          className="absolute inset-0 h-full w-full object-fill"
+        />
+        <span
+          className="absolute z-[1] flex items-center justify-center overflow-hidden rounded-full bg-[#321124]"
+          style={{ left: '16.33%', top: '51%', width: '9%', aspectRatio: '1', transform: 'translate(-50%, -50%)' }}
+        >
+          {avatars.sender ? <img src={avatars.sender} alt="" className="h-full w-full object-cover" /> : <span className="text-amber-200">★</span>}
+        </span>
+        <span
+          className="absolute z-[1] flex items-center justify-center overflow-hidden rounded-full bg-[#241033]"
+          style={{ left: '83.67%', top: '51%', width: '9%', aspectRatio: '1', transform: 'translate(-50%, -50%)' }}
+        >
+          {avatars.recipient ? <img src={avatars.recipient} alt="" className="h-full w-full object-cover" /> : <span className="text-amber-200">★</span>}
+        </span>
+        <span
+          className="absolute z-[2] flex flex-col items-center justify-center overflow-hidden text-center text-sm font-black leading-5 text-[#fffbe6] drop-shadow-[0_2px_4px_#270b20]"
+          style={{ top: '38%', left: '28%', width: '44%', height: '28%', direction: 'rtl' }}
+        >
+          <span className="block max-w-full truncate">{announcement.sender_name} أهدى إلى {announcement.recipient_name}</span>
+          <span className="block max-w-full truncate text-xs">{announcement.gift_name} ×{announcement.quantity} · {announcement.total_coins.toLocaleString('ar-IQ')} عملة</span>
+        </span>
+      </span>
+    </button>
+  );
