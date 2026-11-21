@@ -2,7 +2,7 @@ import { CpFrameForUser } from './CpFrameForUser';
 import { VipMessageFrame } from './VipMessageFrame';
 import { WealthBadge, CharmBadge } from './LevelBadgeIcons';
 import { fetchMyVerifiedRoyalXp } from '../services/royalXp';
-import { stagingBackend, fetchMyAdminAccess } from '../services/stagingBackend';
+import { stagingBackend } from '../services/stagingBackend';
 import { IdentityBadge, type IdentityBadgeKind } from './IdentityBadge';
 import { RoomManagementPanel } from './RoomManagementPanel';
 import { App as CapacitorApp } from '@capacitor/app';
@@ -1238,25 +1238,28 @@ export const VoiceRoomModal: React.FC = () => {
     return () => { active = false; };
   }, [activeRoom?.id, currentUser.id]);
 
-  // Resolve the signed-in sender's ID badge from server-authorized status only.
-  const [myChatIdentity, setMyChatIdentity] = useState<IdentityBadgeKind>('normal');
+  // Badge status is read from a server-verified, read-only identity RPC for every sender.
+  const currentMessages = activeRoom ? roomMessages[activeRoom.id] || [] : [];
+  const [chatIdentityByUser, setChatIdentityByUser] = useState<Record<string, IdentityBadgeKind>>({});
+  const senderIdsKey = [...new Set(currentMessages.map(msg => msg.senderId).filter(Boolean))].sort().join(',');
   useEffect(() => {
     let active = true;
-    setMyChatIdentity('normal');
-    if (!activeRoom?.id || !currentUser.id || !stagingBackend) return;
-    void Promise.all([
-      fetchMyAdminAccess().catch(() => null),
-      stagingBackend.rpc('phase5_special_id_status', { p_target: currentUser.id }).then(({ data, error }) => error ? null : data).catch(() => null),
-    ]).then(([access, special]) => {
-      if (!active) return;
-      const admin = !!access && ['owner', 'super_admin', 'admin'].includes(access.role);
-      setMyChatIdentity(admin ? 'admin' : (special as { assigned?: boolean } | null)?.assigned ? 'special' : 'normal');
-    });
+    setChatIdentityByUser({});
+    if (!activeRoom?.id || !stagingBackend || !senderIdsKey) return;
+    const client = stagingBackend;
+    const senderIds = senderIdsKey.split(',');
+    void Promise.all(senderIds.map(async userId => {
+      try {
+        const { data, error } = await client.rpc('staging_profile_identity_badge', { p_user_id: userId });
+        if (error) throw error;
+        return [userId, data === 'admin' || data === 'special' ? data : 'normal'] as const;
+      } catch (error) {
+        console.error('Verified chat ID badge unavailable:', error);
+        return [userId, 'normal'] as const;
+      }
+    })).then(rows => { if (active) setChatIdentityByUser(Object.fromEntries(rows)); });
     return () => { active = false; };
-  }, [activeRoom?.id, currentUser.id]);
-
-  // Get current messages
-  const currentMessages = activeRoom ? roomMessages[activeRoom.id] || [] : [];
+  }, [activeRoom?.id, senderIdsKey]);
   useEffect(() => {
     if (!activeRoom?.id) {
       seenRoomMessagesRef.current = null;
@@ -1871,7 +1874,7 @@ export const VoiceRoomModal: React.FC = () => {
                     <div key={msg.id} data-room-message-id={msg.id} className="flex min-w-0 items-start justify-end gap-1.5">
                       <VipMessageFrame level={msg.senderId === currentUser.id ? currentUser.vipLevel : (msg.vipLevel ?? 0)}>
                         <span className="text-amber-300 font-bold ml-1">{msg.senderName}:</span>
-                        {msg.senderId === currentUser.id && <IdentityBadge kind={myChatIdentity} size={19} />}
+                        {chatIdentityByUser[msg.senderId] && <IdentityBadge kind={chatIdentityByUser[msg.senderId]} size={19} />}
                         {msg.senderId === currentUser.id && verifiedChatLevels && <WealthBadge level={verifiedChatLevels.wealth} size="xs" />}
                         {msg.senderId === currentUser.id && verifiedChatLevels && <CharmBadge level={verifiedChatLevels.charm} size="xs" />}
                         {(msg.senderId === currentUser.id ? currentUser.vipLevel : (msg.vipLevel ?? 0)) >= 1 && (
