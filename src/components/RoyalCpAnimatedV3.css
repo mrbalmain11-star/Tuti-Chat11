@@ -51,3 +51,17 @@
 .royal-cp-v3-shell{width:calc(100% + 16px);max-width:650px;margin-inline:-8px;padding:0;background:transparent}
 .royal-cp-v3-shell .royal-cp-v3{isolation:auto;background:transparent;aspect-ratio:3/1}
 .royal-cp-v3-shell .royal-cp-v3-art{mix-blend-mode:screen;object-fit:fill}
+
+/* CP banner wing flutter. Each layer is clipped from the approved banner artwork,
+   keeping the existing real avatars, names and CP progress untouched. */
+.royal-cp-v3-wing-overlays{position:absolute;inset:0;z-index:5;pointer-events:none;overflow:visible}
+.royal-cp-v3-wing-cutout{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;mix-blend-mode:screen;will-change:transform;animation-duration:3.4s;animation-timing-function:ease-in-out;animation-iteration-count:infinite}
+.royal-cp-v3-wing-cutout.left-outer{clip-path:polygon(0 22%,7% 10%,15% 16%,23% 38%,25% 67%,16% 77%,4% 59%);transform-origin:22% 66%;animation-name:cp-banner-flutter-left}
+.royal-cp-v3-wing-cutout.left-inner{clip-path:polygon(15% 14%,26% 23%,38% 44%,42% 67%,31% 79%,21% 61%);transform-origin:36% 69%;animation-name:cp-banner-flutter-inner-left;animation-delay:-.35s}
+.royal-cp-v3-wing-cutout.right-inner{clip-path:polygon(85% 14%,74% 23%,62% 44%,58% 67%,69% 79%,79% 61%);transform-origin:64% 69%;animation-name:cp-banner-flutter-inner-right;animation-delay:-.35s}
+.royal-cp-v3-wing-cutout.right-outer{clip-path:polygon(100% 22%,93% 10%,85% 16%,77% 38%,75% 67%,84% 77%,96% 59%);transform-origin:78% 66%;animation-name:cp-banner-flutter-right}
+@keyframes cp-banner-flutter-left{0%,100%{transform:rotate(0deg) scaleX(1)}50%{transform:rotate(-5deg) scaleX(.975)}}
+@keyframes cp-banner-flutter-inner-left{0%,100%{transform:rotate(0deg)}50%{transform:rotate(4deg)}}
+@keyframes cp-banner-flutter-inner-right{0%,100%{transform:rotate(0deg)}50%{transform:rotate(-4deg)}}
+@keyframes cp-banner-flutter-right{0%,100%{transform:rotate(0deg) scaleX(1)}50%{transform:rotate(5deg) scaleX(.975)}}
+@media(prefers-reduced-motion:reduce){.royal-cp-v3-wing-cutout{animation:none}}
