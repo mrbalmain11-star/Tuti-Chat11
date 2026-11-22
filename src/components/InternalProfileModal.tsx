@@ -1,3 +1,4 @@
+import { VipAvatarFrame } from './VipAvatarFrame';
 import { CpWingAvatarFrame } from './CpWingAvatarFrame';
 import { useConfirmedCpFrame, getCpFramePreference, setCpFramePreference } from '../services/cpFramePreference';
 import React, { useState, useRef, useEffect } from 'react';
@@ -569,6 +570,7 @@ export const InternalProfileModal: React.FC = () => {
               )}
             </div>
             <CpWingAvatarFrame enabled={cpAvatarFrameEnabled} name={user.name} />
+            {!cpAvatarFrameEnabled && <VipAvatarFrame level={displayedUser.vipLevel} />}
           </div>
         </div>
 

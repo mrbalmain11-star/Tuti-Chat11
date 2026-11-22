@@ -1705,7 +1705,7 @@ export const VoiceRoomModal: React.FC = () => {
                           loading="eager"
                           onError={e => { e.currentTarget.style.display = 'none'; }}
                         /> : null}
-                        <CpFrameForUser userId={seat.user.id} name={seat.user.name} />
+                        <CpFrameForUser userId={seat.user.id} name={seat.user.name} vipLevel={seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel} />
                         {seat.isSpeaking && !seat.isMuted && (
                           <div role="status" aria-label="يتحدث الآن" className="absolute -inset-1 z-20 rounded-full border-[3px] border-emerald-400/90 shadow-[0_0_12px_rgba(52,211,153,0.75)] pointer-events-none motion-safe:animate-pulse" />
                         )}
@@ -2752,7 +2752,7 @@ export const VoiceRoomModal: React.FC = () => {
                     />
                   </span>
                 </button>
-                <div className="absolute inset-0 pointer-events-none"><CpFrameForUser userId={selectedMicUser.user.id} name={selectedMicUser.user.name} /></div>
+                <div className="absolute inset-0 pointer-events-none"><CpFrameForUser userId={selectedMicUser.user.id} name={selectedMicUser.user.name} vipLevel={selectedMicVerifiedStatus?.userId === selectedMicUser.user.id && !selectedMicVerifiedStatus.loadFailed ? selectedMicVerifiedStatus.vipLevel : undefined} /></div>
               </div>
 
               {/* User Name in large, bold, clear white text */}

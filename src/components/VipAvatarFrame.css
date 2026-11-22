@@ -1,0 +1,53 @@
+.vip-avatar-frame {
+  position: absolute;
+  inset: -23%;
+  z-index: 15;
+  isolation: isolate;
+  pointer-events: none;
+}
+
+.vip-avatar-frame-preview {
+  position: relative;
+  inset: auto;
+  display: block;
+  width: min(10rem, 100%);
+  aspect-ratio: 1;
+  margin-inline: auto;
+}
+
+.vip-avatar-frame img,
+.vip-avatar-wing {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.vip-avatar-frame img { object-fit: contain; }
+
+.vip-avatar-wing {
+  background: var(--vip-frame-art) center / contain no-repeat;
+  mix-blend-mode: screen;
+  animation: vip-avatar-feather 2.7s ease-in-out infinite;
+}
+
+.vip-avatar-wing-left {
+  clip-path: polygon(0% 8%, 42% 14%, 38% 39%, 30% 55%, 0% 67%);
+  transform-origin: 37% 44%;
+  animation-delay: -.3s;
+}
+
+.vip-avatar-wing-right {
+  clip-path: polygon(58% 14%, 100% 8%, 100% 67%, 70% 55%, 62% 39%);
+  transform-origin: 63% 44%;
+  animation-delay: -1.65s;
+}
+
+@keyframes vip-avatar-feather {
+  0%, 100% { opacity: .05; transform: scaleX(1); filter: brightness(1.05); }
+  50% { opacity: .21; transform: scaleX(1.012) translateY(-1px); filter: brightness(1.6); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vip-avatar-wing { display: none; }
+}

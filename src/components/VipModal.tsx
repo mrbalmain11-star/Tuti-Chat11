@@ -1,3 +1,4 @@
+import { VipAvatarFrame } from './VipAvatarFrame';
 /* V002 staging APK build marker: vvv2 — original VIP layout preserved. */
 import React, { useState, useEffect } from 'react';
 import {
@@ -482,6 +483,7 @@ export const VipModal: React.FC = () => {
                 style={{background:`conic-gradient(from ${activeTier.level * 30}deg, transparent, ${activeTier.themeColor}, transparent, ${activeTier.level % 2 ? '#facc15' : '#ffffff'}, transparent)`,filter:`blur(${12 + activeTier.level}px)`,animation:`spin ${7 + activeTier.level * 0.8}s linear infinite ${activeTier.level % 2 ? 'reverse' : 'normal'}`}}/>
             </div>
           </div>
+          <VipAvatarFrame level={activeTier.level} preview />
           <p className="text-center text-xs font-bold text-amber-200">VIP {activeTier.level} · ${currentUser.vipLevel >= activeTier.level ? 'تمتلك المستوى' : 'معاينة فقط'}</p>
 
           {/* User Account VIP Showcase Card: "ترتيب وتطبيق الإشارات الموجودة بالحساب مثل ما هيه" */}
