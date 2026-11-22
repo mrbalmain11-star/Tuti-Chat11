@@ -1661,13 +1661,15 @@ export const VoiceRoomModal: React.FC = () => {
 {Array.from({length:15},(_,i)=>i+1).map((seatNum) => {
               const seat = getSeat(seatNum);
               const isOccupied = !!seat.user;
+              const isPlayingMusic = seat.user?.id === currentUser.id &&
+                musicStatus === 'playing' && musicRoomRef.current === activeRoom.id;
 
               return (
                 <div
                   key={seatNum}
                   role="button"
                   tabIndex={0}
-                  aria-label={`المقعد ${seatNum}: ${isOccupied ? `مشغول بواسطة ${seat.user?.nickname || seat.user?.name || 'مستخدم'}` : seat.isLocked ? 'مقفل' : 'متاح'}`}
+                  aria-label={`المقعد ${seatNum}: ${isOccupied ? `مشغول بواسطة ${seat.user?.nickname || seat.user?.name || 'مستخدم'}` : seat.isLocked ? 'مقفل' : 'متاح'}${isPlayingMusic ? '، يشغّل الموسيقى' : ''}`}
                   onClick={() => handleSeatClick(seatNum)}
                   onKeyDown={(event) => {
                     if (event.key === 'Enter' || event.key === ' ') {
@@ -1696,6 +1698,7 @@ export const VoiceRoomModal: React.FC = () => {
                       >
                         <div className="absolute inset-0 rounded-full bg-gradient-to-br from-emerald-700 to-teal-950 flex items-center justify-center text-white text-lg font-black">{(seat.user.name || '؟').slice(0,1)}</div>
                         {seat.user.avatar ? <img
+                          key={seat.user.avatar}
                           src={seat.user.avatar}
                           alt={seat.user.name}
                           className="absolute inset-0 z-10 block w-full h-full rounded-full object-cover object-center"
@@ -1728,6 +1731,7 @@ export const VoiceRoomModal: React.FC = () => {
                   {/* Under Avatar: User name large & clear / Under empty mic: clean number */}
                   {isOccupied && seat.user ? (
                     <div className="mt-1 flex items-center justify-center gap-0.5 max-w-[76px] px-0.5">
+                      {isPlayingMusic && <Music size={12} className="shrink-0 text-emerald-300" aria-hidden="true" />}
                       <VipName
                         name={seat.user.nickname || seat.user.name}
                         vipLevel={seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel}
