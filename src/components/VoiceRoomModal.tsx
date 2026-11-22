@@ -1147,7 +1147,8 @@ export const VoiceRoomModal: React.FC = () => {
   };
 
   // VIP entrance is shown once on a fresh room entry, never on every render.
-  const [vipEntrance, setVipEntrance] = useState<{ name: string; vipLevel: number } | null>(null);
+  const [vipEntrance, setVipEntrance] = useState<{ roomId: string; sequence: number; name: string; vipLevel: number } | null>(null);
+  const vipEntranceSequence = useRef(0);
   const lastEnteredRoom = useRef<string | null>(null);
   useEffect(() => {
     if (!activeRoom || isRoomMinimized) {
@@ -1157,20 +1158,24 @@ export const VoiceRoomModal: React.FC = () => {
     }
     if (lastEnteredRoom.current === activeRoom.id) return;
     lastEnteredRoom.current = activeRoom.id;
-    if (currentUser.vipLevel < 1) return;
-    setVipEntrance({ name: currentUser.nickname || currentUser.name || 'عضو VIP', vipLevel: currentUser.vipLevel });
+    if (!Number.isInteger(currentUser.vipLevel) || currentUser.vipLevel < 1 || currentUser.vipLevel > 12) return;
+    setVipEntrance({ roomId: activeRoom.id, sequence: ++vipEntranceSequence.current, name: currentUser.nickname || currentUser.name || 'عضو VIP', vipLevel: currentUser.vipLevel });
   }, [activeRoom?.id, isRoomMinimized, currentUser.vipLevel]);
 
   useEffect(() => {
     const onVipRoomEntry = (rawEvent: Event) => {
       const detail = (rawEvent as CustomEvent<{ roomId: string; userId: string; name: string; vipLevel: number }>).detail;
-      if (!detail || detail.roomId !== activeRoom?.id || detail.userId === currentUser.id ||
-          typeof detail.name !== 'string' || !Number.isSafeInteger(detail.vipLevel) || detail.vipLevel < 1) return;
-      setVipEntrance({ name: detail.name, vipLevel: detail.vipLevel });
+      if (isRoomMinimized || !detail || detail.roomId !== activeRoom?.id || detail.userId === currentUser.id ||
+          typeof detail.name !== 'string' || !Number.isSafeInteger(detail.vipLevel) ||
+          detail.vipLevel < 1 || detail.vipLevel > 12) return;
+      setVipEntrance({
+        roomId: detail.roomId, sequence: ++vipEntranceSequence.current,
+        name: detail.name, vipLevel: detail.vipLevel,
+      });
     };
     window.addEventListener('totichat:vip-room-entry', onVipRoomEntry);
     return () => window.removeEventListener('totichat:vip-room-entry', onVipRoomEntry);
-  }, [activeRoom?.id, currentUser.id]);
+  }, [activeRoom?.id, currentUser.id, isRoomMinimized]);
 
   useEffect(() => {
     if (!vipEntrance) return;
@@ -1419,8 +1424,8 @@ export const VoiceRoomModal: React.FC = () => {
       className="fixed inset-0 z-50 flex items-center justify-center bg-black select-none overflow-hidden font-['Cairo',sans-serif]"
       dir="rtl"
     >
-      {vipEntrance && (
-        <div className="toti-vip-entry-track absolute top-20 inset-x-0 z-[90] pointer-events-none overflow-hidden" dir="ltr" role="status" aria-live="polite">
+      {!isRoomMinimized && vipEntrance && vipEntrance.roomId === activeRoom.id && (
+        <div key={vipEntrance.sequence} className="toti-vip-entry-track absolute top-20 inset-x-0 z-[90] pointer-events-none overflow-hidden" dir="ltr" role="status" aria-live="polite">
           <div className="toti-vip-entry-banner relative w-[min(94vw,520px)] aspect-[15/4] shrink-0" dir="rtl" aria-label={`دخول ${vipEntrance.name} إلى الغرفة، VIP ${vipEntrance.vipLevel}`}>
             <img src="/assets/banners/04-royal-announcement-orange.png" alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-contain" style={{ mixBlendMode: 'screen' }} />
             <div className="absolute inset-x-[13%] inset-y-[18%] flex items-center justify-center gap-2 text-[#fff2ca] drop-shadow-[0_2px_3px_#1a0829]">
