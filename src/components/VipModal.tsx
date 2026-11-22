@@ -324,6 +324,12 @@ export const VipModal: React.FC = () => {
     return currentUser.vipLevel > 0 ? Math.max(0, Math.min(11, currentUser.vipLevel - 1)) : 0;
   });
   const activeTier = VIP_TIERS[activeTierIdx];
+  // Keep the carousel aligned with the actual account tier on each opening.
+  useEffect(() => {
+    if (openVipModal) setActiveTierIdx(Math.max(0, Math.min(11, currentUser.vipLevel > 0 ? currentUser.vipLevel - 1 : 0)));
+  }, [openVipModal, currentUser.vipLevel]);
+  const [showcaseImageError, setShowcaseImageError] = useState(false);
+  useEffect(() => setShowcaseImageError(false), [activeTier.level]);
 
   // Active detail popup modal (Matching the 4 uploaded screenshots)
   const [activePopup, setActivePopup] = useState<PopupType>(null);
@@ -464,20 +470,16 @@ export const VipModal: React.FC = () => {
           <div className="relative mx-auto w-full max-w-[440px] overflow-hidden rounded-xl" style={{boxShadow:`0 0 28px ${activeTier.glowColor}`}}>
             <img key={activeTier.level} src={`/assets/vip/showcase/vip${String(activeTier.level).padStart(2, '0')}.png`}
               alt={`لوحة عرض VIP ${activeTier.level}`} className="block h-auto w-full select-none object-contain"
-              draggable={false} />
-            {/* The five original printed nodes lie along the curved path at approximately 41–47% image height.
-                These transparent controls do not duplicate or obscure the original artwork. */}
-            {[0,1,2,3,4].map((offset) => {
-              const tier = Math.max(1, Math.min(12, activeTier.level + offset - 2));
-              return <button key={offset} type="button" aria-label={`عرض VIP ${tier}`}
-                onClick={() => { sounds.playClick(); setActiveTierIdx(tier - 1); }}
-                className="absolute z-20 rounded-full bg-transparent focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-200"
-                style={{left:`${[12,29,50,71,88][offset]}%`,top:`${[41,44,45,44,41][offset]}%`,width:'11%',aspectRatio:'1',transform:'translate(-50%,-50%)'}} />;
-            })}
+              draggable={false} onError={() => setShowcaseImageError(true)} onLoad={() => setShowcaseImageError(false)} />
+            {showcaseImageError && <div role="alert" className="p-8 text-center text-amber-200">تعذر تحميل صورة العرض لهذا المستوى. يرجى التحقق من الملف المرفوع.</div>}
+            {/* The curved level markers are part of the original artwork.
+                Do not overlay misleading tier labels or duplicate them. */}
             <button type="button" aria-label="المستوى السابق" onClick={handlePrevTier} className="absolute right-1 top-[52%] z-20 rounded-full border border-amber-300/50 bg-black/55 p-2 text-amber-200"><ChevronRight size={20}/></button>
             <button type="button" aria-label="المستوى التالي" onClick={handleNextTier} className="absolute left-1 top-[52%] z-20 rounded-full border border-amber-300/50 bg-black/55 p-2 text-amber-200"><ChevronLeft size={20}/></button>
             <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
               <div className="absolute left-1/2 top-[27%] h-24 w-24 -translate-x-1/2 animate-pulse rounded-full blur-3xl opacity-35" style={{background:activeTier.themeColor}}/>
+              <div key={activeTier.level} className="absolute inset-x-[12%] top-[17%] h-[35%] rounded-full opacity-25 motion-reduce:animate-none"
+                style={{background:`conic-gradient(from ${activeTier.level * 30}deg, transparent, ${activeTier.themeColor}, transparent, ${activeTier.level % 2 ? '#facc15' : '#ffffff'}, transparent)`,filter:`blur(${12 + activeTier.level}px)`,animation:`spin ${7 + activeTier.level * 0.8}s linear infinite ${activeTier.level % 2 ? 'reverse' : 'normal'}`}}/>
             </div>
           </div>
           <p className="text-center text-xs font-bold text-amber-200">VIP {activeTier.level} · ${currentUser.vipLevel >= activeTier.level ? 'تمتلك المستوى' : 'معاينة فقط'}</p>
