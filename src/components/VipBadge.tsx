@@ -155,14 +155,16 @@ export const VipBadge: React.FC<VipBadgeProps> = ({
   const { setOpenVipModal, setVipModalInitialPopup } = useApp();
   const [imgError, setImgError] = useState(false);
 
-  // If no VIP active, don't render
-  if (!vipLevel || vipLevel <= 0) return null;
-
-  const validLevel = Math.max(1, Math.min(12, Math.floor(vipLevel)));
-  const meta = VIP_BEAST_METADATA[validLevel] || VIP_BEAST_METADATA[1];
-
-  // Retry the correct badge when the account's VIP level changes.
+  // Hooks must run in the same order even when VIP is disabled.
+  // Reset the asset error when a user's VIP tier changes.
+  const validLevel = Number.isFinite(vipLevel) && vipLevel! > 0
+    ? Math.max(1, Math.min(12, Math.floor(vipLevel!)))
+    : 0;
   useEffect(() => { setImgError(false); }, [validLevel]);
+
+  // Hide inactive VIP only after hooks have executed.
+  if (validLevel === 0) return null;
+  const meta = VIP_BEAST_METADATA[validLevel];
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
