@@ -1,0 +1,1 @@
+Build the Staging test APK with all twelve VIP avatar frames and entrance animation fixes. Corrected entrance artwork is pending.
