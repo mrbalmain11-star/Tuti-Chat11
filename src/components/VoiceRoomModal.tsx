@@ -2733,18 +2733,23 @@ export const VoiceRoomModal: React.FC = () => {
                 <span className="text-xs font-bold text-slate-400">الملف الشخصي</span>
               </div>
 
-              {/* Circular Avatar popping up out of the top edge */}
-              <button type="button" onClick={() => { const target = selectedMicUser.user; setSelectedMicUser(null); handleOpenUserProfile(target); }} aria-label="فتح الملف الشخصي الكامل" className="relative -mt-9 mx-auto block w-20 h-20 sm:w-22 sm:h-22 rounded-full border-2 border-white/90 overflow-hidden shadow-2xl bg-slate-900">
-                <CircleUserRound className="absolute inset-0 m-auto h-10 w-10 text-slate-400" aria-hidden="true" />
-                <img
-                  src={selectedMicUser.user.avatar}
-                  alt={selectedMicUser.user.name}
-                  onError={event => { event.currentTarget.style.display = 'none'; }}
-                  className="w-full h-full object-cover"
-                />
-              </button>
-
-              <div className="relative mx-auto -mt-20 mb-20 w-20 h-0 pointer-events-none"><CpFrameForUser userId={selectedMicUser.user.id} name={selectedMicUser.user.name} /></div>
+              {/* Avatar and CP frame share one anchor. Keep the decorative frame outside
+                  the clipped photo, so neither the CP wings nor the name are obscured. */}
+              <div className="relative -mt-9 mx-auto mb-3 h-20 w-20 sm:h-22 sm:w-22">
+                <button type="button" onClick={() => { const target = selectedMicUser.user; setSelectedMicUser(null); handleOpenUserProfile(target); }} aria-label="فتح الملف الشخصي الكامل" className="relative block h-full w-full rounded-full border-2 border-white/90 shadow-2xl bg-slate-900">
+                  <span className="absolute inset-0 overflow-hidden rounded-full">
+                    <img
+                      src={selectedMicUser.user.avatar || '/placeholder-avatar.svg'}
+                      alt={selectedMicUser.user.name}
+                      onError={event => {
+                        if (!event.currentTarget.src.endsWith('/placeholder-avatar.svg')) event.currentTarget.src = '/placeholder-avatar.svg';
+                      }}
+                      className="h-full w-full object-cover"
+                    />
+                  </span>
+                </button>
+                <div className="absolute inset-0 pointer-events-none"><CpFrameForUser userId={selectedMicUser.user.id} name={selectedMicUser.user.name} /></div>
+              </div>
 
               {/* User Name in large, bold, clear white text */}
               <h3 className="text-xl sm:text-2xl font-black text-white text-center mt-2.5 tracking-wide flex items-center justify-center gap-1">
