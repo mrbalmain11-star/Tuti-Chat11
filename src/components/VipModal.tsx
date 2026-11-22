@@ -364,6 +364,7 @@ export const VipModal: React.FC = () => {
       setGiftSuccessToast('هذه الرتبة مملوكة بالفعل؛ لا حاجة إلى شراء جديد.');
       return;
     }
+    if (activeTier.level !== currentUser.vipLevel + 1) { setGiftSuccessToast('يجب شراء المستوى التالي بالتسلسل فقط.'); return; }
     if (!VIP_PURCHASE_PRICES_RECONCILED) {
       setGiftSuccessToast('شراء VIP متوقف مؤقتاً حتى توحيد أسعار الكتالوج والخادم. لم يتم الخصم.');
       return;
@@ -456,181 +457,30 @@ export const VipModal: React.FC = () => {
         </header>
 
         {/* ========================================================================= */}
-        {/* TOP VIP LEVEL SELECTOR (VIP 1 TO SVIP 12)                                 */}
-        {/* ========================================================================= */}
-        <div className="relative z-20 px-3 py-2 bg-black/60 border-b border-white/5">
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1" aria-label="اختيار مستوى VIP">
-            {VIP_TIERS.map((tier, idx) => {
-              const isSelected = activeTierIdx === idx;
-              const isOwned = currentUser.vipLevel >= tier.level;
-              return (
-                <button
-                  key={tier.level}
-                  aria-pressed={isSelected}
-                  onClick={() => {
-                    sounds.playClick();
-                    setActiveTierIdx(idx);
-                  }}
-                  className={`px-3 py-1 rounded-full text-xs font-black transition-all shrink-0 cursor-pointer flex items-center gap-1 ${
-                    isSelected
-                      ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-slate-950 shadow-[0_0_12px_rgba(245,158,11,0.6)] scale-105 border border-yellow-200'
-                      : isOwned
-                      ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-500/50 hover:bg-emerald-900/60'
-                      : 'bg-white/5 hover:bg-white/10 text-white/70 border border-white/10'
-                  }`}
-                >
-                  <span>{tier.name}</span>
-                  {isOwned && <span className="text-[10px] text-emerald-400">✓</span>}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* ========================================================================= */}
         {/* SCROLLABLE MAIN CONTENT                                                  */}
         {/* ========================================================================= */}
         <div className="relative z-10 flex-1 min-h-0 overflow-y-auto overscroll-contain no-scrollbar px-3 sm:px-4 pb-28 space-y-4 pt-2">
-          {/* VIP POSTER CARD SHOWCASE WITH NAVIGATION ARROWS */}
-          <div className="relative flex items-center justify-center">
-            {/* Previous Tier Arrow (<) */}
-            <button
-              onClick={handlePrevTier}
-              className="absolute right-0 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/70 hover:bg-black border border-white/20 text-amber-300 flex items-center justify-center active:scale-90 transition z-20 cursor-pointer shadow-lg"
-              title="السابق"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-
-            {/* Poster Card Artwork Image from Uploads */}
-            <div
-              className="relative w-full max-w-[340px] mx-auto rounded-3xl overflow-hidden border-2 shadow-[0_0_30px_rgba(0,0,0,0.9)] bg-black"
-              style={{ borderColor: activeTier.themeColor }}
-            >
-              <img
-                key={activeTier.level}
-                src={activeTier.cardImage}
-                alt={activeTier.name}
-                loading="eager"
-                onError={(event) => {
-                  const img = event.currentTarget;
-                  img.style.display = 'none';
-                  img.parentElement?.setAttribute('data-vip-image-missing', String(activeTier.level));
-                }}
-                onLoad={(event) => {
-                  event.currentTarget.style.display = 'block';
-                  event.currentTarget.parentElement?.removeAttribute('data-vip-image-missing');
-                }}
-                className="relative z-10 block w-full h-auto object-contain select-none"
-              />
-
-              <div className="absolute inset-0 z-0 flex items-center justify-center bg-gradient-to-br from-slate-950 via-purple-950 to-amber-950 text-amber-200" aria-hidden="true">
-                <span className="text-5xl font-black opacity-35">{activeTier.name}</span>
-              </div>
-              {/* The selected tier is always labelled independently of the artwork. */}
-              <div className="absolute top-3 right-3 z-30 rounded-full bg-black/85 border border-amber-300/80 px-3 py-1 text-xs font-black text-amber-100 shadow-lg" dir="ltr">{activeTier.name}</div>
-
-              {/* Status Badge overlay in top left of image */}
-              <div className="absolute top-3 left-3 z-20">
-                {isAlreadyOwned ? (
-                  <span className="px-3 py-1 rounded-full bg-emerald-600/90 text-white font-black text-[11px] shadow-lg border border-emerald-300 flex items-center gap-1 backdrop-blur-xs">
-                    <Check className="w-3.5 h-3.5" />
-                    <span>بالفعل تمتلك</span>
-                  </span>
-                ) : (
-                  <span className="px-3 py-1 rounded-full bg-black/70 text-amber-300 font-mono font-black text-[11px] shadow-lg border border-amber-400/60 backdrop-blur-xs">
-                    {VIP_PURCHASE_PRICES_RECONCILED ? `${activeTier.price.toLocaleString()} 🪙` : 'السعر غير معتمد'}
-                  </span>
-                )}
-              </div>
-
-              {/* Overlaid User Profile on top-right circle and banner of the poster artwork */}
-              {/* "بحيث يضهر بلدائره صوره المستخدمين وتحته الإسم ترتيب وتطبيق الإشارات الموجوده بلحساب مثل ماهيه" */}
-
-              {/* 1. Circular User Avatar positioned directly inside the printed golden circular ring */}
-              <div
-                className="absolute z-20 pointer-events-none"
-                style={{
-                  top: '22%',
-                  left: '82%',
-                  transform: 'translate(-50%, -50%)',
-                  width: '17.8%',
-                  aspectRatio: '1 / 1',
-                }}
-              >
-                <div className="w-full h-full rounded-full overflow-hidden border border-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.7)] bg-slate-900 relative isolate">
-                  {currentUser.avatar ? (
-                    <img
-                      key={currentUser.avatar}
-                      src={currentUser.avatar}
-                      alt={currentUser.name}
-                      className="w-full h-full object-cover"
-                      onLoad={(event) => {
-                        const image = event.currentTarget;
-                        // A full phone screenshot is not a profile portrait.
-                        // Never display the entire profile screen inside the VIP frame.
-                        if (image.naturalWidth > 0 && image.naturalHeight / image.naturalWidth > 1.45) {
-                          image.style.display = 'none';
-                        }
-                      }}
-                      onError={(event) => { event.currentTarget.style.display = 'none'; }}
-                    />
-                  ) : null}
-                  <span className="absolute inset-0 -z-10 flex items-center justify-center text-amber-100 font-black text-lg bg-gradient-to-br from-amber-900 to-slate-950">
-                    {(currentUser.nickname || currentUser.name || '؟').trim().charAt(0)}
-                  </span>
-                  <div className="absolute inset-0 bg-gradient-to-tr from-black/20 via-transparent to-white/20 pointer-events-none" />
-                </div>
-              </div>
-
-              {/* 2. User Name in the golden banner directly beneath the circular avatar */}
-              <div
-                className="absolute z-20 pointer-events-none flex items-center justify-center"
-                style={{
-                  top: '30%',
-                  left: '82%',
-                  transform: 'translate(-50%, -50%)',
-                  width: '18%',
-                  height: '2.5%',
-                  overflow: 'hidden',
-                }}
-              >
-                <VipName
-                  name={currentUser.nickname || currentUser.name || 'مستخدم'}
-                  vipLevel={activeTier.level}
-                  className="text-[7px] sm:text-[8px] leading-none font-black truncate whitespace-nowrap text-center block drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] max-w-full min-w-0 px-0.5"
-                  fallbackColor="text-amber-100"
-                />
-              </div>
-
-              {/* 3. Account signals / Badges arranged below name banner (مثل ما هيه بالحساب) */}
-              <div
-                className="absolute z-20 pointer-events-none flex items-center justify-center gap-0.5 flex-nowrap min-w-0 overflow-hidden"
-                style={{
-                  top: '35%',
-                  left: '82%',
-                  transform: 'translate(-50%, -50%)',
-                  width: '23%',
-                  maxHeight: '3.5%',
-                }}
-              >
-                <span className="shrink-0 rounded-full border border-amber-300/80 bg-black/80 px-1 text-[9px] font-black text-amber-200 whitespace-nowrap">{`VIP${activeTier.level}`}</span>
-                <span className="text-[10px] leading-none select-none">{currentUser.countryFlag || '🇮🇶'}</span>
-                <span className="text-[9px] font-bold text-cyan-300">
-                  {currentUser.gender === 'أنثى' ? '♀' : '♂'}
-                </span>
-              </div>
+          {/* Royal VIP showcase: original complete artwork with interactive curved-path hotspots. */}
+          <div className="relative mx-auto w-full max-w-[440px] overflow-hidden rounded-xl" style={{boxShadow:`0 0 28px ${activeTier.glowColor}`}}>
+            <img key={activeTier.level} src={`/assets/vip/showcase/vip${String(activeTier.level).padStart(2, '0')}.png`}
+              alt={`لوحة عرض VIP ${activeTier.level}`} className="block h-auto w-full select-none object-contain"
+              draggable={false} />
+            {/* The five original printed nodes lie along the curved path at approximately 41–47% image height.
+                These transparent controls do not duplicate or obscure the original artwork. */}
+            {[0,1,2,3,4].map((offset) => {
+              const tier = Math.max(1, Math.min(12, activeTier.level + offset - 2));
+              return <button key={offset} type="button" aria-label={`عرض VIP ${tier}`}
+                onClick={() => { sounds.playClick(); setActiveTierIdx(tier - 1); }}
+                className="absolute z-20 rounded-full bg-transparent focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-200"
+                style={{left:`${[12,29,50,71,88][offset]}%`,top:`${[41,44,45,44,41][offset]}%`,width:'11%',aspectRatio:'1',transform:'translate(-50%,-50%)'}} />;
+            })}
+            <button type="button" aria-label="المستوى السابق" onClick={handlePrevTier} className="absolute right-1 top-[52%] z-20 rounded-full border border-amber-300/50 bg-black/55 p-2 text-amber-200"><ChevronRight size={20}/></button>
+            <button type="button" aria-label="المستوى التالي" onClick={handleNextTier} className="absolute left-1 top-[52%] z-20 rounded-full border border-amber-300/50 bg-black/55 p-2 text-amber-200"><ChevronLeft size={20}/></button>
+            <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+              <div className="absolute left-1/2 top-[27%] h-24 w-24 -translate-x-1/2 animate-pulse rounded-full blur-3xl opacity-35" style={{background:activeTier.themeColor}}/>
             </div>
-
-            {/* Next Tier Arrow (>) */}
-            <button
-              onClick={handleNextTier}
-              className="absolute left-0 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/70 hover:bg-black border border-white/20 text-amber-300 flex items-center justify-center active:scale-90 transition z-20 cursor-pointer shadow-lg"
-              title="التالي"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
           </div>
+          <p className="text-center text-xs font-bold text-amber-200">VIP {activeTier.level} · ${currentUser.vipLevel >= activeTier.level ? 'تمتلك المستوى' : 'معاينة فقط'}</p>
 
           {/* User Account VIP Showcase Card: "ترتيب وتطبيق الإشارات الموجودة بالحساب مثل ما هيه" */}
           <div className="bg-gradient-to-r from-amber-950/40 via-purple-950/35 to-slate-900/60 border border-amber-500/35 rounded-2xl p-3.5 backdrop-blur-md shadow-xl flex items-center gap-3.5">
