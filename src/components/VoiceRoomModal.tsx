@@ -2763,7 +2763,7 @@ export const VoiceRoomModal: React.FC = () => {
                     <span className="inline-flex items-center gap-1 rounded-xl bg-slate-900/70 px-1 py-1 text-amber-50"><RoyalLevelEmblem track="wealth" level={royalProgress(BigInt(selectedMicVerifiedStatus.wealthExp)).level} kind="badge" size={62} animated={false} /><span className="text-xs">الثروة {royalProgress(BigInt(selectedMicVerifiedStatus.wealthExp)).level}</span></span>
                     <span className="inline-flex items-center gap-1 rounded-xl bg-slate-900/70 px-1 py-1 text-amber-50"><RoyalLevelEmblem track="charm" level={royalProgress(BigInt(selectedMicVerifiedStatus.charmExp)).level} kind="badge" size={62} animated={false} /><span className="text-xs">السحر {royalProgress(BigInt(selectedMicVerifiedStatus.charmExp)).level}</span></span>
                   </>}
-                  {selectedMicVerifiedStatus.vipLevel > 0 && !selectedMicVerifiedStatus.loadFailed && <span className="inline-flex items-center gap-1 rounded-xl border border-yellow-300/70 bg-gradient-to-r from-amber-950 via-yellow-700 to-amber-500 px-3 py-1.5 text-yellow-50 shadow-lg"><span aria-hidden="true">✦</span><span>VIP {selectedMicVerifiedStatus.vipLevel}</span></span>}
+                  {!selectedMicVerifiedStatus.loadFailed && <VipBadge vipLevel={selectedMicVerifiedStatus.vipLevel} size="lg" />}
                   {selectedMicVerifiedStatus.loadFailed && <span className="text-slate-400">تعذر التحقق من المستويات</span>}
                 </> : <span className="text-slate-400">جارٍ التحقق من بيانات الحساب…</span>}
               </div>
