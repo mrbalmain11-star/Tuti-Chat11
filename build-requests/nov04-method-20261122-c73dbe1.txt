@@ -1,0 +1,2 @@
+Build the latest TotiChat Staging APK with the November 4 workflow.
+Verified app commit: c73dbe11db26427187a7fd3f7e02a1d194519250
