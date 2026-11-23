@@ -1933,8 +1933,8 @@ export const VoiceRoomModal: React.FC = () => {
                         <div className="flex min-w-0 max-w-full flex-wrap items-center justify-end gap-x-1 gap-y-0.5 text-[11px]">
                           <bdi className="text-amber-300 font-bold [overflow-wrap:anywhere]">{msg.senderName}</bdi>
                           {chatIdentityByUser[msg.senderId] && <IdentityBadge kind={chatIdentityByUser[msg.senderId]} size={19} />}
-                          {verifiedSenderBadges[msg.senderId]?.wealth > 0 && <WealthBadge level={verifiedSenderBadges[msg.senderId].wealth} size="xs" />}
-                          {verifiedSenderBadges[msg.senderId]?.charm > 0 && <CharmBadge level={verifiedSenderBadges[msg.senderId].charm} size="xs" />}
+                          {(verifiedSenderBadges[msg.senderId]?.wealth ?? 0) > 0 && <WealthBadge level={verifiedSenderBadges[msg.senderId].wealth} size="xs" />}
+                          {(verifiedSenderBadges[msg.senderId]?.charm ?? 0) > 0 && <CharmBadge level={verifiedSenderBadges[msg.senderId].charm} size="xs" />}
                           {((verifiedSenderBadges[msg.senderId]?.vip ?? 0)) >= 1 && (
                             <VipBadge vipLevel={(verifiedSenderBadges[msg.senderId]?.vip ?? 0)} size="xs" className="inline-flex align-middle ml-1" />
                           )}
