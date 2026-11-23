@@ -139,7 +139,9 @@ export const DirectChatModal: React.FC = () => {
                 </div>
                 <div className={`max-w-[82%] min-w-[76px] ${mine ? 'items-start' : 'items-end'} flex flex-col`}>
                   <div className="mb-1 w-full border-b border-slate-400/40 pb-0.5 text-[10px] font-bold text-slate-600">{senderName}</div>
-                  <div className={`w-fit max-w-full px-3 pt-2 pb-1.5 rounded-xl text-sm leading-6 break-words shadow-sm ${mine ? 'bg-[#d9fdd3] text-[#172b25] rounded-tr-sm' : 'bg-white text-[#172b25] rounded-tl-sm'}`}>
+                  <div className={`relative isolate w-fit max-w-full px-3 pt-2 pb-1.5 rounded-xl text-sm leading-6 break-words shadow-sm ${mine ? 'bg-[#d9fdd3] text-[#172b25] rounded-tr-sm' : 'bg-white text-[#172b25] rounded-tl-sm'}`}>
+                    {m.bubbleAsset && <img src={m.bubbleAsset} alt="" aria-hidden="true" loading="lazy"
+                      className="pointer-events-none absolute inset-0 -z-10 h-full w-full rounded-xl object-fill opacity-30" />}
                     <p className="whitespace-pre-wrap break-words" dir="auto">{m.text}</p>
                     <div className="text-[10px] leading-4 text-slate-500 text-left mt-0.5" dir="ltr">{formatTime(m.timestamp)}</div>
                   </div>

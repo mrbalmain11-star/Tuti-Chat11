@@ -1,3 +1,5 @@
+import { StorageItemVisual } from './StorageItemVisual';
+import { useRoomDecorations } from '../services/roomDecorations';
 import { CpFrameForUser } from './CpFrameForUser';
 import { VipMessageFrame } from './VipMessageFrame';
 import { WealthBadge, CharmBadge } from './LevelBadgeIcons';
@@ -138,6 +140,7 @@ export const VoiceRoomModal: React.FC = () => {
   } = useApp();
 
   // Role detection: Owner vs Moderator vs Visitor
+  const { backgroundUrl: storeBackgroundUrl, arrival: storeArrival } = useRoomDecorations(activeRoom?.id, currentUser.id);
   const isOwner = Boolean(activeRoom && activeRoom.hostId === currentUser.id);
   // Room moderation is authorized by room ownership or room_moderators on the server.
   // Global super-admin status alone does not grant the room-moderation RPC permission.
@@ -1507,12 +1510,22 @@ export const VoiceRoomModal: React.FC = () => {
 
       {/* Main Room Viewport Container (Matching Mobile Aspect Ratio) */}
       <div className="relative w-full max-w-md h-full flex flex-col justify-between overflow-x-hidden overflow-y-auto overscroll-y-contain shadow-2xl bg-[#0d0426] box-border" style={{ paddingTop: "max(10px, env(safe-area-inset-top, 0px))", paddingBottom: "max(10px, env(safe-area-inset-bottom, 0px))" }}>
+        {storeArrival && (
+          <div className="pointer-events-none absolute inset-x-4 top-24 z-40 flex h-44 items-center justify-center gap-2">
+            {storeArrival.mountUrl && <div className="h-full w-1/2">
+              <StorageItemVisual key={storeArrival.mountUrl} url={storeArrival.mountUrl} name="المركبة" play />
+            </div>}
+            {storeArrival.entranceUrl && <div className="h-full w-1/2">
+              <StorageItemVisual key={storeArrival.entranceUrl} url={storeArrival.entranceUrl} name="مؤثر الدخول" play />
+            </div>}
+          </div>
+        )}
         {/* =========================================================================
             1. ROOM BACKGROUND: Deep cosmic galaxy with starry dust & nebula
             ========================================================================= */}
         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
           <img
-            src={activeRoom.backgroundUrl || '/galaxy-room-bg.jpg'}
+            src={storeBackgroundUrl || activeRoom.backgroundUrl || '/galaxy-room-bg.jpg'}
             alt="خلفية الغرفة الكونية"
             className="w-full h-full object-cover object-center"
           />
@@ -1941,9 +1954,17 @@ export const VoiceRoomModal: React.FC = () => {
                             <VipBadge vipLevel={(verifiedSenderBadges[msg.senderId]?.vip ?? 0)} size="xs" className="inline-flex align-middle ml-1" />
                           )}
                         </div>
-                        <VipMessageFrame level={(verifiedSenderBadges[msg.senderId]?.vip ?? 0)}>
-                          <div dir="auto" className="whitespace-pre-wrap [overflow-wrap:anywhere]">{msg.text}</div>
-                        </VipMessageFrame>
+                        {msg.bubbleAsset ? (
+                          <div className="relative isolate rounded-2xl bg-[#160d33] px-3 py-2 text-xs leading-relaxed text-white">
+                            <img src={msg.bubbleAsset} alt="" aria-hidden="true" loading="lazy"
+                              className="pointer-events-none absolute inset-0 -z-10 h-full w-full rounded-2xl object-fill opacity-50" />
+                            <div dir="auto" className="whitespace-pre-wrap [overflow-wrap:anywhere]">{msg.text}</div>
+                          </div>
+                        ) : (
+                          <VipMessageFrame level={(verifiedSenderBadges[msg.senderId]?.vip ?? 0)}>
+                            <div dir="auto" className="whitespace-pre-wrap [overflow-wrap:anywhere]">{msg.text}</div>
+                          </VipMessageFrame>
+                        )}
                       </div>
                       <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full border border-amber-300/70 bg-emerald-950 shadow-sm" aria-label={`صورة ${msg.senderName}`}>
                         {(msg.senderId === currentUser.id ? currentUser.avatar : msg.senderAvatar) ? (

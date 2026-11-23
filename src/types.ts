@@ -114,6 +114,7 @@ export interface ChatMessage {
   timestamp: string;
   isSystem?: boolean;
   isGiftNotice?: boolean;
+  bubbleAsset?: string | null;
   vipLevel?: number;
   giftInfo?: {
     giftName: string;
@@ -138,6 +139,7 @@ export interface DirectConversation {
     id: string;
     text: string;
     sender: 'me' | 'them';
+    bubbleAsset?: string | null;
     timestamp: string;
   }[];
 }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { stagingBackend } from '../services/stagingBackend';
 import {
   ChevronRight,
@@ -15,8 +15,10 @@ import {
   getStorageCategory,
   storageCategories,
   StorageItem,
+  StorageCategory,
   BagItem,
 } from '../data/storageItems';
+import { CpSearchModal } from './CpSearchModal';
 import { StorageItemVisual } from './StorageItemVisual';
 
 export const StorageModal: React.FC = () => {
@@ -29,21 +31,26 @@ export const StorageModal: React.FC = () => {
     equipBagItem,
     unequipBagItem,
     currentUser,
+    rooms,
     setOpenRechargeModal,
     setOpenVipModal,
   } = useApp();
 
   // Sub-tabs in "تخزين" (Store)
-  const [storeCategory, setStoreCategory] = useState<'frames' | 'mounts' | 'bubbles' | 'entrances'>('frames');
+  const [storeCategory, setStoreCategory] = useState<StorageCategory>('frames');
 
   // Sub-tabs in "حقيبة" (Bag / Acquired Items) as requested: VIP, إطار, فقاعة, تأثير الدخول, المركبة
-  const [bagCategory, setBagCategory] = useState<'vip' | 'frames' | 'bubbles' | 'entrances' | 'mounts'>('vip');
+  const [bagCategory, setBagCategory] = useState<'vip' | StorageCategory>('vip');
 
   // Preview item popup
   const [previewItem, setPreviewItem] = useState<StorageItem | BagItem | null>(null);
 
   // Purchase confirmation & toast state
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [targetRoomId, setTargetRoomId] = useState('');
+  const [invitationCardId, setInvitationCardId] = useState<string | null>(null);
+  const ownedRooms = rooms.filter(room => room.hostId === currentUser.id);
+  const purchases = useRef(new Map<string, string>());
   const [purchaseBusy, setPurchaseBusy] = useState(false);
 
   const [storeItems, setStoreItems] = useState<StorageItem[]>([]);
@@ -56,6 +63,8 @@ export const StorageModal: React.FC = () => {
     setCatalogStatus('loading');
     setStoreItems([]);
     setPreviewItem(null);
+    setInvitationCardId(null);
+    setTargetRoomId('');
 
     async function loadCatalog() {
       if (!stagingBackend) {
@@ -63,11 +72,11 @@ export const StorageModal: React.FC = () => {
         return;
       }
       const { data, error } = await stagingBackend.from('store_catalog')
-        .select('id,name,category,price,duration_days,description,preview_url')
+        .select('id,name,category,price,duration_days,description,preview_url,presentation')
         .eq('is_active', true)
         .eq('is_reward', false)
         .eq('currency', 'gold')
-        .in('category', ['frames', 'cars', 'mounts', 'bubbles', 'entrances'])
+        .in('category', ['frames', 'cars', 'mounts', 'bubbles', 'entrances', 'room_backgrounds', 'cards'])
         .order('id');
       if (!active) return;
       if (error) {
@@ -76,6 +85,7 @@ export const StorageModal: React.FC = () => {
       }
       setStoreItems((data ?? []).flatMap(row => {
         const category = getStorageCategory(row.category);
+        if (category === 'cards' && row.presentation?.kind !== 'cp_invitation') return [];
         const assetUrl = getStorageAsset(row.id, row.preview_url);
         const price = Number(row.price);
         if (!category || !assetUrl || !Number.isSafeInteger(price) || price <= 0) return [];
@@ -108,6 +118,8 @@ export const StorageModal: React.FC = () => {
   // Handle Buy Action
   const handleBuy = async (item: StorageItem) => {
     if (purchaseBusy) return;
+    const roomId = item.category === 'room_backgrounds' ? targetRoomId : null;
+    if (item.category === 'room_backgrounds' && !roomId) return;
     if (!stagingBackend) { showToast('الخادم غير متصل، لم يتم الخصم'); return; }
     setPurchaseBusy(true);
     try {
@@ -132,23 +144,31 @@ export const StorageModal: React.FC = () => {
         setCatalogRetry(retry => retry + 1);
         return;
       }
-      if (currentUser.coins < Number(catalog.price)) {
-        showToast('رصيد العملات غير كافٍ');
-        return;
-      }
-      const { data, error } = await stagingBackend.rpc('phase3_purchase_store', {
+      const key = JSON.stringify([currentUser.id, item.id, roomId, item.price, item.durationDays]);
+      const requestId = purchases.current.get(key) ?? crypto.randomUUID();
+      purchases.current.set(key, requestId);
+      const { data, error } = await stagingBackend.rpc('purchase_decoration', {
         p_item_id: item.id,
-        p_request_id: crypto.randomUUID(),
+        p_room_id: roomId,
+        p_request_id: requestId,
+        p_expected_duration: item.durationDays,
         p_expected_price: Number(catalog.price),
         p_expected_currency: catalog.currency,
       });
       if (error) throw error;
       if (!data || data.status !== 'completed' || data.item_id !== item.id) throw new Error('Purchase not confirmed by server');
+      purchases.current.delete(key);
       window.dispatchEvent(new Event('totichat:wallet-changed'));
       window.dispatchEvent(new Event('totichat:inventory-changed'));
       sounds.playSuccess();
-      showToast('تم الشراء بنجاح وحفظ العنصر في حسابك');
-      } catch (error) {
+      setPreviewItem(null);
+      if (item.category === 'cards') {
+        setInvitationCardId(item.id);
+      } else {
+        if (roomId) window.dispatchEvent(new Event('totichat:room-decoration-changed'));
+        showToast('تم الشراء والتفعيل');
+      }
+    } catch (error) {
       console.error('Store purchase failed', error);
       showToast('فشل الشراء أو لم يتم تأكيده، راجع رصيدك قبل المحاولة مجدداً');
     } finally {
@@ -217,7 +237,7 @@ export const StorageModal: React.FC = () => {
         </div>
 
         {storageTab === 'store' ? (
-          <div className="relative z-10 grid grid-cols-4 px-2 pt-2 border-b border-emerald-900/30 text-center text-xs font-bold">
+          <div className="relative z-10 grid grid-cols-3 px-2 pt-2 border-b border-emerald-900/30 text-center text-xs font-bold">
             {storageCategories.map((tab) => {
               const active = storeCategory === tab.id;
               return (
@@ -240,16 +260,8 @@ export const StorageModal: React.FC = () => {
             })}
           </div>
         ) : (
-          <div className="relative z-10 grid grid-cols-5 px-1 pt-2 border-b border-emerald-900/30 text-center text-[11px] sm:text-xs font-bold">
-            {(
-              [
-                { id: 'vip', label: 'VIP' },
-                { id: 'frames', label: 'الإطارات' },
-                { id: 'bubbles', label: 'فقاعة' },
-                { id: 'entrances', label: 'تأثير الدخول' },
-                { id: 'mounts', label: 'المركبات' },
-              ] as const
-            ).map((tab) => {
+          <div className="relative z-10 flex flex-wrap justify-center gap-x-3 px-1 pt-2 border-b border-emerald-900/30 text-center text-[11px] sm:text-xs font-bold">
+            {[{ id: 'vip', label: 'VIP' } as const, ...storageCategories].map(tab => {
               const active = bagCategory === tab.id;
               return (
                 <button
@@ -402,7 +414,10 @@ export const StorageModal: React.FC = () => {
                             </span>
 
                             <div className="mt-2.5 w-full">
-                              {isEquipped ? (
+                              {item.category === 'cards' ? (
+                                <button type="button" className="rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-bold text-emerald-950"
+                                  onClick={() => setInvitationCardId(item.id)}>إرسال دعوة CP</button>
+                              ) : item.category === 'room_backgrounds' ? null : isEquipped ? (
                                 <div className="flex items-center gap-1.5 justify-center">
                                   <span className="flex-1 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[11px] font-bold flex items-center justify-center gap-1">
                                     <Check className="w-3 h-3 stroke-[3]" />
@@ -492,18 +507,27 @@ export const StorageModal: React.FC = () => {
                     <span className="text-xs text-slate-400 font-normal">/ {previewItem.durationDays === null ? 'دائم' : previewItem.durationDays + ' يوم'}</span>
                   </div>
 
+                  {previewItem.category === 'room_backgrounds' && (
+                    <label className="block text-xs font-bold">
+                      اختر غرفتك
+                      <select value={targetRoomId} onChange={event => setTargetRoomId(event.target.value)}
+                        className="mt-2 w-full rounded-lg bg-emerald-950 p-2">
+                        <option value="">{ownedRooms.length ? 'اختر الغرفة' : 'ما عندك غرفة لتطبيق الخلفية'}</option>
+                        {ownedRooms.map(room => <option key={room.id} value={room.id}>{room.title}</option>)}
+                      </select>
+                    </label>
+                  )}
                   <button
-                    disabled={purchaseBusy}
+                    disabled={purchaseBusy || (previewItem.category === 'room_backgrounds' && !targetRoomId)}
                     onClick={() => {
                       void handleBuy(previewItem);
-                      setPreviewItem(null);
                     }}
                     className="w-full py-2.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-emerald-950 font-black text-xs shadow-md active:scale-95 transition"
                   >
                     تأكيد الشراء
                   </button>
                 </div>
-              ) : !previewItem.isEquipped && (
+              ) : !previewItem.isEquipped && previewItem.category !== 'cards' && previewItem.category !== 'room_backgrounds' && (
                 <div className="mt-4 pt-3 border-t border-emerald-900/40">
                   <button
                     onClick={async () => {
@@ -521,6 +545,8 @@ export const StorageModal: React.FC = () => {
           </div>
         )}
       </div>
+      {invitationCardId && <CpSearchModal invitationCardId={invitationCardId}
+        onClose={() => setInvitationCardId(null)} />}
     </div>
   );
 };

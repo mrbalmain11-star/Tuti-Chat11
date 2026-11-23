@@ -3,9 +3,11 @@ export const storageCategories = [
   { id: 'mounts', label: 'المركبات' },
   { id: 'bubbles', label: 'الفقاعات' },
   { id: 'entrances', label: 'مؤثرات الدخول' },
+  { id: 'room_backgrounds', label: 'خلفيات الغرف' },
+  { id: 'cards', label: 'بطاقات CP' },
 ] as const;
 
-type StorageCategory = typeof storageCategories[number]['id'];
+export type StorageCategory = typeof storageCategories[number]['id'];
 
 export interface StorageItem {
   id: string;

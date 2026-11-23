@@ -1,3 +1,4 @@
+import { getStorageAsset } from '../data/storageItems';
 import { stagingBackend } from './stagingBackend';
 import type { ChatMessage } from '../types';
 import { fetchRoomVisualMembers } from './roomVisualMembers';
@@ -7,6 +8,7 @@ type MessageRow = {
   sender_id: string;
   body: string;
   created_at: string;
+  decoration_bubble_url?: string | null;
 };
 
 export async function fetchRealRoomMessages(roomId: string, since?: string): Promise<ChatMessage[]> {
@@ -15,7 +17,7 @@ export async function fetchRealRoomMessages(roomId: string, since?: string): Pro
   if (authError) throw authError;
   if (!auth.user) throw new Error('Not authenticated');
   let query = stagingBackend.from('room_messages')
-    .select('id,sender_id,body,created_at')
+    .select('id,sender_id,body,created_at,decoration_bubble_url')
     .eq('room_id', roomId);
   if (since) query = query.gte('created_at', since);
   const { data, error } = await query
@@ -55,6 +57,7 @@ export async function fetchRealRoomMessages(roomId: string, since?: string): Pro
     senderAvatar: names.get(row.sender_id)?.avatar_url ?? '',
     vipLevel: vipLevels.get(row.sender_id) ?? 0,
     text: row.body,
+    bubbleAsset: getStorageAsset('', row.decoration_bubble_url ?? null),
     timestamp: row.created_at,
   }));
 }

@@ -1,3 +1,4 @@
+import { StoreAvatarFrame } from '../components/StoreAvatarFrame';
 import { VipAvatarFrame } from '../components/VipAvatarFrame';
 import React, { useState, useRef, useEffect } from 'react';
 import {
@@ -364,9 +365,9 @@ export const ProfileView: React.FC = () => {
             {/* Avatar Circle with Camera upload button */}
             <div className="flex w-[6.75rem] shrink-0 flex-col items-center gap-2">
               <div className="relative isolate h-[4.25rem] w-[4.25rem]">
-                {currentUser.vipLevel > 0
+                <StoreAvatarFrame userId={currentUser.id} fallback={currentUser.vipLevel > 0
                   ? <VipAvatarFrame level={currentUser.vipLevel} />
-                  : <RoyalProfileFrame refreshKey={openLevelsModal} />}
+                  : <RoyalProfileFrame refreshKey={openLevelsModal} />} />
                 <div
                   onClick={() => {
                     sounds.playClick();

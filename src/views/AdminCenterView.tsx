@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { AdminDecorationsPanel } from './AdminDecorationsPanel';
 import { AdminBannersPanel } from './AdminBannersPanel';
 import { AdminOffersPanel } from './AdminOffersPanel';
 import { AdminOperationsPanel } from './AdminOperationsPanel';
@@ -114,6 +115,7 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
               {id:'recharge',label:'الشحن',Icon:Building2},
               {id:'staff',label:'الصلاحيات',Icon:ShieldCheck},
               {id:'banners',label:'البنرات',Icon:Radio},
+              ...(access.role === 'owner' ? [{id:'decorations',label:'إدارة الزينة',Icon:Gift}] : []),
               {id:'offers',label:'العروض',Icon:Gift},
               ...(access.role === 'owner' ? [{id:'dailyRewards',label:'المكافآت اليومية',Icon:Gift}] : []),
               ...(access.role === 'owner' ? [{id:'testerBadges',label:'شارات المختبرين',Icon:ShieldCheck}] : []),
@@ -142,6 +144,7 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
                 {adminPage === 'recharge' && <AdminRechargePanel />}
                 {adminPage === 'staff' && <AdminStaffPanel />}
                 {adminPage === 'banners' && <AdminBannersPanel />}
+                {adminPage === 'decorations' && access.role === 'owner' && <AdminDecorationsPanel />}
                 {adminPage === 'offers' && <AdminOffersPanel />}
                 {adminPage === 'dailyRewards' && access.role === 'owner' && <AdminDailyRewardsReadOnly />}
                 {adminPage === 'testerBadges' && access.role === 'owner' && <AdminTesterBadgesPanel />}

@@ -797,7 +797,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const { data: auth, error: authError } = await client.auth.getUser();
       if (authError || auth.user?.id !== currentUser.id) return;
       const { data, error } = await client.from('direct_messages')
-        .select('id,sender_id,recipient_id,body,created_at,read_at')
+        .select('id,sender_id,recipient_id,body,created_at,read_at,decoration_bubble_url')
         .or(`sender_id.eq.${auth.user.id},recipient_id.eq.${auth.user.id}`)
         .order('created_at', { ascending: false }).limit(200);
       if (error) throw error;
@@ -820,6 +820,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const thread = threads.get(peerId)!;
         thread.messages.unshift({
           id: String(m.id), text: m.body,
+          bubbleAsset: getStorageAsset('', m.decoration_bubble_url),
           sender: m.sender_id === auth.user.id ? 'me' : 'them',
           timestamp: m.created_at,
         });
@@ -1014,7 +1015,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const request = ++latestRequest;
       const { data, error } = await client
         .from('store_ownership')
-        .select('item_id,equipped,expires_at,store_catalog(name,category,preview_url)')
+        .select('item_id,equipped,expires_at,store_catalog(name,category,preview_url,presentation)')
         .eq('user_id', currentUser.id);
       if (error) { console.warn('Store inventory refresh failed', error); return; }
       if (!live || request !== latestRequest) return;
@@ -1022,7 +1023,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (row.expires_at && new Date(row.expires_at).getTime() <= Date.now()) return [];
         const catalog = Array.isArray(row.store_catalog) ? row.store_catalog[0] : row.store_catalog;
         const category = catalog && getStorageCategory(catalog.category);
-        if (!category) return [];
+        if (!category || (category === 'cards' && catalog.presentation?.kind !== 'cp_invitation')) return [];
         return [{
           id: row.item_id,
           name: catalog.name,
@@ -1040,12 +1041,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
     void refreshBag();
     const onRefresh = () => { void refreshBag(); };
+    const expiryRefresh = window.setInterval(onRefresh, 30000);
     window.addEventListener('totichat:inventory-changed', onRefresh);
     const channel = client.channel('inventory-' + currentUser.id)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'store_ownership', filter: 'user_id=eq.' + currentUser.id }, onRefresh)
       .subscribe();
     return () => {
       live = false;
+      window.clearInterval(expiryRefresh);
       window.removeEventListener('totichat:inventory-changed', onRefresh);
       void client.removeChannel(channel);
     };
