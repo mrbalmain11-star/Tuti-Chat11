@@ -1382,7 +1382,7 @@ export const VoiceRoomModal: React.FC = () => {
   };
 
   const getSeatPosition = (n:number):React.CSSProperties => {
-    if(seatLayout==='circle'){const angle=(n-1)*2*Math.PI/15;return {position:'absolute',left:'calc(50% + '+(Math.sin(angle)*42)+'% - 22px)',top:'calc(50% - '+(Math.cos(angle)*42)+'% - 22px)'};}
+    if(seatLayout==='circle')return {gridColumn:((n-1)%5)+1,gridRow:Math.floor((n-1)/5)+1};
     if(seatLayout==='classic')return {gridColumn:n<=3?n+1:((n-4)%4)+1,gridRow:n<=3?1:Math.floor((n-4)/4)+2};
     if(seatLayout==='stage')return {gridColumn:n<=3?n+1:((n-4)%5)+1,gridRow:n<=3?1:Math.floor((n-4)/5)+2};
     return {};
@@ -1661,8 +1661,8 @@ export const VoiceRoomModal: React.FC = () => {
         </div>
 
         {/* Seat positions only; seat visuals and seat numbers remain unchanged. */}
-        <div className={seatLayout === "circle" ? "relative z-10 mx-auto h-[365px] w-full max-w-[370px]" : "relative z-10 px-2 pt-2 pb-1"}>
-          <div className={seatLayout === "circle" ? "relative h-full w-full" : "grid grid-cols-5 gap-x-2 gap-y-8 items-start justify-items-center [grid-auto-rows:minmax(88px,auto)]"}>
+        <div className={"relative z-10 mx-auto w-full max-w-[540px] px-2 pt-3 pb-3"}>
+          <div className={"grid grid-cols-5 gap-x-2 gap-y-7 items-start justify-items-center [grid-auto-rows:minmax(104px,auto)]"}>
 {Array.from({length:15},(_,i)=>i+1).map((seatNum) => {
               const seat = getSeat(seatNum);
               const isOccupied = !!seat.user;
@@ -1682,7 +1682,7 @@ export const VoiceRoomModal: React.FC = () => {
                       handleSeatClick(seatNum);
                     }
                   }}
-                  className="flex min-w-0 w-full flex-col items-center cursor-pointer group active:scale-95 transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300"
+                  className="relative flex min-w-0 w-full min-h-[104px] flex-col items-center cursor-pointer group active:scale-95 transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300"
                   style={getSeatPosition(seatNum)}
                 >
                   {/* Seat Translucent Circle: Medium size w-14 h-14 sm:w-16 sm:h-16 */}
@@ -1695,7 +1695,7 @@ export const VoiceRoomModal: React.FC = () => {
                   >
                     {isOccupied && seat.user ? (
                       <div
-                        className={`relative w-full h-full rounded-full overflow-visible shadow-md [&_.vip-avatar-frame]:scale-[.67] [&_.cp-wing-avatar-frame]:scale-[.67] ${
+                        className={`relative w-full h-full rounded-full overflow-visible shadow-md [&_.vip-avatar-frame]:scale-[.60] [&_.cp-wing-avatar-frame]:scale-[.60] ${
                           Number(seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel || 0) > 0
                             ? 'border-transparent'
                             : 'border-transparent'
