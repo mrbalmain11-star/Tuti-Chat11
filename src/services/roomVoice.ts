@@ -1,4 +1,4 @@
-import { Room, RoomEvent } from 'livekit-client';
+import { Room, RoomEvent, Track } from 'livekit-client';
 import { stagingBackend } from './stagingBackend';
 import { RoomMusicPublisher } from './roomMusic';
 
@@ -16,6 +16,7 @@ export async function stopRoomMusic(): Promise<void> { await music.stop(); }
 /** Connects to the existing staging LiveKit authority. Never ships API secrets to Android. */
 export async function connectRoomVoice(roomId: string, shouldPublish: () => boolean, onError: (message: string) => void): Promise<{ canPublish: boolean; sync: () => Promise<void>; close: () => Promise<void> }> {
   if (!stagingBackend) throw new Error('Voice backend unavailable');
+  const backend = stagingBackend;
   // Seat assignment and unmute are separate database writes. A token requested
   // between them is listen-only, even if the UI has already enabled the mic.
   // Wait for the server to confirm publish rights before joining LiveKit.
@@ -135,22 +136,70 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
   }
   let micQueue: Promise<void> = Promise.resolve();
   let micRetryPending = false;
+  let micRetryTimer: number | undefined;
+  let micRetryAttempts = 0;
+  const micRetryDelays = [500, 1250, 3000, 6000];
+
+  const clearMicRetry = () => {
+    window.clearTimeout(micRetryTimer);
+    micRetryTimer = undefined;
+    micRetryPending = false;
+    micRetryAttempts = 0;
+    document.removeEventListener('pointerup', retryMicOnGesture);
+  };
+  const recoverMic = async () => {
+    if (closing || !shouldPublish()) return;
+    const { data: member, error } = await backend.from('room_members')
+      .select('seat_no,is_muted,moderation_muted')
+      .eq('room_id', roomId).eq('user_id', room.localParticipant.identity).maybeSingle();
+    if (closing || !shouldPublish()) return;
+    if (error) {
+      scheduleMicRetry();
+      return;
+    }
+    if (!member || member.seat_no == null || member.is_muted || member.moderation_muted) {
+      clearMicRetry();
+      return;
+    }
+    await sync();
+  };
   const retryMicOnGesture = () => {
     if (closing || !micRetryPending || !shouldPublish()) return;
-    micRetryPending = false;
-    void sync().catch(() => {});
+    clearMicRetry();
+    void recoverMic().catch(() => {});
+  };
+  const scheduleMicRetry = () => {
+    if (closing || !data.canPublish || !shouldPublish() || micRetryTimer !== undefined) return;
+    const delay = micRetryDelays[micRetryAttempts];
+    if (delay === undefined) {
+      micRetryPending = true;
+      document.addEventListener('pointerup', retryMicOnGesture);
+      onError('تعذّرت إعادة تشغيل المايك تلقائياً. اضغط على الشاشة للمحاولة مرة ثانية.');
+      return;
+    }
+    micRetryAttempts += 1;
+    micRetryTimer = window.setTimeout(() => {
+      micRetryTimer = undefined;
+      if (shouldPublish()) void recoverMic().catch(() => {});
+      else clearMicRetry();
+    }, delay);
   };
   const sync = (): Promise<void> => {
     micQueue = micQueue.catch(() => {}).then(async () => {
       if (closing) return;
       const publish = Boolean(data.canPublish && shouldPublish());
-      if (room.localParticipant.isMicrophoneEnabled === publish) return;
+      if (!publish) clearMicRetry();
+      if (room.localParticipant.isMicrophoneEnabled === publish) {
+        if (publish) clearMicRetry();
+        return;
+      }
       try {
         await room.localParticipant.setMicrophoneEnabled(publish);
         console.info('[RoomVoice] microphone publication state', { roomId, requested: publish, enabled: room.localParticipant.isMicrophoneEnabled, tokenCanPublish: data.canPublish });
-        if (publish) {
-          micRetryPending = false;
-          document.removeEventListener('pointerup', retryMicOnGesture);
+        if (publish && !room.localParticipant.isMicrophoneEnabled) {
+          scheduleMicRetry();
+        } else {
+          clearMicRetry();
         }
       } catch (error) {
         const name = error instanceof Error ? error.name : 'UnknownError';
@@ -158,20 +207,34 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
         const devices = navigator.mediaDevices;
         const context = !devices?.getUserMedia ? ' [getUserMedia unavailable]' : '';
         console.warn('[RoomVoice] microphone capture failed:', name, detail + context);
-        onError(name === 'NotAllowedError'
-          ? 'تعذّر الوصول للمايك. تأكد من سماح إذن الميكروفون للتطبيق.'
-          : 'تعذّر تشغيل المايك. اضغط على الشاشة لإعادة المحاولة.');
-        // Keep receiving room audio if Android microphone capture fails.
-        // Retry publishing only after a fresh user gesture; never reconnect the room.
-        if (publish && !closing) {
-          micRetryPending = true;
-          document.addEventListener('pointerup', retryMicOnGesture);
+        if (publish && !closing && shouldPublish()) {
+          if (name === 'NotAllowedError' || name === 'SecurityError') {
+            clearMicRetry();
+            micRetryPending = true;
+            document.addEventListener('pointerup', retryMicOnGesture);
+            onError('تعذّر الوصول للمايك. تأكد من سماح إذن الميكروفون للتطبيق.');
+          } else {
+            scheduleMicRetry();
+          }
         }
         throw error;
       }
     });
     return micQueue;
   };
+  room.on(RoomEvent.TrackMuted, (publication, participant) => {
+    if (participant === room.localParticipant && publication.source === Track.Source.Microphone) scheduleMicRetry();
+  });
+  room.on(RoomEvent.LocalTrackUnpublished, publication => {
+    if (publication.source === Track.Source.Microphone) scheduleMicRetry();
+  });
+  room.on(RoomEvent.Reconnected, () => {
+    if (!room.localParticipant.isMicrophoneEnabled) scheduleMicRetry();
+  });
+  const retryMicOnForeground = () => {
+    if (document.visibilityState === 'visible' && !room.localParticipant.isMicrophoneEnabled) scheduleMicRetry();
+  };
+  document.addEventListener('visibilitychange', retryMicOnForeground);
   // Microphone capture can fail on Android even when the remote audio connection works.
   // Preserve listening and let the next tap retry the microphone on the same room.
   await sync().catch(error => console.warn('[RoomVoice] microphone pending gesture retry', error));
@@ -180,8 +243,8 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
     closing = true;
     if (musicRoom === room) { musicRoom = null; await music.stop(); }
     document.removeEventListener('pointerup', unlockAudio);
-    document.removeEventListener('pointerup', retryMicOnGesture);
-    micRetryPending = false;
+    document.removeEventListener('visibilitychange', retryMicOnForeground);
+    clearMicRetry();
     await micQueue.catch(() => {});
     await room.disconnect();
     clearAudio();

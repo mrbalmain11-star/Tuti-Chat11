@@ -1,6 +1,6 @@
 import { VipAvatarFrame } from './VipAvatarFrame';
 /* V002 staging APK build marker: vvv2 — original VIP layout preserved. */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   X,
   ChevronRight,
@@ -332,6 +332,10 @@ export const VipModal: React.FC = () => {
   const [showSendModal, setShowSendModal] = useState<boolean>(false);
   const [targetFriendId, setTargetFriendId] = useState<string>('');
   const [giftSuccessToast, setGiftSuccessToast] = useState<string | null>(null);
+  const [vipGiftBusy, setVipGiftBusy] = useState(false);
+  const [vipGiftError, setVipGiftError] = useState('');
+  const giftRequest = useRef<{ key: string; id: string } | null>(null);
+
 
   if (!openVipModal) return null;
 
@@ -388,8 +392,42 @@ export const VipModal: React.FC = () => {
     }
   };
 
-  const handleSendGift = () => {
-    alert('إهداء VIP متوقف مؤقتاً حتى ربطه بعملية شراء آمنة على الخادم. لم يتم خصم أي عملات.');
+  const handleSendGift = async () => {
+    const recipient = targetFriendId.trim()
+      .replace(/[٠-٩]/g, digit => String('٠١٢٣٤٥٦٧٨٩'.indexOf(digit)))
+      .replace(/[۰-۹]/g, digit => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(digit)));
+    if (!recipient || vipGiftBusy || !stagingBackend) return;
+    const key = JSON.stringify([currentUser.id, recipient, activeTier.level, activeTier.price]);
+    const request = giftRequest.current?.key === key ? giftRequest.current : { key, id: crypto.randomUUID() };
+    giftRequest.current = request;
+    setVipGiftBusy(true);
+    setVipGiftError('');
+    try {
+      const { data, error } = await stagingBackend.rpc('staging_gift_vip', {
+        p_recipient: recipient,
+        p_tier: activeTier.level,
+        p_price: activeTier.price,
+        p_request_id: request.id,
+      });
+      if (error || data?.success !== true) throw error ?? new Error('VIP gift not confirmed');
+      giftRequest.current = null;
+      window.dispatchEvent(new Event('totichat:wallet-changed'));
+      setShowSendModal(false);
+      setTargetFriendId('');
+      setGiftSuccessToast(`تم إهداء ${activeTier.name} بنجاح.`);
+    } catch (error) {
+      console.error('VIP gift failed:', error);
+      const message = (error as { message?: string } | null)?.message;
+      const messages: Record<string, string> = {
+        VIP_GIFT_INVALID_RECIPIENT: 'المعرّف غير موجود أو يخص حسابك.',
+        VIP_GIFT_INSUFFICIENT_COINS: 'رصيد الكوينز غير كافٍ.',
+        VIP_GIFT_RECIPIENT_ALREADY_HAS_VIP: 'المستلم عنده اشتراك دائم أو رتبة أعلى فعّالة.',
+        VIP_GIFT_INVALID_PRICE_OR_TIER: 'سعر الإهداء غير متطابق مع الخادم.',
+      };
+      setVipGiftError((message && messages[message]) || 'تعذّر تأكيد الإهداء. حاول مرة ثانية لنفس المستلم والمستوى.');
+    } finally {
+      setVipGiftBusy(false);
+    }
   };
 
   return (
@@ -988,7 +1026,7 @@ export const VipModal: React.FC = () => {
         {/* ========================================================================= */}
         {showSendModal && (
           <div
-            onClick={() => setShowSendModal(false)}
+            onClick={() => { if (!vipGiftBusy) setShowSendModal(false); }}
             className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in"
           >
             <div
@@ -1000,7 +1038,7 @@ export const VipModal: React.FC = () => {
                   <span>🎁 إهداء اشتراك {activeTier.name}</span>
                 </h3>
                 <button
-                  onClick={() => setShowSendModal(false)}
+                  onClick={() => { if (!vipGiftBusy) setShowSendModal(false); }}
                   className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-slate-300 hover:text-white"
                 >
                   <X className="w-4 h-4" />
@@ -1014,7 +1052,8 @@ export const VipModal: React.FC = () => {
                 <input
                   type="text"
                   value={targetFriendId}
-                  onChange={(e) => setTargetFriendId(e.target.value)}
+                  disabled={vipGiftBusy}
+                  onChange={(e) => { setTargetFriendId(e.target.value); setVipGiftError(''); }}
                   placeholder="مثال: 313"
                   className="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400 font-mono text-right"
                 />
@@ -1027,7 +1066,8 @@ export const VipModal: React.FC = () => {
                   {conversations.slice(0, 4).map((c) => (
                     <button
                       key={c.id}
-                      onClick={() => setTargetFriendId(c.userId)}
+                      disabled={vipGiftBusy}
+                      onClick={() => { setTargetFriendId(c.userId); setVipGiftError(''); }}
                       className="px-2.5 py-1 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 text-[10px] text-amber-200 flex items-center gap-1 shrink-0"
                     >
                       <User className="w-3 h-3" />
@@ -1041,16 +1081,18 @@ export const VipModal: React.FC = () => {
               <div className="p-3 rounded-xl bg-amber-950/40 border border-amber-500/30 flex items-center justify-between text-xs">
                 <span className="text-slate-300">سعر الاشتراك:</span>
                 <span className="font-bold text-amber-300 font-mono">
-                  {VIP_PURCHASE_PRICES_RECONCILED ? `${activeTier.price.toLocaleString()} كوينز 🪙` : 'غير متاح'}
+                  {`${activeTier.price.toLocaleString()} كوينز 🪙`}
                 </span>
               </div>
 
+              {vipGiftError && <p role="alert" className="text-xs text-rose-200">{vipGiftError}</p>}
               {/* Send Confirmation Button */}
               <button
-                onClick={handleSendGift}
+                disabled={vipGiftBusy || !targetFriendId.trim() || !stagingBackend}
+                onClick={() => void handleSendGift()}
                 className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-xs shadow-lg transition active:scale-95 cursor-pointer"
               >
-                تأكيد الإهداء
+                {vipGiftBusy ? 'جارٍ الإهداء…' : 'تأكيد الإهداء'}
               </button>
             </div>
           </div>
