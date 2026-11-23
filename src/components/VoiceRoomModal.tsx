@@ -1662,7 +1662,7 @@ export const VoiceRoomModal: React.FC = () => {
 
         {/* Seat positions only; seat visuals and seat numbers remain unchanged. */}
         <div className={seatLayout === "circle" ? "relative z-10 mx-auto h-[365px] w-full max-w-[370px]" : "relative z-10 px-2 pt-2 pb-1"}>
-          <div className={seatLayout === "circle" ? "relative h-full w-full" : "grid grid-cols-5 gap-x-1 gap-y-3 items-center justify-items-center"}>
+          <div className={seatLayout === "circle" ? "relative h-full w-full" : "grid grid-cols-5 gap-x-2 gap-y-5 items-center justify-items-center"}>
 {Array.from({length:15},(_,i)=>i+1).map((seatNum) => {
               const seat = getSeat(seatNum);
               const isOccupied = !!seat.user;
@@ -1690,15 +1690,15 @@ export const VoiceRoomModal: React.FC = () => {
                     className={`relative w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center transition-all ${
                       isOccupied && seat.user
                         ? 'p-0.5'
-                        : 'bg-[#15202e]/60 hover:bg-[#1f2e42]/75 border border-slate-500/40 shadow-[0_2px_8px_rgba(0,0,0,0.5)] backdrop-blur-xs'
+                        : 'bg-transparent hover:brightness-110'
                     }`}
                   >
                     {isOccupied && seat.user ? (
                       <div
-                        className={`relative w-full h-full rounded-full overflow-visible border-2 shadow-md [&>.vip-avatar-frame]:scale-[.79] ${
+                        className={`relative w-full h-full rounded-full overflow-visible shadow-md [&>.vip-avatar-frame]:scale-[.79] ${
                           Number(seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel || 0) > 0
-                            ? 'border-amber-300'
-                            : 'border-white/80'
+                            ? 'border-transparent'
+                            : 'border-transparent'
                         }`}
                       >
                         <div className="absolute inset-0 rounded-full bg-gradient-to-br from-emerald-700 to-teal-950 flex items-center justify-center text-white text-lg font-black">{(seat.user.name || '؟').slice(0,1)}</div>
@@ -1726,10 +1726,10 @@ export const VoiceRoomModal: React.FC = () => {
                       </div>
                     ) : seat.isLocked ? (
                       /* Locked mic */
-                      <RoyalSeatIcon locked className="w-10 h-10" />
+                      <RoyalSeatIcon locked className="w-14 h-14 sm:w-16 sm:h-16" />
                     ) : (
                       /* White plus icon matching Screenshots */
-                      <RoyalSeatIcon className="w-10 h-10" />
+                      <RoyalSeatIcon className="w-14 h-14 sm:w-16 sm:h-16" />
                     )}
                   </div>
 
