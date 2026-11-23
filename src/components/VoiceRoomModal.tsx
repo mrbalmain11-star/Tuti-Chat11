@@ -422,7 +422,12 @@ export const VoiceRoomModal: React.FC = () => {
   const [showRoomStatsModal, setShowRoomStatsModal] = useState(false);
   const [roomGiftStats, setRoomGiftStats] = useState<{ today: number; week: number; month: number } | null>(null);
   const [roomGiftStatsError, setRoomGiftStatsError] = useState('');
-  const [roomGiftRank, setRoomGiftRank] = useState<{ rank: number; roomCount: number } | null>(null);
+  const [monthlyRank, setRoomGiftRank] = useState<{ roomId: string; rank: number | null; roomCount: number } | null>(null);
+  const currentMonthlyRank = monthlyRank?.roomId === activeRoom?.id ? monthlyRank : null;
+  const roomGiftRank = currentMonthlyRank?.rank != null ? currentMonthlyRank : null;
+  const rank = roomGiftRank?.rank ?? undefined;
+  const rankLabel = rank === undefined ? (currentMonthlyRank ? 'بلا ترتيب' : 'الترتيب الشهري') : rank <= 10 ? `TOP ${rank}` : rank <= 99 ? `#${rank}` : '99+';
+  const rankTitle = rank === undefined ? 'ترتيب دعم الغرفة لهذا الشهر' : `المركز ${rank} في ترتيب دعم الغرف لهذا الشهر`;
   useEffect(() => {
     if (!activeRoom?.id || !stagingBackend) return;
     let active = true;
@@ -443,7 +448,17 @@ export const VoiceRoomModal: React.FC = () => {
         do {
           refreshAgain = false;
           try {
-            const { data, error } = await stagingBackend!.rpc('totichat_room_gift_totals', { p_room_id: statsRoomId });
+            const [{ data, error }, { data: rankData, error: rankError }] = await Promise.all([
+              stagingBackend!.rpc('totichat_room_gift_totals', { p_room_id: statsRoomId }),
+              stagingBackend!.rpc('totichat_room_gift_rank', { p_room_id: statsRoomId }),
+            ]);
+            if (!active) return;
+            const position = Number(rankData?.rank);
+            const roomCount = Number(rankData?.room_count);
+            const support = rankData?.month == null ? NaN : Number(rankData.month);
+            setRoomGiftRank(!rankError && Number.isFinite(support) && support >= 0 &&
+              Number.isSafeInteger(position) && position >= 1 && Number.isSafeInteger(roomCount) && roomCount >= position
+              ? { roomId: statsRoomId, rank: support > 0 ? position : null, roomCount } : null);
             if (error) throw error;
             if (!active) return;
             if (!data || ['today', 'week', 'month'].some(key =>
@@ -455,18 +470,9 @@ export const VoiceRoomModal: React.FC = () => {
             const totals = { today: Number(data.today), week: Number(data.week), month: Number(data.month) };
             setRoomGiftStats(totals);
             setRoomGiftStatsError('');
-            const { data: rankData, error: rankError } = await stagingBackend!.rpc('totichat_room_gift_rank', { p_room_id: statsRoomId });
-            if (!active) return;
-            if (!rankError && rankData && Number.isSafeInteger(Number(rankData.rank)) && Number(rankData.rank) >= 1 &&
-                Number.isSafeInteger(Number(rankData.room_count)) && Number(rankData.room_count) >= Number(rankData.rank)) {
-              setRoomGiftRank({ rank: Number(rankData.rank), roomCount: Number(rankData.room_count) });
-            } else {
-              setRoomGiftRank(null);
-            }
           } catch (error) {
             if (active) {
               setRoomGiftStats(null);
-              setRoomGiftRank(null);
               setRoomGiftStatsError(error instanceof Error ? error.message : 'تعذر جلب إحصائيات الهدايا');
             }
           }
@@ -1557,12 +1563,6 @@ export const VoiceRoomModal: React.FC = () => {
           ))}
         </div>
 
-        {/* =========================================================================
-            2. TOP HEADER SECTION (Matching Screenshot 1 & 2)
-            - Left: Power button (⏻), Share button (↗), Seat 1 Badge (👑 ○ 1)
-            - Right: Capsule Card: Heart in teal circle, "العراق الع...", ID:5716905 (يحمل معرف الحساب)
-            - Directly under Capsule: {roomGiftStats ? roomGiftStats.month.toLocaleString('en-US') + ' 🪙' : '—'} (كأس الروم)
-            ========================================================================= */}
         <div className="relative z-20 pt-2 pb-1 px-3.5 flex flex-col gap-1.5">
           {/* Main Action Header Row */}
           <div className="flex items-start justify-between mt-1">
@@ -1645,59 +1645,49 @@ export const VoiceRoomModal: React.FC = () => {
               </div>
             </div>
 
-            {/* Right side: Room Capsule Card carrying host account ID & 254K Trophy */}
-            <div className="flex flex-col items-end gap-1">
-              {/* Capsule Card: يحمل معرف الحساب نفسه على اليمين */}
-              <div
+            <div className="flex min-w-0 max-w-[57%] flex-col items-end gap-1.5">
+              <button
+                type="button"
                 onClick={() => {
                   sounds.playClick();
-                  if (isOwner) {
-                    setShowRoomInfoModal(true);
-                  } else {
-                    if (hostAccountId !== '—') handleCopyId(hostAccountId);
-                  }
+                  if (isOwner) setShowRoomInfoModal(true);
+                  else if (hostAccountId !== '—') handleCopyId(hostAccountId);
                 }}
-                className={`flex items-center gap-2 bg-[#211540]/85 backdrop-blur-md border rounded-full py-1 px-3 shadow-lg cursor-pointer transition active:scale-98 ${
-                  isOwner ? 'border-amber-400/40 hover:border-amber-300' : 'border-purple-400/25 hover:border-purple-300/40'
-                }`}
-                title={isOwner ? 'إدارة معلومات وإعدادات غرفتي 👑' : 'معلومات الغرفة ورقم الغرفة (انقر للنسخ)'}
+                className="flex max-w-full items-center gap-2 rounded-xl border border-emerald-200/25 bg-[#071e1c]/90 py-1.5 pl-2.5 pr-1.5 text-right shadow-lg backdrop-blur-md transition active:scale-95"
+                title={isOwner ? 'إدارة معلومات الغرفة' : 'نسخ رقم الغرفة'}
               >
-                {/* Heart outline in teal circle badge (or crown if owner) */}
-                <div
-                  className={`w-6 h-6 rounded-full flex items-center justify-center text-white shrink-0 shadow-xs ${
-                    isOwner ? 'bg-gradient-to-tr from-amber-500 to-yellow-400 text-slate-950 font-bold text-xs' : 'bg-[#1da594]'
-                  }`}
-                >
-                  {isOwner ? '👑' : <Heart className="w-3.5 h-3.5 text-white fill-none stroke-[2.4]" />}
-                </div>
+                <span className={`flex size-7 shrink-0 items-center justify-center rounded-lg border ${isOwner
+                  ? 'border-amber-300/40 bg-amber-300/15 text-amber-200'
+                  : 'border-emerald-300/30 bg-emerald-300/10 text-emerald-200'}`}>
+                  {isOwner ? <Crown className="size-4" aria-hidden="true" /> : <Heart className="size-3.5" aria-hidden="true" />}
+                </span>
+                <span className="flex min-w-0 flex-col gap-0.5">
+                  <bdi className="truncate text-xs leading-tight font-black text-white">{activeRoom.title || 'غرفة صوتية'}</bdi>
+                  <span className="flex items-center gap-1.5 text-[10px] leading-tight text-emerald-50/75">
+                    <bdi dir="ltr" className="font-mono">ID {hostAccountId}</bdi>
+                    {isOwner && <span className="font-bold text-amber-200">مالك</span>}
+                    {copiedId && <span className="font-bold text-emerald-300">✓</span>}
+                  </span>
+                </span>
+              </button>
 
-                {/* Room Info: Name & Host Account ID */}
-                <div className="flex flex-col text-right leading-tight">
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs font-black text-white tracking-wide max-w-[120px] truncate">
-                      {activeRoom.title || 'العراق الع...'}
-                    </span>
-                    {isOwner && <span className="text-[9px] text-amber-300 font-bold">مالك</span>}
-                  </div>
-                  <div className="flex items-center gap-1 text-[9px] text-slate-300 font-mono">
-                    <span>ID:{hostAccountId}</span>
-                    {copiedId && <span className="text-emerald-400 font-bold">✓</span>}
-                  </div>
-                </div>
-              </div>
-
-              {/* 254K Trophy Pill directly below Capsule Card (كأس الروم) */}
-              <div
+              <button
+                type="button"
                 onClick={() => {
                   sounds.playClick();
                   setShowRoomStatsModal(true);
                 }}
-                className="flex items-center gap-1.5 bg-[#1a0e33]/80 border border-purple-400/20 rounded-full px-2.5 py-0.5 shadow-md cursor-pointer hover:bg-[#251449] transition active:scale-95"
-                title="كأس ونقاط دعم الغرفة"
+                className={`inline-flex min-h-7 items-center gap-1.5 rounded-lg border px-2.5 text-[10px] font-black shadow-md backdrop-blur-md transition active:scale-95 ${rank === 1
+                  ? 'border-amber-300/65 bg-[#3d290c]/95 text-amber-100'
+                  : rank !== undefined && rank <= 10
+                    ? 'border-emerald-300/50 bg-[#07332a]/95 text-emerald-50'
+                    : 'border-white/20 bg-[#071e1c]/90 text-emerald-50/90'}`}
+                title={rankTitle}
+                aria-label={rankTitle}
               >
-                <span className="text-xs font-mono font-bold text-white/90">{activeRoom.roomPoints ?? '—'}</span>
-                <span className="text-xs">🏆</span>
-              </div>
+                <Trophy className={`size-3.5 ${rank === undefined ? 'text-emerald-100/65' : 'text-amber-300'}`} aria-hidden="true" />
+                <bdi dir={rank === undefined ? 'rtl' : 'ltr'}>{rankLabel}</bdi>
+              </button>
             </div>
           </div>
         </div>
