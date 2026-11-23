@@ -1261,6 +1261,32 @@ export const VoiceRoomModal: React.FC = () => {
 
   // Badge status is read from a server-verified, read-only identity RPC for every sender.
   const currentMessages = activeRoom ? roomMessages[activeRoom.id] || [] : [];
+  const [verifiedSenderBadges, setVerifiedSenderBadges] = useState<Record<string, { wealth: number; charm: number; vip: number }>>({});
+  const verifiedSenderIdsKey = [...new Set(currentMessages.map(msg => msg.senderId).filter(Boolean))].sort().join(',');
+  useEffect(() => {
+    let active = true;
+    setVerifiedSenderBadges({});
+    if (!activeRoom?.id || !stagingBackend || !verifiedSenderIdsKey) return;
+    void stagingBackend.rpc('staging_room_chat_verified_badges', { p_room_id: activeRoom.id })
+      .then(({ data, error }) => {
+        if (error) throw error;
+        if (!active) return;
+        const verified: Record<string, { wealth: number; charm: number; vip: number }> = {};
+        for (const row of Array.isArray(data) ? data : []) {
+          if (!row || typeof row.user_id !== 'string') continue;
+          const wealthXp = BigInt(String(row.wealth_xp ?? 0));
+          const charmXp = BigInt(String(row.charm_xp ?? 0));
+          verified[row.user_id] = {
+            wealth: royalProgress(wealthXp).level,
+            charm: royalProgress(charmXp).level,
+            vip: Number(row.vip_level) || 0,
+          };
+        }
+        setVerifiedSenderBadges(verified);
+      })
+      .catch(error => console.warn('Verified room sender badges unavailable:', error));
+    return () => { active = false; };
+  }, [activeRoom?.id, verifiedSenderIdsKey]);
   const [chatIdentityByUser, setChatIdentityByUser] = useState<Record<string, IdentityBadgeKind>>({});
   const senderIdsKey = [...new Set(currentMessages.map(msg => msg.senderId).filter(Boolean))].sort().join(',');
   useEffect(() => {
@@ -1907,13 +1933,13 @@ export const VoiceRoomModal: React.FC = () => {
                         <div className="flex min-w-0 max-w-full flex-wrap items-center justify-end gap-x-1 gap-y-0.5 text-[11px]">
                           <bdi className="text-amber-300 font-bold [overflow-wrap:anywhere]">{msg.senderName}</bdi>
                           {chatIdentityByUser[msg.senderId] && <IdentityBadge kind={chatIdentityByUser[msg.senderId]} size={19} />}
-                          {msg.senderId === currentUser.id && verifiedChatLevels && <WealthBadge level={verifiedChatLevels.wealth} size="xs" />}
-                          {msg.senderId === currentUser.id && verifiedChatLevels && <CharmBadge level={verifiedChatLevels.charm} size="xs" />}
-                          {(msg.senderId === currentUser.id ? currentUser.vipLevel : (msg.vipLevel ?? 0)) >= 1 && (
-                            <VipBadge vipLevel={msg.senderId === currentUser.id ? currentUser.vipLevel : (msg.vipLevel ?? 0)} size="xs" className="inline-flex align-middle ml-1" />
+                          {verifiedSenderBadges[msg.senderId]?.wealth > 0 && <WealthBadge level={verifiedSenderBadges[msg.senderId].wealth} size="xs" />}
+                          {verifiedSenderBadges[msg.senderId]?.charm > 0 && <CharmBadge level={verifiedSenderBadges[msg.senderId].charm} size="xs" />}
+                          {((verifiedSenderBadges[msg.senderId]?.vip ?? 0)) >= 1 && (
+                            <VipBadge vipLevel={(verifiedSenderBadges[msg.senderId]?.vip ?? 0)} size="xs" className="inline-flex align-middle ml-1" />
                           )}
                         </div>
-                        <VipMessageFrame level={msg.senderId === currentUser.id ? currentUser.vipLevel : (msg.vipLevel ?? 0)}>
+                        <VipMessageFrame level={(verifiedSenderBadges[msg.senderId]?.vip ?? 0)}>
                           <div dir="auto" className="whitespace-pre-wrap [overflow-wrap:anywhere]">{msg.text}</div>
                         </VipMessageFrame>
                       </div>
