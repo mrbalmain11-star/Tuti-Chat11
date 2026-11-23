@@ -1,6 +1,19 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { fetchIdentityBadgeKind, type IdentityBadgeKind } from '../services/stagingBackend';
 
-export type IdentityBadgeKind = 'normal' | 'special' | 'admin';
+export function useIdentityBadgeKind(userId: string | null) {
+  const [verifiedBadge, setVerifiedBadge] = useState<{ userId: string; kind: IdentityBadgeKind } | null>(null);
+  useEffect(() => {
+    setVerifiedBadge(null);
+    if (!userId) return;
+    let active = true;
+    void fetchIdentityBadgeKind(userId).then(kind => {
+      if (active && kind) setVerifiedBadge({ userId, kind });
+    }).catch(error => console.warn('Verified ID badge unavailable:', error));
+    return () => { active = false; };
+  }, [userId]);
+  return verifiedBadge?.userId === userId ? verifiedBadge.kind : null;
+}
 
 const BADGE_ASSETS: Record<IdentityBadgeKind, { src: string; label: string }> = {
   normal: { src: '/assets/id-badges/id-normal-blue.png', label: 'معرّف عادي' },

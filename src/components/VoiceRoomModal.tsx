@@ -1,8 +1,8 @@
 import { CpFrameForUser } from './CpFrameForUser';
 import { VipMessageFrame } from './VipMessageFrame';
 import { WealthBadge, CharmBadge } from './LevelBadgeIcons';
-import { stagingBackend } from '../services/stagingBackend';
-import { IdentityBadge, type IdentityBadgeKind } from './IdentityBadge';
+import { fetchIdentityBadgeKind, stagingBackend, type IdentityBadgeKind } from '../services/stagingBackend';
+import { IdentityBadge } from './IdentityBadge';
 import { RoomManagementPanel } from './RoomManagementPanel';
 import { App as CapacitorApp } from '@capacitor/app';
 import { playRoomMusic, pauseRoomMusic, resumeRoomMusic, stopRoomMusic, getRoomMusicProgress, seekRoomMusic, setRoomMusicVolume } from '../services/isolatedRoomMusic';
@@ -1273,7 +1273,7 @@ export const VoiceRoomModal: React.FC = () => {
     let active = true;
     setVerifiedSenderBadges({});
     if (!activeRoom?.id || !stagingBackend || !verifiedSenderIdsKey) return;
-    void stagingBackend.rpc('staging_room_chat_verified_badges', { p_room_id: activeRoom.id })
+    void Promise.resolve(stagingBackend.rpc('staging_room_chat_verified_badges', { p_room_id: activeRoom.id }))
       .then(({ data, error }) => {
         if (error) throw error;
         if (!active) return;
@@ -1299,14 +1299,10 @@ export const VoiceRoomModal: React.FC = () => {
     let active = true;
     setChatIdentityByUser({});
     if (!activeRoom?.id || !stagingBackend || !senderIdsKey) return;
-    const client = stagingBackend;
     const senderIds = senderIdsKey.split(',');
     void Promise.all(senderIds.map(async userId => {
       try {
-        const { data, error } = await client.rpc('staging_profile_identity_badge', { p_user_id: userId });
-        if (error) throw error;
-        // Only show an identity badge when the server explicitly confirms its type.
-        return [userId, data === 'admin' || data === 'special' || data === 'normal' ? data : null] as const;
+        return [userId, await fetchIdentityBadgeKind(userId)] as const;
       } catch (error) {
         console.error('Verified chat ID badge unavailable:', error);
         return [userId, null] as const;

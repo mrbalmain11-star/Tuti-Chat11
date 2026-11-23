@@ -43,7 +43,7 @@ import { AgencyProfileCard } from './AgencyProfileCard';
 import { CpSearchModal } from './CpSearchModal';
 import { ProfileCpCard } from './ProfileCpCard';
 import { imageUrl } from '../services/imageUrl';
-import { IdentityBadge } from './IdentityBadge';
+import { IdentityBadge, useIdentityBadgeKind } from './IdentityBadge';
 import { fetchMyVerifiedRoyalXp, type VerifiedRoyalXp } from '../services/royalXp';
 import { royalProgress } from '../utils/royalLevels';
 import { ProfileReportForm } from './ProfileReportForm';
@@ -132,18 +132,7 @@ export const InternalProfileModal: React.FC = () => {
   const [myPublicId, setMyPublicId] = useState<number | null>(null);
   const [displaySpecialId, setDisplaySpecialId] = useState<string | null>(null);
   const [visitorSpecialIdUser, setVisitorSpecialIdUser] = useState<string | null>(null);
-  const [verifiedIdentity, setVerifiedIdentity] = useState<{ userId: string; kind: 'admin' | 'special' | 'normal' } | null>(null);
-  useEffect(() => {
-    let active = true;
-    setVerifiedIdentity(null);
-    if (!openInternalProfileModal || !user.id || !stagingBackend) return;
-    void Promise.resolve(stagingBackend.rpc('staging_profile_identity_badge', { p_user_id: user.id }))
-      .then(({ data, error }) => {
-        if (error) throw error;
-        if (active) setVerifiedIdentity({ userId: user.id, kind: data === 'admin' || data === 'special' ? data : 'normal' });
-      }).catch(error => console.error('Verified profile ID badge unavailable:', error));
-    return () => { active = false; };
-  }, [openInternalProfileModal, user.id]);
+  const identityBadgeKind = useIdentityBadgeKind(openInternalProfileModal ? user.id || null : null);
   const [savedCover, setSavedCover] = useState<string>('');
   const [visitorStatus, setVisitorStatus] = useState<{ userId: string; vipLevel: number; wealthExp: number; charmExp: number } | null>(null);
   useEffect(() => {
@@ -271,7 +260,6 @@ export const InternalProfileModal: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
 
-  const identityBadgeKind = verifiedIdentity?.userId === user.id ? verifiedIdentity.kind : 'normal';
 
   if (!openInternalProfileModal) return null;
 
@@ -686,7 +674,7 @@ export const InternalProfileModal: React.FC = () => {
             ) : (
               <Copy className="w-3.5 h-3.5 text-slate-500" />
             )}
-            <IdentityBadge kind={identityBadgeKind} size={22} />
+            {identityBadgeKind && <IdentityBadge kind={identityBadgeKind} size={22} />}
             <span className="font-semibold tracking-wider">
               ID: {isSelf ? (displaySpecialId || myPublicId || '—') : (visitorPublicId || '—')}
             </span>

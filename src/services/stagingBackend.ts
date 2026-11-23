@@ -235,6 +235,15 @@ export async function verifySignedInProfile(): Promise<{ userId: string; publicI
   return { userId: user.id, publicId: profile.public_id };
 }
 
+export type IdentityBadgeKind = 'normal' | 'special' | 'admin';
+
+/** Staging returns a single verified badge, with administration taking precedence over special ID. */
+export async function fetchIdentityBadgeKind(userId: string): Promise<IdentityBadgeKind | null> {
+  const { data, error } = await requireBackend().rpc('staging_profile_identity_badge', { p_user_id: userId });
+  if (error) throw error;
+  return data === 'admin' || data === 'special' || data === 'normal' ? data : null;
+}
+
 export type AdminAccess = { role: string; permissions: string[] };
 
 /** Server-authorized access for the signed-in user only. Fail closed on any error. */
