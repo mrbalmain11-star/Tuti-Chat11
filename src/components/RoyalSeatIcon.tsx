@@ -1,24 +1,28 @@
 import React, { useId } from 'react';
 
-/** Seat artwork only: the authoritative locked/occupied state remains with the room server. */
-export const RoyalSeatIcon: React.FC<{ locked?: boolean; className?: string }> = ({ locked = false, className = 'w-8 h-8' }) => {
+/** Decorative seat frame. The server remains authoritative for seat lock/occupancy. */
+export const RoyalSeatIcon: React.FC<{ locked?: boolean; className?: string; frameOnly?: boolean }> = ({ locked = false, className = 'w-8 h-8', frameOnly = false }) => {
   const id = useId().replace(/:/g, '');
-  return <svg viewBox="0 0 64 64" className={className} fill="none" aria-hidden="true">
-    <defs>
-      <linearGradient id={`seatGold-${id}`} x1="0" y1="0" x2="1" y2="1">
-        <stop stopColor="#fff0b3"/><stop offset=".45" stopColor="#dba749"/><stop offset="1" stopColor="#8b5d1d"/>
-      </linearGradient>
-      <linearGradient id={`seatGreen-${id}`} x1="0" y1="0" x2="1" y2="1">
-        <stop stopColor="#1cc99b"/><stop offset="1" stopColor="#064d3f"/>
-      </linearGradient>
-    </defs>
-    <path d="M11 30 Q11 20 21 20 H43 Q53 20 53 30 V46 H11 Z" fill={`url(#seatGreen-${id})`} stroke={`url(#seatGold-${id})`} strokeWidth="2.5"/>
-    <path d="M15 36 Q15 32 21 32 H43 Q49 32 49 36 V47 H15 Z" fill="#0a735c" stroke="#d8b76b" strokeWidth="1.5"/>
-    <path d="M8 34 Q8 29 13 29 Q18 29 18 34 V48 H8 Z M46 34 Q46 29 51 29 Q56 29 56 34 V48 H46 Z" fill="#0a604c" stroke="#e3b960" strokeWidth="2"/>
-    <path d="M9 48 H55 V52 H9 Z" fill={`url(#seatGold-${id})`}/>
-    <path d="M14 52 V56 M50 52 V56" stroke="#d9ad5b" strokeWidth="4" strokeLinecap="round"/>
-    {locked
-      ? <g><rect x="25" y="27" width="14" height="13" rx="3" fill="#412908" stroke="#ffe3a0" strokeWidth="2"/><path d="M28 27 V23 A4 4 0 0 1 36 23 V27" stroke="#ffe3a0" strokeWidth="3" strokeLinecap="round"/><circle cx="32" cy="33" r="2" fill="#ffe3a0"/></g>
-      : <g><circle cx="32" cy="25" r="9" fill="#073f34" stroke="#f5d68a" strokeWidth="1.5"/><path d="M32 20 V30 M27 25 H37" stroke="#f9e4a4" strokeWidth="2.5" strokeLinecap="round"/></g>}
-  </svg>;
+  return (
+    <svg viewBox="0 0 80 80" className={className} fill="none" aria-hidden="true">
+      <defs>
+        <linearGradient id={`royalGold-${id}`} x1="0" y1="0" x2="1" y2="1">
+          <stop stopColor="#fff4bb"/><stop offset=".4" stopColor="#e9bd60"/><stop offset=".72" stopColor="#b77c2a"/><stop offset="1" stopColor="#fff0a0"/>
+        </linearGradient>
+        <radialGradient id={`royalGreen-${id}`}>
+          <stop stopColor="#146d58"/><stop offset="1" stopColor="#062b2b"/>
+        </radialGradient>
+      </defs>
+      <circle cx="40" cy="43" r="31" fill={frameOnly ? "none" : `url(#royalGreen-${id})`} stroke={`url(#royalGold-${id})`} strokeWidth="3"/>
+      <circle cx="40" cy="43" r="27" stroke="#f5d88a" strokeOpacity=".8" strokeWidth="1.3" strokeDasharray="2 3"/>
+      <path d="M20 15 L18 5 L29 11 L40 1 L51 11 L62 5 L60 15 Z" fill={`url(#royalGold-${id})`} stroke="#fff2b6" strokeWidth="1.5" strokeLinejoin="round"/>
+      <path d="M22 15 H58 V20 Q40 17 22 20 Z" fill="#b97c27" stroke="#fff2b6"/>
+      <circle cx="40" cy="11" r="2.8" fill="#21e6bc"/>
+      <path d="M8 37 L3 31 L13 29 M72 37 L77 31 L67 29 M13 62 L7 69 L19 67 M67 62 L73 69 L61 67" stroke={`url(#royalGold-${id})`} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M26 73 Q40 79 54 73" stroke="#f7d88b" strokeWidth="2" strokeLinecap="round"/>
+      {!frameOnly && (locked
+        ? <g><rect x="33" y="39" width="14" height="13" rx="2" fill="#9c6325" stroke="#fff0b2" strokeWidth="2"/><path d="M35 39 V35 A5 5 0 0 1 45 35 V39" stroke="#fff0b2" strokeWidth="3"/></g>
+        : <g><circle cx="40" cy="43" r="12" fill="#093e36" stroke="#d9b15d" strokeWidth="1.5"/><path d="M40 36 V50 M33 43 H47" stroke="#fff2b5" strokeWidth="2.5" strokeLinecap="round"/></g>)}
+    </svg>
+  );
 };
