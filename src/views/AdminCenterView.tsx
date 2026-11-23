@@ -1,3 +1,5 @@
+import { adminSections } from '../services/adminPermissions';
+import { AdminAppBansPanel } from './AdminAppBansPanel';
 import React, { useEffect, useState } from 'react';
 import { AdminDecorationsPanel } from './AdminDecorationsPanel';
 import { AdminBannersPanel } from './AdminBannersPanel';
@@ -65,7 +67,6 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
   const [access, setAccess] = useState<AdminAccess | null>(null);
   const [counts, setCounts] = useState<OwnerDashboardCounts | null>(null);
   const [recent, setRecent] = useState<OwnerDashboardRecent | null>(null);
-  const [section, setSection] = useState<'users' | 'agencies' | 'rooms'>('users');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const reload = async () => {
@@ -74,7 +75,13 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
       const verified = await fetchMyAdminAccess();
       if (!verified) throw new Error('ليس لديك تصريح لدخول مركز الإدارة');
       setAccess(verified);
-      if (verified.role === 'owner') { const [totals, records] = await Promise.all([fetchOwnerDashboardCounts(), fetchOwnerDashboardRecent()]); setCounts(totals); setRecent(records); }
+      const all = verified.role === 'owner';
+      const [totals, records] = await Promise.all([
+        all || verified.permissions.includes('stats.read') ? fetchOwnerDashboardCounts() : null,
+        all || ['users.manage','agencies.read','rooms.read'].some(key => verified.permissions.includes(key))
+          ? fetchOwnerDashboardRecent() : null,
+      ]);
+      setCounts(totals); setRecent(records);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'تعذر الاتصال بالخادم');
     } finally { setLoading(false); }
@@ -85,6 +92,28 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
     document.addEventListener('visibilitychange', recheck);
     return () => document.removeEventListener('visibilitychange', recheck);
   }, []);
+  useEffect(() => {
+    if (!access || access.role === 'owner') return;
+    let active = true;
+    const timer = window.setInterval(() => {
+      if (document.hidden) return;
+      void fetchMyAdminAccess().then(verified => {
+        if (!active) return;
+        if (!verified || verified.role !== access.role ||
+          verified.permissions.length !== access.permissions.length ||
+          verified.permissions.some(permission => !access.permissions.includes(permission))) {
+          void reload();
+        }
+      }).catch(() => {
+        if (active) {
+          setAccess(null);
+          setAdminPage(null);
+          setError('تعذر إعادة التحقق من صلاحياتك');
+        }
+      });
+    }, 15000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, [access]);
   return (
     <div className="fixed inset-0 z-[100] bg-[#FDFBF7] text-slate-900 overflow-y-auto font-['Cairo',sans-serif]" dir="rtl">
       <header className="sticky top-0 bg-white/95 border-b border-amber-200 px-5 py-4 flex items-center justify-between z-10">
@@ -96,30 +125,10 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
         {error && <div role="alert" className="bg-red-50 border border-red-200 p-4 rounded-xl text-red-700">{error}</div>}
         {!loading && access && <>
           {(() => {
-            const tiles = [
-              ...(access.role === 'owner' ? [{id:'stats',label:'الإحصائيات',Icon:Radio}] : []),
-              ...(access.role === 'owner' ? [
-                {id:'users',label:'المستخدمون',Icon:Users},
-                {id:'agencies',label:'الوكالات',Icon:Building2},
-                {id:'rooms',label:'الغرف',Icon:Radio},
-              ] : []),
-              {id:'operations',label:'العمليات',Icon:ShieldCheck},
-              {id:'ids',label:'الآيديات',Icon:Users},
-              {id:'moderation',label:'إشراف الغرف',Icon:Radio},
-              {id:'roomAppeals',label:'اعتراضات الباند',Icon:ShieldCheck},
-              {id:'customerServiceAppeals',label:'طلبات الباند العام',Icon:ShieldCheck},
-              {id:'agencyActions',label:'إجراءات الوكالات',Icon:Building2},
-              {id:'agencyRegistrations',label:'طلبات فتح وكالة',Icon:Building2},
-              {id:'reports',label:'البلاغات',Icon:ShieldCheck},
-              {id:'financeReports',label:'التقارير المالية',Icon:ShieldCheck},
-              {id:'recharge',label:'الشحن',Icon:Building2},
-              {id:'staff',label:'الصلاحيات',Icon:ShieldCheck},
-              {id:'banners',label:'البنرات',Icon:Radio},
-              ...(access.role === 'owner' ? [{id:'decorations',label:'إدارة الزينة',Icon:Gift}] : []),
-              {id:'offers',label:'العروض',Icon:Gift},
-              ...(access.role === 'owner' ? [{id:'dailyRewards',label:'المكافآت اليومية',Icon:Gift}] : []),
-              ...(access.role === 'owner' ? [{id:'testerBadges',label:'شارات المختبرين',Icon:ShieldCheck}] : []),
-            ];
+            const tiles = adminSections.filter(item => access.role === 'owner' ||
+              (!('ownerOnly' in item) && (!('superOnly' in item) || access.role === 'super_admin') &&
+                access.permissions.includes(item.permission)))
+              .map(item => ({ ...item, Icon: item.id === 'decorations' ? Gift : ShieldCheck }));
             return <div className="space-y-5">
               {!adminPage || !tiles.some(tile => tile.id === adminPage) ? <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {tiles.map(({id,label,Icon}) => <button key={id} type="button" onClick={() => setAdminPage(id)}
@@ -136,18 +145,19 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
                 {adminPage === 'ids' && <AdminSpecialIdPanel />}
                 {adminPage === 'moderation' && <AdminRoomModerationPanel />}
                 {adminPage === 'roomAppeals' && <AdminRoomAppealsPanel />}
-                {adminPage === 'customerServiceAppeals' && <AdminCustomerServicePanel isOwner={access.role === 'owner'} />}
+                {adminPage === 'customerServiceAppeals' && <AdminCustomerServicePanel isOwner={access.role === 'owner'} canDecide={access.role === 'owner' || (access.role === 'super_admin' && access.permissions.includes('app_bans.manage'))} />}
                 {adminPage === 'agencyActions' && <AdminAgencyActionsPanel />}
                 {adminPage === 'agencyRegistrations' && <AdminAgencyRegistrationRequestsPanel />}
                 {adminPage === 'reports' && <AdminUserReportsPanel />}
                 {adminPage === 'financeReports' && <AdminReportsPanel />}
                 {adminPage === 'recharge' && <AdminRechargePanel />}
+                {adminPage === 'appBans' && <AdminAppBansPanel />}
                 {adminPage === 'staff' && <AdminStaffPanel />}
                 {adminPage === 'banners' && <AdminBannersPanel />}
-                {adminPage === 'decorations' && access.role === 'owner' && <AdminDecorationsPanel />}
+                {adminPage === 'decorations' && <AdminDecorationsPanel />}
                 {adminPage === 'offers' && <AdminOffersPanel />}
-                {adminPage === 'dailyRewards' && access.role === 'owner' && <AdminDailyRewardsReadOnly />}
-                {adminPage === 'testerBadges' && access.role === 'owner' && <AdminTesterBadgesPanel />}
+                {adminPage === 'dailyRewards' && <AdminDailyRewardsReadOnly />}
+                {adminPage === 'testerBadges' && <AdminTesterBadgesPanel />}
               </>}
             </div>;
           })()}

@@ -14,9 +14,9 @@ type Case = {
   createdAt: string;
 };
 
-type Props = { isOwner: boolean };
+type Props = { isOwner: boolean; canDecide: boolean };
 
-export const AdminCustomerServicePanel: React.FC<Props> = ({ isOwner }) => {
+export const AdminCustomerServicePanel: React.FC<Props> = ({ isOwner, canDecide }) => {
   const [roomId, setRoomId] = useState('');
   const [cases, setCases] = useState<Case[]>([]);
   const [note, setNote] = useState('');
@@ -98,7 +98,7 @@ export const AdminCustomerServicePanel: React.FC<Props> = ({ isOwner }) => {
       <p className="text-sm">الحساب: {item.targetName} — ID {item.targetPublicId}</p>
       <p className="text-xs text-slate-500">الاسم الذي ذكره المستخدم: {item.reportedName}</p>
       <p className="whitespace-pre-wrap text-sm">{item.details}</p>
-      {['pending_admin','under_review','needs_info'].includes(item.status) && <>
+      {canDecide && ['pending_admin','under_review','needs_info'].includes(item.status) && <>
         <textarea rows={2} maxLength={1000} value={note} onChange={e => setNote(e.target.value)} className="w-full rounded-xl border p-2" placeholder="ملاحظة الإدارة"/>
         <div className="flex flex-wrap gap-2">
           <button disabled={busy} onClick={() => void decide(item,'under_review')} className="rounded-lg bg-blue-700 px-3 py-2 text-white">بدء المراجعة</button>
