@@ -16,6 +16,7 @@ import {
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
 import { imageUrl } from '../services/imageUrl';
+import { AgencyDataCenter } from './AgencyDataCenter';
 
 export const AgencyModal: React.FC = () => {
   const {
@@ -73,38 +74,6 @@ export const AgencyModal: React.FC = () => {
     'host_data_details' | 'agent_data_details' | 'agent_members' | 'agent_rewards' | null
   >(null);
 
-  // Live agency statistics are derived only from server-authorized agency state.
-  const [agencyStatistics, setAgencyStatistics] = useState<{ agencies: number; members: number; pending: number; agencyNames: string[] } | null>(null);
-  const [agencyStatisticsLoading, setAgencyStatisticsLoading] = useState(false);
-  const [agencyStatisticsError, setAgencyStatisticsError] = useState(false);
-  const [agencyStatisticsAttempt, setAgencyStatisticsAttempt] = useState(0);
-  useEffect(() => {
-    if (!openAgencyModal || activeSubView !== 'agent_data_details' || role !== 'agent') return;
-    let active = true;
-    setAgencyStatistics(null);
-    setAgencyStatisticsError(false);
-    setAgencyStatisticsLoading(true);
-    void (async () => {
-      const { stagingBackend } = await import('../services/stagingBackend');
-      if (!stagingBackend) throw new Error('خادم الوكالات غير متصل');
-      const { data: auth, error: authError } = await stagingBackend.auth.getUser();
-      if (authError || !auth.user) throw authError ?? new Error('الجلسة غير متاحة');
-      const { data, error } = await stagingBackend.rpc('phase4_agency_state');
-      if (error) throw error;
-      const agencies = (Array.isArray(data?.agencies) ? data.agencies : []).filter((a: { owner_id: string; is_active: boolean }) => a.owner_id === auth.user.id && a.is_active);
-      const ids = new Set<string>(agencies.map((a: { id: string }) => a.id));
-      const members = (Array.isArray(data?.members) ? data.members : []).filter((m: { agency_id: string }) => ids.has(m.agency_id));
-      const requests = (Array.isArray(data?.requests) ? data.requests : []).filter((q: { agency_id: string; status: string }) => ids.has(q.agency_id) && q.status === 'pending_new');
-      if (active) setAgencyStatistics({ agencies: agencies.length, members: new Set(members.map((m: { user_id: string }) => m.user_id)).size, pending: requests.length, agencyNames: agencies.map((a: { name?: string }) => a.name || 'وكالة بدون اسم') });
-    })().catch(error => {
-      if (active) {
-        console.warn('Agency statistics unavailable:', error);
-        setAgencyStatisticsError(true);
-      }
-    }).finally(() => { if (active) setAgencyStatisticsLoading(false); });
-    return () => { active = false; };
-  }, [openAgencyModal, activeSubView, role, currentUser.id, agencyStatisticsAttempt]);
-
   // Incoming Join Request from an Agent (Available for User role)
   const [pendingAgencyInvite, setPendingAgencyInvite] = useState<{
     id: string;
@@ -113,11 +82,6 @@ export const AgencyModal: React.FC = () => {
     agencyIdNumber: string;
     agentName: string;
   } | null>(null);
-
-  // Expandable host rows in Agent Data Center
-  const [expandedHostIndex, setExpandedHostIndex] = useState<number | null>(0);
-
-  // Date Filter in Agent Data Details
 
   // Agency Members List for Agent
   const [membersList, setMembersList] = useState<Array<{ id: string; publicId: number | null; name: string; role: string; avatar: string }>>([]);
@@ -304,46 +268,12 @@ export const AgencyModal: React.FC = () => {
       {/* Main Screen Container */}
       <div className="relative w-full max-w-[390px] h-full sm:h-[92vh] sm:max-h-[820px] sm:rounded-[36px] overflow-hidden shadow-[0_12px_50px_rgba(0,0,0,0.95)] border-0 sm:border border-[#C59B27]/40 flex flex-col justify-between bg-[#040814]">
 
-        {/* =========================================================================
-            DETAILED SUB-PAGE 1: HOST DATA CENTER (بيانات المضيف فقط)
-            يظهر فقط عند النقر على مركز البيانات في شاشة المضيف
-            ========================================================================= */}
-        {activeSubView === 'host_data_details' ? (
-          <div className="relative z-30 flex h-full w-full flex-col overflow-hidden bg-[#F6F7F9] text-slate-800 animate-in fade-in duration-200">
-            <div className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 py-3 shadow-xs">
-              <button type="button" onClick={() => { sounds.playClick(); setActiveSubView(null); }} aria-label="العودة إلى مركز الوكالة" className="flex h-9 w-9 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100"><ChevronRight className="h-6 w-6" /></button>
-              <h2 className="text-base font-black text-slate-900">تفاصيل بيانات المضيف</h2>
-              <span className="w-9" />
-            </div>
-            <div className="flex flex-1 items-center justify-center p-6">
-              <div className="w-full max-w-sm rounded-2xl border border-amber-200 bg-white p-6 text-center shadow-xs" role="status">
-                <Database className="mx-auto h-8 w-8 text-amber-600" aria-hidden="true" />
-                <p className="mt-3 text-sm font-black text-slate-800">بيانات البث والرواتب غير متاحة حالياً</p>
-                <p className="mt-2 text-xs leading-6 text-slate-500">لم يوفّر الخادم قيماً موثقة لهذه الشاشة، لذلك لا نعرض ساعات أو أرصدة أو مستويات تقديرية.</p>
-              </div>
-            </div>
-          </div>
-        ) : activeSubView === 'agent_data_details' ? (
-          <div className="relative z-30 flex h-full w-full flex-col overflow-hidden bg-[#090f1c] text-amber-100 animate-in fade-in duration-200">
-            <div className="flex shrink-0 items-center justify-between border-b border-amber-400/50 bg-[#11192c]/95 px-4 py-3 shadow-xs">
-              <button type="button" onClick={() => { sounds.playClick(); setActiveSubView(null); }} aria-label="العودة إلى مركز الوكالة" className="flex h-9 w-9 items-center justify-center rounded-full text-amber-100 hover:bg-amber-500/15"><ChevronRight className="h-6 w-6" /></button>
-              <h2 className="text-base font-black text-amber-100">مركز بيانات الوكالة</h2>
-              <span className="w-9" />
-            </div>
-            <div className="relative flex flex-1 flex-col overflow-y-auto p-5 gap-4 bg-[linear-gradient(180deg,rgba(7,14,29,.62),rgba(4,9,20,.92)),url(/agency-no-data-bg.jpg)] bg-cover bg-center">
-              {agencyStatisticsLoading ? <p role="status" className="text-center text-amber-100">جارٍ تحميل إحصائيات الوكالة من الخادم...</p> : agencyStatisticsError ? <div role="alert" className="rounded-2xl bg-white p-5 text-center text-red-700">تعذر تحميل إحصائيات الوكالة. <button type="button" className="font-bold underline" onClick={() => setAgencyStatisticsAttempt(attempt => attempt + 1)}>إعادة المحاولة</button></div> : agencyStatistics ? (
-                <>
-                  <div className="grid grid-cols-2 gap-3">
-                    {([['الوكالات النشطة', agencyStatistics.agencies], ['أعضاء الوكالة', agencyStatistics.members], ['طلبات الانضمام المعلقة', agencyStatistics.pending]] as const).map(([label, count]) => (
-                      <div key={label} className="rounded-2xl border border-amber-400/60 bg-[#14203a]/90 p-4 text-center shadow-sm"><div className="text-2xl font-black text-amber-300">{count}</div><div className="mt-2 text-xs font-bold text-amber-100">{label}</div></div>
-                    ))}
-                  </div>
-                  <div className="rounded-2xl border border-amber-400/60 bg-[#14203a]/90 p-4"><h3 className="font-black text-amber-100">الوكالات التابعة لك</h3>{agencyStatistics.agencyNames.length ? agencyStatistics.agencyNames.map((name, index) => <p key={index} className="mt-2 text-sm text-amber-100">{name}</p>) : <p className="mt-2 text-sm text-amber-100/75">لا توجد وكالة نشطة مرتبطة بحسابك.</p>}</div>
-                  <div className="rounded-2xl border border-amber-400/40 bg-[#14203a]/90 p-4"><h3 className="font-black text-amber-100">الرواتب والأهداف وساعات النشاط</h3><p className="mt-2 text-xs leading-6 text-amber-100/75">هذه المؤشرات تنتظر سجلات مالية ونشاط موثقة من الخادم. لا تُعرض أرقام تقديرية.</p></div>
-                </>
-              ) : null}
-            </div>
-          </div>
+        {activeSubView === 'host_data_details' || activeSubView === 'agent_data_details' ? (
+          <AgencyDataCenter
+            key={currentUser.id + activeSubView}
+            view={activeSubView === 'host_data_details' ? 'host' : 'agent'}
+            onBack={() => { sounds.playClick(); setActiveSubView(null); }}
+          />
         ) : (
           /* =========================================================================
               MAIN SCREEN WITH ROYAL CREST BACKGROUND
