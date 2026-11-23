@@ -16,9 +16,9 @@ export function useIdentityBadgeKind(userId: string | null) {
 }
 
 const BADGE_ASSETS: Record<IdentityBadgeKind, { src: string; label: string }> = {
-  normal: { src: '/assets/id-badges/id-normal-blue.png', label: 'معرّف عادي' },
-  special: { src: '/assets/id-badges/id-special-pink.png', label: 'معرّف مميز' },
-  admin: { src: '/assets/id-badges/id-admin-red.png', label: 'معرّف الإدارة' },
+  normal: { src: '/assets/id-badges/3.png', label: 'معرّف عادي' },
+  special: { src: '/assets/id-badges/2.png', label: 'معرّف مميز' },
+  admin: { src: '/assets/id-badges/1.png', label: 'معرّف الإدارة' },
 };
 
 export const IdentityBadge: React.FC<{ kind: IdentityBadgeKind; size?: number }> = ({ kind, size = 22 }) => {
