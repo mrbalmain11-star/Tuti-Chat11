@@ -1396,8 +1396,7 @@ export const VoiceRoomModal: React.FC = () => {
   if (!activeRoom) return null;
 
   // Floating Minimized Bubble
-  if (isRoomMinimized) {
-    return (
+  const minimizedBubble = isRoomMinimized ? (
       <div
         onPointerDown={onBubblePointerDown}
         onPointerMove={onBubblePointerMove}
@@ -1420,8 +1419,7 @@ export const VoiceRoomModal: React.FC = () => {
         </div>
         <Maximize2 className="w-4 h-4 text-purple-300 mr-1" />
       </div>
-    );
-  }
+  ) : null;
 
   // Seats map from activeRoom (seats 1 to 15)
   const roomSeats = activeRoom.seats || [];
@@ -1484,9 +1482,14 @@ export const VoiceRoomModal: React.FC = () => {
 
   const hostAccountId = roomPublicId;
 
+  // Keep the theater iframe in the same DOM position while the room is minimized.
+  // Recreating or moving the iframe resets the current YouTube playback.
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black select-none overflow-hidden font-['Cairo',sans-serif]"
+    <>
+      {(!isRoomMinimized || seatLayout === 'stage') && <div
+      inert={isRoomMinimized}
+      aria-hidden={isRoomMinimized || undefined}
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-black select-none overflow-hidden font-['Cairo',sans-serif] ${isRoomMinimized ? 'pointer-events-none opacity-0' : ''}`}
       dir="rtl"
     >
       {!isRoomMinimized && vipEntrance && vipEntrance.roomId === activeRoom.id && (
@@ -3885,6 +3888,8 @@ export const VoiceRoomModal: React.FC = () => {
           </div>
         )}
       </div>
-    </div>
+    </div>}
+      {minimizedBubble}
+    </>
   );
 };
