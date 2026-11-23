@@ -362,31 +362,39 @@ export const ProfileView: React.FC = () => {
         {/* Profile Card Row */}
         <div className="flex items-center justify-between gap-2 min-w-0">
           {/* Right Side: Avatar + Details */}
-          <div className="flex items-center gap-3.5 min-w-0 flex-1">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
             {/* Avatar Circle with Camera upload button */}
-            <div className={`relative w-18 h-18 rounded-full shrink-0 group ${currentUser.vipLevel > 0 ? 'isolate' : ''}`}>
-              <RoyalProfileFrame refreshKey={openLevelsModal} />
-              <VipAvatarFrame level={currentUser.vipLevel} />
-              <div
-                onClick={() => {
-                  sounds.playClick();
-                  setInternalProfileUser(currentUser);
-                  setOpenInternalProfileModal(true);
-                }}
-                className="relative z-10 w-full h-full rounded-full overflow-hidden border-2 border-amber-100 shadow-lg cursor-pointer active:scale-95 transition bg-transparent"
-                title="عرض الملف الشخصي"
-              >
-                <img
-                  src={
-                    currentUser.avatar ||
-                    '/placeholder-avatar.svg'
-                  }
-                  alt={currentUser.name}
-                  onError={event => { event.currentTarget.src = '/placeholder-avatar.svg'; }}
-                  className="w-full h-full object-cover"
-                />
-              </div>
+            <div className="flex w-[6.75rem] shrink-0 flex-col items-center gap-2">
+              <div className="relative isolate h-[4.25rem] w-[4.25rem]">
+                {currentUser.vipLevel > 0
+                  ? <VipAvatarFrame level={currentUser.vipLevel} />
+                  : <RoyalProfileFrame refreshKey={openLevelsModal} />}
+                <div
+                  onClick={() => {
+                    sounds.playClick();
+                    setInternalProfileUser(currentUser);
+                    setOpenInternalProfileModal(true);
+                  }}
+                  className="relative z-10 w-full h-full rounded-full overflow-hidden border-2 border-amber-100 shadow-lg cursor-pointer active:scale-95 transition bg-transparent"
+                  title="عرض الملف الشخصي"
+                >
+                  <img
+                    src={
+                      currentUser.avatar ||
+                      '/placeholder-avatar.svg'
+                    }
+                    alt={currentUser.name}
+                    onError={event => { event.currentTarget.src = '/placeholder-avatar.svg'; }}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
 
+                {uploadingAvatar && (
+                  <div className="absolute inset-0 rounded-full bg-black/60 flex items-center justify-center text-white z-20">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  </div>
+                )}
+              </div>
               <button
                 type="button"
                 aria-label="تغيير الصورة الشخصية"
@@ -397,15 +405,10 @@ export const ProfileView: React.FC = () => {
                   setProfileError(null);
                   fileInputRef.current?.click();
                 }}
-                className="absolute -bottom-1 -left-1 z-30 w-9 h-9 rounded-full bg-amber-500 text-white border-2 border-white shadow-lg flex items-center justify-center disabled:opacity-50"
+                className="z-30 mt-2 w-7 h-7 rounded-full bg-amber-500 text-white border-2 border-white shadow-lg flex items-center justify-center disabled:opacity-50"
               >
                 <Camera className="w-4 h-4" />
               </button>
-              {uploadingAvatar && (
-                <div className="absolute inset-0 rounded-full bg-black/60 flex items-center justify-center text-white z-20">
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                </div>
-              )}
             </div>
 
             {/* User Info (Name, ID, Badges) */}
@@ -425,7 +428,7 @@ export const ProfileView: React.FC = () => {
                     name={currentUser.name || 'مستخدم جديد'}
                     vipLevel={currentUser.vipLevel}
                     fallbackColor="text-slate-900"
-                    className="text-xl font-black drop-shadow-xs"
+                    className="block max-w-full whitespace-normal [overflow-wrap:anywhere] text-xl font-black drop-shadow-xs"
                   />
                 </h1>
                 <button
@@ -435,7 +438,7 @@ export const ProfileView: React.FC = () => {
                     setEditNameInput(currentUser.name || '');
                     setShowEditNameModal(true);
                   }}
-                  className="w-6 h-6 rounded-full bg-amber-100/80 hover:bg-amber-200 border border-amber-300 text-amber-800 flex items-center justify-center transition active:scale-90 cursor-pointer shadow-xs"
+                  className="w-6 h-6 shrink-0 rounded-full bg-amber-100/80 hover:bg-amber-200 border border-amber-300 text-amber-800 flex items-center justify-center transition active:scale-90 cursor-pointer shadow-xs"
                   title="تعديل الاسم"
                 >
                   <Pencil className="w-3 h-3 text-amber-700" />
@@ -626,12 +629,12 @@ export const ProfileView: React.FC = () => {
             sounds.playClick();
             setOpenRechargeModal(true);
           }}
-          className="rounded-2xl bg-gradient-to-b from-white via-amber-50/50 to-amber-100/40 border border-amber-300 p-4 flex items-center justify-between cursor-pointer active:scale-98 transition shadow-[0_4px_15px_rgba(245,158,11,0.12)] hover:border-amber-400"
+          className="rounded-2xl bg-gradient-to-b from-white via-amber-50/50 to-amber-100/40 border border-amber-300 min-w-0 p-2.5 flex flex-col items-center justify-center gap-1.5 cursor-pointer active:scale-98 transition shadow-[0_4px_15px_rgba(245,158,11,0.12)] hover:border-amber-400"
         >
           {/* Left Text in Card */}
-          <div className="text-right flex-1 min-w-0 pr-1">
+          <div className="w-full min-w-0 text-center">
             <span
-              className="text-base sm:text-lg font-black text-amber-700 block font-sans truncate"
+              dir="ltr" className="text-sm sm:text-lg font-black text-amber-700 block font-sans tabular-nums [overflow-wrap:anywhere]"
               title={(currentUser.coins ?? 0).toLocaleString('en-US')}
             >
               {(currentUser.coins ?? 0).toLocaleString('en-US')}
@@ -642,8 +645,8 @@ export const ProfileView: React.FC = () => {
           </div>
 
           {/* Right Icon in Card: 3D Gold Coin with Star */}
-          <div className="w-12 h-12 flex items-center justify-center">
-            <svg viewBox="0 0 48 48" className="w-11 h-11 drop-shadow-[0_2px_8px_rgba(245,158,11,0.4)]">
+          <div className="order-first w-8 h-8 flex items-center justify-center">
+            <svg viewBox="0 0 48 48" className="w-8 h-8 drop-shadow-[0_2px_8px_rgba(245,158,11,0.4)]">
               <circle cx="24" cy="24" r="21" fill="url(#coinOuterGrad)" stroke="#FEF08A" strokeWidth="1.5" />
               <circle cx="24" cy="24" r="16" fill="url(#coinInnerGrad)" stroke="#F59E0B" strokeWidth="1" />
               <polygon
@@ -672,12 +675,12 @@ export const ProfileView: React.FC = () => {
             setToastMessage('رصيد الألماس الخاص بك 💎');
             setTimeout(() => setToastMessage(null), 2500);
           }}
-          className="rounded-2xl bg-gradient-to-b from-white via-sky-50/40 to-amber-50/20 border border-amber-200/90 p-4 flex items-center justify-between cursor-pointer active:scale-98 transition shadow-[0_4px_15px_rgba(59,130,246,0.08)] hover:border-amber-300"
+          className="rounded-2xl bg-gradient-to-b from-white via-sky-50/40 to-amber-50/20 border border-amber-200/90 min-w-0 p-2.5 flex flex-col items-center justify-center gap-1.5 cursor-pointer active:scale-98 transition shadow-[0_4px_15px_rgba(59,130,246,0.08)] hover:border-amber-300"
         >
           {/* Left Text in Card */}
-          <div className="text-right">
-            <span className="text-2xl font-black text-slate-900 block font-sans">
-              {currentUser.diamonds ?? 0}
+          <div className="w-full min-w-0 text-center">
+            <span dir="ltr" className="text-sm sm:text-lg font-black text-slate-900 block font-sans tabular-nums [overflow-wrap:anywhere]">
+              {(currentUser.diamonds ?? 0).toLocaleString('en-US')}
             </span>
             <span className="text-xs text-slate-600 font-bold mt-1 block">
               ألماس 💎
@@ -685,8 +688,8 @@ export const ProfileView: React.FC = () => {
           </div>
 
           {/* Right Icon in Card: 3D Blue Diamond */}
-          <div className="w-12 h-12 flex items-center justify-center">
-            <svg viewBox="0 0 48 48" className="w-11 h-11 drop-shadow-[0_2px_8px_rgba(59,130,246,0.4)]">
+          <div className="order-first w-8 h-8 flex items-center justify-center">
+            <svg viewBox="0 0 48 48" className="w-8 h-8 drop-shadow-[0_2px_8px_rgba(59,130,246,0.4)]">
               <path
                 d="M14 14 L34 14 L42 24 L24 40 L6 24 Z"
                 fill="url(#diamondBaseGrad)"

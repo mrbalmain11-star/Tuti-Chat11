@@ -1695,9 +1695,9 @@ export const VoiceRoomModal: React.FC = () => {
                   >
                     {isOccupied && seat.user ? (
                       <div
-                        className={`relative w-full h-full rounded-full overflow-visible border-2 shadow-md ${
+                        className={`relative w-full h-full rounded-full overflow-visible border-2 shadow-md [&>.vip-avatar-frame]:scale-[.79] ${
                           Number(seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel || 0) > 0
-                            ? 'border-amber-300 ring-[3px] ring-fuchsia-500/80 shadow-[0_0_16px_4px_rgba(236,72,153,0.65)]'
+                            ? 'border-amber-300'
                             : 'border-white/80'
                         }`}
                       >
@@ -1735,7 +1735,8 @@ export const VoiceRoomModal: React.FC = () => {
 
                   {/* Under Avatar: User name large & clear / Under empty mic: clean number */}
                   {isOccupied && seat.user ? (
-                    <div className="mt-1 flex items-center justify-center gap-0.5 max-w-[76px] px-0.5">
+                    <div className="relative z-20 mt-1 flex items-center justify-center gap-1 max-w-[76px] px-0.5">
+                      <span className="shrink-0 rounded bg-black/70 px-1 text-[9px] text-white" aria-label={`المايك ${seatNum}`}>{seatNum}</span>
                       {isPlayingMusic && <Music size={12} className="shrink-0 text-emerald-300" aria-hidden="true" />}
                       <VipName
                         name={seat.user.nickname || seat.user.name}
@@ -1902,14 +1903,16 @@ export const VoiceRoomModal: React.FC = () => {
                   {currentMessages.map((msg) => (
                     <div key={msg.id} data-room-message-id={msg.id} className="flex min-w-0 items-start justify-end gap-1.5">
                       <VipMessageFrame level={msg.senderId === currentUser.id ? currentUser.vipLevel : (msg.vipLevel ?? 0)}>
-                        <span className="text-amber-300 font-bold ml-1">{msg.senderName}:</span>
-                        {chatIdentityByUser[msg.senderId] && <IdentityBadge kind={chatIdentityByUser[msg.senderId]} size={19} />}
-                        {msg.senderId === currentUser.id && verifiedChatLevels && <WealthBadge level={verifiedChatLevels.wealth} size="xs" />}
-                        {msg.senderId === currentUser.id && verifiedChatLevels && <CharmBadge level={verifiedChatLevels.charm} size="xs" />}
-                        {(msg.senderId === currentUser.id ? currentUser.vipLevel : (msg.vipLevel ?? 0)) >= 1 && (
-                          <VipBadge vipLevel={msg.senderId === currentUser.id ? currentUser.vipLevel : (msg.vipLevel ?? 0)} size="xs" className="inline-flex align-middle ml-1" />
-                        )}
-                        <span>{msg.text}</span>
+                        <div className="flex min-w-0 flex-wrap items-center gap-x-1 gap-y-0.5">
+                          <bdi className="text-amber-300 font-bold [overflow-wrap:anywhere]">{msg.senderName}</bdi>
+                          {chatIdentityByUser[msg.senderId] && <IdentityBadge kind={chatIdentityByUser[msg.senderId]} size={19} />}
+                          {msg.senderId === currentUser.id && verifiedChatLevels && <WealthBadge level={verifiedChatLevels.wealth} size="xs" />}
+                          {msg.senderId === currentUser.id && verifiedChatLevels && <CharmBadge level={verifiedChatLevels.charm} size="xs" />}
+                          {(msg.senderId === currentUser.id ? currentUser.vipLevel : (msg.vipLevel ?? 0)) >= 1 && (
+                            <VipBadge vipLevel={msg.senderId === currentUser.id ? currentUser.vipLevel : (msg.vipLevel ?? 0)} size="xs" className="inline-flex align-middle ml-1" />
+                          )}
+                        </div>
+                        <div dir="auto" className="mt-0.5 whitespace-pre-wrap [overflow-wrap:anywhere]">{msg.text}</div>
                       </VipMessageFrame>
                       <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full border border-amber-300/70 bg-emerald-950 shadow-sm" aria-label={`صورة ${msg.senderName}`}>
                         {(msg.senderId === currentUser.id ? currentUser.avatar : msg.senderAvatar) ? (

@@ -27,7 +27,6 @@ import { VipBadge, VIP_BEAST_METADATA } from './VipBadge';
 export interface VipTierData {
   level: number;
   name: string;
-  beastName: string;
   price: number;
   durationDays: number;
   cardImage: string;
@@ -42,7 +41,6 @@ export const VIP_TIERS: VipTierData[] = [
   {
     level: 1,
     name: 'VIP 1',
-    beastName: 'غزال الريم الأخضر الأسطوري',
     price: 20000,
     durationDays: 30,
     cardImage: '/assets/aistudio/IMG-20261026-WA0038_55a88cbb.jpg',
@@ -62,7 +60,6 @@ export const VIP_TIERS: VipTierData[] = [
   {
     level: 2,
     name: 'VIP 2',
-    beastName: 'الفرس السماوي الأزرق المجنح',
     price: 60000,
     durationDays: 30,
     cardImage: '/assets/aistudio/IMG-20261026-WA0037_14e3217b.jpg',
@@ -83,7 +80,6 @@ export const VIP_TIERS: VipTierData[] = [
   {
     level: 3,
     name: 'VIP 3',
-    beastName: 'الذئب القمري الكوبالت البنفسجي',
     price: 200000,
     durationDays: 30,
     cardImage: '/assets/aistudio/IMG-20261026-WA0036_39fcf42e.jpg',
@@ -104,7 +100,6 @@ export const VIP_TIERS: VipTierData[] = [
   {
     level: 4,
     name: 'VIP 4',
-    beastName: 'الصقر الأرجواني والتاج الملكي',
     price: 600000,
     durationDays: 30,
     cardImage: '/assets/aistudio/IMG-20261026-WA0039_a41ca8b9.jpg',
@@ -125,7 +120,6 @@ export const VIP_TIERS: VipTierData[] = [
   {
     level: 5,
     name: 'VIP 5',
-    beastName: 'الفهد الذهبي الناري',
     price: 1500000,
     durationDays: 30,
     cardImage: '/assets/aistudio/IMG-20261026-WA0040_d3aa3c77.jpg',
@@ -146,7 +140,6 @@ export const VIP_TIERS: VipTierData[] = [
   {
     level: 6,
     name: 'VIP 6',
-    beastName: 'الأسد البرونزي الزمردي الملكي',
     price: 3500000,
     durationDays: 30,
     cardImage: '/assets/aistudio/IMG-20261026-WA0048_ecccc119.jpg',
@@ -167,7 +160,6 @@ export const VIP_TIERS: VipTierData[] = [
   {
     level: 7,
     name: 'VIP 7',
-    beastName: 'النمر اللهبي الأزرق الفاخر',
     price: 8000000,
     durationDays: 30,
     cardImage: '/assets/aistudio/IMG-20261026-WA0046_be379335.jpg',
@@ -188,7 +180,6 @@ export const VIP_TIERS: VipTierData[] = [
   {
     level: 8,
     name: 'VIP 8',
-    beastName: 'الفيل الملكي الوردي الأسطوري',
     price: 18000000,
     durationDays: 30,
     cardImage: '/assets/aistudio/IMG-20261026-WA0047_a9a12b99.jpg',
@@ -209,7 +200,6 @@ export const VIP_TIERS: VipTierData[] = [
   {
     level: 9,
     name: 'VIP 9',
-    beastName: 'التنين القرمزي الكوني الناري',
     price: 35000000,
     durationDays: 30,
     cardImage: '/assets/aistudio/IMG-20261026-WA0043_a4d1533d.jpg',
@@ -230,7 +220,6 @@ export const VIP_TIERS: VipTierData[] = [
   {
     level: 10,
     name: 'VIP 10',
-    beastName: 'الأسد الإمبراطوري المتوج بالياقوت',
     price: 70000000,
     durationDays: 30,
     cardImage: '/assets/aistudio/IMG-20261026-WA0045_5e019064.jpg',
@@ -251,7 +240,6 @@ export const VIP_TIERS: VipTierData[] = [
   {
     level: 11,
     name: 'SVIP 11',
-    beastName: 'العنقاء الإمبراطورية وأجنحة النور',
     price: 120000000,
     durationDays: 30,
     cardImage: '/assets/aistudio/IMG-20261026-WA0041_e4885212.jpg',
@@ -272,7 +260,6 @@ export const VIP_TIERS: VipTierData[] = [
   {
     level: 12,
     name: 'SVIP 12',
-    beastName: 'عرش السيادة والخلود الأعظم عيار 24',
     price: 200000000,
     durationDays: 30,
     cardImage: '/assets/aistudio/IMG-20261026-WA0042_9d9a2962.jpg',
@@ -329,8 +316,7 @@ export const VipModal: React.FC = () => {
   useEffect(() => {
     if (openVipModal) setActiveTierIdx(Math.max(0, Math.min(11, currentUser.vipLevel > 0 ? currentUser.vipLevel - 1 : 0)));
   }, [openVipModal, currentUser.vipLevel]);
-  const [showcaseImageError, setShowcaseImageError] = useState(false);
-  useEffect(() => setShowcaseImageError(false), [activeTier.level]);
+  const tierVisual = VIP_BEAST_METADATA[activeTier.level];
 
   // Active detail popup modal (Matching the 4 uploaded screenshots)
   const [activePopup, setActivePopup] = useState<PopupType>(null);
@@ -418,7 +404,7 @@ export const VipModal: React.FC = () => {
         <div className="absolute inset-0 pointer-events-none z-0">
           <div
             className="absolute -top-24 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full blur-3xl opacity-35 transition-all duration-700"
-            style={{ backgroundColor: activeTier.themeColor }}
+            style={{ backgroundColor: tierVisual.themeColor }}
           />
           <div className="absolute inset-0 bg-radial from-white/5 via-black/85 to-black opacity-70" />
         </div>
@@ -445,7 +431,7 @@ export const VipModal: React.FC = () => {
               <span>👑 مركز كبار الشخصيات VIP</span>
             </h2>
             <span className="text-[10px] text-amber-400/90 font-bold block">
-              {activeTier.name} - {activeTier.beastName}
+              {activeTier.name} - {tierVisual.beast}
             </span>
           </div>
 
@@ -467,24 +453,25 @@ export const VipModal: React.FC = () => {
         {/* SCROLLABLE MAIN CONTENT                                                  */}
         {/* ========================================================================= */}
         <div className="relative z-10 flex-1 min-h-0 overflow-y-auto overscroll-contain no-scrollbar px-3 sm:px-4 pb-28 space-y-4 pt-2">
-          {/* Royal VIP showcase: original complete artwork with interactive curved-path hotspots. */}
-          <div className="relative mx-auto w-full max-w-[440px] overflow-hidden rounded-xl" style={{boxShadow:`0 0 28px ${activeTier.glowColor}`}}>
-            <img key={activeTier.level} src={`/assets/vip/showcase/vip${String(activeTier.level).padStart(2, '0')}.png`}
-              alt={`لوحة عرض VIP ${activeTier.level}`} className="block h-auto w-full select-none object-contain"
-              draggable={false} onError={() => setShowcaseImageError(true)} onLoad={() => setShowcaseImageError(false)} />
-            {showcaseImageError && <div role="alert" className="p-8 text-center text-amber-200">تعذر تحميل صورة العرض لهذا المستوى. يرجى التحقق من الملف المرفوع.</div>}
-            {/* The curved level markers are part of the original artwork.
-                Do not overlay misleading tier labels or duplicate them. */}
-            <button type="button" aria-label="المستوى السابق" onClick={handlePrevTier} className="absolute right-1 top-[52%] z-20 rounded-full border border-amber-300/50 bg-black/55 p-2 text-amber-200"><ChevronRight size={20}/></button>
-            <button type="button" aria-label="المستوى التالي" onClick={handleNextTier} className="absolute left-1 top-[52%] z-20 rounded-full border border-amber-300/50 bg-black/55 p-2 text-amber-200"><ChevronLeft size={20}/></button>
-            <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-              <div className="absolute left-1/2 top-[27%] h-24 w-24 -translate-x-1/2 animate-pulse rounded-full blur-3xl opacity-35" style={{background:activeTier.themeColor}}/>
-              <div key={activeTier.level} className="absolute inset-x-[12%] top-[17%] h-[35%] rounded-full opacity-25 motion-reduce:animate-none"
-                style={{background:`conic-gradient(from ${activeTier.level * 30}deg, transparent, ${activeTier.themeColor}, transparent, ${activeTier.level % 2 ? '#facc15' : '#ffffff'}, transparent)`,filter:`blur(${12 + activeTier.level}px)`,animation:`spin ${7 + activeTier.level * 0.8}s linear infinite ${activeTier.level % 2 ? 'reverse' : 'normal'}`}}/>
+          <section className="relative mx-auto w-full max-w-[440px] rounded-2xl border border-amber-300/35 bg-black/55 p-3"
+            style={{ boxShadow: `inset 0 0 52px ${tierVisual.themeColor}35` }}>
+            <div className="grid grid-cols-3 items-center">
+              <button type="button" aria-label="المستوى السابق" onClick={handlePrevTier} className="justify-self-start rounded-full border border-amber-300/50 p-2 text-amber-200"><ChevronRight size={20} /></button>
+              <span className="text-center text-sm font-black text-amber-200">{activeTier.name}</span>
+              <button type="button" aria-label="المستوى التالي" onClick={handleNextTier} className="justify-self-end rounded-full border border-amber-300/50 p-2 text-amber-200"><ChevronLeft size={20} /></button>
             </div>
-          </div>
-          <VipAvatarFrame level={activeTier.level} preview />
-          <p className="text-center text-xs font-bold text-amber-200">VIP {activeTier.level} · ${currentUser.vipLevel >= activeTier.level ? 'تمتلك المستوى' : 'معاينة فقط'}</p>
+            <img src={tierVisual.badgeImg} alt={tierVisual.beast} className="mx-auto mt-2 h-40 w-full object-contain" draggable={false} />
+            <div className="my-3 grid grid-cols-6 gap-1.5" role="group" aria-label="مستويات VIP">
+              {VIP_TIERS.map((tier, index) => (
+                <button key={tier.level} type="button" aria-pressed={activeTierIdx === index}
+                  onClick={() => { sounds.playClick(); setActiveTierIdx(index); }}
+                  className={`rounded-md border px-0.5 py-1.5 text-[10px] font-bold ${activeTierIdx === index ? 'border-amber-300 bg-amber-300 text-slate-950' : 'border-white/15 text-amber-100'}`}>
+                  {tier.name}
+                </button>
+              ))}
+            </div>
+            <VipAvatarFrame level={activeTier.level} preview />
+          </section>
 
           {/* User Account VIP Showcase Card: "ترتيب وتطبيق الإشارات الموجودة بالحساب مثل ما هيه" */}
           <div className="bg-gradient-to-r from-amber-950/40 via-purple-950/35 to-slate-900/60 border border-amber-500/35 rounded-2xl p-3.5 backdrop-blur-md shadow-xl flex items-center gap-3.5">
@@ -696,17 +683,10 @@ export const VipModal: React.FC = () => {
 
             {/* Main Action Button: بالفعل تمتلك / شراء الآن */}
             {isAlreadyOwned ? (
-              <button
-                onClick={handleAction}
-                className={`px-5 py-2.5 rounded-xl font-black text-xs transition active:scale-95 cursor-pointer shadow-lg flex items-center gap-1.5 ${
-                  isCurrentActive
-                    ? 'bg-emerald-600 border border-emerald-300 text-white shadow-emerald-900/50'
-                    : 'bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 text-slate-950 border border-yellow-200'
-                }`}
-              >
-                <Check className="w-4 h-4 stroke-[3]" />
-                <span>{isCurrentActive ? 'بالفعل تمتلك (مفعل)' : 'بالفعل تمتلك (تعيين)'}</span>
-              </button>
+              <span className="flex items-center gap-1.5 rounded-xl border border-emerald-300/40 bg-emerald-900 px-3 py-2.5 text-xs font-black text-white">
+                <Check className="h-4 w-4" />
+                {isCurrentActive ? 'الرتبة المفعّلة' : 'رتبة أقل من رتبتك الحالية'}
+              </span>
             ) : (
               <button
                 onClick={handleAction}
@@ -803,7 +783,7 @@ export const VipModal: React.FC = () => {
                           title={`${tier.name} - انقر للاختيار`}
                         >
                           <img
-                            src={`/assets/vip_badges/vip_${tier.level}.png`}
+                            src={VIP_BEAST_METADATA[tier.level].badgeImg}
                             alt={tier.name}
                             className="w-full h-auto object-contain max-h-12 pointer-events-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
                           />
@@ -858,7 +838,7 @@ export const VipModal: React.FC = () => {
                         <span>
                           {currentUser.vipLevel === activeTier.level
                             ? 'الشعار مفعل حالياً ✓'
-                            : 'تطبيق الشعار'}
+                            : 'رتبة أقل من رتبتك الحالية'}
                         </span>
                       </button>
                     ) : (
@@ -889,13 +869,8 @@ export const VipModal: React.FC = () => {
               {/* ============================================================= */}
               {activePopup === 'headframe' && (
                 <div className="w-full flex flex-col items-center space-y-3 pt-1">
-                  {/* Screenshot Artwork */}
-                  <div className="w-full rounded-2xl overflow-hidden border border-amber-500/30 shadow-lg">
-                    <img
-                      src="/assets/aistudio/Screenshot_____-__-__-__-__-__-____com.tuliling.laika_350fdf65.jpg"
-                      alt="أغطية رأس VIP 1-12"
-                      className="w-full h-auto object-contain max-h-[42vh]"
-                    />
+                  <div className="w-full rounded-2xl border border-amber-500/30 py-3 shadow-lg">
+                    <VipAvatarFrame level={activeTier.level} preview />
                   </div>
 
                   <div className="text-center pt-1">
@@ -915,16 +890,9 @@ export const VipModal: React.FC = () => {
                     ))}
                   </div>
 
-                  <button
-                    onClick={() => {
-                      sounds.playLevelUp();
-                      setGiftSuccessToast(`تم تطبيق إطار غطاء رأس ${activeTier.name} بنجاح! 👑`);
-                      setTimeout(() => setGiftSuccessToast(null), 3000);
-                    }}
-                    className="w-full py-3.5 rounded-full bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-slate-950 font-black text-sm shadow-xl active:scale-98 transition cursor-pointer flex items-center justify-center gap-2"
-                  >
-                    <span>تطبيق غطاء الرأس</span>
-                  </button>
+                  <p className="text-xs font-bold text-amber-200">
+                    {isCurrentActive ? 'إطار رتبتك الحالية' : `معاينة إطار ${activeTier.name}`}
+                  </p>
                 </div>
               )}
 
