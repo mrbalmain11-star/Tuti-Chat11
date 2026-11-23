@@ -1,7 +1,6 @@
 import { CpFrameForUser } from './CpFrameForUser';
 import { VipMessageFrame } from './VipMessageFrame';
 import { WealthBadge, CharmBadge } from './LevelBadgeIcons';
-import { fetchMyVerifiedRoyalXp } from '../services/royalXp';
 import { stagingBackend } from '../services/stagingBackend';
 import { IdentityBadge, type IdentityBadgeKind } from './IdentityBadge';
 import { RoomManagementPanel } from './RoomManagementPanel';
@@ -1243,21 +1242,6 @@ export const VoiceRoomModal: React.FC = () => {
     if (!activeRoom?.id || isRoomMinimized) return;
     window.dispatchEvent(new CustomEvent('totichat:room-message-refresh', { detail: activeRoom.id }));
   }, [activeRoom?.id, isRoomMinimized]);
-
-  // Official badge levels are derived only from authenticated gift-event XP.
-  const [verifiedChatLevels, setVerifiedChatLevels] = useState<{ wealth: number; charm: number } | null>(null);
-  useEffect(() => {
-    let active = true;
-    setVerifiedChatLevels(null);
-    if (!activeRoom?.id || !currentUser.id) return;
-    void fetchMyVerifiedRoyalXp().then(xp => {
-      if (active) setVerifiedChatLevels({
-        wealth: royalProgress(BigInt(xp.wealth_lifetime_xp)).level,
-        charm: royalProgress(BigInt(xp.charm_lifetime_xp)).level,
-      });
-    }).catch(error => console.warn('Verified chat badges unavailable:', error));
-    return () => { active = false; };
-  }, [activeRoom?.id, currentUser.id]);
 
   // Badge status is read from a server-verified, read-only identity RPC for every sender.
   const currentMessages = activeRoom ? roomMessages[activeRoom.id] || [] : [];
