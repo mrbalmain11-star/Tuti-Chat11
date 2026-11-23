@@ -164,6 +164,28 @@ export const VoiceRoomModal: React.FC = () => {
   // Local interactive states
   const [showChatInput, setShowChatInput] = useState(false);
   const [chatMessage, setChatMessage] = useState('');
+  // Android may dismiss its IME without dispatching a WebView back event.
+  // Track the visual viewport so hiding the keyboard also closes the composer.
+  useEffect(() => {
+    if (!showChatInput) return;
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    const baseline = Math.max(window.innerHeight, viewport.height);
+    let keyboardWasVisible = false;
+    const onViewportResize = () => {
+      const keyboardVisible = baseline - viewport.height > 140;
+      if (keyboardVisible) keyboardWasVisible = true;
+      else if (keyboardWasVisible) {
+        keyboardWasVisible = false;
+        setShowChatInput(false);
+        setShowEmojiPicker(false);
+      }
+    };
+    viewport.addEventListener('resize', onViewportResize);
+    onViewportResize();
+    return () => viewport.removeEventListener('resize', onViewportResize);
+  }, [showChatInput]);
+
   const [unreadRoomMessages, setUnreadRoomMessages] = useState(0);
   const [copiedId, setCopiedId] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -1964,7 +1986,7 @@ export const VoiceRoomModal: React.FC = () => {
         {showChatInput && (
           <form
             onSubmit={handleSendChat}
-            className="relative z-30 p-2.5 bg-[#140b2e]/95 border-t border-purple-500/20 flex items-center gap-2 animate-in slide-in-from-bottom"
+            className="relative z-30 mx-2 mb-1 rounded-2xl border border-emerald-300/30 bg-gradient-to-r from-[#101e2b]/95 via-[#17283b]/95 to-[#18243a]/95 px-2.5 py-2 shadow-[0_8px_28px_rgba(0,0,0,0.4)] backdrop-blur-xl flex items-center gap-2 animate-in slide-in-from-bottom"
           >
             <input
               type="text"
@@ -1973,13 +1995,13 @@ export const VoiceRoomModal: React.FC = () => {
               onChange={(e) => setChatMessage(e.target.value)}
               aria-invalid={chatMessage.trim().length > 1000}
               aria-describedby="room-chat-length"
-              className="flex-1 p-2 rounded-xl bg-white/10 border border-white/20 text-white text-xs focus:outline-none focus:border-cyan-400"
+              className="flex-1 min-w-0 px-3 py-2.5 rounded-xl bg-[#0a1726]/80 border border-emerald-300/30 text-white text-sm placeholder:text-slate-400 focus:outline-none focus:border-emerald-300 focus:ring-1 focus:ring-emerald-400/30"
               autoFocus
             />
             <button
               type="button"
               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-              className="p-2 rounded-xl bg-white/10 text-white hover:text-amber-300 cursor-pointer"
+              className="p-2.5 rounded-xl border border-white/10 bg-white/5 text-emerald-100 hover:text-amber-300 cursor-pointer"
             >
               <Smile className="w-4 h-4" />
             </button>
@@ -1989,14 +2011,14 @@ export const VoiceRoomModal: React.FC = () => {
             <button
               type="submit"
               disabled={!chatMessage.trim() || chatMessage.trim().length > 1000}
-              className="p-2 rounded-xl bg-[#26d0b2] hover:bg-[#20b89d] text-slate-950 font-bold transition active:scale-95 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              className="p-2.5 rounded-xl bg-gradient-to-br from-emerald-300 to-teal-500 text-[#082523] shadow-[0_2px_12px_rgba(45,212,191,0.25)] font-bold transition active:scale-95 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Send className="w-4 h-4" />
             </button>
             <button
               type="button"
               onClick={() => setShowChatInput(false)}
-              className="p-2 rounded-xl bg-white/10 text-white cursor-pointer"
+              className="p-2.5 rounded-xl border border-white/10 bg-white/5 text-slate-200 cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
