@@ -1452,6 +1452,15 @@ export const VoiceRoomModal: React.FC = () => {
   // Row 3: NO 11, NO 12, NO 13, NO 14, NO 15
   const row3Numbers = [11, 12, 13, 14, 15];
 
+  const profileTargetId = selectedMicUser?.user.id;
+  const profileTargetSeat = profileTargetId
+    ? activeRoom.seats.find(seat => seat.user?.id === profileTargetId)
+    : undefined;
+  const canModerateProfile = Boolean(profileTargetId &&
+    profileTargetId !== currentUser.id && profileTargetId !== activeRoom.hostId &&
+    (isOwner || (isModerator && !activeRoom.moderatorIds?.includes(profileTargetId))));
+  const profileModerationButton = 'flex min-h-11 items-center justify-center gap-1.5 rounded-xl px-2 py-2 text-xs font-bold disabled:opacity-50';
+
   const myCurrentSeat = roomSeats.find((s) => s.user?.id === currentUser.id);
   const isUserOnAnySeat = !!myCurrentSeat;
 
@@ -2850,6 +2859,33 @@ export const VoiceRoomModal: React.FC = () => {
               </button>
 
               {selectedMicUser.user.id !== currentUser.id && <button type="button" onClick={() => void setPersonalBlock(selectedMicUser.user.id, !personalBlocks.some(item => item.userId === selectedMicUser.user.id))} className="mx-auto mt-2 block rounded-xl bg-slate-700 px-4 py-2 text-xs text-white">{personalBlocks.some(item => item.userId === selectedMicUser.user.id) ? 'فك الحظر الشخصي' : 'حظر شخصي'}</button>}
+              {canModerateProfile && profileTargetId && (
+                <section aria-label="إدارة العضو في الغرفة" className="mx-auto mt-3 w-full max-w-[340px] rounded-2xl border border-slate-700/80 bg-slate-900/60 p-2.5">
+                  <h3 className="mb-2 px-1 text-xs font-bold text-slate-200">إدارة العضو في الغرفة</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {profileTargetSeat && (
+                      <>
+                        <button type="button" disabled={moderationBusy}
+                          onClick={() => toggleMuteSeat(profileTargetSeat.seatNumber)}
+                          className={profileModerationButton + ' bg-emerald-950 text-emerald-100'}>
+                          {profileTargetSeat.isModeratorMuted ? <Mic size={16} /> : <MicOff size={16} />}
+                          {profileTargetSeat.isModeratorMuted ? 'رفع كتم المايك' : 'كتم المايك'}
+                        </button>
+                        <button type="button" disabled={moderationBusy}
+                          onClick={() => void handleVoiceModeration(profileTargetId, 'release_seat')}
+                          className={profileModerationButton + ' bg-slate-800 text-slate-100'}>
+                          <UserMinus size={16} /> إنزال من المقعد
+                        </button>
+                      </>
+                    )}
+                    <button type="button" disabled={moderationBusy}
+                      onClick={() => void handleVoiceModeration(profileTargetId, 'ban')}
+                      className={profileModerationButton + ' col-span-2 bg-rose-950 text-rose-100'}>
+                      <Shield size={16} /> حظر من الروم
+                    </button>
+                  </div>
+                </section>
+              )}
               {/* ID Row with Copy */}
               <div
                 onClick={() => {
