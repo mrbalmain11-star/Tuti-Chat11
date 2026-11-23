@@ -14,7 +14,7 @@ export async function stopRoomMusic(): Promise<void> { await music.stop(); }
 
 
 /** Connects to the existing staging LiveKit authority. Never ships API secrets to Android. */
-export async function connectRoomVoice(roomId: string, shouldPublish: () => boolean, onError: (message: string) => void): Promise<{ sync: () => Promise<void>; close: () => Promise<void> }> {
+export async function connectRoomVoice(roomId: string, shouldPublish: () => boolean, onError: (message: string) => void): Promise<{ canPublish: boolean; sync: () => Promise<void>; close: () => Promise<void> }> {
   if (!stagingBackend) throw new Error('Voice backend unavailable');
   // Seat assignment and unmute are separate database writes. A token requested
   // between them is listen-only, even if the UI has already enabled the mic.
@@ -45,9 +45,12 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
         pendingPlayback.delete(element);
         continue;
       }
-      void element.play().then(() => pendingPlayback.delete(element)).catch(() => {});
+      void element.play().then(() => {
+        pendingPlayback.delete(element);
+        if (pendingPlayback.size === 0) document.removeEventListener('pointerup', retryPlayback);
+      }).catch(() => {});
     }
-    if (pendingPlayback.size === 0) document.removeEventListener('pointerdown', retryPlayback);
+    if (pendingPlayback.size === 0) document.removeEventListener('pointerup', retryPlayback);
   };
   const removeAudio = (key: string) => {
     const element = audio.get(key);
@@ -56,12 +59,12 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
     element.pause();
     element.remove();
     audio.delete(key);
-    if (pendingPlayback.size === 0) document.removeEventListener('pointerdown', retryPlayback);
+    if (pendingPlayback.size === 0) document.removeEventListener('pointerup', retryPlayback);
   };
   const clearAudio = () => {
     for (const key of [...audio.keys()]) removeAudio(key);
     pendingPlayback.clear();
-    document.removeEventListener('pointerdown', retryPlayback);
+    document.removeEventListener('pointerup', retryPlayback);
   };
   room.on(RoomEvent.LocalTrackPublished, publication => {
     console.info('[RoomVoice] local track published', { roomId, kind: publication.kind, source: publication.source });
@@ -83,7 +86,7 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
     void element.play().catch(() => {
       if (closing || !element.isConnected) return;
       pendingPlayback.add(element);
-      document.addEventListener('pointerdown', retryPlayback);
+      document.addEventListener('pointerup', retryPlayback);
       onError('اضغط على الشاشة للسماح بتشغيل الصوت');
     });
   });
@@ -113,19 +116,21 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
   // Avoid repeatedly calling startAudio from its own status-change event.
   const unlockAudio = () => {
     if (room.canPlaybackAudio) {
-      document.removeEventListener('pointerdown', unlockAudio);
+      document.removeEventListener('pointerup', unlockAudio);
       return;
     }
     void room.startAudio().then(() => {
-      document.removeEventListener('pointerdown', unlockAudio);
+      document.removeEventListener('pointerup', unlockAudio);
     }).catch(error => onError('تعذر تشغيل الصوت المستلم: ' + String(error)));
   };
-  document.addEventListener('pointerdown', unlockAudio);
+  document.addEventListener('pointerup', unlockAudio);
   try {
     await room.connect(data.url, data.token, { autoSubscribe: true });
   } catch (error) {
-    document.removeEventListener('pointerdown', unlockAudio);
-    room.disconnect();
+    document.removeEventListener('pointerup', unlockAudio);
+    closing = true;
+    clearAudio();
+    await room.disconnect().catch(() => {});
     throw error;
   }
   let micQueue: Promise<void> = Promise.resolve();
@@ -145,19 +150,22 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
         console.info('[RoomVoice] microphone publication state', { roomId, requested: publish, enabled: room.localParticipant.isMicrophoneEnabled, tokenCanPublish: data.canPublish });
         if (publish) {
           micRetryPending = false;
-          document.removeEventListener('pointerdown', retryMicOnGesture);
+          document.removeEventListener('pointerup', retryMicOnGesture);
         }
       } catch (error) {
         const name = error instanceof Error ? error.name : 'UnknownError';
         const detail = error instanceof Error ? error.message : String(error);
         const devices = navigator.mediaDevices;
         const context = !devices?.getUserMedia ? ' [getUserMedia unavailable]' : '';
-        onError('فشل تشغيل الميكروفون [' + name + ']: ' + detail + context);
+        console.warn('[RoomVoice] microphone capture failed:', name, detail + context);
+        onError(name === 'NotAllowedError'
+          ? 'تعذّر الوصول للمايك. تأكد من سماح إذن الميكروفون للتطبيق.'
+          : 'تعذّر تشغيل المايك. اضغط على الشاشة لإعادة المحاولة.');
         // Keep receiving room audio if Android microphone capture fails.
         // Retry publishing only after a fresh user gesture; never reconnect the room.
         if (publish && !closing) {
           micRetryPending = true;
-          document.addEventListener('pointerdown', retryMicOnGesture);
+          document.addEventListener('pointerup', retryMicOnGesture);
         }
         throw error;
       }
@@ -168,11 +176,11 @@ export async function connectRoomVoice(roomId: string, shouldPublish: () => bool
   // Preserve listening and let the next tap retry the microphone on the same room.
   await sync().catch(error => console.warn('[RoomVoice] microphone pending gesture retry', error));
   musicRoom = room;
-  return { sync, close: async () => {
-    if (musicRoom === room) { musicRoom = null; await music.stop(); }
+  return { canPublish: data.canPublish === true, sync, close: async () => {
     closing = true;
-    document.removeEventListener('pointerdown', unlockAudio);
-    document.removeEventListener('pointerdown', retryMicOnGesture);
+    if (musicRoom === room) { musicRoom = null; await music.stop(); }
+    document.removeEventListener('pointerup', unlockAudio);
+    document.removeEventListener('pointerup', retryMicOnGesture);
     micRetryPending = false;
     await micQueue.catch(() => {});
     await room.disconnect();

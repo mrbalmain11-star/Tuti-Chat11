@@ -571,58 +571,61 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [myMicMuted, setMyMicMuted] = useState(false);
   const voiceRoomId = activeRoom?.id ?? null;
   const voiceSeat = activeRoom?.seats.some(seat => seat.user?.id === currentUser.id) ?? false;
-  const voicePublishRef = useRef(false);
+  const voiceShouldPublish = isLoggedIn && voiceSeat && !myMicMuted;
+  const voiceIntentRef = useRef({ roomId: voiceRoomId, publish: voiceShouldPublish });
+  voiceIntentRef.current = { roomId: voiceRoomId, publish: voiceShouldPublish };
   const voiceLifecycleRef = useRef<Promise<void>>(Promise.resolve());
-  const voiceConnectionRef = useRef<Awaited<ReturnType<typeof connectRoomVoice>> | null>(null);
-  voicePublishRef.current = voiceSeat && !myMicMuted;
+  const voiceConnectionRef = useRef<{
+    roomId: string;
+    connection: Awaited<ReturnType<typeof connectRoomVoice>>;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!isLoggedIn || !voiceRoomId) return;
+    return () => {
+      voiceLifecycleRef.current = voiceLifecycleRef.current.catch(() => {}).then(async () => {
+        const current = voiceConnectionRef.current;
+        if (current?.roomId !== voiceRoomId) return;
+        voiceConnectionRef.current = null;
+        await current.connection.close();
+      });
+    };
+  }, [isLoggedIn, voiceRoomId]);
+
   useEffect(() => {
     if (!isLoggedIn || !voiceRoomId) return;
     let cancelled = false;
-    let connection: Awaited<ReturnType<typeof connectRoomVoice>> | null = null;
-    const setup = voiceLifecycleRef.current.catch(() => {}).then(async () => {
+    voiceLifecycleRef.current = voiceLifecycleRef.current.catch(() => {}).then(async () => {
       if (cancelled) return;
+      const shouldPublish = () => voiceIntentRef.current.roomId === voiceRoomId && voiceIntentRef.current.publish;
+      const reportVoiceStatus = (message: string) => {
+        if (voiceIntentRef.current.roomId !== voiceRoomId) return;
+        console.warn('Room voice:', message);
+        window.dispatchEvent(new CustomEvent('totichat:room-voice-status', { detail: { roomId: voiceRoomId, message } }));
+      };
+      const current = voiceConnectionRef.current;
       try {
-        const connected = await connectRoomVoice(voiceRoomId, () => voicePublishRef.current, message => {
-          if (!cancelled) console.error('Room voice:', message);
-        });
-        connection = connected;
-        if (!cancelled) {
-          voiceConnectionRef.current = connected;
-          // connectRoomVoice already synchronizes microphone state on initial connect.
-          // A second immediate capture attempt can race Android WebView's audio source.
+        if (current?.roomId === voiceRoomId) {
+          const hasGrant = current.connection.canPublish;
+          if ((voiceShouldPublish && !hasGrant) || (!voiceSeat && hasGrant)) {
+            voiceConnectionRef.current = null;
+            await current.connection.close();
+          } else {
+            await current.connection.sync();
+            return;
+          }
         }
+        if (cancelled) return;
+        const connection = await connectRoomVoice(voiceRoomId, shouldPublish, reportVoiceStatus);
+        voiceConnectionRef.current = { roomId: voiceRoomId, connection };
       } catch (error) {
-        if (!cancelled) {
-          console.error('Voice connection failed:', error);
-          alert('تعذر تشغيل صوت الغرفة: ' + (error instanceof Error ? error.message : 'خطأ اتصال'));
-        }
+        if (cancelled) return;
+        console.error('Voice connection or microphone sync failed:', error);
+        if (!voiceConnectionRef.current) reportVoiceStatus('تعذّر الاتصال بصوت الغرفة. اطلع من الغرفة وادخل مرة ثانية.');
       }
     });
-    voiceLifecycleRef.current = setup;
-    return () => {
-      cancelled = true;
-      // Cleanup is queued after setup, including microphone acquisition.
-      // Next connection must wait for this queued close to finish.
-      voiceLifecycleRef.current = setup.then(async () => {
-        if (connection) {
-          if (voiceConnectionRef.current === connection) voiceConnectionRef.current = null;
-          await connection.close();
-        }
-      });
-    };
-  // Seat changes require a fresh LiveKit token: the server grants microphone
-  // publishing only to seated, unmuted members at token issuance time.
-  }, [isLoggedIn, voiceRoomId, voiceSeat, myMicMuted]);
-
-  // Muting a seated microphone only updates the existing LiveKit publication.
-  // Reissuing tokens and reconnecting for every mute can exhaust the 20/min preflight budget.
-  useEffect(() => {
-    if (!isLoggedIn || !voiceRoomId || !voiceSeat) return;
-    const connection = voiceConnectionRef.current;
-    if (connection) {
-      void connection.sync().catch(error => console.error('Microphone sync failed:', error));
-    }
-  }, [isLoggedIn, voiceRoomId, voiceSeat, myMicMuted]);
+    return () => { cancelled = true; };
+  }, [isLoggedIn, voiceRoomId, voiceSeat, voiceShouldPublish]);
 
   useEffect(() => {
     if (isLoggedIn) return;
@@ -1677,6 +1680,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }).then(() => {
       reservationConfirmed = true;
       if (roomTransitionVersion.current !== transitionAtStart) return;
+      setMyMicMuted(true);
       window.dispatchEvent(new CustomEvent('totichat:room-seat-changed', { detail: roomId }));
       setActiveRoom(prev => {
         if (prev?.id !== roomId) return prev;

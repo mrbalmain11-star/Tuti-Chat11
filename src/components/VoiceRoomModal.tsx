@@ -735,6 +735,18 @@ export const VoiceRoomModal: React.FC = () => {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
+  useEffect(() => {
+    const roomId = activeRoom?.id;
+    if (!roomId) return;
+    const onVoiceStatus = (event: Event) => {
+      const detail = (event as CustomEvent<{ roomId: string; message: string }>).detail;
+      if (detail?.roomId === roomId) showToast(detail.message);
+    };
+    window.addEventListener('totichat:room-voice-status', onVoiceStatus);
+    return () => window.removeEventListener('totichat:room-voice-status', onVoiceStatus);
+  }, [activeRoom?.id]);
+
+
   const handleOpenUserProfile = (targetUser: UserProfile) => {
     sounds.playClick();
     setInternalProfileUser(targetUser);
