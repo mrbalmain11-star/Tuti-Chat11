@@ -1982,45 +1982,49 @@ export const VoiceRoomModal: React.FC = () => {
           </>
         )}
 
-        {/* Chat input text drawer */}
+        {/* Compact royal chat composer: send | message | emoji | close (RTL). */}
         {showChatInput && (
           <form
+            dir="rtl"
             onSubmit={handleSendChat}
-            className="relative z-30 mx-2 mb-1 rounded-2xl border border-emerald-300/30 bg-gradient-to-r from-[#101e2b]/95 via-[#17283b]/95 to-[#18243a]/95 px-2.5 py-2 shadow-[0_8px_28px_rgba(0,0,0,0.4)] backdrop-blur-xl flex items-center gap-2 animate-in slide-in-from-bottom"
+            className="relative z-30 mx-2 mb-1 flex min-w-0 items-center gap-2 rounded-[22px] border border-emerald-400/50 bg-[#1b1034]/95 px-2 py-2 shadow-[0_0_16px_rgba(16,185,129,0.16),0_8px_28px_rgba(0,0,0,0.35)] backdrop-blur-xl animate-in slide-in-from-bottom"
           >
+            <button
+              type="submit"
+              disabled={!chatMessage.trim() || chatMessage.trim().length > 1000}
+              aria-label="إرسال الرسالة"
+              className="order-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-emerald-400/70 bg-[#063b2b] text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.35)] transition active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Send className="h-5 w-5" />
+            </button>
             <input
               type="text"
-              placeholder="اكتب رسالة في الروم..."
+              placeholder="اكتب رسالة في الغرفة..."
               value={chatMessage}
               onChange={(e) => setChatMessage(e.target.value)}
               aria-invalid={chatMessage.trim().length > 1000}
               aria-describedby="room-chat-length"
-              className="flex-1 min-w-0 px-3 py-2.5 rounded-xl bg-[#0a1726]/80 border border-emerald-300/30 text-white text-sm placeholder:text-slate-400 focus:outline-none focus:border-emerald-300 focus:ring-1 focus:ring-emerald-400/30"
+              className="order-2 min-w-0 flex-1 rounded-full border border-emerald-400/65 bg-[#211036]/95 px-4 py-2.5 text-right text-sm text-white placeholder:text-slate-300 focus:outline-none focus:border-emerald-300 focus:ring-1 focus:ring-emerald-400/40"
               autoFocus
             />
             <button
               type="button"
               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-              className="p-2.5 rounded-xl border border-white/10 bg-white/5 text-emerald-100 hover:text-amber-300 cursor-pointer"
+              aria-label="الرموز التعبيرية"
+              className="order-3 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-purple-400/40 bg-[#24143e] text-white hover:text-amber-300"
             >
-              <Smile className="w-4 h-4" />
+              <Smile className="h-5 w-5" />
             </button>
-            <span id="room-chat-length" className={`text-[10px] tabular-nums ${chatMessage.trim().length > 1000 ? 'text-red-300' : 'text-slate-300'}`} aria-live="polite">
-              {chatMessage.trim().length}/1000
+            <span id="room-chat-length" className="sr-only" aria-live="polite">
+              {chatMessage.trim().length} من 1000 حرف
             </span>
             <button
-              type="submit"
-              disabled={!chatMessage.trim() || chatMessage.trim().length > 1000}
-              className="p-2.5 rounded-xl bg-gradient-to-br from-emerald-300 to-teal-500 text-[#082523] shadow-[0_2px_12px_rgba(45,212,191,0.25)] font-bold transition active:scale-95 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <Send className="w-4 h-4" />
-            </button>
-            <button
               type="button"
-              onClick={() => setShowChatInput(false)}
-              className="p-2.5 rounded-xl border border-white/10 bg-white/5 text-slate-200 cursor-pointer"
+              onClick={() => { setShowChatInput(false); setShowEmojiPicker(false); }}
+              aria-label="إغلاق حقل الكتابة"
+              className="order-4 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-purple-400/40 bg-[#24143e] text-white"
             >
-              <X className="w-4 h-4" />
+              <X className="h-5 w-5" />
             </button>
           </form>
         )}
