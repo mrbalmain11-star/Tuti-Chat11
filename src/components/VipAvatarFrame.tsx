@@ -6,7 +6,7 @@ export function VipAvatarFrame({ level, preview = false }: { level?: number; pre
 
   const source = `/assets/vip/frames/vip${String(level).padStart(2, '0')}.webp`;
   return (
-    <span className={`vip-avatar-frame ${preview ? 'vip-avatar-frame-preview' : ''}`}
+    <span data-avatar-frame className={`vip-avatar-frame ${preview ? 'vip-avatar-frame-preview' : ''}`}
       style={{ '--vip-frame-art': `url("${source}")` } as CSSProperties}
       role={preview ? 'img' : undefined} aria-label={preview ? `إطار VIP ${level}` : undefined}
       aria-hidden={preview ? undefined : true}>

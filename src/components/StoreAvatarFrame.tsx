@@ -32,7 +32,7 @@ export function StoreAvatarFrame({ userId, fallback }: { userId: string; fallbac
     : remote?.userId === userId ? remote.url : null;
   if (!url) return fallback;
   return (
-    <div aria-hidden="true" className="pointer-events-none absolute -inset-[15%] z-20">
+    <div data-avatar-frame aria-hidden="true" className="pointer-events-none absolute -inset-[15%] z-20">
       <StorageItemVisual key={url} url={url} name="" play />
     </div>
   );

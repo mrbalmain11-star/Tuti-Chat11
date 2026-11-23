@@ -1279,6 +1279,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!isLoggedIn || !activeRoom || !stagingBackend) return;
     const roomId = activeRoom.id;
     const roomClient = stagingBackend;
+    const hostId = activeRoom.hostId;
     let alive = true;
     let loading = false;
     let pending = false;
@@ -1291,6 +1292,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         do {
           pending = false;
           const members = await resolveRoomAvatars(await fetchRoomVisualMembers(roomId));
+          const hostMember = members.find(member => member.user_id === hostId);
+          const { data: hostProfile } = !hostMember && hostId
+            ? await roomClient.from('profiles').select('display_name,avatar_url').eq('id', hostId).maybeSingle()
+            : { data: null };
+          const hostName = hostMember?.display_name ?? hostProfile?.display_name;
+          const hostAvatar = hostMember?.resolvedAvatar ?? (hostProfile ? imageUrl(hostProfile.avatar_url) : undefined);
           const rawMembers = await fetchRoomMembers(roomId);
           const moderatorMutedIds = new Set(rawMembers.filter(m => m.moderation_muted).map(m => m.user_id));
           const { data: moderatorIds, error: moderatorsError } = await roomClient.rpc('totichat_room_moderator_ids', { p_room_id: roomId });
@@ -1331,6 +1338,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             if (!prev || prev.id !== roomId) return prev;
             return {
               ...prev,
+              hostName: hostName ?? prev.hostName,
+              hostAvatar: hostAvatar ?? prev.hostAvatar,
               listenersCount: members.length,
               moderatorIds: !moderatorsError && Array.isArray(moderatorIds) ? moderatorIds : prev.moderatorIds,
               memberAvatars: members.map(m => m.resolvedAvatar || (m.user_id === currentUser.id ? currentUser.avatar : '')).filter((avatar): avatar is string => Boolean(avatar)),

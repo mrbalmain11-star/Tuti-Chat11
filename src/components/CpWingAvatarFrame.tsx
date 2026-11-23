@@ -39,7 +39,7 @@ export const CpWingAvatarFrame: React.FC<Props> = ({ enabled, name, className = 
     return () => { live = false; };
   }, [enabled]);
   if (!enabled || !layers) return null;
-  return <span className={`cp-wing-avatar-frame ${className}`} aria-label={name ? `إطار CP لـ ${name}` : 'إطار CP المتحرك'}>
+  return <span data-avatar-frame className={`cp-wing-avatar-frame ${className}`} aria-label={name ? `إطار CP لـ ${name}` : 'إطار CP المتحرك'}>
     {layers.map((src, index) => <img key={index} className={`cp-wing-avatar-layer ${index ? `cp-wing-layer-w${index}` : 'cp-wing-avatar-base'}`} src={src} alt="" draggable={false} />)}
   </span>;
 };

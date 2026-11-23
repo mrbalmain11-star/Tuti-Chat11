@@ -1493,6 +1493,8 @@ export const VoiceRoomModal: React.FC = () => {
   };
 
   const hostAccountId = roomPublicId;
+  const welcomeHostName = (isOwner ? currentUser.name : activeRoom.hostName) || 'صاحب الغرفة';
+  const welcomeHostAvatar = isOwner ? currentUser.avatar : activeRoom.hostAvatar;
 
   // Keep the theater iframe in the same DOM position while the room is minimized.
   // Recreating or moving the iframe resets the current YouTube playback.
@@ -1768,7 +1770,7 @@ export const VoiceRoomModal: React.FC = () => {
                   >
                     {isOccupied && seat.user ? (
                       <div
-                        className="relative h-full w-full rounded-full shadow-md ring-1 ring-amber-300/65 [&_.vip-avatar-frame]:scale-[.82] [&_.cp-wing-avatar-frame]:scale-[.88]"
+                        className="relative h-full w-full rounded-full shadow-md ring-1 ring-amber-300/65 [&:has([data-avatar-frame])]:ring-0 [&_.vip-avatar-frame]:scale-[.82] [&_.cp-wing-avatar-frame]:scale-[.88]"
                       >
                         <div className="absolute inset-0 rounded-full bg-gradient-to-br from-emerald-700 to-teal-950 flex items-center justify-center text-white text-lg font-black">{(seat.user.name || '؟').slice(0,1)}</div>
                         {seat.user.avatar ? <img
@@ -1956,15 +1958,15 @@ export const VoiceRoomModal: React.FC = () => {
                   {activeRoom.announcement?.trim() && (
                     <div className="flex items-start gap-2 justify-end">
                       <div className="flex flex-col items-end min-w-0">
-                        <div className="text-xs font-black text-white mb-1">{activeRoom.hostName || (activeRoom.hostId === currentUser.id ? currentUser.name : 'صاحب الغرفة')}</div>
+                        <div className="text-xs font-black text-white mb-1">{welcomeHostName}</div>
                         <div className="bg-[#160d33]/90 backdrop-blur-md rounded-2xl p-2.5 border border-purple-500/30 text-xs text-slate-100 shadow-md text-right leading-relaxed">
                           {activeRoom.announcement}
                         </div>
                       </div>
                       <div className="w-10 h-10 rounded-full overflow-hidden border border-amber-300/80 bg-[#1b1038] shrink-0 flex items-center justify-center">
-                        {(activeRoom.hostAvatar || (activeRoom.hostId === currentUser.id ? currentUser.avatar : '')) ? (
-                          <img src={activeRoom.hostAvatar || currentUser.avatar} alt="صاحب الغرفة" className="w-full h-full object-cover" />
-                        ) : <span className="text-white font-bold">{(activeRoom.hostName || currentUser.name || 'غ').charAt(0)}</span>}
+                        {welcomeHostAvatar ? (
+                          <img src={welcomeHostAvatar} alt="صاحب الغرفة" className="w-full h-full object-cover" />
+                        ) : <span className="text-white font-bold">{welcomeHostName.charAt(0)}</span>}
                       </div>
                     </div>
                   )}
@@ -2830,7 +2832,7 @@ export const VoiceRoomModal: React.FC = () => {
 
               {/* Avatar and CP frame share one anchor. Keep the decorative frame outside
                   the clipped photo, so neither the CP wings nor the name are obscured. */}
-              <div className="relative -mt-9 mx-auto mb-3 h-20 w-20 sm:h-22 sm:w-22">
+              <div className="relative -mt-9 mx-auto mb-3 h-20 w-20 sm:h-22 sm:w-22 [&:has([data-avatar-frame])>button]:border-transparent">
                 <button type="button" onClick={() => { const target = selectedMicUser.user; setSelectedMicUser(null); handleOpenUserProfile(target); }} aria-label="فتح الملف الشخصي الكامل" className="relative block h-full w-full rounded-full border-2 border-white/90 shadow-2xl bg-slate-900">
                   <span className="absolute inset-0 overflow-hidden rounded-full">
                     <img
