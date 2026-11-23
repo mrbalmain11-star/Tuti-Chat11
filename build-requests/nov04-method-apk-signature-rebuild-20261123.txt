@@ -1,0 +1,1 @@
+Rebuild latest staging Android APK using Nov 4 workflow after reported INSTALL_PARSE_FAILED_NO_CERTIFICATES and CRC mismatch on downloaded eb9eb3f4 APK. Preserve application code and existing signing/build workflow. Verify APK with apksigner, zipalign, emulator install and published bytes as existing workflow specifies.
