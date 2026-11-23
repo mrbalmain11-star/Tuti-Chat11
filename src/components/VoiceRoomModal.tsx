@@ -1273,12 +1273,13 @@ export const VoiceRoomModal: React.FC = () => {
       try {
         const { data, error } = await client.rpc('staging_profile_identity_badge', { p_user_id: userId });
         if (error) throw error;
-        return [userId, data === 'admin' || data === 'special' ? data : 'normal'] as const;
+        // Only show an identity badge when the server explicitly confirms its type.
+        return [userId, data === 'admin' || data === 'special' || data === 'normal' ? data : null] as const;
       } catch (error) {
         console.error('Verified chat ID badge unavailable:', error);
-        return [userId, 'normal'] as const;
+        return [userId, null] as const;
       }
-    })).then(rows => { if (active) setChatIdentityByUser(Object.fromEntries(rows)); });
+    })).then(rows => { if (active) setChatIdentityByUser(Object.fromEntries(rows.filter((row): row is readonly [string, IdentityBadgeKind] => row[1] !== null))); });
     return () => { active = false; };
   }, [activeRoom?.id, senderIdsKey]);
   useEffect(() => {
