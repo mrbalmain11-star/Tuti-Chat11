@@ -1382,7 +1382,7 @@ export const VoiceRoomModal: React.FC = () => {
   };
 
   const getSeatPosition = (n:number):React.CSSProperties => {
-    if(seatLayout==='circle'){const angle=(n-1)*2*Math.PI/15;return {position:'absolute',left:'calc(50% + '+(Math.sin(angle)*40)+'% - 28px)',top:'calc(50% - '+(Math.cos(angle)*39)+'% - 28px)'};}
+    if(seatLayout==='circle'){const angle=(n-1)*2*Math.PI/15;return {position:'absolute',left:'calc(50% + '+(Math.sin(angle)*42)+'% - 22px)',top:'calc(50% - '+(Math.cos(angle)*42)+'% - 22px)'};}
     if(seatLayout==='classic')return {gridColumn:n<=3?n+1:((n-4)%4)+1,gridRow:n<=3?1:Math.floor((n-4)/4)+2};
     if(seatLayout==='stage')return {gridColumn:n<=3?n+1:((n-4)%5)+1,gridRow:n<=3?1:Math.floor((n-4)/5)+2};
     return {};
@@ -1662,7 +1662,7 @@ export const VoiceRoomModal: React.FC = () => {
 
         {/* Seat positions only; seat visuals and seat numbers remain unchanged. */}
         <div className={seatLayout === "circle" ? "relative z-10 mx-auto h-[365px] w-full max-w-[370px]" : "relative z-10 px-2 pt-2 pb-1"}>
-          <div className={seatLayout === "circle" ? "relative h-full w-full" : "grid grid-cols-5 gap-x-2 gap-y-5 items-center justify-items-center"}>
+          <div className={seatLayout === "circle" ? "relative h-full w-full" : "grid grid-cols-5 gap-x-2 gap-y-8 items-start justify-items-center [grid-auto-rows:minmax(88px,auto)]"}>
 {Array.from({length:15},(_,i)=>i+1).map((seatNum) => {
               const seat = getSeat(seatNum);
               const isOccupied = !!seat.user;
@@ -1682,12 +1682,12 @@ export const VoiceRoomModal: React.FC = () => {
                       handleSeatClick(seatNum);
                     }
                   }}
-                  className="flex flex-col items-center cursor-pointer group active:scale-95 transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300"
+                  className="flex min-w-0 w-full flex-col items-center cursor-pointer group active:scale-95 transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300"
                   style={getSeatPosition(seatNum)}
                 >
                   {/* Seat Translucent Circle: Medium size w-14 h-14 sm:w-16 sm:h-16 */}
                   <div
-                    className={`relative w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center transition-all ${
+                    className={`relative w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all ${
                       isOccupied && seat.user
                         ? 'p-0.5'
                         : 'bg-transparent hover:brightness-110'
@@ -1695,7 +1695,7 @@ export const VoiceRoomModal: React.FC = () => {
                   >
                     {isOccupied && seat.user ? (
                       <div
-                        className={`relative w-full h-full rounded-full overflow-visible shadow-md [&>.vip-avatar-frame]:scale-[.79] ${
+                        className={`relative w-full h-full rounded-full overflow-visible shadow-md [&_.vip-avatar-frame]:scale-[.67] [&_.cp-wing-avatar-frame]:scale-[.67] ${
                           Number(seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel || 0) > 0
                             ? 'border-transparent'
                             : 'border-transparent'
@@ -1726,16 +1726,16 @@ export const VoiceRoomModal: React.FC = () => {
                       </div>
                     ) : seat.isLocked ? (
                       /* Locked mic */
-                      <RoyalSeatIcon locked className="w-14 h-14 sm:w-16 sm:h-16" />
+                      <RoyalSeatIcon locked className="w-11 h-11 sm:w-12 sm:h-12" />
                     ) : (
                       /* White plus icon matching Screenshots */
-                      <RoyalSeatIcon className="w-14 h-14 sm:w-16 sm:h-16" />
+                      <RoyalSeatIcon className="w-11 h-11 sm:w-12 sm:h-12" />
                     )}
                   </div>
 
                   {/* Under Avatar: User name large & clear / Under empty mic: clean number */}
                   {isOccupied && seat.user ? (
-                    <div className="relative z-20 mt-1 flex items-center justify-center gap-1 max-w-[76px] px-0.5">
+                    <div className="relative z-20 mt-1 flex items-center justify-center gap-1 max-w-full px-0.5">
                       <span className="shrink-0 rounded bg-black/70 px-1 text-[9px] text-white" aria-label={`المايك ${seatNum}`}>{seatNum}</span>
                       {isPlayingMusic && <Music size={12} className="shrink-0 text-emerald-300" aria-hidden="true" />}
                       <VipName
