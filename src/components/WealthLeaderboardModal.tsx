@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useId, useState } from 'react';
 import { stagingBackend } from '../services/stagingBackend';
 import { imageUrl } from '../services/imageUrl';
 
@@ -24,6 +24,32 @@ import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
 import { VipName } from './VipName';
 import { UserProfile, WealthSupporter } from '../types';
+
+function PodiumPortrait({ rank, src, name }: { rank: 1 | 2 | 3; src?: string; name: string }) {
+  const filterId = useId();
+  return (
+    <div className={`relative mb-1 aspect-square max-w-full ${rank === 1 ? 'w-28' : 'w-24'}`} aria-label={`المركز ${rank}`}>
+      <img src={src || rankingImageFallback} onError={onRankingImageError} alt={name}
+        className="absolute left-[21%] top-[23%] h-[52%] w-[58%] rounded-[50%] object-cover" />
+      <svg viewBox="0 0 100 100" aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full">
+        <defs>
+          {/* Key out the neutral checkerboard in the uploaded artwork while keeping the coloured frame. */}
+          <filter id={filterId} colorInterpolationFilters="sRGB">
+            <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  25 0 -25 0 -.5" result="warm" />
+            <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -25 0 25 0 -.5" result="violet" />
+            <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 25 -25 0 -.5" result="green" />
+            <feComposite in="warm" in2="violet" operator="over" result="warmOrViolet" />
+            <feComposite in="green" in2="warmOrViolet" operator="over" />
+            <feMorphology operator="dilate" radius="0.55" />
+            <feMorphology operator="erode" radius="0.55" result="frameMask" />
+            <feComposite in="SourceGraphic" in2="frameMask" operator="in" />
+          </filter>
+        </defs>
+        <image href={`/assets/TOP${rank}.png`} width="100" height="100" filter={`url(#${filterId})`} />
+      </svg>
+    </div>
+  );
+}
 
 export interface CharmLeaderboardItem {
   rank: number;
@@ -349,22 +375,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                       onClick={() => handleOpenUser(topWealth2.user)}
                       className="flex-1 flex flex-col items-center cursor-pointer group active:scale-95 transition"
                     >
-                      <div className="relative mb-1">
-                        <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-base filter drop-shadow">
-                          🥈
-                        </span>
-                        <div className="w-16 h-16 rounded-full p-1 bg-gradient-to-b from-slate-200 to-slate-400 border-2 border-slate-300 shadow-md">
-                          <img
-                            src={topWealth2.user.avatar || rankingImageFallback}
-                            onError={onRankingImageError}
-                            alt={topWealth2.user.name}
-                            className="w-full h-full rounded-full object-cover"
-                          />
-                        </div>
-                        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-gradient-to-r from-slate-400 to-slate-600 text-white text-[9px] font-black px-2 py-0.2 rounded-full shadow-xs">
-                          #2
-                        </div>
-                      </div>
+                      <PodiumPortrait rank={2} src={topWealth2.user.avatar} name={topWealth2.user.name} />
 
                       <VipName
                         name={topWealth2.user.name}
@@ -386,19 +397,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                       onClick={() => handleOpenUser(topWealth1.user)}
                       className="flex-1.1 flex flex-col items-center cursor-pointer group active:scale-95 transition -translate-y-3"
                     >
-                      <div className="relative mb-1">
-                        <div className="w-20 h-20 rounded-full p-1.5 bg-gradient-to-b from-amber-300 via-yellow-200 to-amber-500 border-2 border-amber-400 shadow-xl ring-3 ring-amber-300/40">
-                          <img
-                            src={topWealth1.user.avatar || rankingImageFallback}
-                            onError={onRankingImageError}
-                            alt={topWealth1.user.name}
-                            className="w-full h-full rounded-full object-cover"
-                          />
-                        </div>
-                        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 text-[11px] font-black px-3 py-0.5 rounded-full shadow-md border border-white">
-                          #1
-                        </div>
-                      </div>
+                      <PodiumPortrait rank={1} src={topWealth1.user.avatar} name={topWealth1.user.name} />
 
                       <VipName
                         name={topWealth1.user.name}
@@ -422,22 +421,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                       onClick={() => handleOpenUser(topWealth3.user)}
                       className="flex-1 flex flex-col items-center cursor-pointer group active:scale-95 transition"
                     >
-                      <div className="relative mb-1">
-                        <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-base filter drop-shadow">
-                          🥉
-                        </span>
-                        <div className="w-16 h-16 rounded-full p-1 bg-gradient-to-b from-amber-600 to-amber-800 border-2 border-amber-600 shadow-md">
-                          <img
-                            src={topWealth3.user.avatar || rankingImageFallback}
-                            onError={onRankingImageError}
-                            alt={topWealth3.user.name}
-                            className="w-full h-full rounded-full object-cover"
-                          />
-                        </div>
-                        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-700 to-amber-900 text-white text-[9px] font-black px-2 py-0.2 rounded-full shadow-xs">
-                          #3
-                        </div>
-                      </div>
+                      <PodiumPortrait rank={3} src={topWealth3.user.avatar} name={topWealth3.user.name} />
 
                       <VipName
                         name={topWealth3.user.name}
@@ -547,22 +531,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                       onClick={() => handleOpenUser(topCharm2.user)}
                       className="flex-1 flex flex-col items-center cursor-pointer group active:scale-95 transition"
                     >
-                      <div className="relative mb-1">
-                        <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-base filter drop-shadow">
-                          🥈
-                        </span>
-                        <div className="w-16 h-16 rounded-full p-1 bg-gradient-to-b from-slate-200 to-slate-400 border-2 border-slate-300 shadow-md">
-                          <img
-                            src={topCharm2.user.avatar || rankingImageFallback}
-                            onError={onRankingImageError}
-                            alt={topCharm2.user.name}
-                            className="w-full h-full rounded-full object-cover"
-                          />
-                        </div>
-                        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-gradient-to-r from-slate-400 to-slate-600 text-white text-[9px] font-black px-2 py-0.2 rounded-full shadow-xs">
-                          #2
-                        </div>
-                      </div>
+                      <PodiumPortrait rank={2} src={topCharm2.user.avatar} name={topCharm2.user.name} />
 
                       <VipName
                         name={topCharm2.user.name}
@@ -587,19 +556,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                       onClick={() => handleOpenUser(topCharm1.user)}
                       className="flex-1.1 flex flex-col items-center cursor-pointer group active:scale-95 transition -translate-y-3"
                     >
-                      <div className="relative mb-1">
-                        <div className="w-20 h-20 rounded-full p-1.5 bg-gradient-to-b from-amber-300 via-yellow-200 to-amber-500 border-2 border-amber-400 shadow-xl ring-3 ring-amber-300/40">
-                          <img
-                            src={topCharm1.user.avatar || rankingImageFallback}
-                            onError={onRankingImageError}
-                            alt={topCharm1.user.name}
-                            className="w-full h-full rounded-full object-cover"
-                          />
-                        </div>
-                        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 text-[11px] font-black px-3 py-0.5 rounded-full shadow-md border border-white">
-                          #1
-                        </div>
-                      </div>
+                      <PodiumPortrait rank={1} src={topCharm1.user.avatar} name={topCharm1.user.name} />
 
                       <VipName
                         name={topCharm1.user.name}
@@ -625,22 +582,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                       onClick={() => handleOpenUser(topCharm3.user)}
                       className="flex-1 flex flex-col items-center cursor-pointer group active:scale-95 transition"
                     >
-                      <div className="relative mb-1">
-                        <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-base filter drop-shadow">
-                          🥉
-                        </span>
-                        <div className="w-16 h-16 rounded-full p-1 bg-gradient-to-b from-amber-600 to-amber-800 border-2 border-amber-600 shadow-md">
-                          <img
-                            src={topCharm3.user.avatar || rankingImageFallback}
-                            onError={onRankingImageError}
-                            alt={topCharm3.user.name}
-                            className="w-full h-full rounded-full object-cover"
-                          />
-                        </div>
-                        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-700 to-amber-900 text-white text-[9px] font-black px-2 py-0.2 rounded-full shadow-xs">
-                          #3
-                        </div>
-                      </div>
+                      <PodiumPortrait rank={3} src={topCharm3.user.avatar} name={topCharm3.user.name} />
 
                       <VipName
                         name={topCharm3.user.name}
@@ -756,23 +698,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                       onClick={() => handleEnterRoom(topRoom2.id)}
                       className="flex-1 flex flex-col items-center cursor-pointer group active:scale-95 transition"
                     >
-                      <div className="relative mb-1">
-                        <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-base filter drop-shadow">
-                          🥈
-                        </span>
-                        {/* صورة الروم */}
-                        <div className="w-16 h-16 rounded-2xl p-1 bg-gradient-to-b from-slate-200 to-slate-400 border-2 border-slate-300 shadow-md overflow-hidden">
-                          <img
-                            src={topRoom2.coverImage || rankingImageFallback}
-                            onError={onRankingImageError}
-                            alt={topRoom2.title}
-                            className="w-full h-full rounded-xl object-cover"
-                          />
-                        </div>
-                        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-gradient-to-r from-slate-400 to-slate-600 text-white text-[9px] font-black px-2 py-0.2 rounded-full shadow-xs">
-                          #2
-                        </div>
-                      </div>
+                      <PodiumPortrait rank={2} src={topRoom2.coverImage} name={topRoom2.title} />
 
                       {/* اسم الروم */}
                       <span className="text-xs font-black text-slate-900 max-w-[85px] mt-1 text-center truncate">
@@ -794,20 +720,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                       onClick={() => handleEnterRoom(topRoom1.id)}
                       className="flex-1.1 flex flex-col items-center cursor-pointer group active:scale-95 transition -translate-y-3"
                     >
-                      <div className="relative mb-1">
-                        {/* صورة الروم المركز الأول */}
-                        <div className="w-20 h-20 rounded-2xl p-1.5 bg-gradient-to-b from-amber-300 via-yellow-200 to-amber-500 border-2 border-amber-400 shadow-xl ring-3 ring-amber-300/40 overflow-hidden">
-                          <img
-                            src={topRoom1.coverImage || rankingImageFallback}
-                            onError={onRankingImageError}
-                            alt={topRoom1.title}
-                            className="w-full h-full rounded-xl object-cover"
-                          />
-                        </div>
-                        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 text-[11px] font-black px-3 py-0.5 rounded-full shadow-md border border-white">
-                          #1
-                        </div>
-                      </div>
+                      <PodiumPortrait rank={1} src={topRoom1.coverImage} name={topRoom1.title} />
 
                       {/* اسم الروم */}
                       <span className="text-sm font-black text-amber-950 max-w-[100px] mt-1 text-center truncate">
@@ -829,23 +742,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                       onClick={() => handleEnterRoom(topRoom3.id)}
                       className="flex-1 flex flex-col items-center cursor-pointer group active:scale-95 transition"
                     >
-                      <div className="relative mb-1">
-                        <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-base filter drop-shadow">
-                          🥉
-                        </span>
-                        {/* صورة الروم */}
-                        <div className="w-16 h-16 rounded-2xl p-1 bg-gradient-to-b from-amber-600 to-amber-800 border-2 border-amber-600 shadow-md overflow-hidden">
-                          <img
-                            src={topRoom3.coverImage || rankingImageFallback}
-                            onError={onRankingImageError}
-                            alt={topRoom3.title}
-                            className="w-full h-full rounded-xl object-cover"
-                          />
-                        </div>
-                        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-700 to-amber-900 text-white text-[9px] font-black px-2 py-0.2 rounded-full shadow-xs">
-                          #3
-                        </div>
-                      </div>
+                      <PodiumPortrait rank={3} src={topRoom3.coverImage} name={topRoom3.title} />
 
                       {/* اسم الروم */}
                       <span className="text-xs font-black text-slate-900 max-w-[85px] mt-1 text-center truncate">
