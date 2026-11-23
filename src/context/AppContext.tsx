@@ -21,7 +21,7 @@ import { fetchRealRoomMessages } from '../services/roomMessageReads';
 import { fetchRoomVisualMembers, type RoomVisualMember } from '../services/roomVisualMembers';
 import { reserveSeat, joinRoomMembership, leaveRoomMembership, sendRealRoomMessage, setMyRoomMute, releaseMySeat } from '../services/roomMembershipRpc';
 import { Language, Translations, translations } from '../i18n/translations';
-import { StorageItem, BagItem, storeFrames, storeMounts, storeBubbles, storeEntrances } from '../data/storageItems';
+import { BagItem, getStorageAsset, getStorageCategory } from '../data/storageItems';
 
 interface GiftAnimationPayload {
   gift: GiftItem;
@@ -105,9 +105,8 @@ interface AppContextType {
   equippedBubble: string;
   equippedEntrance: string;
   equippedMount: string;
-  equipBagItem: (item: BagItem) => void;
-  unequipBagItem: (item: BagItem) => void;
-  buyStoreItem: (item: StorageItem) => boolean;
+  equipBagItem: (item: BagItem) => Promise<boolean>;
+  unequipBagItem: (item: BagItem) => Promise<boolean>;
   openHonorModal: boolean;
   setOpenHonorModal: (open: boolean) => void;
   openSettingsModal: boolean;
@@ -1003,37 +1002,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     const client = stagingBackend;
-    if (!client || !currentUser.id) {
-      setBagItems([]);
-      return;
-    }
+    setBagItems([]);
+    setEquippedFrame('');
+    setEquippedBubble('');
+    setEquippedEntrance('');
+    setEquippedMount('');
+    if (!client || !currentUser.id) return;
     let live = true;
+    let latestRequest = 0;
     const refreshBag = async () => {
+      const request = ++latestRequest;
       const { data, error } = await client
         .from('store_ownership')
-        .select('item_id,equipped,expires_at,store_catalog(name,category)')
+        .select('item_id,equipped,expires_at,store_catalog(name,category,preview_url)')
         .eq('user_id', currentUser.id);
       if (error) { console.warn('Store inventory refresh failed', error); return; }
-      if (!live) return;
-      const definitions = [...storeFrames, ...storeMounts, ...storeBubbles, ...storeEntrances];
-      const rows: BagItem[] = (data || []).filter((row: any) =>
-        !row.expires_at || new Date(row.expires_at).getTime() > Date.now()
-      ).map((row: any) => {
-        const definition = definitions.find(item => item.id === row.item_id);
+      if (!live || request !== latestRequest) return;
+      const rows: BagItem[] = (data ?? []).flatMap(row => {
+        if (row.expires_at && new Date(row.expires_at).getTime() <= Date.now()) return [];
         const catalog = Array.isArray(row.store_catalog) ? row.store_catalog[0] : row.store_catalog;
-        const category = definition?.category || (catalog?.category === 'cars' ? 'mounts' : catalog?.category);
-        if (!['frames','bubbles','entrances','mounts'].includes(category)) return null;
-        return {
+        const category = catalog && getStorageCategory(catalog.category);
+        if (!category) return [];
+        return [{
           id: row.item_id,
-          name: catalog?.name || definition?.name || row.item_id,
+          name: catalog.name,
           category,
-          iconType: definition?.iconType || 'crown',
-          colorScheme: definition?.colorScheme || 'gold',
+          assetUrl: getStorageAsset(row.item_id, catalog.preview_url),
           expiry: row.expires_at ? new Date(row.expires_at).toLocaleDateString('ar-IQ') : 'دائم',
           isEquipped: Boolean(row.equipped),
-          isPermanent: !row.expires_at,
-        } as BagItem;
-      }).filter(Boolean) as BagItem[];
+        }];
+      });
       setBagItems(rows);
       setEquippedFrame(rows.find(i => i.category === 'frames' && i.isEquipped)?.id || '');
       setEquippedBubble(rows.find(i => i.category === 'bubbles' && i.isEquipped)?.id || '');
@@ -1054,28 +1052,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [currentUser.id]);
 
   const changeEquippedItem = async (item: BagItem, equipped: boolean) => {
-    if (!stagingBackend || !currentUser.id || !bagItems.some(i => i.id === item.id)) return;
+    if (!stagingBackend || !currentUser.id || !bagItems.some(i => i.id === item.id)) return false;
     const { error } = await stagingBackend.rpc('phase3_equip_store', {
       p_item_id: item.id,
       p_equipped: equipped,
     });
     if (error) {
       console.error('Server equip rejected', error);
-      alert('تعذر تحديث التجهيز على الخادم. لم يتغير العنصر.');
-      return;
+      return false;
     }
     window.dispatchEvent(new Event('totichat:inventory-changed'));
+    return true;
   };
-  const equipBagItem = (item: BagItem) => { void changeEquippedItem(item, true); };
-  const unequipBagItem = (item: BagItem) => { void changeEquippedItem(item, false); };
-
-  // Store purchases must be settled by the server ledger and ownership table.
-  // The legacy client-only deduction/inventory path is deliberately disabled:
-  // it falsely reported success and lost items on reinstall or another device.
-  const buyStoreItem = (_item: StorageItem): boolean => {
-    alert('هذا العنصر غير مربوط بعد بكتالوج الشراء على الخادم. لم تُخصم أي عملات.');
-    return false;
-  };
+  const equipBagItem = (item: BagItem) => changeEquippedItem(item, true);
+  const unequipBagItem = (item: BagItem) => changeEquippedItem(item, false);
   const [openHonorModal, setOpenHonorModal] = useState(false);
   const [openSettingsModal, setOpenSettingsModal] = useState(false);
   const [openCreateRoomModal, setOpenCreateRoomModal] = useState(false);
@@ -2398,7 +2388,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         equippedMount,
         equipBagItem,
         unequipBagItem,
-        buyStoreItem,
         openHonorModal,
         setOpenHonorModal,
         openSettingsModal,

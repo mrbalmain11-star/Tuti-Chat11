@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { stagingBackend } from '../services/stagingBackend';
 import {
   ChevronRight,
@@ -6,24 +6,14 @@ import {
   Sparkles,
   Check,
   Crown,
-  Volume2,
-  Coins,
-  ShieldCheck,
-  Star,
-  Zap,
-  Car,
-  MessageSquare,
-  Compass,
   Store,
-  Layers,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
 import {
-  storeFrames,
-  storeMounts,
-  storeBubbles,
-  storeEntrances,
+  getStorageAsset,
+  getStorageCategory,
+  storageCategories,
   StorageItem,
   BagItem,
 } from '../data/storageItems';
@@ -36,10 +26,6 @@ export const StorageModal: React.FC = () => {
     storageTab,
     setStorageTab,
     bagItems,
-    equippedFrame,
-    equippedBubble,
-    equippedEntrance,
-    equippedMount,
     equipBagItem,
     unequipBagItem,
     currentUser,
@@ -53,15 +39,57 @@ export const StorageModal: React.FC = () => {
   // Sub-tabs in "حقيبة" (Bag / Acquired Items) as requested: VIP, إطار, فقاعة, تأثير الدخول, المركبة
   const [bagCategory, setBagCategory] = useState<'vip' | 'frames' | 'bubbles' | 'entrances' | 'mounts'>('vip');
 
-  // Selected item for purchase in store
-  const [selectedStoreItem, setSelectedStoreItem] = useState<StorageItem | null>(null);
-
   // Preview item popup
   const [previewItem, setPreviewItem] = useState<StorageItem | BagItem | null>(null);
 
   // Purchase confirmation & toast state
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [purchaseBusy, setPurchaseBusy] = useState(false);
+
+  const [storeItems, setStoreItems] = useState<StorageItem[]>([]);
+  const [catalogStatus, setCatalogStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [catalogRetry, setCatalogRetry] = useState(0);
+
+  useEffect(() => {
+    if (!openStorageModal) return;
+    let active = true;
+    setCatalogStatus('loading');
+    setStoreItems([]);
+    setPreviewItem(null);
+
+    async function loadCatalog() {
+      if (!stagingBackend) {
+        setCatalogStatus('error');
+        return;
+      }
+      const { data, error } = await stagingBackend.from('store_catalog')
+        .select('id,name,category,price,duration_days,description,preview_url')
+        .eq('is_active', true)
+        .eq('is_reward', false)
+        .eq('currency', 'gold')
+        .in('category', ['frames', 'cars', 'mounts', 'bubbles', 'entrances'])
+        .order('id');
+      if (!active) return;
+      if (error) {
+        setCatalogStatus('error');
+        return;
+      }
+      setStoreItems((data ?? []).flatMap(row => {
+        const category = getStorageCategory(row.category);
+        const assetUrl = getStorageAsset(row.id, row.preview_url);
+        const price = Number(row.price);
+        if (!category || !assetUrl || !Number.isSafeInteger(price) || price <= 0) return [];
+        return [{
+          id: row.id, name: row.name, category, assetUrl, price,
+          durationDays: row.duration_days, description: row.description,
+        }];
+      }));
+      setCatalogStatus('ready');
+    }
+
+    void loadCatalog();
+    return () => { active = false; };
+  }, [openStorageModal, currentUser.id, catalogRetry]);
 
   if (!openStorageModal) return null;
 
@@ -72,13 +100,7 @@ export const StorageModal: React.FC = () => {
     }, 2800);
   };
 
-  // Get current store list
-  const currentStoreList = {
-    frames: storeFrames,
-    mounts: storeMounts,
-    bubbles: storeBubbles,
-    entrances: storeEntrances,
-  }[storeCategory];
+  const currentStoreList = storeItems.filter(item => item.category === storeCategory);
 
   // Get current bag list
   const currentBagList = bagItems.filter((i) => i.category === bagCategory);
@@ -92,12 +114,12 @@ export const StorageModal: React.FC = () => {
       // Only catalog-backed items may be sold. Prices are verified server-side.
       const { data: catalog, error: catalogError } = await stagingBackend
         .from('store_catalog')
-        .select('id,price,currency,is_active')
+        .select('id,price,currency,is_reward,preview_url,duration_days')
         .eq('id', item.id)
         .eq('is_active', true)
         .maybeSingle();
       if (catalogError) throw catalogError;
-      if (!catalog) {
+      if (!catalog || catalog.is_reward || !getStorageAsset(item.id, catalog.preview_url)) {
         showToast('هذا العنصر غير متاح للشراء على الخادم حالياً');
         return;
       }
@@ -105,8 +127,9 @@ export const StorageModal: React.FC = () => {
         showToast('عملة هذا العنصر غير مدعومة في واجهة الشراء الحالية');
         return;
       }
-      if (Number(catalog.price) !== item.price) {
-        showToast('السعر تغيّر، يرجى تحديث المتجر قبل تأكيد الشراء');
+      if (Number(catalog.price) !== item.price || catalog.duration_days !== item.durationDays) {
+        showToast('تغيّرت تفاصيل العنصر. حدّثنا المتجر، اختر العنصر من جديد');
+        setCatalogRetry(retry => retry + 1);
         return;
       }
       if (currentUser.coins < Number(catalog.price)) {
@@ -125,8 +148,7 @@ export const StorageModal: React.FC = () => {
       window.dispatchEvent(new Event('totichat:inventory-changed'));
       sounds.playSuccess();
       showToast('تم الشراء بنجاح وحفظ العنصر في حسابك');
-      setSelectedStoreItem(null);
-    } catch (error) {
+      } catch (error) {
       console.error('Store purchase failed', error);
       showToast('فشل الشراء أو لم يتم تأكيده، راجع رصيدك قبل المحاولة مجدداً');
     } finally {
@@ -135,9 +157,8 @@ export const StorageModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md font-['Cairo',sans-serif] select-none p-0 sm:p-3 animate-in fade-in">
+    <div dir="rtl" className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md font-['Cairo',sans-serif] select-none p-0 sm:p-3 animate-in fade-in">
       <div className="w-full max-w-md h-full sm:h-[90vh] bg-gradient-to-b from-[#081810] via-[#091C13] to-[#050F0A] text-white sm:rounded-3xl shadow-2xl border border-emerald-900/50 flex flex-col overflow-hidden relative">
-        {/* Floating Toast Notification */}
         {toastMessage && (
           <div className="absolute top-16 left-4 right-4 z-50 py-2.5 px-4 bg-emerald-600/95 text-white text-xs font-bold rounded-2xl shadow-xl border border-emerald-400/50 flex items-center justify-center gap-2 animate-in fade-in slide-in-from-top-2">
             <Sparkles className="w-4 h-4 text-yellow-300 shrink-0" />
@@ -145,11 +166,7 @@ export const StorageModal: React.FC = () => {
           </div>
         )}
 
-        {/* =========================================================================
-            TOP HEADER BAR (تخزين مع التبويب الداخلي: المتجر / الحقيبة)
-            ========================================================================= */}
         <div className="relative z-10 px-4 pt-3.5 pb-2 flex items-center justify-between border-b border-emerald-900/30">
-          {/* Top-Left: Internal Segments for (المتجر / الحقيبة) inside تخزين */}
           <div className="flex items-center bg-emerald-950/90 border border-emerald-500/40 rounded-full p-0.5 shadow-sm">
             <button
               onClick={() => {
@@ -182,12 +199,10 @@ export const StorageModal: React.FC = () => {
             </button>
           </div>
 
-          {/* Center Title: تخزين */}
           <h2 className="text-lg font-black tracking-wide text-white drop-shadow-sm flex items-center gap-1.5">
-            <span>تخزين</span>
+            <span>الزينة</span>
           </h2>
 
-          {/* Top-Right: Chevron Back Button */}
           <button
             onClick={() => {
               sounds.playClick();
@@ -195,25 +210,15 @@ export const StorageModal: React.FC = () => {
             }}
             className="w-8 h-8 rounded-full bg-emerald-950/50 hover:bg-emerald-900/50 border border-emerald-800/40 flex items-center justify-center text-slate-300 hover:text-white transition active:scale-95"
             title="رجوع"
+            aria-label="رجوع"
           >
             <ChevronRight className="w-5 h-5" />
           </button>
         </div>
 
-        {/* =========================================================================
-            CATEGORY NAVIGATION BAR
-            ========================================================================= */}
         {storageTab === 'store' ? (
-          /* Store Tabs: غطاء الرأس | المركبة | فقاعة | مؤثر الدخول */
           <div className="relative z-10 grid grid-cols-4 px-2 pt-2 border-b border-emerald-900/30 text-center text-xs font-bold">
-            {(
-              [
-                { id: 'frames', label: 'غطاء الرأس' },
-                { id: 'mounts', label: 'المركبة' },
-                { id: 'bubbles', label: 'فقاعة' },
-                { id: 'entrances', label: 'مؤثر الدخول' },
-              ] as const
-            ).map((tab) => {
+            {storageCategories.map((tab) => {
               const active = storeCategory === tab.id;
               return (
                 <button
@@ -221,8 +226,7 @@ export const StorageModal: React.FC = () => {
                   onClick={() => {
                     sounds.playClick();
                     setStoreCategory(tab.id);
-                    setSelectedStoreItem(null);
-                  }}
+                                  }}
                   className={`py-2 transition-all flex flex-col items-center gap-1.5 ${
                     active ? 'text-white font-black' : 'text-slate-400 hover:text-slate-200'
                   }`}
@@ -236,15 +240,14 @@ export const StorageModal: React.FC = () => {
             })}
           </div>
         ) : (
-          /* Bag Tabs as ordered by user: VIP | إطار | فقاعة | تأثير الدخول | المركبة */
           <div className="relative z-10 grid grid-cols-5 px-1 pt-2 border-b border-emerald-900/30 text-center text-[11px] sm:text-xs font-bold">
             {(
               [
                 { id: 'vip', label: 'VIP' },
-                { id: 'frames', label: 'إطار' },
+                { id: 'frames', label: 'الإطارات' },
                 { id: 'bubbles', label: 'فقاعة' },
                 { id: 'entrances', label: 'تأثير الدخول' },
-                { id: 'mounts', label: 'المركبة' },
+                { id: 'mounts', label: 'المركبات' },
               ] as const
             ).map((tab) => {
               const active = bagCategory === tab.id;
@@ -269,73 +272,43 @@ export const StorageModal: React.FC = () => {
           </div>
         )}
 
-        {/* =========================================================================
-            MAIN CONTENT AREA
-            ========================================================================= */}
         <div className="flex-1 overflow-y-auto p-3 no-scrollbar space-y-3">
           {storageTab === 'store' ? (
-            /* -------------------------------------------------------------
-               STORE GRID (3 COLUMNS) - Exact Match to Screenshots 1, 2, 3
-               ------------------------------------------------------------- */
-            <div className="grid grid-cols-3 gap-2.5">
-              {currentStoreList.map((item) => {
-                const isSelected = selectedStoreItem?.id === item.id;
-                return (
-                  <div
-                    key={item.id}
-                    onClick={() => {
-                      sounds.playClick();
-                      setSelectedStoreItem(item);
-                    }}
-                    className={`rounded-2xl p-2.5 flex flex-col items-center text-center cursor-pointer transition relative group border ${
-                      isSelected
-                        ? 'bg-[#102C20] border-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.3)]'
-                        : 'bg-[#0E241A] border-[#163828] hover:border-emerald-500/50'
-                    }`}
-                  >
-                    {/* Item Visual Art with Center Play Icon */}
-                    <div
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        sounds.playCoin();
-                        setPreviewItem(item);
-                      }}
-                      className="w-18 h-18 sm:w-20 sm:h-20 mb-1.5 relative cursor-pointer"
-                    >
-                      <StorageItemVisual iconType={item.iconType} colorScheme={item.colorScheme} />
+            catalogStatus !== 'ready' || currentStoreList.length === 0 ? (
+              <div className="rounded-2xl border border-emerald-900/40 bg-[#0E241A] px-4 py-12 text-center">
+                <p role="status" className="text-sm font-bold text-slate-300">
+                  {catalogStatus === 'loading' ? 'جاري تحميل المتجر…'
+                    : catalogStatus === 'error' ? 'تعذر تحميل المتجر'
+                    : 'لا توجد عناصر متاحة في هذا القسم حالياً'}
+                </p>
+                {catalogStatus === 'error' && (
+                  <button type="button" onClick={() => setCatalogRetry(retry => retry + 1)}
+                    className="mt-3 rounded-xl bg-emerald-400 px-4 py-2 text-xs font-bold text-emerald-950">
+                    إعادة المحاولة
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {currentStoreList.map(item => (
+                  <button key={item.id} type="button" onClick={() => {
+                    sounds.playClick();
+                    setPreviewItem(item);
+                  }} className="flex min-w-0 flex-col items-center gap-2 rounded-2xl border border-emerald-900 bg-[#0E241A] p-3 text-center hover:border-emerald-400">
+                    <div className="aspect-square w-full max-w-28">
+                      <StorageItemVisual key={item.assetUrl} url={item.assetUrl} name={item.name} />
                     </div>
-
-                    {/* Arabic Item Title */}
-                    <h4 className="text-xs font-bold text-white text-center leading-tight line-clamp-1 mb-1">
-                      {item.name}
-                    </h4>
-
-                    {/* Price and Duration (e.g. 49999/7أيام 🪙) */}
-                    <div className="flex items-center justify-center gap-1 text-[11px] font-mono text-amber-300 font-bold">
-                      <span className="text-[10px] text-amber-200/90">
-                        {item.price.toLocaleString('en-US')}/{item.duration}
-                      </span>
-                      {/* Gold Coin Icon */}
-                      <span className="text-xs">🪙</span>
-                    </div>
-
-                    {/* Selected Indicator Checkmark */}
-                    {isSelected && (
-                      <div className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-emerald-500 text-black flex items-center justify-center shadow-xs">
-                        <Check className="w-3 h-3 stroke-[3]" />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                    <span className="text-sm font-bold">{item.name}</span>
+                    <span className="text-xs font-bold text-amber-300">
+                      {item.price.toLocaleString('ar-IQ')} عملة · {item.durationDays === null ? 'دائم' : item.durationDays + ' يوم'}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )
           ) : (
-            /* -------------------------------------------------------------
-               BAG CONTENT (VIP + Owned Categories)
-               ------------------------------------------------------------- */
             <div>
               {bagCategory === 'vip' ? (
-                /* VIP status from the authenticated account */
                 <div className="space-y-3 animate-in fade-in">
                   <div className="relative overflow-hidden rounded-2xl border border-amber-300 bg-gradient-to-r from-[#FCE19C] via-[#FCE9B8] to-[#FCE096] p-4 shadow-lg">
                     <div className="flex items-center justify-between gap-3">
@@ -379,7 +352,6 @@ export const StorageModal: React.FC = () => {
                   </div>
                 </div>
               ) : (
-                /* Owned Items for Selected Bag Category */
                 <div className="space-y-2.5">
                   {currentBagList.length === 0 ? (
                     <div className="py-12 px-4 text-center space-y-3 bg-[#0E241A] rounded-2xl border border-emerald-900/40">
@@ -390,17 +362,17 @@ export const StorageModal: React.FC = () => {
                         لا توجد عناصر في هذا القسم من حقيبتك
                       </p>
                       <p className="text-xs text-slate-400">
-                        يمكنك زيارة التخزين لاقتناء أرقى الإطارات والمؤثرات
+                        تقدر تشوف العناصر المتاحة في المتجر
                       </p>
                       <button
                         onClick={() => {
                           sounds.playClick();
                           setStorageTab('store');
-                          setStoreCategory(bagCategory as any);
+                          setStoreCategory(bagCategory);
                         }}
                         className="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-black text-xs transition"
                       >
-                        تصفح التخزين الآن
+                        تصفح المتجر
                       </button>
                     </div>
                   ) : (
@@ -416,26 +388,19 @@ export const StorageModal: React.FC = () => {
                                 : 'border-[#163828] hover:border-slate-700'
                             }`}
                           >
-                            {/* Visual Artwork */}
-                            <div
-                              onClick={() => {
-                                sounds.playCoin();
-                                setPreviewItem(item);
-                              }}
-                              className="w-16 h-16 mb-1.5 cursor-pointer relative"
-                            >
-                              <StorageItemVisual iconType={item.iconType} colorScheme={item.colorScheme} />
-                            </div>
+                            {item.assetUrl && (
+                              <button type="button" onClick={() => setPreviewItem(item)}
+                                aria-label={`معاينة ${item.name}`} className="mb-1.5 h-20 w-20">
+                                <StorageItemVisual key={item.assetUrl} url={item.assetUrl} name={item.name} />
+                              </button>
+                            )}
 
-                            {/* Name */}
                             <h4 className="text-xs font-bold text-white line-clamp-1">{item.name}</h4>
 
-                            {/* Expiry Badge */}
                             <span className="text-[10px] text-amber-300 font-mono mt-0.5">
                               {item.expiry}
                             </span>
 
-                            {/* Equip / Unequip Action Buttons */}
                             <div className="mt-2.5 w-full">
                               {isEquipped ? (
                                 <div className="flex items-center gap-1.5 justify-center">
@@ -444,9 +409,9 @@ export const StorageModal: React.FC = () => {
                                     <span>مستخدم</span>
                                   </span>
                                   <button
-                                    onClick={() => {
-                                      unequipBagItem(item);
-                                      showToast(`تم إلغاء تجهيز ${item.name}`);
+                                    onClick={async () => {
+                                      const ok = await unequipBagItem(item);
+                                      showToast(ok ? `تم إلغاء تجهيز ${item.name}` : 'تعذر إلغاء التجهيز');
                                     }}
                                     className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-bold"
                                   >
@@ -455,9 +420,9 @@ export const StorageModal: React.FC = () => {
                                 </div>
                               ) : (
                                 <button
-                                  onClick={() => {
-                                    equipBagItem(item);
-                                    showToast(`تم تجهيز ${item.name} بنجاح!`);
+                                  onClick={async () => {
+                                    const ok = await equipBagItem(item);
+                                    showToast(ok ? `تم تجهيز ${item.name}` : 'تعذر تجهيز العنصر');
                                   }}
                                   className="w-full py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-black text-xs active:scale-95 transition"
                                 >
@@ -476,28 +441,8 @@ export const StorageModal: React.FC = () => {
           )}
         </div>
 
-        {/* =========================================================================
-            BOTTOM ACTION BAR (Exact Match to Screenshot 1, 2, 3)
-            ========================================================================= */}
         {storageTab === 'store' && (
-          <div className="relative z-10 px-4 py-3 bg-[#06140D] border-t border-emerald-900/40 flex items-center justify-between">
-            {/* Left: Green Buy Pill Button "شراء" */}
-            <button
-              onClick={() => {
-                if (selectedStoreItem) {
-                  void handleBuy(selectedStoreItem);
-                } else {
-                  sounds.playClick();
-                  showToast('الرجاء اختيار عنصر من المتجر أولاً للشراء');
-                }
-              }}
-              disabled={purchaseBusy}
-              className="px-8 py-2 rounded-full bg-emerald-400 hover:bg-emerald-300 text-emerald-950 font-black text-sm shadow-md active:scale-95 transition"
-            >
-              شراء
-            </button>
-
-            {/* Right: Coins Balance Pill (e.g. < 85,400 🪙) */}
+          <div className="relative z-10 px-4 py-3 bg-[#06140D] border-t border-emerald-900/40 flex items-center justify-end">
             <button
               onClick={() => {
                 sounds.playClick();
@@ -514,28 +459,22 @@ export const StorageModal: React.FC = () => {
           </div>
         )}
 
-        {/* =========================================================================
-            ITEM PREVIEW MODAL POPUP (When Clicking Play ▶ on an item)
-            ========================================================================= */}
         {previewItem && (
           <div className="absolute inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
             <div className="w-full max-w-xs bg-gradient-to-b from-[#0B2317] to-[#07160F] border border-emerald-500/50 rounded-3xl p-5 text-center shadow-2xl relative">
-              {/* Close preview */}
               <button
+                aria-label="إغلاق المعاينة"
                 onClick={() => setPreviewItem(null)}
                 className="absolute top-3 right-3 w-7 h-7 rounded-full bg-emerald-950 border border-emerald-800/60 text-slate-300 flex items-center justify-center hover:text-white"
               >
                 ✕
               </button>
 
-              {/* Big animated visual */}
-              <div className="w-28 h-28 mx-auto my-3 relative">
-                <StorageItemVisual
-                  iconType={previewItem.iconType}
-                  colorScheme={previewItem.colorScheme}
-                  className="w-28 h-28"
-                />
-              </div>
+              {previewItem.assetUrl && (
+                <div className="mx-auto my-3 h-44 w-full">
+                  <StorageItemVisual key={previewItem.assetUrl} url={previewItem.assetUrl} name={previewItem.name} play />
+                </div>
+              )}
 
               <h3 className="text-base font-black text-white">{previewItem.name}</h3>
 
@@ -550,25 +489,26 @@ export const StorageModal: React.FC = () => {
                   <div className="flex items-center justify-center gap-1.5 text-sm font-black text-amber-300 font-mono">
                     <span>{previewItem.price.toLocaleString('en-US')} عملة</span>
                     <span>🪙</span>
-                    <span className="text-xs text-slate-400 font-normal">/ {previewItem.duration}</span>
+                    <span className="text-xs text-slate-400 font-normal">/ {previewItem.durationDays === null ? 'دائم' : previewItem.durationDays + ' يوم'}</span>
                   </div>
 
                   <button
+                    disabled={purchaseBusy}
                     onClick={() => {
-                      void handleBuy(previewItem as StorageItem);
+                      void handleBuy(previewItem);
                       setPreviewItem(null);
                     }}
                     className="w-full py-2.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-emerald-950 font-black text-xs shadow-md active:scale-95 transition"
                   >
-                    تأكيد الشراء الفوري
+                    تأكيد الشراء
                   </button>
                 </div>
-              ) : (
+              ) : !previewItem.isEquipped && (
                 <div className="mt-4 pt-3 border-t border-emerald-900/40">
                   <button
-                    onClick={() => {
-                      equipBagItem(previewItem as BagItem);
-                      showToast(`تم تجهيز ${previewItem.name} بنجاح!`);
+                    onClick={async () => {
+                      const ok = await equipBagItem(previewItem);
+                      showToast(ok ? `تم تجهيز ${previewItem.name}` : 'تعذر تجهيز العنصر');
                       setPreviewItem(null);
                     }}
                     className="w-full py-2.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-emerald-950 font-black text-xs shadow-md active:scale-95 transition"
