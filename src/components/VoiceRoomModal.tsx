@@ -1,3 +1,4 @@
+import { RoomTheater } from './RoomTheater';
 import { StorageItemVisual } from './StorageItemVisual';
 import { useRoomDecorations } from '../services/roomDecorations';
 import { CpFrameForUser } from './CpFrameForUser';
@@ -1422,7 +1423,7 @@ export const VoiceRoomModal: React.FC = () => {
   const getSeatPosition = (n:number):React.CSSProperties => {
     if(seatLayout==='circle')return {gridColumn:((n-1)%5)+1,gridRow:Math.floor((n-1)/5)+1};
     if(seatLayout==='classic')return {gridColumn:n<=3?n+1:((n-4)%4)+1,gridRow:n<=3?1:Math.floor((n-4)/4)+2};
-    if(seatLayout==='stage')return {gridColumn:n<=3?n+1:((n-4)%5)+1,gridRow:n<=3?1:Math.floor((n-4)/5)+2};
+    if (seatLayout === 'stage') return { gridColumn: 5 - ((n - 1) % 5), gridRow: Math.floor((n - 1) / 5) + 1 };
     return {};
   };
   const saveSeatLayout=async(layout:'grid'|'classic'|'circle'|'stage')=>{if(!activeRoom||!stagingBackend||layoutSaving||(!isOwner&&!currentUser.isSuperAdmin))return;setLayoutSaving(true);try{const {data,error}=await stagingBackend.rpc('totichat_room_seat_layout',{p_room_id:activeRoom.id,p_layout:layout});if(error||data!==layout)throw error||new Error('لم يؤكد الخادم الحفظ');setSeatLayout(layout);setShowSeatLayouts(false);showToast('تم حفظ ترتيب المقاعد لجميع الأعضاء');}catch(e){showToast(e instanceof Error?e.message:'تعذر حفظ ترتيب المقاعد');}finally{setLayoutSaving(false);}};
@@ -1692,9 +1693,9 @@ export const VoiceRoomModal: React.FC = () => {
           </div>
         </div>
 
-        {/* Seat positions only; seat visuals and seat numbers remain unchanged. */}
+        {seatLayout === 'stage' && <RoomTheater key={activeRoom.id} roomId={activeRoom.id} isOwner={isOwner} />}
         <div className={"relative z-10 mx-auto w-full max-w-[540px] px-2 pt-3 pb-3"}>
-          <div className={"grid grid-cols-5 gap-x-2 gap-y-7 items-start justify-items-center [grid-auto-rows:minmax(104px,auto)]"}>
+          <div dir={seatLayout === 'stage' ? 'ltr' : undefined} className={"grid grid-cols-5 gap-x-2 gap-y-7 items-start justify-items-center [grid-auto-rows:minmax(104px,auto)]"}>
 {Array.from({length:15},(_,i)=>i+1).map((seatNum) => {
               const seat = getSeat(seatNum);
               const isOccupied = !!seat.user;
