@@ -1902,8 +1902,8 @@ export const VoiceRoomModal: React.FC = () => {
                   {/* 3. Real-time User Sent Messages */}
                   {currentMessages.map((msg) => (
                     <div key={msg.id} data-room-message-id={msg.id} className="flex min-w-0 items-start justify-end gap-1.5">
-                      <VipMessageFrame level={msg.senderId === currentUser.id ? currentUser.vipLevel : (msg.vipLevel ?? 0)}>
-                        <div className="flex min-w-0 flex-wrap items-center gap-x-1 gap-y-0.5">
+                      <div className="flex min-w-0 max-w-[calc(100%-2.5rem)] flex-col items-end gap-1">
+                        <div className="flex min-w-0 max-w-full flex-wrap items-center justify-end gap-x-1 gap-y-0.5 text-[11px]">
                           <bdi className="text-amber-300 font-bold [overflow-wrap:anywhere]">{msg.senderName}</bdi>
                           {chatIdentityByUser[msg.senderId] && <IdentityBadge kind={chatIdentityByUser[msg.senderId]} size={19} />}
                           {msg.senderId === currentUser.id && verifiedChatLevels && <WealthBadge level={verifiedChatLevels.wealth} size="xs" />}
@@ -1912,8 +1912,10 @@ export const VoiceRoomModal: React.FC = () => {
                             <VipBadge vipLevel={msg.senderId === currentUser.id ? currentUser.vipLevel : (msg.vipLevel ?? 0)} size="xs" className="inline-flex align-middle ml-1" />
                           )}
                         </div>
-                        <div dir="auto" className="mt-0.5 whitespace-pre-wrap [overflow-wrap:anywhere]">{msg.text}</div>
-                      </VipMessageFrame>
+                        <VipMessageFrame level={msg.senderId === currentUser.id ? currentUser.vipLevel : (msg.vipLevel ?? 0)}>
+                          <div dir="auto" className="whitespace-pre-wrap [overflow-wrap:anywhere]">{msg.text}</div>
+                        </VipMessageFrame>
+                      </div>
                       <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full border border-amber-300/70 bg-emerald-950 shadow-sm" aria-label={`صورة ${msg.senderName}`}>
                         {(msg.senderId === currentUser.id ? currentUser.avatar : msg.senderAvatar) ? (
                           <img src={msg.senderId === currentUser.id ? currentUser.avatar : msg.senderAvatar} alt={msg.senderName} className="h-full w-full object-cover" loading="lazy" />
