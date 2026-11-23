@@ -1,6 +1,7 @@
 import { getStorageAsset } from '../data/storageItems';
 import { stagingBackend } from './stagingBackend';
 import type { ChatMessage } from '../types';
+import { imageUrl } from './imageUrl';
 import { fetchRoomVisualMembers } from './roomVisualMembers';
 
 type MessageRow = {
@@ -54,7 +55,7 @@ export async function fetchRealRoomMessages(roomId: string, since?: string): Pro
     id: String(row.id),
     senderId: row.sender_id,
     senderName: names.get(row.sender_id)?.display_name ?? '',
-    senderAvatar: names.get(row.sender_id)?.avatar_url ?? '',
+    senderAvatar: imageUrl(names.get(row.sender_id)?.avatar_url),
     vipLevel: vipLevels.get(row.sender_id) ?? 0,
     text: row.body,
     bubbleAsset: getStorageAsset('', row.decoration_bubble_url ?? null),

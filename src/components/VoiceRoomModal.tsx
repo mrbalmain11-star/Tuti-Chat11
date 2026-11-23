@@ -107,6 +107,22 @@ const PRESET_BACKGROUNDS = [
   },
 ];
 
+function RoomMessageAvatar({ name, src, alternateSrc }: { name: string; src: string; alternateSrc?: string }) {
+  const [failedUrls, setFailedUrls] = useState<string[]>([]);
+  const avatar = [src, alternateSrc].find(url => url && !failedUrls.includes(url));
+
+  return (
+    <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full border border-amber-300/70 bg-emerald-950 shadow-sm" role="img" aria-label={`صورة ${name}`}>
+      {avatar ? (
+        <img src={avatar} alt="" className="h-full w-full object-cover" loading="lazy"
+          onError={() => setFailedUrls(previous => [...previous, avatar])} />
+      ) : (
+        <span aria-hidden="true" className="flex h-full w-full items-center justify-center text-xs font-bold text-white">{name.trim().charAt(0) || '؟'}</span>
+      )}
+    </div>
+  );
+}
+
 export const VoiceRoomModal: React.FC = () => {
   const {
     activeRoom,
@@ -1953,11 +1969,11 @@ export const VoiceRoomModal: React.FC = () => {
                           </VipMessageFrame>
                         )}
                       </div>
-                      <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full border border-amber-300/70 bg-emerald-950 shadow-sm" aria-label={`صورة ${msg.senderName}`}>
-                        {(msg.senderId === currentUser.id ? currentUser.avatar : msg.senderAvatar) ? (
-                          <img src={msg.senderId === currentUser.id ? currentUser.avatar : msg.senderAvatar} alt={msg.senderName} className="h-full w-full object-cover" loading="lazy" />
-                        ) : <span className="flex h-full w-full items-center justify-center text-xs font-bold text-white">{msg.senderName.trim().charAt(0) || '؟'}</span>}
-                      </div>
+                      <RoomMessageAvatar
+                        name={msg.senderName}
+                        src={msg.senderId === currentUser.id ? currentUser.avatar || msg.senderAvatar : msg.senderAvatar}
+                        alternateSrc={activeRoom.seats.find(seat => seat.user?.id === msg.senderId)?.user?.avatar}
+                      />
                     </div>
                   ))}
 
