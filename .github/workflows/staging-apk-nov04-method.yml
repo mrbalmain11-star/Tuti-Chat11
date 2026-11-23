@@ -235,7 +235,7 @@ jobs:
           script: |
             adb wait-for-device
             adb shell getprop sys.boot_completed
-            adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+            bash scripts/install-staging-apk-on-emulator.sh android/app/build/outputs/apk/debug/app-debug.apk
             adb shell pm path com.numyar.totichat.staging
             adb logcat -c
             adb shell am start -W -n com.numyar.totichat.staging/.MainActivity

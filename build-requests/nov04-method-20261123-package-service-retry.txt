@@ -1,0 +1,1 @@
+Retry the staging APK with the emulator package-service readiness check.
