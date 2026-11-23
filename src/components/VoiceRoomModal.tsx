@@ -1,3 +1,4 @@
+import './roomHeader.css';
 import { RoomTheater } from './RoomTheater';
 import { StorageItemVisual } from './StorageItemVisual';
 import { useRoomDecorations } from '../services/roomDecorations';
@@ -1654,11 +1655,12 @@ export const VoiceRoomModal: React.FC = () => {
                   if (isOwner) setShowRoomInfoModal(true);
                   else if (hostAccountId !== '—') handleCopyId(hostAccountId);
                 }}
-                className="flex max-w-full items-center gap-2 rounded-xl border border-emerald-200/25 bg-[#071e1c]/90 py-1.5 pl-2.5 pr-1.5 text-right shadow-lg backdrop-blur-md transition active:scale-95"
+                dir="ltr"
+                className="room-header-name flex max-w-full items-center gap-2 px-4 py-1.5 text-start text-white transition active:scale-95"
                 title={isOwner ? 'إدارة معلومات الغرفة' : 'نسخ رقم الغرفة'}
               >
-                <span className={`flex size-7 shrink-0 items-center justify-center rounded-lg border ${isOwner
-                  ? 'border-amber-300/40 bg-amber-300/15 text-amber-200'
+                <span className={`flex size-7 shrink-0 items-center justify-center rounded-full border ${isOwner
+                  ? 'border-amber-300/65 bg-emerald-950/85 text-amber-200'
                   : 'border-emerald-300/30 bg-emerald-300/10 text-emerald-200'}`}>
                   {isOwner ? <Crown className="size-4" aria-hidden="true" /> : <Heart className="size-3.5" aria-hidden="true" />}
                 </span>
@@ -1678,11 +1680,9 @@ export const VoiceRoomModal: React.FC = () => {
                   sounds.playClick();
                   setShowRoomStatsModal(true);
                 }}
-                className={`inline-flex min-h-7 items-center gap-1.5 rounded-lg border px-2.5 text-[10px] font-black shadow-md backdrop-blur-md transition active:scale-95 ${rank === 1
-                  ? 'border-amber-300/65 bg-[#3d290c]/95 text-amber-100'
-                  : rank !== undefined && rank <= 10
-                    ? 'border-emerald-300/50 bg-[#07332a]/95 text-emerald-50'
-                    : 'border-white/20 bg-[#071e1c]/90 text-emerald-50/90'}`}
+                dir="ltr"
+                className="room-header-rank inline-flex min-h-7 items-center gap-1.5 rounded-full border px-2.5 text-[10px] font-black transition active:scale-95"
+                data-ranked={rank !== undefined}
                 title={rankTitle}
                 aria-label={rankTitle}
               >
