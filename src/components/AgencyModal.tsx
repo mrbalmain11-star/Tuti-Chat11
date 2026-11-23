@@ -76,12 +76,13 @@ export const AgencyModal: React.FC = () => {
   // Live agency statistics are derived only from server-authorized agency state.
   const [agencyStatistics, setAgencyStatistics] = useState<{ agencies: number; members: number; pending: number; agencyNames: string[] } | null>(null);
   const [agencyStatisticsLoading, setAgencyStatisticsLoading] = useState(false);
-  const [agencyStatisticsError, setAgencyStatisticsError] = useState('');
+  const [agencyStatisticsError, setAgencyStatisticsError] = useState(false);
+  const [agencyStatisticsAttempt, setAgencyStatisticsAttempt] = useState(0);
   useEffect(() => {
     if (!openAgencyModal || activeSubView !== 'agent_data_details' || role !== 'agent') return;
     let active = true;
     setAgencyStatistics(null);
-    setAgencyStatisticsError('');
+    setAgencyStatisticsError(false);
     setAgencyStatisticsLoading(true);
     void (async () => {
       const { stagingBackend } = await import('../services/stagingBackend');
@@ -96,10 +97,13 @@ export const AgencyModal: React.FC = () => {
       const requests = (Array.isArray(data?.requests) ? data.requests : []).filter((q: { agency_id: string; status: string }) => ids.has(q.agency_id) && q.status === 'pending_new');
       if (active) setAgencyStatistics({ agencies: agencies.length, members: new Set(members.map((m: { user_id: string }) => m.user_id)).size, pending: requests.length, agencyNames: agencies.map((a: { name?: string }) => a.name || 'وكالة بدون اسم') });
     })().catch(error => {
-      if (active) setAgencyStatisticsError(error instanceof Error ? error.message : 'تعذر تحميل الإحصائيات');
+      if (active) {
+        console.warn('Agency statistics unavailable:', error);
+        setAgencyStatisticsError(true);
+      }
     }).finally(() => { if (active) setAgencyStatisticsLoading(false); });
     return () => { active = false; };
-  }, [openAgencyModal, activeSubView, role, currentUser.id]);
+  }, [openAgencyModal, activeSubView, role, currentUser.id, agencyStatisticsAttempt]);
 
   // Incoming Join Request from an Agent (Available for User role)
   const [pendingAgencyInvite, setPendingAgencyInvite] = useState<{
@@ -327,7 +331,7 @@ export const AgencyModal: React.FC = () => {
               <span className="w-9" />
             </div>
             <div className="relative flex flex-1 flex-col overflow-y-auto p-5 gap-4 bg-[linear-gradient(180deg,rgba(7,14,29,.62),rgba(4,9,20,.92)),url(/agency-no-data-bg.jpg)] bg-cover bg-center">
-              {agencyStatisticsLoading ? <p role="status" className="text-center text-amber-100">جارٍ تحميل إحصائيات الوكالة من الخادم...</p> : agencyStatisticsError ? <div role="alert" className="rounded-2xl bg-white p-5 text-center text-red-700">تعذر تحميل إحصائيات الوكالة: {agencyStatisticsError}</div> : agencyStatistics ? (
+              {agencyStatisticsLoading ? <p role="status" className="text-center text-amber-100">جارٍ تحميل إحصائيات الوكالة من الخادم...</p> : agencyStatisticsError ? <div role="alert" className="rounded-2xl bg-white p-5 text-center text-red-700">تعذر تحميل إحصائيات الوكالة. <button type="button" className="font-bold underline" onClick={() => setAgencyStatisticsAttempt(attempt => attempt + 1)}>إعادة المحاولة</button></div> : agencyStatistics ? (
                 <>
                   <div className="grid grid-cols-2 gap-3">
                     {([['الوكالات النشطة', agencyStatistics.agencies], ['أعضاء الوكالة', agencyStatistics.members], ['طلبات الانضمام المعلقة', agencyStatistics.pending]] as const).map(([label, count]) => (

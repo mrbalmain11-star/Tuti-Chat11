@@ -1427,7 +1427,7 @@ export const VoiceRoomModal: React.FC = () => {
     if (seatLayout === 'stage') return { gridColumn: 5 - ((n - 1) % 5), gridRow: Math.floor((n - 1) / 5) + 1 };
     return {};
   };
-  const saveSeatLayout=async(layout:'grid'|'classic'|'circle'|'stage')=>{if(!activeRoom||!stagingBackend||layoutSaving||(!isOwner&&!currentUser.isSuperAdmin))return;setLayoutSaving(true);try{const {data,error}=await stagingBackend.rpc('totichat_room_seat_layout',{p_room_id:activeRoom.id,p_layout:layout});if(error||data!==layout)throw error||new Error('لم يؤكد الخادم الحفظ');setSeatLayout(layout);setShowSeatLayouts(false);showToast('تم حفظ ترتيب المقاعد لجميع الأعضاء');}catch(e){showToast(e instanceof Error?e.message:'تعذر حفظ ترتيب المقاعد');}finally{setLayoutSaving(false);}};
+  const saveSeatLayout=async(layout:'grid'|'classic'|'circle'|'stage')=>{if(!activeRoom||!stagingBackend||layoutSaving||(!isOwner&&!currentUser.isSuperAdmin))return;if(layout==='stage' && roomSeats.some(seat=>seat.seatNumber>10 && seat.user)){showToast('انقل المتحدثين إلى المايكات ١–١٠ قبل تشغيل المسرح');return;}setLayoutSaving(true);try{const {data,error}=await stagingBackend.rpc('totichat_room_seat_layout',{p_room_id:activeRoom.id,p_layout:layout});if(error||data!==layout)throw error||new Error('لم يؤكد الخادم الحفظ');setSeatLayout(layout);setShowSeatLayouts(false);showToast('تم حفظ ترتيب المقاعد لجميع الأعضاء');}catch(e){showToast(e instanceof Error?e.message:'تعذر حفظ ترتيب المقاعد');}finally{setLayoutSaving(false);}};
   // 15 Seats Layout: 3 Rows of 5 Seats
   // Row 1: NO 01, NO 02, NO 03, NO 04, NO 05
   const row1Numbers = [1, 2, 3, 4, 5];
@@ -1517,7 +1517,7 @@ export const VoiceRoomModal: React.FC = () => {
       )}
 
       {/* Main Room Viewport Container (Matching Mobile Aspect Ratio) */}
-      <div className="relative w-full max-w-md h-full flex flex-col justify-between overflow-x-hidden overflow-y-auto overscroll-y-contain shadow-2xl bg-[#0d0426] box-border" style={{ paddingTop: "max(10px, env(safe-area-inset-top, 0px))", paddingBottom: "max(10px, env(safe-area-inset-bottom, 0px))" }}>
+      <div className="relative w-full max-w-md h-full flex flex-col overflow-hidden overscroll-none shadow-2xl bg-[#0d0426] box-border" style={{ paddingTop: "max(10px, env(safe-area-inset-top, 0px))", paddingBottom: "max(10px, env(safe-area-inset-bottom, 0px))" }}>
         {storeArrival && (
           <div className="pointer-events-none absolute inset-x-4 top-24 z-40 flex h-44 items-center justify-center gap-2">
             {storeArrival.mountUrl && <div className="h-full w-1/2">
@@ -1694,9 +1694,9 @@ export const VoiceRoomModal: React.FC = () => {
         </div>
 
         {seatLayout === 'stage' && <RoomTheater key={activeRoom.id} roomId={activeRoom.id} isOwner={isOwner} />}
-        <div className={"relative z-10 mx-auto w-full max-w-[540px] px-2 pt-3 pb-3"}>
-          <div dir={seatLayout === 'stage' ? 'ltr' : undefined} className={"grid grid-cols-5 gap-x-2 gap-y-7 items-start justify-items-center [grid-auto-rows:minmax(104px,auto)]"}>
-{Array.from({length:15},(_,i)=>i+1).map((seatNum) => {
+        <div className={"relative z-10 mx-auto w-full max-w-[540px] shrink-0 px-2 py-1"}>
+          <div dir={seatLayout === 'stage' ? 'ltr' : undefined} className={"grid grid-cols-5 gap-x-1 gap-y-[clamp(2px,1.5dvh,12px)] items-start justify-items-center"}>
+{Array.from({length:seatLayout === 'stage' ? 10 : 15},(_,i)=>i+1).map((seatNum) => {
               const seat = getSeat(seatNum);
               const isOccupied = !!seat.user;
               const isPlayingMusic = seat.user?.id === currentUser.id &&
@@ -1715,12 +1715,12 @@ export const VoiceRoomModal: React.FC = () => {
                       handleSeatClick(seatNum);
                     }
                   }}
-                  className="relative flex min-w-0 w-full min-h-[104px] flex-col items-center cursor-pointer group active:scale-95 transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300"
+                  className="relative flex min-w-0 w-full flex-col items-center cursor-pointer group active:scale-95 transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300"
                   style={getSeatPosition(seatNum)}
                 >
                   {/* Seat Translucent Circle: Medium size w-14 h-14 sm:w-16 sm:h-16 */}
                   <div
-                    className={`relative w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all ${
+                    className={`relative aspect-square w-[min(100%,clamp(44px,9dvh,58px))] rounded-full flex items-center justify-center transition-all ${
                       isOccupied && seat.user
                         ? 'p-0.5'
                         : 'bg-transparent hover:brightness-110'
@@ -1728,11 +1728,7 @@ export const VoiceRoomModal: React.FC = () => {
                   >
                     {isOccupied && seat.user ? (
                       <div
-                        className={`relative w-full h-full rounded-full overflow-visible shadow-md [&_.vip-avatar-frame]:scale-[.60] [&_.cp-wing-avatar-frame]:scale-[.60] ${
-                          Number(seat.user.id === currentUser.id ? currentUser.vipLevel : seat.user.vipLevel || 0) > 0
-                            ? 'border-transparent'
-                            : 'border-transparent'
-                        }`}
+                        className="relative h-full w-full rounded-full shadow-md ring-1 ring-amber-300/65 [&_.vip-avatar-frame]:scale-[.82] [&_.cp-wing-avatar-frame]:scale-[.88]"
                       >
                         <div className="absolute inset-0 rounded-full bg-gradient-to-br from-emerald-700 to-teal-950 flex items-center justify-center text-white text-lg font-black">{(seat.user.name || '؟').slice(0,1)}</div>
                         {seat.user.avatar ? <img
@@ -1759,10 +1755,10 @@ export const VoiceRoomModal: React.FC = () => {
                       </div>
                     ) : seat.isLocked ? (
                       /* Locked mic */
-                      <RoyalSeatIcon locked className="w-11 h-11 sm:w-12 sm:h-12" />
+                      <RoyalSeatIcon locked className="h-full w-full" />
                     ) : (
                       /* White plus icon matching Screenshots */
-                      <RoyalSeatIcon className="w-11 h-11 sm:w-12 sm:h-12" />
+                      <RoyalSeatIcon className="h-full w-full" />
                     )}
                   </div>
 
@@ -1859,8 +1855,8 @@ export const VoiceRoomModal: React.FC = () => {
             </div>
 
             {/* 5. CHAT STREAM & WELCOME NOTICES */}
-            <div className="relative z-10 px-4 flex-1 flex flex-col justify-end pb-2 overflow-hidden">
-              <div className="w-full flex items-end justify-between gap-3">
+            <div className="relative z-10 min-h-0 px-4 flex-1 flex flex-col justify-end pb-2 overflow-hidden">
+              <div className="w-full flex min-h-0 max-h-full items-end justify-between gap-3">
                 {/* Left side floating badges: 🚀, 🎮, •• */}
                 <div className="flex flex-col items-center gap-2 pb-1 shrink-0">
                   {/* Rocket Badge */}
@@ -1911,7 +1907,7 @@ export const VoiceRoomModal: React.FC = () => {
                       ? { id: firstVisible.dataset.roomMessageId, offset: firstVisible.offsetTop - element.offsetTop - element.scrollTop }
                       : null;
                   }}
-                  className="flex-1 space-y-1.5 overflow-y-auto max-h-48 no-scrollbar pr-1"
+                  className="flex-1 space-y-1.5 overflow-y-auto overscroll-contain max-h-[min(12rem,100%)] no-scrollbar pr-1"
                 >
                   {/* Room rules and real host welcome, never demo accounts or stock avatars. */}
                   <div className="bg-[#180f33]/85 backdrop-blur-md rounded-2xl p-3 border border-purple-500/20 text-xs text-slate-200 leading-relaxed shadow-lg">
@@ -2064,7 +2060,7 @@ export const VoiceRoomModal: React.FC = () => {
             - 🔊 Speaker button (mute/unmute room audio)
             - Far Right: 💬 Chat bubble button (opens text input)
             ========================================================================= */}
-        <footer className="relative z-20 px-4 py-2 bg-transparent flex items-center justify-between">
+        <footer className="relative z-20 shrink-0 px-4 py-2 bg-transparent flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             {/* 1. Gift Button: 3D colorful gift box */}
             <button
@@ -3241,7 +3237,7 @@ export const VoiceRoomModal: React.FC = () => {
           <div className="w-full max-w-sm rounded-3xl border-2 border-amber-400 bg-emerald-950 p-5 text-white" onClick={e=>e.stopPropagation()}>
             <div className="flex items-center justify-between"><h3 className="font-black text-lg text-amber-300">🛋️ أشكال ترتيب المقاعد</h3><button onClick={()=>setShowSeatLayouts(false)} aria-label="إغلاق"><X/></button></div>
             <p className="mt-2 text-xs text-emerald-100">نغيّر أماكن المقاعد فقط، بدون تغيير شكل المايك أو نقل المستخدمين</p>
-            <div className="mt-4 grid grid-cols-2 gap-3">{([['classic','الكلاسيكي'],['circle','الدائري'],['stage','المسرحي (المنصة)'],['grid','الشبكي المتوازن']] as const).map(([id,label])=><button key={id} type="button" disabled={layoutSaving||(!isOwner&&!currentUser.isSuperAdmin)} onClick={()=>void saveSeatLayout(id)} className={seatLayout===id?'rounded-2xl border border-emerald-400 bg-emerald-900 p-4 text-sm font-bold':'rounded-2xl border border-amber-400/60 bg-emerald-950 p-4 text-sm font-bold'}>{seatLayout===id?'✓ ':''}{label}<span className="mt-2 block text-xs text-amber-200">15 مقعداً</span></button>)}</div>
+            <div className="mt-4 grid grid-cols-2 gap-3">{([['classic','الكلاسيكي'],['circle','الدائري'],['stage','المسرحي (المنصة)'],['grid','الشبكي المتوازن']] as const).map(([id,label])=><button key={id} type="button" disabled={layoutSaving||(!isOwner&&!currentUser.isSuperAdmin)} onClick={()=>void saveSeatLayout(id)} className={seatLayout===id?'rounded-2xl border border-emerald-400 bg-emerald-900 p-4 text-sm font-bold':'rounded-2xl border border-amber-400/60 bg-emerald-950 p-4 text-sm font-bold'}>{seatLayout===id?'✓ ':''}{label}<span className="mt-2 block text-xs text-amber-200">{id === 'stage' ? 10 : 15} مقعداً</span></button>)}</div>
           </div>
         </div>}
         {showRoomInfoModal && (

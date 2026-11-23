@@ -73,11 +73,11 @@ export function RoomTheater({ roomId, isOwner }: { roomId: string; isOwner: bool
   }
 
   return (
-    <section className="relative z-10 mx-auto w-full max-w-[540px] px-3 pt-2 text-center" dir="rtl">
-      <h2 className="mb-2 flex items-center justify-center gap-2 font-bold text-amber-200">
+    <section className="relative z-10 mx-auto w-full shrink-0 max-w-[540px] px-3 pt-1 text-center" dir="rtl">
+      <h2 className="mb-1 flex items-center justify-center gap-2 font-bold text-amber-200">
         <Clapperboard size={18} aria-hidden="true" /> وضع المسرح
       </h2>
-      <div className="relative aspect-video overflow-hidden rounded-2xl border border-emerald-200/50 bg-black/85">
+      <div className="relative mx-auto aspect-video w-[min(100%,48dvh)] overflow-hidden rounded-2xl border border-emerald-200/50 bg-black/85">
         {videoId ? (
           <iframe
             key={videoId}
@@ -107,7 +107,7 @@ export function RoomTheater({ roomId, isOwner }: { roomId: string; isOwner: bool
           </form>
         )}
       </div>
-      <div className="flex h-12 items-center justify-center">
+      <div className="flex h-9 items-center justify-center">
         {isOwner && (
           <button type="button" className="flex items-center gap-2 rounded-full border border-amber-300/70 bg-emerald-950 px-4 py-1.5 text-sm font-bold text-white"
             onClick={() => {

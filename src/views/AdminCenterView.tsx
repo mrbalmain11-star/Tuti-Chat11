@@ -69,21 +69,28 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
   const [recent, setRecent] = useState<OwnerDashboardRecent | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dashboardErrors, setDashboardErrors] = useState({ counts: false, recent: false });
   const reload = async () => {
     setLoading(true); setError(null); setAccess(null); setCounts(null); setRecent(null);
+    setDashboardErrors({ counts: false, recent: false });
     try {
       const verified = await fetchMyAdminAccess();
       if (!verified) throw new Error('ليس لديك تصريح لدخول مركز الإدارة');
       setAccess(verified);
       const all = verified.role === 'owner';
-      const [totals, records] = await Promise.all([
+      const [totals, records] = await Promise.allSettled([
         all || verified.permissions.includes('stats.read') ? fetchOwnerDashboardCounts() : null,
         all || ['users.manage','agencies.read','rooms.read'].some(key => verified.permissions.includes(key))
           ? fetchOwnerDashboardRecent() : null,
       ]);
-      setCounts(totals); setRecent(records);
+      if (totals.status === 'fulfilled') setCounts(totals.value);
+      else console.warn('Admin dashboard totals unavailable:', totals.reason);
+      if (records.status === 'fulfilled') setRecent(records.value);
+      else console.warn('Admin dashboard recent records unavailable:', records.reason);
+      setDashboardErrors({ counts: totals.status === 'rejected', recent: records.status === 'rejected' });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'تعذر الاتصال بالخادم');
+      console.warn('Admin access verification failed:', err);
+      setError(err instanceof Error ? err.message : 'تعذر التحقق من صلاحيات مركز الإدارة');
     } finally { setLoading(false); }
   };
   useEffect(() => { void reload(); }, []);
@@ -139,6 +146,13 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
               </div> : <>
                 <button type="button" onClick={() => setAdminPage(null)} className="rounded-xl bg-white border border-amber-200 px-4 py-2 text-amber-800 font-bold">رجوع للأقسام</button>
                 <h2 className="font-black text-xl">{tiles.find(t => t.id === adminPage)?.label}</h2>
+                {((adminPage === 'stats' && dashboardErrors.counts) ||
+                  (['users', 'agencies', 'rooms'].includes(adminPage) && dashboardErrors.recent)) && (
+                  <div role="alert" className="rounded-xl bg-red-50 p-3 text-red-700">
+                    تعذر تحميل بيانات هذا القسم.
+                    <button type="button" onClick={() => void reload()} className="ms-2 font-bold underline">إعادة المحاولة</button>
+                  </div>
+                )}
                 {adminPage === 'stats' && <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{([{label:'المستخدمون',value:counts?.users_count,Icon:Users},{label:'الوكالات',value:counts?.agencies_count,Icon:Building2},{label:'الغرف',value:counts?.rooms_count,Icon:Radio}]).map(({label,value,Icon}) => <div key={label} className="rounded-2xl bg-white border border-amber-200 p-3 text-center"><Icon className="mx-auto text-amber-700"/><strong className="block text-xl">{value ?? '—'}</strong><span className="text-xs">{label}</span></div>)}</div>}
                 {['users','agencies','rooms'].includes(adminPage) && recent && <div className="rounded-2xl bg-white border border-amber-200 p-4 space-y-3">{recent[adminPage as 'users'|'agencies'|'rooms'].map((item,index) => <div key={item.id ?? index} className="flex justify-between border-b border-slate-100 py-2"><span>{item.display_name ?? item.name ?? item.title ?? 'بدون اسم'}</span><span dir="ltr">{item.public_id ?? '—'}</span></div>)}</div>}
                 {adminPage === 'operations' && <AdminOperationsPanel />}

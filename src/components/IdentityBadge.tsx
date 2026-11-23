@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useId, useState } from 'react';
 import { fetchIdentityBadgeKind, type IdentityBadgeKind } from '../services/stagingBackend';
 
 export function useIdentityBadgeKind(userId: string | null) {
@@ -23,15 +23,19 @@ const BADGE_ASSETS: Record<IdentityBadgeKind, { src: string; label: string }> = 
 
 export const IdentityBadge: React.FC<{ kind: IdentityBadgeKind; size?: number }> = ({ kind, size = 22 }) => {
   const badge = BADGE_ASSETS[kind];
+  const filterId = useId();
   return (
-    <img
-      src={badge.src}
-      alt={badge.label}
-      title={badge.label}
-      width={size}
-      height={size}
-      className="inline-block shrink-0 object-contain align-middle"
-      loading="eager"
-    />
+    <svg role="img" aria-label={badge.label} width={size} height={size} viewBox="0 0 100 100"
+      className="inline-block shrink-0 align-middle">
+      <title>{badge.label}</title>
+      <defs>
+        <filter id={filterId} colorInterpolationFilters="sRGB">
+          <feColorMatrix in="SourceGraphic" type="matrix"
+            values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  4 4 4 0 -.14" result="nonBlack" />
+          <feComposite in="SourceGraphic" in2="nonBlack" operator="in" />
+        </filter>
+      </defs>
+      <image href={badge.src} width="100" height="100" filter={`url(#${filterId})`} />
+    </svg>
   );
 };
