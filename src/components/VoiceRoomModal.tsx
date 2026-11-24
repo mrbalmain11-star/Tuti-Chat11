@@ -1,3 +1,4 @@
+import { RoomShareDialog } from './RoomShareDialog';
 import { RoomOptionsDialog } from './RoomOptionsDialog';
 import { RoomProfileCard, RoomProfileAvatarFrame } from './RoomProfileCard';
 import { ProfileReportForm } from './ProfileReportForm';
@@ -267,6 +268,7 @@ export const VoiceRoomModal: React.FC = () => {
   const [roomManagementSection,setRoomManagementSection]=useState<'rules'|'auto_message'|'announcement'|'history'|null>(null);
   const [seatLayout, setSeatLayout] = useState<'grid'|'classic'|'circle'|'stage'>('grid');
   const [layoutSaving, setLayoutSaving] = useState(false);
+  const [roomShareId, setRoomShareId] = useState<string | null>(null);
   const [showExitOptions, setShowExitOptions] = useState(false);
   const [showMembersModal, setShowMembersModal] = useState(false);
   const [serverRoomMembers, setServerRoomMembers] = useState<Array<{user_id:string;display_name:string;avatar_url:string|null;seat_no:number|null}>>([]);
@@ -1280,6 +1282,8 @@ export const VoiceRoomModal: React.FC = () => {
       if (musicPickerPendingRef.current || Date.now() - musicPickerReturnAtRef.current < 2000) return;
       if (isRoomMinimized) {
         setIsRoomMinimized(false);
+      } else if (roomShareId === activeRoom.id) {
+        setRoomShareId(null);
       } else if (showExitOptions) {
         setShowExitOptions(false);
       } else if (showChatInput) {
@@ -1324,7 +1328,7 @@ export const VoiceRoomModal: React.FC = () => {
       }
     }).then(handle => { if (disposed) void handle.remove(); else listener = handle; });
     return () => { disposed = true; if (listener) void listener.remove(); };
-  }, [activeRoom?.id, isRoomMinimized, showExitOptions, showChatInput, showEmojiPicker, showMusicPlayerModal, showTasksModal, showChangeBgModal, showDecorationsModal, showRoomStatsModal, showHostCenterModal, showAgencyInfoModal, showMembersModal, showMessagesSheet, showToolsDrawer, showRoomModeModal, showRoomInfoModal, roomProfileReport, selectedMicUser, selectedEmptySeat, setIsRoomMinimized]);
+  }, [activeRoom?.id, isRoomMinimized, roomShareId, showExitOptions, showChatInput, showEmojiPicker, showMusicPlayerModal, showTasksModal, showChangeBgModal, showDecorationsModal, showRoomStatsModal, showHostCenterModal, showAgencyInfoModal, showMembersModal, showMessagesSheet, showToolsDrawer, showRoomModeModal, showRoomInfoModal, roomProfileReport, selectedMicUser, selectedEmptySeat, setIsRoomMinimized]);
 
   // Reconcile messages missed while the room was minimized before showing the chat again.
   useEffect(() => {
@@ -1554,6 +1558,11 @@ export const VoiceRoomModal: React.FC = () => {
         onMinimize={() => { setShowExitOptions(false); setIsRoomMinimized(true); }}
         onLeave={() => { setShowExitOptions(false); leaveRoom(); }} />
 
+      {!isRoomMinimized && roomShareId === activeRoom.id && <RoomShareDialog key={activeRoom.id} room={activeRoom}
+        publicId={roomPublicId !== '—' ? roomPublicId : undefined}
+        members={serverMembersStatus === 'ready' ? serverRoomMembers.length : undefined}
+        onClose={() => setRoomShareId(null)} />}
+
       {/* Toast Notification */}
       {toastMessage && (
         <div className="absolute top-14 z-50 px-4 py-2 rounded-full bg-black/90 border border-purple-500/60 text-white text-xs font-bold shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-4 max-w-[90%] text-center">
@@ -1628,27 +1637,9 @@ export const VoiceRoomModal: React.FC = () => {
                   <Power className="w-5 h-5 text-white stroke-[2.2]" />
                 </button>
 
-                {/* Share / External button */}
-                <button
-                  onClick={() => {
-                    sounds.playClick();
-                    const roomReference = roomPublicId !== '—' ? roomPublicId : activeRoom.id;
-                    const shareText = `انضم إلى غرفتي في TotiChat 🎙️\nالغرفة: ${activeRoom.title}\nرقم الغرفة: ${roomReference}`;
-                    void (async () => {
-                      try {
-                        if (navigator.share) {
-                          await navigator.share({ title: activeRoom.title, text: shareText });
-                          return;
-                        }
-                        if (!navigator.clipboard) throw new Error('Clipboard unavailable');
-                        await navigator.clipboard.writeText(shareText);
-                        showToast('تم نسخ معلومات الغرفة للمشاركة');
-                      } catch (error) {
-                        if (error instanceof Error && error.name === 'AbortError') return;
-                        showToast('تعذرت المشاركة. حاول مرة أخرى.');
-                      }
-                    })();
-                  }}
+                {/* Share the current room through existing private chats. */}
+                <button type="button"
+                  onClick={() => { sounds.playClick(); setRoomShareId(activeRoom.id); }}
                   className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 text-white/90 flex items-center justify-center transition active:scale-95 cursor-pointer"
                   title="مشاركة الغرفة"
                 >

@@ -1,3 +1,6 @@
+import { App as CapacitorApp } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
+import { fetchSharedRoom, nativeRoomLinkId } from './services/roomShare';
 import React from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { Header } from './components/Header';
@@ -34,12 +37,22 @@ import { InviteModal } from './components/InviteModal';
 import { AuthScreen } from './components/AuthScreen';
 import { GoogleEmailOtpScreen } from './components/GoogleEmailOtpScreen';
 import { CompleteAccountScreen } from './components/CompleteAccountScreen';
-import { stagingBackend, fetchRealRooms } from './services/stagingBackend';
+import { stagingBackend } from './services/stagingBackend';
 import { mapRoomToUi } from './services/mapRoomToUi';
 import { consumeNativeOpenMessagesIntent, listenForNativeOpenMessages } from './services/nativePushBridge';
 
 // Staging APK OTP UI test: enabled by default; VITE_GOOGLE_EMAIL_OTP_ENFORCED=false disables it.
 // Server enforcement remains separately disabled until end-to-end email/session tests pass.
+const pendingRoomLinkKey = 'totichat:pending-room-link';
+
+function clearPendingRoomLink(roomId: string) {
+  try {
+    if (nativeRoomLinkId(localStorage.getItem(pendingRoomLinkKey) ?? '') === roomId) {
+      localStorage.removeItem(pendingRoomLinkKey);
+    }
+  } catch { /* The URL still carries the pending room for this session. */ }
+}
+
 const GOOGLE_EMAIL_OTP_ENFORCED = import.meta.env.VITE_GOOGLE_EMAIL_OTP_ENFORCED !== 'false';
 
 
@@ -95,7 +108,7 @@ class ErrorBoundary extends React.Component<
 }
 
 const AppContent: React.FC = () => {
-  const { activeTab, setActiveTab, isLoggedIn, isRtl, rooms, enterRoom, activeRoom } = useApp();
+  const { activeTab, setActiveTab, isLoggedIn, isRtl, rooms, enterRoom, activeRoom, setIsRoomMinimized } = useApp();
   const [dmNotice, setDmNotice] = React.useState(false);
   React.useEffect(() => {
     const onMessage = () => {
@@ -188,11 +201,29 @@ const AppContent: React.FC = () => {
     };
   }, [isLoggedIn, otpState, onboardingState, setActiveTab]);
 
+  const [roomLinkRevision, setRoomLinkRevision] = React.useState(0);
+  React.useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    let active = true;
+    const accept = (raw: string) => {
+      const id = nativeRoomLinkId(raw);
+      if (!active || !id) return;
+      const url = new URL(window.location.href);
+      try { localStorage.setItem(pendingRoomLinkKey, raw); } catch { /* Keep the address-bar intent. */ }
+      url.searchParams.set('room', id);
+      window.history.replaceState(window.history.state, '', url);
+      setRoomLinkRevision(value => value + 1);
+    };
+    try { const saved = localStorage.getItem(pendingRoomLinkKey); if (saved) accept(saved); } catch { /* No pending room to restore. */ }
+    const subscription = CapacitorApp.addListener('appUrlOpen', event => accept(event.url));
+    void subscription.catch(console.error);
+    void CapacitorApp.getLaunchUrl().then(event => { if (event?.url) accept(event.url); }).catch(console.error);
+    return () => { active = false; void subscription.then(handle => handle.remove()).catch(console.error); };
+  }, []);
+
   // Open a shared room only after authentication, OTP and onboarding are complete.
   React.useEffect(() => {
     if (!isLoggedIn || (GOOGLE_EMAIL_OTP_ENFORCED && otpState !== 'verified') || onboardingState !== 'complete') return;
-    // Do not interrupt an existing voice room when a share link is processed.
-    if (activeRoom) return;
     const url = new URL(window.location.href);
     const roomId = url.searchParams.get('room');
     if (!roomId) return;
@@ -202,21 +233,13 @@ const AppContent: React.FC = () => {
       alert('رابط الغرفة غير صالح.');
       return;
     }
-    const available = rooms.find(room => room.id === roomId);
-    if (available) {
-      url.searchParams.delete('room');
-      window.history.replaceState(window.history.state, '', url.toString());
-      enterRoom(roomId);
-      return;
-    }
-    // Avoid duplicate network lookups while the room list and context rerender.
     if (sharedRoomLookupRef.current === roomId) return;
     sharedRoomLookupRef.current = roomId;
-    void fetchRealRooms().then(async rows => {
-      const target = rows.find(room => room.id === roomId);
+    void fetchSharedRoom(roomId).then(async target => {
       if (!target) {
         const currentUrl = new URL(window.location.href);
         if (currentUrl.searchParams.get('room') === roomId) {
+          clearPendingRoomLink(roomId);
           currentUrl.searchParams.delete('room');
           window.history.replaceState(window.history.state, '', currentUrl.toString());
           alert('الغرفة غير متاحة حالياً أو لا تملك صلاحية الوصول إليها.');
@@ -228,19 +251,22 @@ const AppContent: React.FC = () => {
       if (authError || !auth.user) return;
       const currentUrl = new URL(window.location.href);
       if (currentUrl.searchParams.get('room') !== roomId) return;
+      clearPendingRoomLink(roomId);
       currentUrl.searchParams.delete('room');
       window.history.replaceState(window.history.state, '', currentUrl.toString());
-      enterRoom(roomId, mapRoomToUi(target));
+      if (activeRoom?.id === roomId) setIsRoomMinimized(false);
+      else enterRoom(roomId, mapRoomToUi(target));
     }).catch(error => {
       console.error('Shared room lookup failed:', error);
       const currentUrl = new URL(window.location.href);
       if (currentUrl.searchParams.get('room') !== roomId) return;
+      clearPendingRoomLink(roomId);
       currentUrl.searchParams.delete('room');
       window.history.replaceState(window.history.state, '', currentUrl.toString());
       alert('تعذر التحقق من رابط الغرفة بسبب الاتصال بالخادم. حاول فتح الرابط مجدداً.');
     })
       .finally(() => { if (sharedRoomLookupRef.current === roomId) sharedRoomLookupRef.current = null; });
-  }, [isLoggedIn, otpState, onboardingState, rooms, enterRoom, activeRoom]);
+  }, [isLoggedIn, otpState, onboardingState, activeRoom?.id, enterRoom, roomLinkRevision, setIsRoomMinimized]);
 
   if (!isLoggedIn) {
     return (

@@ -864,12 +864,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         void loadDirectMessages().catch(error => console.error('DM resume refresh failed:', error));
       }
     };
+    window.addEventListener('totichat:dm-refresh', refreshOnReturn);
     window.addEventListener('focus', refreshOnReturn);
     window.addEventListener('online', refreshOnReturn);
     document.addEventListener('visibilitychange', refreshOnReturn);
     window.addEventListener('totichat:personal-blocks-changed', refreshOnReturn);
     return () => {
       active = false;
+      window.removeEventListener('totichat:dm-refresh', refreshOnReturn);
       window.removeEventListener('focus', refreshOnReturn);
       window.removeEventListener('online', refreshOnReturn);
       document.removeEventListener('visibilitychange', refreshOnReturn);

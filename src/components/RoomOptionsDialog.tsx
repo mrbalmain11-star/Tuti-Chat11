@@ -2,7 +2,7 @@ import { useId } from 'react';
 import { ExternalLink, LogOut, SquareMinus, X } from 'lucide-react';
 import './room-options-dialog.css';
 
-function RoyalOrnament({ top = false }: { top?: boolean }) {
+export function RoyalOrnament({ top = false }: { top?: boolean }) {
   const gold = useId();
   const green = useId();
   return <svg viewBox="0 0 320 100" className={top ? 'room-options-crest' : 'room-options-finial'} aria-hidden="true">
