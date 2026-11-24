@@ -1,3 +1,4 @@
+import { MusicListPages } from './MusicListPages';
 import './roomHeader.css';
 import { RoomTheater } from './RoomTheater';
 import { StorageItemVisual } from './StorageItemVisual';
@@ -2641,18 +2642,18 @@ export const VoiceRoomModal: React.FC = () => {
         {/* Royal room music player: separate from voice participant */}
         {showMusicPlayerModal && (
           <div onClick={() => { if (!musicPickerPendingRef.current && Date.now() - musicPickerReturnAtRef.current >= 2000) setShowMusicPlayerModal(false); }} className="fixed inset-0 z-60 bg-black/85 backdrop-blur-md flex items-center justify-center p-3">
-            <div onClick={e => e.stopPropagation()} dir="rtl" className="w-full max-w-sm max-h-[92vh] overflow-y-auto rounded-[30px] border border-[#bd8d38]/60 bg-gradient-to-b from-[#302316] via-[#18130f] to-[#080808] p-5 text-white shadow-2xl shadow-amber-700/20 space-y-5">
+            <div onClick={e => e.stopPropagation()} dir="rtl" className="w-full max-w-sm rounded-3xl border border-[#bd8d38]/60 bg-gradient-to-b from-[#302316] via-[#18130f] to-[#080808] px-3 py-2 text-white shadow-2xl shadow-amber-700/20 space-y-[clamp(3px,1dvh,12px)]">
               <div className="flex justify-between items-center">
                 <button aria-label="إغلاق" onClick={() => setShowMusicPlayerModal(false)} className="p-2 rounded-full bg-white/10"><X size={20}/></button>
                 <span className="text-[#e9c776] font-bold tracking-wider text-sm">TOTICHAT MUSIC</span>
                 <Music size={22} className="text-[#e9c776]"/>
               </div>
-              <div className="aspect-square max-h-[240px] mx-auto rounded-3xl border border-amber-500/40 bg-gradient-to-br from-[#594022] via-[#17120e] to-black flex flex-col items-center justify-center shadow-inner shadow-amber-600/20">
-                <Music size={76} className="text-[#e6bb61] drop-shadow-lg"/>
-                <span className="mt-4 text-amber-100/70 text-xs">موسيقى الغرفة الملكية</span>
+              <div className="h-[clamp(32px,13dvh,115px)] rounded-xl border border-amber-500/40 bg-gradient-to-br from-[#594022] via-[#17120e] to-black flex items-center justify-center gap-3 shadow-inner shadow-amber-600/20">
+                <Music className="size-[clamp(20px,6dvh,54px)] text-[#e6bb61] drop-shadow-lg"/>
+                <span className="text-amber-100/70 text-xs">موسيقى الغرفة الملكية</span>
               </div>
-              <div className="text-center space-y-1">
-                <h3 className="font-bold text-lg text-amber-50 truncate">{musicFileName || 'اختر أغنية من هاتفك'}</h3>
+              <div className="text-center leading-tight">
+                <h3 className="font-bold text-sm sm:text-base text-amber-50 truncate">{musicFileName || 'اختر أغنية من هاتفك'}</h3>
                 <p className="text-xs text-amber-200/70">{musicStatus === 'playing' ? 'قيد التشغيل' : musicStatus === 'paused' ? 'متوقف مؤقتاً' : 'جاهز للتشغيل'}</p>
               </div>
               {(isOwner || isModerator) ? (
@@ -2664,17 +2665,17 @@ export const VoiceRoomModal: React.FC = () => {
                   <div dir="ltr" className="flex items-center justify-between gap-2">
                     <button aria-label="تشغيل عشوائي" onClick={() => setMusicShuffle(v=>!v)} className={musicShuffle ? 'text-amber-400' : 'text-white/60'}><Shuffle size={22}/></button>
                     <button aria-label="السابق" disabled={!musicQueue.length || musicBusy} onClick={() => switchQueuedMusic(-1)}><SkipBack size={28}/></button>
-                    <button aria-label={musicStatus === 'playing' ? 'إيقاف مؤقت' : 'تشغيل'} disabled={musicBusy || (musicStatus === 'stopped' && !musicQueue.length)} className="rounded-full bg-gradient-to-br from-[#f5d48a] to-[#bc852d] p-5 text-black disabled:opacity-40" onClick={async () => { try { if (musicStatus === 'stopped') { await playQueuedMusic(musicQueue[musicIndex >= 0 && musicIndex < musicQueue.length ? musicIndex : 0], musicIndex >= 0 && musicIndex < musicQueue.length ? musicIndex : 0); } else if (musicStatus === 'paused') { await resumeRoomMusic(); setMusicStatus('playing'); } else { pauseRoomMusic(); setMusicStatus('paused'); } } catch(error) { console.error(error); showToast('تعذر التحكم بالموسيقى'); } }}>{musicStatus === 'playing' ? <Pause size={30} fill="currentColor"/> : <Play size={30} fill="currentColor"/>}</button>
+                    <button aria-label={musicStatus === 'playing' ? 'إيقاف مؤقت' : 'تشغيل'} disabled={musicBusy || (musicStatus === 'stopped' && !musicQueue.length)} className="rounded-full bg-gradient-to-br from-[#f5d48a] to-[#bc852d] p-[clamp(6px,1.5dvh,13px)] text-black disabled:opacity-40" onClick={async () => { try { if (musicStatus === 'stopped') { await playQueuedMusic(musicQueue[musicIndex >= 0 && musicIndex < musicQueue.length ? musicIndex : 0], musicIndex >= 0 && musicIndex < musicQueue.length ? musicIndex : 0); } else if (musicStatus === 'paused') { await resumeRoomMusic(); setMusicStatus('playing'); } else { pauseRoomMusic(); setMusicStatus('paused'); } } catch(error) { console.error(error); showToast('تعذر التحكم بالموسيقى'); } }}>{musicStatus === 'playing' ? <Pause size={30} fill="currentColor"/> : <Play size={30} fill="currentColor"/>}</button>
                     <button aria-label="التالي" disabled={!musicQueue.length || musicBusy} onClick={() => switchQueuedMusic(1)}><SkipForward size={28}/></button>
                     <button aria-label="تكرار" onClick={() => setMusicRepeat(v=>!v)} className={musicRepeat ? 'text-amber-400' : 'text-white/60'}><Repeat size={22}/></button>
                   </div>
                   <div dir="ltr" className="flex items-center gap-3"><Volume1 size={18} className="text-amber-300"/><input aria-label="صوت الموسيقى" type="range" min={0} max={100} value={musicVolume} onChange={e => {const v=Number(e.target.value); setMusicVolume(v); setRoomMusicVolume(v/100);}} className="flex-1 accent-[#d8aa52]"/><Volume2 size={18} className="text-amber-300"/></div>
-                  <label htmlFor="totichat-room-music-file" onClick={openMusicPicker} className="flex items-center justify-center gap-2 w-full rounded-xl bg-gradient-to-r from-[#b7812e] to-[#f1d18a] text-black font-bold py-3 cursor-pointer">
+                  <label htmlFor="totichat-room-music-file" onClick={openMusicPicker} className="flex items-center justify-center gap-2 w-full rounded-xl bg-gradient-to-r from-[#b7812e] to-[#f1d18a] text-black font-bold py-1.5 cursor-pointer">
                     <FolderOpen size={20}/> اختيار موسيقى من الهاتف
                   </label>
 
-                  {musicQueue.length > 0 && <div className="rounded-xl border border-amber-500/20 bg-black/30 p-3 max-h-36 overflow-y-auto space-y-1"><p className="text-xs text-amber-300 mb-2">قائمة الأغاني ({musicQueue.length})</p>{musicQueue.map((file,index)=><button key={index} disabled={musicBusy} onClick={()=>void playQueuedMusic(file,index)} className={'w-full text-right text-xs truncate rounded-lg px-2 py-2 '+(musicIndex===index?'bg-amber-500/20 text-amber-200':'text-white/70')}>{index+1}. {file.name}</button>)}</div>}
-                  <button onClick={() => {void stopRoomMusic().then(()=>{setMusicStatus('stopped');setMusicFileName('');setMusicProgress({position:0,duration:0});musicRoomRef.current=null;}).catch(error=>{console.error(error);showToast('تعذر إيقاف الموسيقى');});}} className="w-full border border-amber-500/40 rounded-xl py-2 text-amber-100 text-sm">إيقاف نهائي</button>
+                  {musicQueue.length > 0 && <div className="rounded-xl border border-amber-500/20 bg-black/30 px-2 py-1"><p className="text-xs text-amber-300 mb-0.5">قائمة الأغاني ({musicQueue.length})</p><MusicListPages pageSize={2} items={musicQueue.map((file,index)=><button key={index} disabled={musicBusy} onClick={()=>void playQueuedMusic(file,index)} className={'w-full text-right text-xs truncate rounded-lg px-2 py-0.5 '+(musicIndex===index?'bg-amber-500/20 text-amber-200':'text-white/70')}>{index+1}. {file.name}</button>)} /></div>}
+                  <button onClick={() => {void stopRoomMusic().then(()=>{setMusicStatus('stopped');setMusicFileName('');setMusicProgress({position:0,duration:0});musicRoomRef.current=null;}).catch(error=>{console.error(error);showToast('تعذر إيقاف الموسيقى');});}} className="w-full border border-amber-500/40 rounded-xl py-1 text-amber-100 text-sm">إيقاف نهائي</button>
                 </>
               ) : <p className="text-center text-sm text-amber-100/70">التحكم ببث الموسيقى متاح لإدارة الغرفة فقط.</p>}
             </div>
@@ -2704,25 +2705,25 @@ export const VoiceRoomModal: React.FC = () => {
 
         {musicSelectionOpen && (
           <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-lg flex items-center justify-center p-4" dir="rtl">
-            <div className="w-full max-w-sm max-h-[85vh] overflow-hidden rounded-3xl border border-amber-500/50 bg-gradient-to-b from-[#2d2113] to-[#0b0a09] text-amber-50 flex flex-col shadow-2xl">
-              <div className="p-5 border-b border-amber-500/20">
-                <h3 className="font-bold text-lg flex items-center gap-2"><FolderOpen size={22} className="text-amber-400"/> إضافة أغاني إلى القائمة</h3>
+            <div className="w-full max-w-sm rounded-3xl border border-amber-500/50 bg-gradient-to-b from-[#2d2113] to-[#0b0a09] text-amber-50 flex flex-col shadow-2xl">
+              <div className="p-3 border-b border-amber-500/20">
+                <h3 className="font-bold text-base flex items-center gap-2"><FolderOpen size={22} className="text-amber-400"/> إضافة أغاني إلى القائمة</h3>
                 <p className="text-sm text-amber-100/70 mt-2">حدد الأغاني التي تريد إضافتها، ثم اضغط إضافة أو إلغاء.</p>
                 <p className="text-xs text-amber-300 mt-2">المحدد: {musicSelectionKeys.length} من {musicSelection.length}</p>
-                <p className="text-xs text-amber-100/70 mt-2">من ملفات الهاتف تگدر تحدد عدة أغاني بضغطة مطوّلة ثم تحديد الباقي. وإذا جهازك يختار أغنية واحدة فقط، اضغط «اختيار المزيد» وراح نجمعهن كلهن قبل الإضافة.</p>
-                <label htmlFor="totichat-room-music-file" onClick={openMusicPicker} className="mt-3 w-full flex items-center justify-center gap-2 rounded-xl border border-amber-400/60 bg-amber-400/10 py-3 font-bold text-amber-200 cursor-pointer"><Plus size={18}/> اختيار المزيد من الأغاني</label>
+                <p className="text-xs text-amber-100/70 mt-2">اضغط مطوّلاً لتحديد عدة أغاني من الهاتف، أو اختر المزيد لإضافتها على دفعات.</p>
+                <label htmlFor="totichat-room-music-file" onClick={openMusicPicker} className="mt-2 w-full flex items-center justify-center gap-2 rounded-xl border border-amber-400/60 bg-amber-400/10 py-2 font-bold text-amber-200 cursor-pointer"><Plus size={18}/> اختيار المزيد من الأغاني</label>
               </div>
-              <div className="flex-1 overflow-y-auto p-3 space-y-2">
-                {musicSelection.map(file => (
-                  <label key={musicFileKey(file)} className="flex items-center gap-3 rounded-xl bg-white/5 p-3 cursor-pointer">
+              <div className="min-w-0 p-2">
+                <MusicListPages pageSize={3} items={musicSelection.map(file => (
+                  <label key={musicFileKey(file)} className="flex items-center gap-2 rounded-xl bg-white/5 px-2 py-1.5 cursor-pointer">
                     <input type="checkbox" checked={musicSelectionKeys.includes(musicFileKey(file))} onChange={e => setMusicSelectionKeys(prev => e.target.checked ? [...prev, musicFileKey(file)] : prev.filter(key => key !== musicFileKey(file)))} className="accent-amber-500 w-5 h-5"/>
                     <span className="text-sm truncate flex-1">{file.name}</span>
                   </label>
-                ))}
+                ))} />
               </div>
-              <div className="flex gap-3 p-4 border-t border-amber-500/20">
-                <button type="button" onClick={confirmMusicSelection} disabled={!musicSelectionKeys.length} className="flex-1 rounded-xl bg-gradient-to-r from-[#b7812e] to-[#f1d18a] text-black font-bold py-3 disabled:opacity-40">إضافة ({musicSelectionKeys.length})</button>
-                <button type="button" onClick={cancelMusicSelection} className="flex-1 rounded-xl border border-amber-500/50 py-3 font-bold">إلغاء</button>
+              <div className="flex gap-2 p-2 border-t border-amber-500/20">
+                <button type="button" onClick={confirmMusicSelection} disabled={!musicSelectionKeys.length} className="flex-1 rounded-xl bg-gradient-to-r from-[#b7812e] to-[#f1d18a] text-black font-bold py-2 disabled:opacity-40">إضافة ({musicSelectionKeys.length})</button>
+                <button type="button" onClick={cancelMusicSelection} className="flex-1 rounded-xl border border-amber-500/50 py-2 font-bold">إلغاء</button>
               </div>
             </div>
           </div>
