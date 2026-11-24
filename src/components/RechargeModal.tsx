@@ -1,8 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ChevronRight, ChevronDown, FileText, X, Check, ArrowRightLeft, Sparkles, AlertCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useApp } from '../context/AppContext';
+import { stagingBackend } from '../services/stagingBackend';
 import { sounds } from '../utils/audio';
+
+const diamondRejections: Record<string, string> = {
+  'Insufficient diamonds': 'رصيد الألماس غير كافٍ.',
+  'Insufficient tracked diamonds': 'المبلغ يتجاوز رصيد الألماس المؤهل للتحويل. جرّب مبلغاً أقل.',
+  'Amount too small to redeem': 'كمية الألماس أقل من الحد اللازم للتحويل.',
+  'Redemption quote changed; confirm again': 'تغيرت قيمة التحويل. راجع العرض الجديد وأكّد مرة ثانية.',
+  'Wallet amount out of range': 'تعذر التحويل بسبب حد رصيد المحفظة.',
+};
+function diamondError(message: string) {
+  return diamondRejections[message] ?? 'تعذر حساب قيمة التحويل. تحقق من الاتصال وحاول مرة ثانية.';
+}
 
 // 6 Recharge Packs exactly from Image 1
 export interface RechargePack {
@@ -381,7 +393,6 @@ export const RechargeModal: React.FC = () => {
     rechargeTab: activeTab,
     setRechargeTab: setActiveTab,
     currentUser,
-    convertDiamondsToCoins,
     transactions,
   } = useApp();
 
@@ -447,6 +458,45 @@ export const RechargeModal: React.FC = () => {
     return () => { active = false; };
   }, [openRechargeModal, rechargeMode]);
 
+  const exchangeKey = 'totichat:diamond-redemption:' + currentUser.id;
+  const [pendingExchange, setPendingExchange] = useState<{ amount: number; coins: number; requestId: string }>();
+  const [quote, setQuote] = useState<{ amount: number; coins: number }>();
+  const [exchangeError, setExchangeError] = useState('');
+  const [quoteRetry, setQuoteRetry] = useState(0);
+  const [exchangeBusy, setExchangeBusy] = useState(false);
+  const exchangeLock = useRef(false);
+
+  useEffect(() => {
+    setPendingExchange(undefined);
+    setQuote(undefined);
+    setExchangeError('');
+    if (!openRechargeModal || !showExchangeModal) return;
+    try {
+      const saved = localStorage.getItem(exchangeKey);
+      if (saved) {
+        setPendingExchange(JSON.parse(saved));
+        return;
+      }
+    } catch {
+      setExchangeError('تعذر قراءة العملية المحفوظة.');
+      return;
+    }
+    if (!stagingBackend || !Number.isSafeInteger(exchangeAmount) || exchangeAmount < 1) return;
+    const client = stagingBackend;
+    let active = true;
+    const timer = window.setTimeout(async () => {
+      const { data, error } = await client.rpc('phase4_preview_redemption', { p_diamonds: exchangeAmount });
+      if (!active) return;
+      if (error || !Number.isSafeInteger(data?.coins) || data.coins <= 0) {
+        setExchangeError(diamondError(error?.message ?? ''));
+        return;
+      }
+      setQuote({ amount: exchangeAmount, coins: data.coins });
+    }, 250);
+    return () => { active = false; window.clearTimeout(timer); };
+  }, [openRechargeModal, showExchangeModal, exchangeAmount, exchangeKey, quoteRetry]);
+
+  const exchangeCoins = pendingExchange?.coins ?? (quote?.amount === exchangeAmount ? quote.coins : undefined);
   if (!openRechargeModal) return null;
 
   // Trigger Toast Notification
@@ -462,28 +512,45 @@ export const RechargeModal: React.FC = () => {
     window.alert('الشحن المباشر من التطبيق غير متاح. يرجى التواصل مع وكيل شحن معتمد.');
   };
 
-  // Convert Diamonds to Coins Handler (30% rule: 100,000 Diamonds = 30,000 Coins)
-  const handleConvertDiamonds = () => {
-    const userDiamonds = currentUser.diamonds || 0;
-    if (exchangeAmount <= 0) {
-      showToast('يرجى إدخال كمية صالحة للتحويل');
-      return;
-    }
-    if (userDiamonds < exchangeAmount) {
-      showToast(`رصيدك الحالي (${userDiamonds.toLocaleString('ar-EG')}) غير كافٍ`);
-      return;
-    }
-
-    const success = convertDiamondsToCoins(exchangeAmount);
-    if (success) {
-      const calculatedCoins = Math.floor(exchangeAmount * 0.3);
-      confetti({ particleCount: 70, spread: 65, origin: { y: 0.5 } });
+  const handleConvertDiamonds = async () => {
+    if (!stagingBackend || exchangeLock.current || exchangeCoins === undefined) return;
+    exchangeLock.current = true;
+    setExchangeBusy(true);
+    setExchangeError('');
+    try {
+      const intent = pendingExchange ?? { amount: exchangeAmount, coins: exchangeCoins, requestId: crypto.randomUUID() };
+      localStorage.setItem(exchangeKey, JSON.stringify(intent));
+      setPendingExchange(intent);
+      const { data, error } = await stagingBackend.rpc('phase4_redeem_diamonds', {
+        p_diamonds: intent.amount,
+        p_expected_coins: intent.coins,
+        p_request_id: intent.requestId,
+      });
+      if (error) {
+        if (diamondRejections[error.message]) {
+          localStorage.removeItem(exchangeKey);
+          setPendingExchange(undefined);
+          setQuote(undefined);
+          if (error.message === 'Redemption quote changed; confirm again') setQuoteRetry(value => value + 1);
+          else setExchangeError(diamondError(error.message));
+        } else setExchangeError('تعذر تأكيد التحويل. اضغط استرجاع العملية لإعادة الطلب نفسه.');
+        return;
+      }
+      if (data?.status !== 'completed' || !Number.isSafeInteger(data.coins)) {
+        setExchangeError('تعذر تأكيد التحويل. اضغط استرجاع العملية.');
+        return;
+      }
+      localStorage.removeItem(exchangeKey);
+      setPendingExchange(undefined);
+      window.dispatchEvent(new Event('totichat:wallet-changed'));
       setShowExchangeModal(false);
-      showToast(
-        `تم فك ${exchangeAmount.toLocaleString('ar-EG')} ألماسة إلى ${calculatedCoins.toLocaleString('ar-EG')} كوينز بنسبة 30%! ✨`
-      );
-    } else {
-      showToast('تعذر إتمام عملية الفك، يرجى المحاولة لاحقاً');
+      showToast(`تم تحويل الألماس وإضافة ${data.coins.toLocaleString('ar-IQ')} كوينز.`);
+      confetti({ particleCount: 70, spread: 65, origin: { y: 0.5 } });
+    } catch {
+      setExchangeError('تعذر إكمال الطلب. جرّب مرة ثانية.');
+    } finally {
+      exchangeLock.current = false;
+      setExchangeBusy(false);
     }
   };
 
@@ -730,14 +797,14 @@ export const RechargeModal: React.FC = () => {
                   %
                 </span>
                 <div className="text-right">
-                  <p className="font-extrabold text-sky-900">آلية الفك الرسمية: 30%</p>
+                  <p className="font-extrabold text-sky-900">آلية تحويل الألماس</p>
                   <p className="text-[10px] text-sky-700 font-semibold mt-0.5">
-                    كل 100,000 ألماسة = 30,000 كوينز معدنية
+                    تُحسب قيمة التحويل حسب مصدر الألماس.
                   </p>
                 </div>
               </div>
               <span className="px-2 py-1 bg-sky-600 text-white font-black text-[11px] rounded-lg shadow-xs">
-                30%
+                %
               </span>
             </div>
 
@@ -762,7 +829,7 @@ export const RechargeModal: React.FC = () => {
                 <span>كيف تحصل على الألماس وتفكه؟</span>
               </div>
               <p className="text-[11px] leading-relaxed text-slate-500">
-                عند استلام الهدايا من الأصدقاء في الغرف الصوتية، يتم إيداع الألماس في حسابك، وتستطيع فكه بنسبة 30% وتحويله إلى كوينز على الفور (مثال: فك 100,000 ألماسة يعطيك 30,000 كوينز).
+                عند استلام الهدايا من الأصدقاء في الغرف الصوتية، يتم إيداع الألماس في حسابك، وتقدر تحول الرصيد المؤهل إلى كوينز حسب القيمة التي تظهر قبل التأكيد.
               </p>
             </div>
           </div>
@@ -878,7 +945,7 @@ export const RechargeModal: React.FC = () => {
 
               {/* Conversion Rule Note */}
               <div className="bg-amber-50/80 border border-amber-200/60 rounded-xl px-3 py-2 text-[11px] text-amber-900 text-center font-bold">
-                ⚡ نسبة الفك الرسمية: 30% (كل 100,000 💎 = 30,000 🪙)
+                تظهر قيمة التحويل من الخادم قبل التأكيد.
               </div>
 
               {/* Quick Preset Buttons */}
@@ -896,6 +963,7 @@ export const RechargeModal: React.FC = () => {
                     <button
                       key={idx}
                       type="button"
+                      disabled={exchangeBusy || !!pendingExchange}
                       onClick={() => setExchangeAmount(preset.dia)}
                       className={`py-1.5 rounded-xl text-xs font-bold transition border ${
                         exchangeAmount === preset.dia
@@ -920,7 +988,8 @@ export const RechargeModal: React.FC = () => {
                     min="1"
                     step="1000"
                     max={currentUser.diamonds || 1000000}
-                    value={exchangeAmount || ''}
+                    value={pendingExchange?.amount ?? (exchangeAmount || '')}
+                    disabled={exchangeBusy || !!pendingExchange}
                     onChange={(e) => setExchangeAmount(Math.max(0, Number(e.target.value)))}
                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-center font-black text-sm text-slate-800 focus:outline-sky-500"
                     placeholder="أدخل عدد الألماس..."
@@ -934,23 +1003,24 @@ export const RechargeModal: React.FC = () => {
               {/* Output Preview Calculation (30% formula) */}
               <div className="p-3 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 rounded-2xl border border-emerald-200/80 text-center">
                 <span className="text-[11px] font-bold text-emerald-800 block">
-                  الكوينز المحصلة بعد الفك (بنسبة 30%):
+                  الكوينز المحصلة بعد التحويل
                 </span>
                 <span className="text-xl font-black text-emerald-600 block mt-0.5">
-                  {Math.floor(exchangeAmount * 0.3).toLocaleString('ar-EG')} 🪙
+                  {exchangeCoins?.toLocaleString('ar-EG') ?? '—'} 🪙
                 </span>
                 <span className="text-[10px] text-emerald-700 font-semibold mt-1 block">
-                  (خصم {exchangeAmount.toLocaleString('ar-EG')} 💎 ➜ إضافة {Math.floor(exchangeAmount * 0.3).toLocaleString('ar-EG')} 🪙)
+                  (خصم {(pendingExchange?.amount ?? exchangeAmount).toLocaleString('ar-EG')} 💎 ➜ إضافة {exchangeCoins?.toLocaleString('ar-EG') ?? '—'} 🪙)
                 </span>
               </div>
             </div>
 
+            {exchangeError && <p role="alert" className="mb-2 text-sm text-red-700">{exchangeError}</p>}
             <button
-              onClick={handleConvertDiamonds}
-              disabled={exchangeAmount <= 0 || (currentUser.diamonds || 0) < exchangeAmount}
+              onClick={() => void handleConvertDiamonds()}
+              disabled={exchangeBusy || exchangeCoins === undefined}
               className="w-full py-3 bg-gradient-to-r from-[#29B6F6] to-[#0288D1] hover:from-[#26a5df] hover:to-[#0277bd] disabled:opacity-50 text-white font-extrabold text-xs rounded-full shadow-md active:scale-95 transition"
             >
-              تأكيد فك الألماس (30%)
+              {exchangeBusy ? 'جارٍ التحويل…' : pendingExchange ? 'استرجاع العملية' : 'تأكيد فك الألماس'}
             </button>
           </div>
         </div>

@@ -70,7 +70,6 @@ interface AppContextType {
   createAgency: (name: string, description: string) => void;
   transactions: Transaction[];
   rechargeCoins: (amount: number) => void;
-  convertDiamondsToCoins: (diamondsAmount: number) => boolean;
   followedRoomHosts: Set<string>;
   toggleFollowHost: (hostId: string) => void;
   createVoiceRoom: (title: string, tag: string, coverDataUrl?: string) => Promise<VoiceRoom>;
@@ -2140,12 +2139,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     alert('الشحن المباشر من التطبيق غير متاح. يرجى التواصل مع وكيل شحن معتمد.');
   };
 
-  // Conversion requires an atomic server transaction, not local wallet mutation.
-  const convertDiamondsToCoins = (_diamondsAmount: number): boolean => {
-    alert('تحويل الألماس غير متاح حتى اكتمال الربط الآمن بالخادم.');
-    return false;
-  };
-
   const toggleFollowHost = (hostId: string): void => {
     if (!stagingBackend || !hostId || hostId === currentUser.id || followPendingRef.current.has(hostId)) return;
     followPendingRef.current.add(hostId);
@@ -2374,7 +2367,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         createAgency,
         transactions,
         rechargeCoins,
-        convertDiamondsToCoins,
         followedRoomHosts,
         toggleFollowHost,
         createVoiceRoom,
