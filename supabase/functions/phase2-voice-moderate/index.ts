@@ -129,6 +129,8 @@ Deno.serve(async req=>{
   if(action==='ban')moderationArgs.p_duration_seconds=durationSeconds;
   const {data,error}=await trusted.rpc(moderationRpc,moderationArgs);
   if(error){
+   if(error.message==='VIP_ROOM_MUTE_PROTECTED'||error.message==='VIP_ROOM_KICK_PROTECTED')
+    return reply(403,{error:error.message,databaseCommitted:false});
    if(error.code==='42501')return reply(403,{error:'MODERATION_NOT_AUTHORIZED',databaseCommitted:false});
    if(/rate limit/i.test(error.message||''))return reply(429,{error:'MODERATION_RATE_LIMITED',databaseCommitted:false});
    return reply(409,{error:'MODERATION_REJECTED',databaseCommitted:false});

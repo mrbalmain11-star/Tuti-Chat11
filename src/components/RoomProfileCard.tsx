@@ -3,13 +3,14 @@ import { Crown, UserRound, X } from 'lucide-react';
 import { useConfirmedCpFrame } from '../services/cpFramePreference';
 import { StoreAvatarFrame } from './StoreAvatarFrame';
 import { CpWingAvatarFrame } from './CpWingAvatarFrame';
+import { VipAvatarFrame } from './VipAvatarFrame';
 import { RoyalProfileFrame } from './RoyalProfileFrame';
 import './room-profile-card.css';
 
-export function RoomProfileAvatarFrame({ userId, name, isSelf }: { userId: string; name: string; isSelf: boolean }) {
+export function RoomProfileAvatarFrame({ userId, name, isSelf, vipTier }: { userId: string; name: string; isSelf: boolean; vipTier: number }) {
   const cpFrame = useConfirmedCpFrame(userId);
   if (cpFrame) return <CpWingAvatarFrame enabled name={name} />;
-  return <StoreAvatarFrame userId={userId} fallback={isSelf ? <RoyalProfileFrame /> : null} />;
+  return <StoreAvatarFrame userId={userId} fallback={vipTier ? <VipAvatarFrame level={vipTier} /> : isSelf ? <RoyalProfileFrame /> : null} />;
 }
 
 export function RoomProfileCard({ children, onClose }: { children: ReactNode; onClose: () => void }) {

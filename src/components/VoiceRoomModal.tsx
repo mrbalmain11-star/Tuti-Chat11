@@ -1,3 +1,4 @@
+import { activeVipTier, hasVipEntrance } from '../utils/vipPerks';
 import { RoomShareDialog } from './RoomShareDialog';
 import { RoomOptionsDialog } from './RoomOptionsDialog';
 import { RoomProfileCard, RoomProfileAvatarFrame } from './RoomProfileCard';
@@ -569,7 +570,8 @@ export const VoiceRoomModal: React.FC = () => {
     const userId = selectedMicUser?.user.id;
     setSelectedMicVerifiedStatus(null);
     if (!userId || !stagingBackend) return;
-    void Promise.resolve(stagingBackend.rpc('staging_visited_profile_status', { p_user_id: userId }))
+    const client = stagingBackend;
+    const refresh = () => void Promise.resolve(client.rpc('staging_visited_profile_status', { p_user_id: userId }))
       .then(({ data, error }) => {
         if (error) throw error;
         if (!active || !data) return;
@@ -587,7 +589,9 @@ export const VoiceRoomModal: React.FC = () => {
         console.warn('Verified room profile levels unavailable:', error);
         if (active) setSelectedMicVerifiedStatus({ userId, wealthExp: 0, charmExp: 0, vipLevel: 0, loadFailed: true });
       });
-    return () => { active = false; };
+    refresh();
+    const timer = window.setInterval(refresh, 5000);
+    return () => { active = false; window.clearInterval(timer); };
   }, [selectedMicUser?.user.id]);
   useEffect(() => {
     let active = true;
@@ -1078,7 +1082,16 @@ export const VoiceRoomModal: React.FC = () => {
           ...(reason ? { reason: reason.trim() } : {}),
           ...(action === 'ban' ? { durationSeconds } : {}) },
       });
-      if (data?.databaseCommitted === true) {
+      const response = error && 'context' in error ? error.context : null;
+      const failure = response instanceof Response
+        ? await response.clone().json().catch(() => null) : data;
+      if (failure?.error === 'VIP_ROOM_MUTE_PROTECTED' || failure?.error === 'VIP_ROOM_KICK_PROTECTED') {
+        showToast(action === 'mute'
+          ? 'لا يمكنك كتم هذا المستخدم بسبب صلاحيات VIP الخاصة به.'
+          : 'هذا المستخدم يتمتع بحماية VIP من الطرد.');
+        return;
+      }
+      if (failure?.databaseCommitted === true) {
         // The database has changed even if the voice disconnect acknowledgement fails.
         // Reconcile seats from the server; do not optimistically remove a member.
         window.dispatchEvent(new CustomEvent('totichat:room-moderators-changed', { detail: activeRoom.id }));
@@ -1091,7 +1104,7 @@ export const VoiceRoomModal: React.FC = () => {
       }
       if (error || data?.success !== true || data?.sfuDisconnected !== true) {
         console.error('Voice moderation not confirmed:', error, data);
-        showToast(data?.databaseCommitted
+        showToast(failure?.databaseCommitted
           ? 'تم تحديث الخادم لكن فصل الصوت غير مؤكد. تحقق من حالة العضو.'
           : 'تعذر تنفيذ الأمر. تحقق من الصلاحيات واتصال الصوت.');
         return;
@@ -1237,25 +1250,15 @@ export const VoiceRoomModal: React.FC = () => {
   // VIP entrance is shown once on a fresh room entry, never on every render.
   const [vipEntrance, setVipEntrance] = useState<{ roomId: string; sequence: number; name: string; vipLevel: number } | null>(null);
   const vipEntranceSequence = useRef(0);
-  const lastEnteredRoom = useRef<string | null>(null);
   useEffect(() => {
-    if (!activeRoom || isRoomMinimized) {
-      if (!activeRoom) lastEnteredRoom.current = null;
-      setVipEntrance(null);
-      return;
-    }
-    if (lastEnteredRoom.current === activeRoom.id) return;
-    lastEnteredRoom.current = activeRoom.id;
-    if (!Number.isInteger(currentUser.vipLevel) || currentUser.vipLevel < 1 || currentUser.vipLevel > 12) return;
-    setVipEntrance({ roomId: activeRoom.id, sequence: ++vipEntranceSequence.current, name: currentUser.nickname || currentUser.name || 'عضو VIP', vipLevel: currentUser.vipLevel });
-  }, [activeRoom?.id, isRoomMinimized, currentUser.vipLevel]);
+    setVipEntrance(null);
+  }, [activeRoom?.id, isRoomMinimized]);
 
   useEffect(() => {
     const onVipRoomEntry = (rawEvent: Event) => {
       const detail = (rawEvent as CustomEvent<{ roomId: string; userId: string; name: string; vipLevel: number }>).detail;
-      if (isRoomMinimized || !detail || detail.roomId !== activeRoom?.id || detail.userId === currentUser.id ||
-          typeof detail.name !== 'string' || !Number.isSafeInteger(detail.vipLevel) ||
-          detail.vipLevel < 1 || detail.vipLevel > 12) return;
+      if (isRoomMinimized || !detail || detail.roomId !== activeRoom?.id ||
+          typeof detail.name !== 'string' || !hasVipEntrance(detail.vipLevel)) return;
       setVipEntrance({
         roomId: detail.roomId, sequence: ++vipEntranceSequence.current,
         name: detail.name, vipLevel: detail.vipLevel,
@@ -1263,7 +1266,7 @@ export const VoiceRoomModal: React.FC = () => {
     };
     window.addEventListener('totichat:vip-room-entry', onVipRoomEntry);
     return () => window.removeEventListener('totichat:vip-room-entry', onVipRoomEntry);
-  }, [activeRoom?.id, currentUser.id, isRoomMinimized]);
+  }, [activeRoom?.id, isRoomMinimized]);
 
   useEffect(() => {
     if (!vipEntrance) return;
@@ -1344,7 +1347,8 @@ export const VoiceRoomModal: React.FC = () => {
     let active = true;
     setVerifiedSenderBadges({});
     if (!activeRoom?.id || !stagingBackend || !verifiedSenderIdsKey) return;
-    void Promise.resolve(stagingBackend.rpc('staging_room_chat_verified_badges', { p_room_id: activeRoom.id }))
+    const client = stagingBackend;
+    const refresh = () => void Promise.resolve(client.rpc('staging_room_chat_verified_badges', { p_room_id: activeRoom.id }))
       .then(({ data, error }) => {
         if (error) throw error;
         if (!active) return;
@@ -1362,7 +1366,9 @@ export const VoiceRoomModal: React.FC = () => {
         setVerifiedSenderBadges(verified);
       })
       .catch(error => console.warn('Verified room sender badges unavailable:', error));
-    return () => { active = false; };
+    refresh();
+    const timer = window.setInterval(() => { if (!document.hidden) refresh(); }, 15000);
+    return () => { active = false; window.clearInterval(timer); };
   }, [activeRoom?.id, verifiedSenderIdsKey]);
   const [chatIdentityByUser, setChatIdentityByUser] = useState<Record<string, IdentityBadgeKind>>({});
   const senderIdsKey = [...new Set(currentMessages.map(msg => msg.senderId).filter(Boolean))].sort().join(',');
@@ -1969,7 +1975,7 @@ export const VoiceRoomModal: React.FC = () => {
                     <div key={msg.id} data-room-message-id={msg.id} className="flex min-w-0 items-start justify-end gap-1.5">
                       <div className="flex min-w-0 max-w-[calc(100%-2.5rem)] flex-col items-end gap-1">
                         <div className="flex min-w-0 max-w-full flex-wrap items-center justify-end gap-x-1 gap-y-0.5 text-[11px]">
-                          <bdi className="text-amber-300 font-bold [overflow-wrap:anywhere]">{msg.senderName}</bdi>
+                          <bdi className="min-w-0 [overflow-wrap:anywhere]"><VipName name={msg.senderName} vipLevel={verifiedSenderBadges[msg.senderId]?.vip} fallbackColor="text-amber-300 font-bold" /></bdi>
                           {chatIdentityByUser[msg.senderId] && <IdentityBadge kind={chatIdentityByUser[msg.senderId]} size={19} />}
                           {(verifiedSenderBadges[msg.senderId]?.wealth ?? 0) > 0 && <WealthBadge level={verifiedSenderBadges[msg.senderId].wealth} size="xs" />}
                           {(verifiedSenderBadges[msg.senderId]?.charm ?? 0) > 0 && <CharmBadge level={verifiedSenderBadges[msg.senderId].charm} size="xs" />}
@@ -2827,9 +2833,9 @@ export const VoiceRoomModal: React.FC = () => {
                 <img src={avatar || '/placeholder-avatar.svg'} alt={name} className="room-profile-photo"
                   onError={event => { if (!event.currentTarget.src.endsWith('/placeholder-avatar.svg')) event.currentTarget.src = '/placeholder-avatar.svg'; }} />
               </button>
-              <RoomProfileAvatarFrame userId={target.id} name={name} isSelf={isSelf} />
+              <RoomProfileAvatarFrame userId={target.id} name={name} isSelf={isSelf} vipTier={activeVipTier(status?.vipLevel)} />
             </div>
-            <h3 className="room-profile-name">{name}</h3>
+            <h3 className="room-profile-name"><VipName name={name} vipLevel={status?.vipLevel} /></h3>
             {(identity?.bio ?? target.bio) && <p className="room-profile-status">{identity?.bio ?? target.bio}</p>}
             {selectedMicAgencyName && <p className="text-center text-[11px] text-amber-200">{selectedMicAgencyName}</p>}
             <div className="room-profile-levels" aria-live="polite">

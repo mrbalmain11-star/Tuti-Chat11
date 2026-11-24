@@ -17,7 +17,7 @@ export type SearchUser = {
   badge: 'admin' | 'special' | 'normal'; gender: string | null; vip: number;
   wealth: number; charm: number; frame: string | null; royal_track: 'wealth' | 'charm' | null; royal_level: number | null;
 };
-type SearchRoom = BackendRoom & { members: number; level: number; rank: number | null };
+type SearchRoom = BackendRoom & { members: number | null; level: number | null; rank: number | null };
 type SearchKind = 'rooms' | 'users';
 type Result = SearchUser | SearchRoom;
 const idImages = { admin: 'id-admin-red', special: 'id-special-pink', normal: 'id-normal-blue' };
@@ -70,7 +70,8 @@ function RoomResult({ room, onOpen }: { room: SearchRoom; onOpen: () => void }) 
     </span>
     <span className="royal-search-result-text"><strong>{room.title}</strong>
       {room.public_id != null && <bdi>ID: {room.public_id}</bdi>}
-      <small>مستوى الغرفة {room.level} · <Users size={13} aria-hidden="true" /> {room.members}</small>
+      {room.level === null || room.members === null ? <small>غرفة مغلقة · دخول VIP12</small> :
+        <small>مستوى الغرفة {room.level} · <Users size={13} aria-hidden="true" /> {room.members}</small>}
     </span>
   </button>;
 }

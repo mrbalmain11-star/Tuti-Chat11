@@ -1,3 +1,4 @@
+import { activeVipTier, hasVipEntrance } from '../utils/vipPerks';
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { imageUrl } from '../services/imageUrl';
 import { startAuthenticatedPushRegistration } from '../services/nativePushBridge';
@@ -493,18 +494,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     if (!isLoggedIn || !stagingBackend) return;
     let active = true;
+    let expiryTimer: number | undefined;
+    let request = 0;
     const refreshVip = async () => {
+      const currentRequest = ++request;
       const { data: auth, error: authError } = await stagingBackend!.auth.getUser();
       if (authError || !auth.user) return;
       const { data, error } = await stagingBackend!.from('vip_entitlements')
         .select('tier,expires_at').eq('user_id', auth.user.id).maybeSingle();
       if (error) throw error;
-      if (active) setCurrentUser(prev => ({
-        ...prev,
-        vipLevel: data && (!data.expires_at || new Date(data.expires_at).getTime() > Date.now())
-          ? Number(data.tier) : 0,
-        vipExpiry: data?.expires_at ?? '',
-      }));
+      if (!active || currentRequest !== request) return;
+      window.clearTimeout(expiryTimer);
+      const expiresIn = data?.expires_at ? Date.parse(data.expires_at) - Date.now() : Infinity;
+      const tier = expiresIn > 0 ? activeVipTier(Number(data?.tier)) : 0;
+      setCurrentUser(prev => ({ ...prev, vipLevel: tier, vipExpiry: data?.expires_at ?? '' }));
+      if (tier && Number.isFinite(expiresIn)) {
+        expiryTimer = window.setTimeout(() => {
+          if (!active) return;
+          if (Date.now() >= Date.parse(data!.expires_at)) {
+            setCurrentUser(prev => prev.vipExpiry === data!.expires_at ? { ...prev, vipLevel: 0 } : prev);
+          }
+          onChanged();
+        }, Math.min(expiresIn + 10, 2147483647));
+      }
     };
     void refreshVip().catch(error => console.error('VIP entitlement refresh failed:', error));
     const onChanged = () => { void refreshVip().catch(error => console.error('VIP refresh failed:', error)); };
@@ -519,6 +531,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       .subscribe();
     return () => {
       active = false;
+      window.clearTimeout(expiryTimer);
       window.removeEventListener('totichat:vip-changed', onChanged);
       window.removeEventListener('focus', onChanged);
       document.removeEventListener('visibilitychange', onVisible);
@@ -1305,15 +1318,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const { data: moderatorIds, error: moderatorsError } = await roomClient.rpc('totichat_room_moderator_ids', { p_room_id: roomId });
           if (!alive) return;
           const currentVipRoomMemberIds = new Set(members.map(member => member.user_id));
-          if (previousVipRoomMemberIds) {
-            for (const member of members) {
-              if (previousVipRoomMemberIds.has(member.user_id) || member.user_id === currentUser.id) continue;
-              const vipLevel = Number(member.vip_level);
-              if (Number.isSafeInteger(vipLevel) && vipLevel > 0) {
-                window.dispatchEvent(new CustomEvent('totichat:vip-room-entry', {
-                  detail: { roomId, userId: member.user_id, name: member.display_name, vipLevel },
-                }));
-              }
+          for (const member of members) {
+            const newArrival = previousVipRoomMemberIds
+              ? member.user_id !== currentUser.id && !previousVipRoomMemberIds.has(member.user_id)
+              : member.user_id === currentUser.id;
+            const vipLevel = Number(member.vip_level);
+            if (newArrival && hasVipEntrance(vipLevel)) {
+              window.dispatchEvent(new CustomEvent('totichat:vip-room-entry', {
+                detail: { roomId, userId: member.user_id, name: member.display_name, vipLevel },
+              }));
             }
           }
           previousVipRoomMemberIds = currentVipRoomMemberIds;
@@ -1640,6 +1653,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             })();
           }
         }
+      } else if (joinError?.message === 'room is private') {
+        alert('هذه الغرفة مغلقة. تأكد من وجود صلاحية دخول أو اشتراك VIP12 فعّال.');
+      } else if (joinError?.message === 'ROOM_ACCESS_DENIED') {
+        alert('لا يمكن الدخول إلى هذه الغرفة بسبب قيود الوصول الحالية.');
       } else {
         alert('تعذر تأكيد دخول الغرفة من الخادم.');
       }
