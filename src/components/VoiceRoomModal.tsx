@@ -1,3 +1,4 @@
+import { RoomTapHearts } from './RoomTapHearts';
 import './roomHeader.css';
 import { RoomTheater } from './RoomTheater';
 import { StorageItemVisual } from './StorageItemVisual';
@@ -1594,6 +1595,8 @@ export const VoiceRoomModal: React.FC = () => {
           </div>
         </div>
 
+        {!isRoomMinimized && <RoomTapHearts key={activeRoom.id} />}
+
         {/* Floating animated emojis */}
         <div className="absolute inset-0 pointer-events-none z-30 overflow-hidden">
           {floatingEmojis.map((item) => (
@@ -1934,6 +1937,7 @@ export const VoiceRoomModal: React.FC = () => {
 
                 {/* Chat Messages Column */}
                 <div
+                  data-room-heart-area
                   ref={chatScrollRef}
                   onScroll={(event) => {
                     const element = event.currentTarget;
