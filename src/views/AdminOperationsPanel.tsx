@@ -26,7 +26,7 @@ export const AdminOperationsPanel: React.FC = () => {
   useEffect(() => {
     let active = true;
     const load = async () => {
-      setBusy(true); setError(''); setRows([]);
+      setBusy(true); setError(''); setRows([]); setTotal(0);
       try {
         if (!stagingBackend) throw new Error('الخادم غير متصل');
         const isDirectory = tab === 'users' || tab === 'rooms';
@@ -58,7 +58,7 @@ export const AdminOperationsPanel: React.FC = () => {
     {!busy && !error && rows.length === 0 && <p className="text-slate-500">لا توجد سجلات.</p>}
     <div className="divide-y divide-slate-100">{rows.map((row, index) => <div key={String(row.id ?? row.user_id ?? index)} className="py-3">
       <p className="font-bold text-sm break-words">{String(row.display_name ?? row.title ?? row.name ?? row.action ?? row.role ?? row.status ?? 'سجل')}</p>
-      <div className="text-xs text-slate-500 mt-1 break-all" dir="ltr">{String(row.id ?? row.user_id ?? row.actor_id ?? '')}</div>
+      <div className="text-xs text-slate-500 mt-1 break-all" dir="ltr">{String(row.public_id ?? row.id ?? row.user_id ?? row.actor_id ?? '')}</div>
       {row.status != null && <p className="text-xs text-slate-500 mt-1">الحالة: {String(row.status)}</p>}
       {row.is_active != null && <p className="text-xs text-slate-500 mt-1">{row.is_active ? 'فعّال' : 'غير فعّال'}</p>}
     </div>)}</div>

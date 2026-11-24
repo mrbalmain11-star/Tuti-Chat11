@@ -275,7 +275,7 @@ export async function fetchOwnerDashboardCounts(): Promise<OwnerDashboardCounts 
   return { users_count: values[0], agencies_count: values[1], rooms_count: values[2] };
 }
 
-export type AdminRecentItem = { public_id?: number; id?: string; display_name?: string; name?: string; title?: string; created_at: string };
+export type AdminRecentItem = { public_id?: number; id?: string; display_name?: string; name?: string; title?: string; kind?: string; is_active?: boolean; is_private?: boolean; created_at: string };
 export type OwnerDashboardRecent = { users: AdminRecentItem[]; agencies: AdminRecentItem[]; rooms: AdminRecentItem[] };
 /** Owner-only, read-only latest records. Authorization enforced by the SQL function. */
 export async function fetchOwnerDashboardRecent(): Promise<OwnerDashboardRecent> {

@@ -61,6 +61,21 @@ const AdminDailyRewardsReadOnly: React.FC = () => {
   </section>;
 };
 
+function AdminRecentRecords({ items }: { items: OwnerDashboardRecent['rooms'] }) {
+  if (items.length === 0) return <p role="status" className="text-slate-600">لا توجد سجلات في هذا القسم.</p>;
+  return <section className="rounded-2xl border border-amber-200 bg-white p-4">
+    <h3 className="mb-2 text-sm font-bold text-slate-700">أحدث السجلات</h3>
+    {items.map((item, index) => <div key={item.id ?? index} className="flex gap-2 justify-between border-b border-slate-100 py-2 last:border-0">
+      <div className="min-w-0">
+        <strong className="break-words">{item.display_name ?? item.name ?? item.title ?? 'بدون اسم'}</strong>
+        {typeof item.is_private === 'boolean' && <p className="text-xs text-slate-500">{item.is_private ? 'غرفة خاصة' : 'غرفة عامة'}</p>}
+        {typeof item.is_active === 'boolean' && <p className="text-xs text-slate-500">{item.is_active ? 'فعّالة' : 'غير فعّالة'}</p>}
+      </div>
+      {item.public_id != null && <bdi className="shrink-0 tabular-nums">ID: {item.public_id}</bdi>}
+    </div>)}
+  </section>;
+}
+
 type Props = { onClose: () => void };
 export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
   const [adminPage, setAdminPage] = useState<string | null>(null);
@@ -87,7 +102,7 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
       else console.warn('Admin dashboard totals unavailable:', totals.reason);
       if (records.status === 'fulfilled') setRecent(records.value);
       else console.warn('Admin dashboard recent records unavailable:', records.reason);
-      setDashboardErrors({ counts: totals.status === 'rejected', recent: records.status === 'rejected' });
+      setDashboardErrors({ counts: totals.status === 'rejected' || ((all || verified.permissions.includes('stats.read')) && !totals.value), recent: records.status === 'rejected' });
     } catch (err) {
       console.warn('Admin access verification failed:', err);
       setError(err instanceof Error ? err.message : 'تعذر التحقق من صلاحيات مركز الإدارة');
@@ -154,7 +169,8 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
                   </div>
                 )}
                 {adminPage === 'stats' && <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{([{label:'المستخدمون',value:counts?.users_count,Icon:Users},{label:'الوكالات',value:counts?.agencies_count,Icon:Building2},{label:'الغرف',value:counts?.rooms_count,Icon:Radio}]).map(({label,value,Icon}) => <div key={label} className="rounded-2xl bg-white border border-amber-200 p-3 text-center"><Icon className="mx-auto text-amber-700"/><strong className="block text-xl">{value ?? '—'}</strong><span className="text-xs">{label}</span></div>)}</div>}
-                {['users','agencies','rooms'].includes(adminPage) && recent && <div className="rounded-2xl bg-white border border-amber-200 p-4 space-y-3">{recent[adminPage as 'users'|'agencies'|'rooms'].map((item,index) => <div key={item.id ?? index} className="flex justify-between border-b border-slate-100 py-2"><span>{item.display_name ?? item.name ?? item.title ?? 'بدون اسم'}</span><span dir="ltr">{item.public_id ?? '—'}</span></div>)}</div>}
+                {recent && (adminPage === 'users' || adminPage === 'agencies' || adminPage === 'rooms') &&
+                  <AdminRecentRecords items={recent[adminPage]} />}
                 {adminPage === 'operations' && <AdminOperationsPanel />}
                 {adminPage === 'ids' && <AdminSpecialIdPanel />}
                 {adminPage === 'moderation' && <AdminRoomModerationPanel />}
