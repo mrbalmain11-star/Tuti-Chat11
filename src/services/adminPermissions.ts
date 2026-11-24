@@ -1,4 +1,5 @@
 export const adminSections = [
+  { id: 'games', label: 'إدارة الألعاب', permission: 'games.manage' },
   { id: 'stats', label: 'الإحصائيات', permission: 'stats.read' },
   { id: 'users', label: 'المستخدمون', permission: 'users.manage' },
   { id: 'agencies', label: 'الوكالات', permission: 'agencies.read' },

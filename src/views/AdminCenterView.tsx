@@ -1,3 +1,4 @@
+import { AdminGames } from '../features/games/AdminGames';
 import { adminSections } from '../services/adminPermissions';
 import { AdminAppBansPanel } from './AdminAppBansPanel';
 import React, { useEffect, useState } from 'react';
@@ -134,7 +135,8 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
           {(() => {
             const tiles = adminSections.filter(item => access.role === 'owner' ||
               (!('ownerOnly' in item) && (!('superOnly' in item) || access.role === 'super_admin') &&
-                access.permissions.includes(item.permission)))
+                access.permissions.includes(item.permission) &&
+                (item.id !== 'games' || access.role === 'admin' || access.role === 'super_admin')))
               .map(item => ({ ...item, Icon: item.id === 'decorations' ? Gift : ShieldCheck }));
             return <div className="space-y-5">
               {!adminPage || !tiles.some(tile => tile.id === adminPage) ? <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -155,6 +157,7 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
                 )}
                 {adminPage === 'stats' && <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{([{label:'المستخدمون',value:counts?.users_count,Icon:Users},{label:'الوكالات',value:counts?.agencies_count,Icon:Building2},{label:'الغرف',value:counts?.rooms_count,Icon:Radio}]).map(({label,value,Icon}) => <div key={label} className="rounded-2xl bg-white border border-amber-200 p-3 text-center"><Icon className="mx-auto text-amber-700"/><strong className="block text-xl">{value ?? '—'}</strong><span className="text-xs">{label}</span></div>)}</div>}
                 {['users','agencies','rooms'].includes(adminPage) && recent && <div className="rounded-2xl bg-white border border-amber-200 p-4 space-y-3">{recent[adminPage as 'users'|'agencies'|'rooms'].map((item,index) => <div key={item.id ?? index} className="flex justify-between border-b border-slate-100 py-2"><span>{item.display_name ?? item.name ?? item.title ?? 'بدون اسم'}</span><span dir="ltr">{item.public_id ?? '—'}</span></div>)}</div>}
+                {adminPage === 'games' && <AdminGames />}
                 {adminPage === 'operations' && <AdminOperationsPanel />}
                 {adminPage === 'ids' && <AdminSpecialIdPanel />}
                 {adminPage === 'moderation' && <AdminRoomModerationPanel />}
