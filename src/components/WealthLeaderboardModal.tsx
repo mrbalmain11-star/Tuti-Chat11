@@ -91,6 +91,7 @@ export const WealthLeaderboardModal: React.FC = () => {
   // Ranking RPC does not return VIP, role or level metadata: never copy the viewer's badges or privileges to another user.
   const profileFor=(r:RankingRow):UserProfile=>({
     id:r.entity_id,
+    publicId: Number.isSafeInteger(r.public_id) && r.public_id > 0 ? r.public_id : undefined,
     name:r.display_name,
     nickname:r.display_name,
     avatar:imageUrl(r.avatar_url) || rankingImageFallback,
@@ -430,11 +431,13 @@ export const WealthLeaderboardModal: React.FC = () => {
                             fallbackColor="text-slate-900"
                             className="text-xs font-black truncate max-w-[130px]"
                           />
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                            <span className="text-[9px] text-slate-500 font-mono">
-                              ID:{supporter.user.id}
-                            </span>
-                          </div>
+                          {supporter.user.publicId !== undefined && (
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span dir="ltr" className="text-[9px] text-slate-500 font-mono">
+                                ID: {supporter.user.publicId}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -596,12 +599,13 @@ export const WealthLeaderboardModal: React.FC = () => {
                             fallbackColor="text-slate-900"
                             className="text-xs font-black truncate max-w-[130px]"
                           />
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                            {/* مستوى السحر */}
-                            <span className="text-[9px] text-slate-500 font-mono">
-                              ID:{item.user.id}
-                            </span>
-                          </div>
+                          {item.user.publicId !== undefined && (
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span dir="ltr" className="text-[9px] text-slate-500 font-mono">
+                                ID: {item.user.publicId}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
 
