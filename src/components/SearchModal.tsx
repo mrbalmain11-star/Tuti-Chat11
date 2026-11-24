@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { Crown, DoorOpen, Info, Search, UserRound, Users, X } from 'lucide-react';
@@ -12,7 +12,7 @@ import { StorageItemVisual } from './StorageItemVisual';
 import { VIP_BEAST_METADATA } from './VipBadge';
 import './royal-search.css';
 
-type SearchUser = {
+export type SearchUser = {
   id: string; name: string; avatar: string | null; public_id: string | null;
   badge: 'admin' | 'special' | 'normal'; gender: string | null; vip: number;
   wealth: number; charm: number; frame: string | null; royal_track: 'wealth' | 'charm' | null; royal_level: number | null;
@@ -35,7 +35,9 @@ function Wing() {
   </svg>;
 }
 
-function UserResult({ user, onOpen }: { user: SearchUser; onOpen: () => void }) {
+export function UserResult({ user, onOpen, details, frameOverride }: {
+  user: SearchUser; onOpen: () => void; details?: ReactNode; frameOverride?: ReactNode;
+}) {
   const avatar = imageUrl(user.avatar);
   const frame = getStorageAsset('', user.frame);
   const vip = VIP_BEAST_METADATA[user.vip];
@@ -43,10 +45,10 @@ function UserResult({ user, onOpen }: { user: SearchUser; onOpen: () => void }) 
   return <button type="button" className="royal-search-result" onClick={onOpen}>
     <span className="royal-search-picture">
       {avatar ? <img src={avatar} alt="" className="royal-search-avatar" /> : <UserRound />}
-      {frame ? <span className="royal-search-frame"><StorageItemVisual url={frame} name="" /></span> :
+      {frameOverride ?? (frame ? <span className="royal-search-frame"><StorageItemVisual url={frame} name="" /></span> :
         user.royal_track && user.royal_level ? <span className="royal-search-frame">
           <RoyalLevelEmblem track={user.royal_track} kind="frame" level={user.royal_level} size={60} animated={false} />
-        </span> : null}
+        </span> : null)}
     </span>
     <span className="royal-search-result-text"><strong>{user.name} {gender}</strong>
       <span className="royal-search-meta">
@@ -54,6 +56,7 @@ function UserResult({ user, onOpen }: { user: SearchUser; onOpen: () => void }) 
         {vip && <img className="royal-search-vip" src={vip.badgeImg} alt={'VIP ' + user.vip} />}
       </span>
       <small>الثروة {user.wealth} · الجاذبية {user.charm}</small>
+      {details}
     </span>
   </button>;
 }

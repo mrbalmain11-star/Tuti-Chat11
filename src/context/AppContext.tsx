@@ -72,7 +72,7 @@ interface AppContextType {
   rechargeCoins: (amount: number) => void;
   convertDiamondsToCoins: (diamondsAmount: number) => boolean;
   followedRoomHosts: Set<string>;
-  toggleFollowHost: (hostId: string) => void;
+  toggleFollowHost: (hostId: string, desired?: boolean) => boolean;
   createVoiceRoom: (title: string, tag: string, coverDataUrl?: string) => Promise<VoiceRoom>;
   updateRoom: (roomId: string, updates: Partial<VoiceRoom>) => Promise<void>;
   changeRoomBackground: (roomId: string, backgroundUrl: string) => Promise<boolean>;
@@ -2141,15 +2141,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return false;
   };
 
-  const toggleFollowHost = (hostId: string): void => {
-    if (!stagingBackend || !hostId || hostId === currentUser.id || followPendingRef.current.has(hostId)) return;
+  const toggleFollowHost = (hostId: string, desired?: boolean): boolean => {
+    if (!stagingBackend || !hostId || hostId === currentUser.id || followPendingRef.current.has(hostId)) return false;
     followPendingRef.current.add(hostId);
-    void Promise.resolve(stagingBackend.rpc('staging_toggle_follow', { p_followed_id: hostId }))
+    const request = desired === undefined
+      ? stagingBackend.rpc('staging_toggle_follow', { p_followed_id: hostId })
+      : stagingBackend.rpc('phase5_social_follow', {
+        p_target: hostId, p_follow: desired, p_request_id: crypto.randomUUID(),
+      });
+    void Promise.resolve(request)
       .then(({ data, error }) => {
-        if (error || typeof data !== 'boolean') throw error ?? new Error('Follow not confirmed');
+        const followed = desired === undefined ? data : data?.followed;
+        if (error || typeof followed !== 'boolean' || (desired !== undefined && followed !== desired)) {
+          throw error ?? new Error('Follow not confirmed');
+        }
         setFollowedRoomHosts(prev => {
           const next = new Set(prev);
-          if (data) next.add(hostId);
+          if (followed) next.add(hostId);
           else next.delete(hostId);
           return next;
         });
@@ -2158,6 +2166,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         console.error('Follow update rejected:', error);
         alert('تعذر تحديث المتابعة من الخادم.');
       }).finally(() => { followPendingRef.current.delete(hostId); window.dispatchEvent(new Event('totichat:follows-changed')); });
+    return true;
   };
 
   const joinAgency = (agencyId: string): void => {

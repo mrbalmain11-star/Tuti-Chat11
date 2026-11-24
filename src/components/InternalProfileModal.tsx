@@ -1,3 +1,4 @@
+import { ProfileSocialStats } from './ProfileSocialStats';
 import { StoreAvatarFrame } from './StoreAvatarFrame';
 import { VipAvatarFrame } from './VipAvatarFrame';
 import { CpWingAvatarFrame } from './CpWingAvatarFrame';
@@ -82,6 +83,13 @@ export const InternalProfileModal: React.FC = () => {
   // The user being displayed: either targeted user or current user
   const user: UserProfile = internalProfileUser?.id === currentUser.id ? currentUser : (internalProfileUser || currentUser);
   const isSelf = user.id === currentUser.id;
+  useEffect(() => {
+    if (!openInternalProfileModal || isSelf || !stagingBackend || !user.id) return;
+    void Promise.resolve(stagingBackend.rpc('record_profile_visit', { p_target: user.id }))
+      .then(({ error }) => { if (error) throw error; })
+      .catch(error => console.error('Profile visit could not be recorded:', error));
+  }, [openInternalProfileModal, isSelf, user.id]);
+
   const equippedFrameItem = isSelf ? bagItems.find(item => item.id === equippedFrame && item.category === 'frames') : undefined;
   const equippedMountItem = isSelf ? bagItems.find(item => item.id === equippedMount && item.category === 'mounts') : undefined;
   const [showCpSearch,setShowCpSearch] = useState(false);
@@ -720,62 +728,8 @@ export const InternalProfileModal: React.FC = () => {
               className="mt-3.5"
             />
           )}
-          {/* Stats Row: (الزوار | المعجبون | متابعة | الأصدقاء) */}
-          <div className="grid grid-cols-4 gap-2 text-center mt-4 p-2.5 rounded-2xl bg-white/95 border border-amber-200/90 shadow-xs">
-            {/* الأصدقاء */}
-            <div
-              onClick={() => sounds.playClick()}
-              className="cursor-pointer active:scale-95 transition"
-            >
-              <span className="text-xl font-bold text-slate-900 block font-sans">
-                {isSelf ? (currentUser.friendsCount || 0) : (user.friendsCount || 0)}
-              </span>
-              <span className="text-xs text-slate-500 font-bold mt-0.5 block">
-                الأصدقاء
-              </span>
-            </div>
-
-            {/* متابعة */}
-            <div
-              onClick={() => sounds.playClick()}
-              className="cursor-pointer active:scale-95 transition"
-            >
-              <span className="text-xl font-bold text-slate-900 block font-sans">
-                {isSelf ? (currentUser.followingCount || 0) : (user.followingCount || 0)}
-              </span>
-              <span className="text-xs text-slate-500 font-bold mt-0.5 block">
-                متابعة
-              </span>
-            </div>
-
-            {/* المعجبون */}
-            <div
-              onClick={() => sounds.playClick()}
-              className="cursor-pointer active:scale-95 transition"
-            >
-              <span className="text-xl font-bold text-slate-900 block font-sans">
-                {isSelf
-                  ? (currentUser.followersCount || 0)
-                  : ((user.followersCount || 0) + (isUserFollowed ? 1 : 0))}
-              </span>
-              <span className="text-xs text-slate-500 font-bold mt-0.5 block">
-                المعجبون
-              </span>
-            </div>
-
-            {/* الزوار */}
-            <div
-              onClick={() => sounds.playClick()}
-              className="cursor-pointer active:scale-95 transition"
-            >
-              <span className="text-xl font-bold text-slate-900 block font-sans">
-                {isSelf ? (currentUser.visitorsCount || 0) : (user.visitorsCount || 0)}
-              </span>
-              <span className="text-xs text-slate-500 font-bold mt-0.5 block">
-                الزوار
-              </span>
-            </div>
-          </div>
+          <ProfileSocialStats key={user.id} viewerId={currentUser.id}
+            targetId={isSelf ? undefined : user.id} enabled={openInternalProfileModal} compact />
 
           {/* Active Voice Room Mic Control Banner if user is currently on mic in room */}
           {seatOnActiveRoom && (
