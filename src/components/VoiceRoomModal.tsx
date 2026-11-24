@@ -1,3 +1,4 @@
+import { GameCenter } from '../features/games/GameCenter';
 import { RoomProfileCard, RoomProfileAvatarFrame } from './RoomProfileCard';
 import { ProfileReportForm } from './ProfileReportForm';
 import { imageUrl } from '../services/imageUrl';
@@ -637,6 +638,7 @@ export const VoiceRoomModal: React.FC = () => {
   const [activeChatTab, setActiveChatTab] = useState<'all' | 'chat' | 'other'>('all');
 
   // Bottom Sheets & Popups
+  const [gamesRoomId, setGamesRoomId] = useState<string | null>(null);
   const [showToolsDrawer, setShowToolsDrawer] = useState(false);
   const [showMessagesSheet, setShowMessagesSheet] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -1279,6 +1281,8 @@ export const VoiceRoomModal: React.FC = () => {
       if (musicPickerPendingRef.current || Date.now() - musicPickerReturnAtRef.current < 2000) return;
       if (isRoomMinimized) {
         setIsRoomMinimized(false);
+      } else if (gamesRoomId === activeRoom.id) {
+        setGamesRoomId(null);
       } else if (showExitOptions) {
         setShowExitOptions(false);
       } else if (showChatInput) {
@@ -1323,7 +1327,7 @@ export const VoiceRoomModal: React.FC = () => {
       }
     }).then(handle => { if (disposed) void handle.remove(); else listener = handle; });
     return () => { disposed = true; if (listener) void listener.remove(); };
-  }, [activeRoom?.id, isRoomMinimized, showExitOptions, showChatInput, showEmojiPicker, showMusicPlayerModal, showTasksModal, showChangeBgModal, showDecorationsModal, showRoomStatsModal, showHostCenterModal, showAgencyInfoModal, showMembersModal, showMessagesSheet, showToolsDrawer, showRoomModeModal, showRoomInfoModal, roomProfileReport, selectedMicUser, selectedEmptySeat, setIsRoomMinimized]);
+  }, [activeRoom?.id, gamesRoomId, isRoomMinimized, showExitOptions, showChatInput, showEmojiPicker, showMusicPlayerModal, showTasksModal, showChangeBgModal, showDecorationsModal, showRoomStatsModal, showHostCenterModal, showAgencyInfoModal, showMembersModal, showMessagesSheet, showToolsDrawer, showRoomModeModal, showRoomInfoModal, roomProfileReport, selectedMicUser, selectedEmptySeat, setIsRoomMinimized]);
 
   // Reconcile messages missed while the room was minimized before showing the chat again.
   useEffect(() => {
@@ -1941,16 +1945,17 @@ export const VoiceRoomModal: React.FC = () => {
                   </div>
 
                   {/* Gamepad Badge */}
-                  <div
+                  <button
+                    type="button"
                     onClick={() => {
                       sounds.playClick();
-                      setShowToolsDrawer(true);
+                      setGamesRoomId(activeRoom.id);
                     }}
                     className="w-10 h-10 rounded-2xl bg-[#1b1038]/80 border border-purple-400/30 flex items-center justify-center shadow-lg text-emerald-400 cursor-pointer active:scale-95 transition"
-                    title="الألعاب والمسابقات"
+                    aria-label="مركز الألعاب" title="مركز الألعاب"
                   >
                     <RoyalGamepadIcon className="w-7 h-7 drop-shadow-[0_2px_5px_rgba(16,185,129,0.45)]" />
-                  </div>
+                  </button>
 
                   {/* Double dot */}
                   <div className="flex items-center gap-1 opacity-70">
@@ -2242,6 +2247,7 @@ export const VoiceRoomModal: React.FC = () => {
             - Host Center
             - Agency Center
             ========================================================================= */}
+        {!isRoomMinimized && gamesRoomId === activeRoom.id && <GameCenter key={activeRoom.id + currentUser.id} accountId={currentUser.id} onClose={() => setGamesRoomId(null)} />}
         {showToolsDrawer && (
           <div
             onClick={() => setShowToolsDrawer(false)}
