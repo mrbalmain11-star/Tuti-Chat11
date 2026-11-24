@@ -1,0 +1,100 @@
+.room-options-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: max(35px, calc(env(safe-area-inset-top) + 26px)) 12px max(27px, calc(env(safe-area-inset-bottom) + 18px));
+  background: #000e0abb;
+  backdrop-filter: blur(6px);
+  opacity: 1;
+  transition: opacity 160ms ease, display 160ms allow-discrete;
+}
+.room-options-overlay[data-open='false'] { display: none; opacity: 0; pointer-events: none; }
+@starting-style { .room-options-overlay[data-open='true'] { opacity: 0; } }
+.room-options-panel {
+  position: relative;
+  width: min(100%, 27rem);
+  padding: clamp(15px, 6dvh, 43px) clamp(14px, 7vw, 39px) clamp(20px, 6dvh, 44px);
+  border-radius: clamp(23px, 8vw, 40px);
+  border: 4px solid transparent;
+  background: radial-gradient(ellipse at 50% 70%, #073323, #021a13 75%) padding-box,
+    linear-gradient(126deg, #fff5a9, #a7580c 15%, #ffe471 25%, #9e5210 40%, #fff2ac 60%, #c37821 79%, #ffdf58 95%) border-box;
+  box-shadow: inset 0 0 0 2px #2d9a6577, 0 0 12px #ffb92765, 0 18px 30px #000a;
+  color: #fff7dc;
+}
+.room-options-crest,.room-options-finial {
+  position: absolute;
+  left: 50%;
+  width: min(81%, 280px);
+  transform: translateX(-50%);
+  pointer-events: none;
+  filter: drop-shadow(0 0 5px #ffca5552);
+}
+.room-options-crest { bottom: calc(100% - 14px); height: clamp(38px, 10dvh, 73px); overflow: visible; }
+.room-options-finial { top: calc(100% - 19px); height: clamp(30px, 6dvh, 47px); transform: translateX(-50%) translateY(-30%); overflow: visible; }
+.room-options-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(2px, 2vw, 10px);
+  padding-inline: 25px;
+  margin-bottom: clamp(10px, 4dvh, 28px);
+}
+.room-options-header h3 { font-weight: 900; font-size: clamp(17px, 5.3vw, 26px); white-space: nowrap; }
+.room-options-laurel { width: clamp(12px, 5.2vw, 25px); height: 27px; color: #f6ca59; flex: none; }
+.room-options-laurel:first-of-type { transform: scaleX(-1); }
+.room-options-close {
+  position: absolute;
+  inset-inline-start: calc(-1 * clamp(7px, 3vw, 17px));
+  inset-block-start: -5px;
+  border: 1px solid #7dcaa1;
+  background: radial-gradient(circle at 40% 20%, #1a5d3d, #062a1c);
+  border-radius: 50%;
+  padding: 5px;
+}
+.room-options-close svg { width: 17px; height: 17px; display: block; }
+.room-options-actions { display: grid; gap: clamp(7px, 2.5dvh, 17px); }
+.room-options-action {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(4px, 3vw, 15px);
+  min-height: clamp(33px, 10dvh, 65px);
+  padding: 3px 9px;
+  border-radius: 99px;
+  border: 2px solid transparent;
+  background: var(--room-option-surface) padding-box, linear-gradient(160deg,#fff0a3,#bd731a 48%,#fff19a 76%,#a65a10) border-box;
+  box-shadow: inset 0 0 7px var(--room-option-glow),0 0 8px var(--room-option-glow);
+  font-size: clamp(12px, 4.15vw, 20px);
+  font-weight: 800;
+  transition: transform 120ms ease;
+}
+.room-options-action::before,.room-options-action::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  transform: translateY(-50%) rotate(45deg);
+  background: linear-gradient(135deg,#fff4a8,#d39020 72%);
+  box-shadow: 0 0 4px #ffd253;
+}
+.room-options-action::before { left: -4px; }
+.room-options-action::after { right: -4px; }
+.room-options-action svg { width: clamp(15px, 5.4vw, 27px); height: auto; flex: none; }
+.room-options-action:active,.room-options-close:active { transform: scale(.98); }
+.room-options-return { --room-option-surface: linear-gradient(#08754b,#032b1d 45%,#07563c); --room-option-glow: #1cfb8290; }
+.room-options-minimize { --room-option-surface: linear-gradient(#3c4522,#17291a 47%,#34371a); --room-option-glow: #ffd36361; }
+.room-options-leave { --room-option-surface: linear-gradient(#731731,#320b18 45%,#630e26); --room-option-glow: #ff395c73; }
+@media (max-height: 370px) {
+  .room-options-overlay { padding-block: 30px 20px; }
+  .room-options-panel { padding-block: 13px 16px; }
+  .room-options-header { margin-bottom: 8px; }
+  .room-options-crest { height: 35px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .room-options-overlay,.room-options-action { transition: none; }
+}
