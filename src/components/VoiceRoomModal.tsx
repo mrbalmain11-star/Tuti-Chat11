@@ -1,3 +1,7 @@
+import { RoomProfileCard, RoomProfileAvatarFrame } from './RoomProfileCard';
+import { ProfileReportForm } from './ProfileReportForm';
+import { imageUrl } from '../services/imageUrl';
+import { Flag, Ban, Ellipsis } from 'lucide-react';
 import './roomHeader.css';
 import { RoomTheater } from './RoomTheater';
 import { StorageItemVisual } from './StorageItemVisual';
@@ -533,8 +537,29 @@ export const VoiceRoomModal: React.FC = () => {
     return () => { active = false; };
   }, [activeRoom?.id]);
 
-  const [selectedMicPublicId, setSelectedMicPublicId] = useState<string>('—');
+  const [selectedMicAccountId, setSelectedMicAccountId] = useState<{ userId: string; value: string }>();
   const [selectedMicUser, setSelectedMicUser] = useState<{ seatNumber: number; user: UserProfile } | null>(null);
+  const [roomProfileReport, setRoomProfileReport] = useState<{ id: string; name: string } | null>(null);
+  const [roomProfileIdentity, setRoomProfileIdentity] = useState<{ id: string; name: string; avatar: string; bio: string; badge: IdentityBadgeKind | null }>();
+  useEffect(() => {
+    const id = selectedMicUser?.user.id;
+    if (!id || !stagingBackend) return;
+    let active = true;
+    const client = stagingBackend;
+    const refresh = async () => {
+      const [profile, badge] = await Promise.all([
+        client.from('profiles').select('display_name,avatar_url,bio').eq('id', id).maybeSingle(),
+        fetchIdentityBadgeKind(id).catch(() => null),
+      ]);
+      if (active && profile.data && !profile.error) setRoomProfileIdentity({
+        id, name: profile.data.display_name, avatar: imageUrl(profile.data.avatar_url), bio: profile.data.bio, badge,
+      });
+    };
+    void refresh();
+    const timer = window.setInterval(refresh, 15000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, [selectedMicUser?.user.id]);
+
   const [selectedMicVerifiedStatus, setSelectedMicVerifiedStatus] = useState<{ userId: string; wealthExp: number; charmExp: number; vipLevel: number; loadFailed?: boolean } | null>(null);
   useEffect(() => {
     let active = true;
@@ -563,7 +588,7 @@ export const VoiceRoomModal: React.FC = () => {
   }, [selectedMicUser?.user.id]);
   useEffect(() => {
     let active = true;
-    setSelectedMicPublicId('—');
+    setSelectedMicAccountId(undefined);
     const target = selectedMicUser?.user.id;
     if (!target || !stagingBackend) return;
     // The seat card must use the same effective ID as the profile page:
@@ -574,12 +599,12 @@ export const VoiceRoomModal: React.FC = () => {
       const status = special as { assigned?: boolean; publicId?: string } | null;
       if (!active) return;
       if (!specialError && status?.assigned && status.publicId) {
-        setSelectedMicPublicId(String(status.publicId));
+        setSelectedMicAccountId({ userId: target, value: String(status.publicId) });
         return;
       }
       const { data, error } = await stagingBackend.from('profiles').select('public_id').eq('id', target).maybeSingle();
       if (error) throw error;
-      if (active && data?.public_id != null) setSelectedMicPublicId(String(data.public_id));
+      if (active && data?.public_id != null) setSelectedMicAccountId({ userId: target, value: String(data.public_id) });
     })().catch(error => console.error('Seat profile ID lookup failed:', error));
     return () => { active = false; };
   }, [selectedMicUser?.user.id]);
@@ -1287,6 +1312,8 @@ export const VoiceRoomModal: React.FC = () => {
         setShowRoomModeModal(false);
       } else if (showRoomInfoModal) {
         setShowRoomInfoModal(false);
+      } else if (roomProfileReport) {
+        setRoomProfileReport(null);
       } else if (selectedMicUser) {
         setSelectedMicUser(null);
       } else if (selectedEmptySeat !== null) {
@@ -1296,7 +1323,7 @@ export const VoiceRoomModal: React.FC = () => {
       }
     }).then(handle => { if (disposed) void handle.remove(); else listener = handle; });
     return () => { disposed = true; if (listener) void listener.remove(); };
-  }, [activeRoom?.id, isRoomMinimized, showExitOptions, showChatInput, showEmojiPicker, showMusicPlayerModal, showTasksModal, showChangeBgModal, showDecorationsModal, showRoomStatsModal, showHostCenterModal, showAgencyInfoModal, showMembersModal, showMessagesSheet, showToolsDrawer, showRoomModeModal, showRoomInfoModal, selectedMicUser, selectedEmptySeat, setIsRoomMinimized]);
+  }, [activeRoom?.id, isRoomMinimized, showExitOptions, showChatInput, showEmojiPicker, showMusicPlayerModal, showTasksModal, showChangeBgModal, showDecorationsModal, showRoomStatsModal, showHostCenterModal, showAgencyInfoModal, showMembersModal, showMessagesSheet, showToolsDrawer, showRoomModeModal, showRoomInfoModal, roomProfileReport, selectedMicUser, selectedEmptySeat, setIsRoomMinimized]);
 
   // Reconcile messages missed while the room was minimized before showing the chat again.
   useEffect(() => {
@@ -2807,77 +2834,81 @@ export const VoiceRoomModal: React.FC = () => {
             - زر الهدية المركزي الكبير 🎁 ارسل الهدايا
             - شريط التحكم السفلي: "نزل من المايك 💺" و "حظر مايك 🔇"
             ========================================================================= */}
-        {selectedMicUser && (
-          <div
-            onClick={() => setSelectedMicUser(null)}
-            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end justify-center animate-in fade-in"
-            dir="rtl"
-          >
-            <div
-              onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-md max-h-[min(88dvh,780px)] overflow-y-auto overscroll-contain bg-[#101924]/95 border-t border-slate-700/70 rounded-t-3xl backdrop-blur-xl shadow-2xl p-5 pt-3 text-white relative animate-in slide-in-from-bottom [padding-bottom:calc(1.5rem+env(safe-area-inset-bottom,0px))]"
-            >
-              {/* Top Header Row: close control only; room roles are not profile badges. */}
-              <div className="flex items-center justify-between">
-                <button
-                  onClick={() => setSelectedMicUser(null)}
-                  className="w-8 h-8 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 flex items-center justify-center active:scale-95 transition cursor-pointer"
-                  title="إغلاق"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-
-                <span className="text-xs font-bold text-slate-400">الملف الشخصي</span>
-              </div>
-
-              {/* Avatar and CP frame share one anchor. Keep the decorative frame outside
-                  the clipped photo, so neither the CP wings nor the name are obscured. */}
-              <div className="relative -mt-9 mx-auto mb-3 h-20 w-20 sm:h-22 sm:w-22 [&:has([data-avatar-frame])>button]:border-transparent">
-                <button type="button" onClick={() => { const target = selectedMicUser.user; setSelectedMicUser(null); handleOpenUserProfile(target); }} aria-label="فتح الملف الشخصي الكامل" className="relative block h-full w-full rounded-full border-2 border-white/90 shadow-2xl bg-slate-900">
-                  <span className="absolute inset-0 overflow-hidden rounded-full">
-                    <img
-                      src={selectedMicUser.user.avatar || '/placeholder-avatar.svg'}
-                      alt={selectedMicUser.user.name}
-                      onError={event => {
-                        if (!event.currentTarget.src.endsWith('/placeholder-avatar.svg')) event.currentTarget.src = '/placeholder-avatar.svg';
-                      }}
-                      className="h-full w-full object-cover"
-                    />
-                  </span>
-                </button>
-                <div className="absolute inset-0 pointer-events-none"><CpFrameForUser userId={selectedMicUser.user.id} name={selectedMicUser.user.name} vipLevel={selectedMicVerifiedStatus?.userId === selectedMicUser.user.id && !selectedMicVerifiedStatus.loadFailed ? selectedMicVerifiedStatus.vipLevel : undefined} /></div>
-              </div>
-
-              {/* User Name in large, bold, clear white text */}
-              <h3 className="text-xl sm:text-2xl font-black text-white text-center mt-2.5 tracking-wide flex items-center justify-center gap-1">
-                <span>{selectedMicUser.user.nickname || selectedMicUser.user.name}</span>
-              </h3>
-
-              {selectedMicAgencyName && <p className="mt-1 text-center text-[11px] font-bold text-red-400">{selectedMicAgencyName}</p>}
-              <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-xs font-bold" aria-live="polite">
-                {selectedMicVerifiedStatus?.userId === selectedMicUser.user.id ? <>
-                  {!selectedMicVerifiedStatus.loadFailed && <>
-                    <span className="inline-flex items-center gap-1 rounded-xl bg-slate-900/70 px-1 py-1 text-amber-50"><RoyalLevelEmblem track="wealth" level={royalProgress(BigInt(selectedMicVerifiedStatus.wealthExp)).level} kind="badge" size={62} animated={false} /><span className="text-xs">الثروة {royalProgress(BigInt(selectedMicVerifiedStatus.wealthExp)).level}</span></span>
-                    <span className="inline-flex items-center gap-1 rounded-xl bg-slate-900/70 px-1 py-1 text-amber-50"><RoyalLevelEmblem track="charm" level={royalProgress(BigInt(selectedMicVerifiedStatus.charmExp)).level} kind="badge" size={62} animated={false} /><span className="text-xs">السحر {royalProgress(BigInt(selectedMicVerifiedStatus.charmExp)).level}</span></span>
-                  </>}
-                  {!selectedMicVerifiedStatus.loadFailed && <VipBadge vipLevel={selectedMicVerifiedStatus.vipLevel} size="lg" />}
-                  {selectedMicVerifiedStatus.loadFailed && <span className="text-slate-400">تعذر التحقق من المستويات</span>}
-                </> : <span className="text-slate-400">جارٍ التحقق من بيانات الحساب…</span>}
-              </div>
-              <ProfileCpCard key={selectedMicUser.user.id} userId={selectedMicUser.user.id} userName={selectedMicUser.user.nickname || selectedMicUser.user.name} userAvatar={selectedMicUser.user.avatar} onPartnerClick={partnerId => { if (!stagingBackend) return; void (async () => {
+        {selectedMicUser && (() => {
+          const target = selectedMicUser.user;
+          const isSelf = target.id === currentUser.id;
+          const selectedMicPublicId = selectedMicAccountId?.userId === target.id ? selectedMicAccountId.value : '—';
+          const identity = roomProfileIdentity?.id === target.id ? roomProfileIdentity : undefined;
+          const name = identity?.name || target.nickname || target.name;
+          const avatar = identity?.avatar ?? target.avatar;
+          const status = selectedMicVerifiedStatus?.userId === target.id ? selectedMicVerifiedStatus : null;
+          const following = followedRoomHosts.has(target.id);
+          const blocked = personalBlocks.some(item => item.userId === target.id);
+          const close = () => setSelectedMicUser(null);
+          const more = () => { close(); handleOpenUserProfile(target); };
+          const message = () => {
+            const existing = conversations.find(thread => thread.userId === target.id);
+            close();
+            setOpenChatThread(existing ?? {
+              id: 'chat-' + target.id, userId: target.id, userName: name, userAvatar: avatar,
+              isOnline: false, lastMessage: '', lastTime: '', unreadCount: 0, messages: [],
+            });
+          };
+          return <RoomProfileCard onClose={close}>
+            <div className="room-profile-avatar">
+              <button type="button" onClick={more} aria-label="فتح الملف الشخصي الكامل">
+                <img src={avatar || '/placeholder-avatar.svg'} alt={name} className="room-profile-photo"
+                  onError={event => { if (!event.currentTarget.src.endsWith('/placeholder-avatar.svg')) event.currentTarget.src = '/placeholder-avatar.svg'; }} />
+              </button>
+              <RoomProfileAvatarFrame userId={target.id} name={name} isSelf={isSelf} />
+            </div>
+            <h3 className="room-profile-name">{name}</h3>
+            {(identity?.bio ?? target.bio) && <p className="room-profile-status">{identity?.bio ?? target.bio}</p>}
+            {selectedMicAgencyName && <p className="text-center text-[11px] text-amber-200">{selectedMicAgencyName}</p>}
+            <div className="room-profile-levels" aria-live="polite">
+              {status && !status.loadFailed ? <>
+                {(['wealth','charm'] as const).map(track => {
+                  const level = royalProgress(BigInt(track === 'wealth' ? status.wealthExp : status.charmExp)).level;
+                  return <div key={track} className="room-profile-level">
+                    <RoyalLevelEmblem track={track} level={level} kind="badge" size={40} animated={false} />
+                    <span>{track === 'wealth' ? 'الثروة' : 'السحر'}<b>{level}</b></span>
+                  </div>;
+                })}
+                {status.vipLevel > 0 && <VipBadge vipLevel={status.vipLevel} size="lg" />}
+              </> : <span className="py-2 text-xs">{status?.loadFailed ? 'تعذر التحقق من المستويات' : 'جارٍ التحقق من المستويات…'}</span>}
+            </div>
+              <ProfileCpCard key={selectedMicUser.user.id} userId={selectedMicUser.user.id} userName={name} userAvatar={avatar} onPartnerClick={partnerId => { if (!stagingBackend) return; void (async () => {
                 const { data, error } = await stagingBackend.from('profiles').select('id,display_name,avatar_url').eq('id', partnerId).maybeSingle();
                 if (error || !data) { showToast('تعذر فتح ملف الشريك'); return; }
                 const avatar = data.avatar_url ? (/^(https?:\/\/|data:image\/)/i.test(data.avatar_url) ? data.avatar_url : stagingBackend.storage.from('profile-avatars').getPublicUrl(data.avatar_url).data.publicUrl) : '';
                 setSelectedMicUser(null);
                 handleOpenUserProfile({ ...currentUser, id: data.id, name: data.display_name || 'مستخدم', nickname: data.display_name || 'مستخدم', avatar, country: '', countryCode: '', countryFlag: '', birthdate: '', age: null, friendsCount: 0, followersCount: 0, followingCount: 0, fansCount: 0, visitorsCount: 0, hearts: 0, gameLevel: 0, gameExp: 0, cover: '', bio: '', album: [], vipExpiry: '', specialIdBadge: undefined, isBanned: false, banReason: undefined, isNameBanned: false, isAvatarBanned: false, wealthExp: 0, charmExp: 0, wealthLevel: 0, charmLevel: 0, coins: 0, diamonds: 0, vipLevel: 0, isSuperAdmin: false, isRechargeAgent: false, isHost: false, isSpecialId: false, permissions: [], agencyRole: undefined, agencyName: undefined, rechargeCoins: 0, hasWelcomeBanner: false });
               })().catch(() => showToast('تعذر فتح ملف الشريك')); }} compact />
-              <button type="button" onClick={() => { const target = selectedMicUser.user; setSelectedMicUser(null); handleOpenUserProfile(target); }} className="mx-auto mt-4 flex min-h-12 w-[min(100%,340px)] items-center justify-center gap-2 rounded-full bg-gradient-to-l from-emerald-400 via-green-400 to-teal-500 px-5 py-3 text-base font-black text-emerald-950 shadow-[0_8px_22px_rgba(16,185,129,.28)] transition active:scale-[.98]">
-                <CircleUserRound className="h-5 w-5" /> المزيد
-              </button>
 
-              {selectedMicUser.user.id !== currentUser.id && <button type="button" onClick={() => void setPersonalBlock(selectedMicUser.user.id, !personalBlocks.some(item => item.userId === selectedMicUser.user.id))} className="mx-auto mt-2 block rounded-xl bg-slate-700 px-4 py-2 text-xs text-white">{personalBlocks.some(item => item.userId === selectedMicUser.user.id) ? 'فك الحظر الشخصي' : 'حظر شخصي'}</button>}
+            <div className="room-profile-actions">
+              <button type="button" className="room-profile-action" onClick={() => {
+                sounds.playGiftFanfare(); setSelectedGiftReceiver(target); setOpenGiftStore(true); close();
+              }}><Gift />إرسال الهدايا</button>
+              {!isSelf && <>
+                <button type="button" className="room-profile-action primary" aria-pressed={following}
+                  onClick={() => toggleFollowHost(target.id)}>{following ? <UserCheck /> : <UserPlus />}{following ? 'إلغاء المتابعة' : 'متابعة'}</button>
+                <button type="button" className="room-profile-action" onClick={message}><MessageCircle />مراسلة</button>
+                <button type="button" className="room-profile-action" onClick={() => setRoomProfileReport({ id: target.id, name })}><Flag />إبلاغ</button>
+                <button type="button" className="room-profile-action danger" aria-pressed={blocked}
+                  onClick={() => void setPersonalBlock(target.id, !blocked)}><Ban />{blocked ? 'فك الحظر الشخصي' : 'حظر شخصي'}</button>
+              </>}
+              <button type="button" className="room-profile-action" onClick={more}><Ellipsis />المزيد</button>
+              {isSelf && profileTargetSeat && <>
+                <button type="button" className="room-profile-action" onClick={() => { sounds.playClick(); toggleMyMic(); close(); }}>
+                  {myMicMuted ? <MicOff /> : <Mic />}{myMicMuted ? 'فتح المايك' : 'كتم المايك'}
+                </button>
+                <button type="button" className="room-profile-action" onClick={() => { sounds.playClick(); leaveSeat(profileTargetSeat.seatNumber); close(); }}>
+                  <ArrowRightLeft />النزول من المقعد
+                </button>
+              </>}
+            </div>
               {canModerateProfile && profileTargetId && (
-                <section aria-label="إدارة العضو في الغرفة" className="mx-auto mt-3 w-full max-w-[340px] rounded-2xl border border-slate-700/80 bg-slate-900/60 p-2.5">
+                <section aria-label="إدارة العضو في الغرفة" className="mx-auto mt-3 w-full max-w-[340px] rounded-2xl border border-amber-500/40 bg-emerald-950/60 p-2.5">
                   <h3 className="mb-2 px-1 text-xs font-bold text-slate-200">إدارة العضو في الغرفة</h3>
                   <div className="grid grid-cols-2 gap-2">
                     {profileTargetSeat && (
@@ -2895,104 +2926,29 @@ export const VoiceRoomModal: React.FC = () => {
                         </button>
                       </>
                     )}
+                    <button type="button" disabled={moderationBusy} onClick={() => void handleVoiceModeration(profileTargetId, 'kick')}
+                      className={profileModerationButton + ' bg-rose-950 text-rose-100'}><LogOut size={16} /> طرد</button>
                     <button type="button" disabled={moderationBusy}
                       onClick={() => void handleVoiceModeration(profileTargetId, 'ban')}
-                      className={profileModerationButton + ' col-span-2 bg-rose-950 text-rose-100'}>
+                      className={profileModerationButton + ' bg-rose-950 text-rose-100'}>
                       <Shield size={16} /> حظر من الروم
                     </button>
                   </div>
                 </section>
               )}
-              {/* ID Row with Copy */}
-              <div
-                onClick={() => {
-                  sounds.playClick();
-                  const copyId = selectedMicPublicId !== '—' ? selectedMicPublicId : undefined;
-                  if (!copyId) return;
-                  if (!navigator.clipboard?.writeText) {
-                    showToast('نسخ المعرف غير متاح على هذا الجهاز');
-                    return;
-                  }
-                  void navigator.clipboard.writeText(copyId)
-                    .then(() => showToast(`تم نسخ المعرف: ${copyId} بنجاح 📋`))
-                    .catch(() => showToast('تعذر نسخ المعرف، حاول مجدداً'));
-                }}
-                className="flex items-center justify-center gap-1.5 text-slate-300 text-xs mt-2 cursor-pointer hover:text-white transition active:scale-95"
-                title="انقر لنسخ المعرف"
-              >
-                <Copy className="w-3.5 h-3.5 text-slate-400" />
-                <span className="font-mono font-bold tracking-wider">{selectedMicPublicId}</span>
-                <span className="px-1.5 py-0.2 rounded-full bg-cyan-600 text-white font-mono text-[10px] font-bold">
-                  ID
-                </span>
-              </div>
 
-              {selectedMicUser.user.id !== currentUser.id && (
-                <div className="flex justify-center mt-3">
-                  <button type="button"
-                    onClick={() => toggleFollowHost(selectedMicUser.user.id)}
-                    className="min-h-10 px-5 rounded-full bg-emerald-600/20 border border-emerald-400/60 text-emerald-100 text-sm font-bold flex items-center gap-2"
-                    aria-label={followedRoomHosts.has(selectedMicUser.user.id) ? 'إلغاء المتابعة' : 'متابعة المستخدم'}
-                  >
-                    {followedRoomHosts.has(selectedMicUser.user.id) ? <UserCheck className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
-                    {followedRoomHosts.has(selectedMicUser.user.id) ? 'إلغاء المتابعة' : 'متابعة'}
-                  </button>
-                </div>
-              )}
-
-              {/* Central Large Gift Button (ارسل الهدايا 🎁) */}
-              <div className="flex flex-col items-center justify-center my-4">
-                <button
-                  onClick={() => {
-                    sounds.playGiftFanfare();
-                    setSelectedGiftReceiver(selectedMicUser.user);
-                    setOpenGiftStore(true);
-                    setSelectedMicUser(null);
-                  }}
-                  className="flex flex-col items-center group active:scale-95 transition cursor-pointer"
-                >
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-cyan-500/20 via-teal-400/25 to-blue-500/20 border border-cyan-400/40 flex items-center justify-center text-4xl shadow-[0_0_20px_rgba(6,182,212,0.3)] group-hover:shadow-[0_0_25px_rgba(6,182,212,0.5)] transition">
-                    🎁
-                  </div>
-                  <span className="text-sm font-bold text-slate-200 mt-1.5">ارسل الهدايا</span>
-                </button>
-              </div>
-
-              {/* Self seat controls stay with the user; moderation actions live in room management. */}
-              {selectedMicUser.user.id === currentUser.id && <div className="border-t border-slate-800/90 pt-3 flex items-center justify-around">
-                {/* Action 1: نزل من المايك */}
-                <button
-                  onClick={() => {
-                    sounds.playClick();
-                    leaveSeat(selectedMicUser.seatNumber);
-                    setSelectedMicUser(null);
-                  }}
-                  className="flex flex-col items-center gap-1 text-slate-300 hover:text-white transition active:scale-95 cursor-pointer"
-                >
-                  <div className="w-10 h-10 rounded-full bg-slate-800/90 flex items-center justify-center border border-slate-700 shadow-sm">
-                    <ArrowRightLeft className="w-5 h-5 text-cyan-400" />
-                  </div>
-                  <span className="text-xs font-bold">نزل من المايك</span>
-                </button>
-
-                {/* Action 2: حظر مايك */}
-                <button
-                  onClick={() => {
-                    sounds.playClick();
-                    toggleMyMic();
-                    setSelectedMicUser(null);
-                  }}
-                  className="flex flex-col items-center gap-1 text-slate-300 hover:text-white transition active:scale-95 cursor-pointer"
-                >
-                  <div className="w-10 h-10 rounded-full bg-slate-800/90 flex items-center justify-center border border-slate-700 shadow-sm">
-                    <MicOff className="w-5 h-5 text-rose-400" />
-                  </div>
-                  <span className="text-xs font-bold">{myMicMuted ? 'فتح المايك' : 'كتم المايك'}</span>
-                </button>
-              </div>}
-            </div>
-          </div>
-        )}
+            <button type="button" className="room-profile-id" aria-label="نسخ رقم الحساب" disabled={selectedMicPublicId === '—'} onClick={() => {
+              sounds.playClick();
+              if (!navigator.clipboard?.writeText) { showToast('نسخ المعرف غير متاح على هذا الجهاز'); return; }
+              void navigator.clipboard.writeText(selectedMicPublicId).then(() => showToast('تم نسخ المعرف'))
+                .catch(() => showToast('تعذر نسخ المعرف، حاول مجدداً'));
+            }}>
+              {identity?.badge ? <IdentityBadge kind={identity.badge} size={22} /> : <span>ID</span>}
+              <bdi>{selectedMicPublicId}</bdi><Copy size={15} />
+            </button>
+          </RoomProfileCard>;
+        })()}
+        {roomProfileReport && <ProfileReportForm targetId={roomProfileReport.id} targetName={roomProfileReport.name} onClose={() => setRoomProfileReport(null)} />}
 
         {/* =========================================================================
             EMPTY MIC ACTIONS BOTTOM SHEET (اصعد بنفسي، قفل المايكرفون، انتقل، مغادرة)
