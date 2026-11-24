@@ -1,3 +1,4 @@
+import { SupplyReview } from '../features/rechargeAgent/SupplyReview';
 import { adminSections } from '../services/adminPermissions';
 import { AdminAppBansPanel } from './AdminAppBansPanel';
 import React, { useEffect, useState } from 'react';
@@ -164,7 +165,7 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
                 {adminPage === 'agencyRegistrations' && <AdminAgencyRegistrationRequestsPanel />}
                 {adminPage === 'reports' && <AdminUserReportsPanel />}
                 {adminPage === 'financeReports' && <AdminReportsPanel />}
-                {adminPage === 'recharge' && <AdminRechargePanel />}
+                {adminPage === 'recharge' && <><SupplyReview /><AdminRechargePanel /></>}
                 {adminPage === 'appBans' && <AdminAppBansPanel />}
                 {adminPage === 'staff' && <AdminStaffPanel />}
                 {adminPage === 'banners' && <AdminBannersPanel />}

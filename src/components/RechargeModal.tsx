@@ -1,3 +1,5 @@
+import { RechargeAgent } from '../features/rechargeAgent/RechargeAgent';
+import { agentRpc } from '../features/rechargeAgent/api';
 import React, { useState, useEffect } from 'react';
 import { ChevronRight, ChevronDown, FileText, X, Check, ArrowRightLeft, Sparkles, AlertCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -447,7 +449,24 @@ export const RechargeModal: React.FC = () => {
     return () => { active = false; };
   }, [openRechargeModal, rechargeMode]);
 
+  const [agentAccess, setAgentAccess] = useState<string>();
+  const [agentOpen, setAgentOpen] = useState(false);
+  useEffect(() => {
+    setAgentAccess(undefined);
+    setAgentOpen(false);
+    if (!openRechargeModal || !currentUser.id) return;
+    let active = true;
+    void agentRpc<boolean>('access').then(allowed => {
+      if (active && allowed) setAgentAccess(currentUser.id);
+    }).catch(() => {});
+    return () => { active = false; };
+  }, [openRechargeModal, currentUser.id]);
+
   if (!openRechargeModal) return null;
+  if (agentOpen && agentAccess === currentUser.id) {
+    return <RechargeAgent actor={currentUser.id} onClose={() => setAgentOpen(false)} />;
+  }
+
 
   // Trigger Toast Notification
   const showToast = (msg: string) => {
@@ -529,6 +548,11 @@ export const RechargeModal: React.FC = () => {
             <ChevronRight className="w-6 h-6 text-slate-800" />
           </button>
         </div>
+
+        {agentAccess === currentUser.id && <div className="px-3 pt-2" dir="rtl">
+          <button type="button" className="rounded-lg bg-emerald-900 px-3 py-1.5 text-sm font-bold text-white"
+            onClick={() => setAgentOpen(true)}>وكيل الشحن</button>
+        </div>}
 
         {/* Tab Switcher: "عملات معدنية" and "ألماسي" exactly matching Image 2 */}
         <div className="flex justify-center pt-3 pb-2">
