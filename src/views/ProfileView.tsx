@@ -671,8 +671,7 @@ export const ProfileView: React.FC = () => {
         <div
           onClick={() => {
             sounds.playClick();
-            setToastMessage('رصيد الألماس الخاص بك 💎');
-            setTimeout(() => setToastMessage(null), 2500);
+            setOpenRechargeModal(true, 'diamonds');
           }}
           className="rounded-2xl bg-gradient-to-b from-white via-sky-50/40 to-amber-50/20 border border-amber-200/90 min-w-0 p-2.5 flex flex-col items-center justify-center gap-1.5 cursor-pointer active:scale-98 transition shadow-[0_4px_15px_rgba(59,130,246,0.08)] hover:border-amber-300"
         >

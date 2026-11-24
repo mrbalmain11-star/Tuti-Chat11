@@ -378,13 +378,13 @@ export const RechargeModal: React.FC = () => {
   const {
     openRechargeModal,
     setOpenRechargeModal,
+    rechargeTab: activeTab,
+    setRechargeTab: setActiveTab,
     currentUser,
     convertDiamondsToCoins,
     transactions,
   } = useApp();
 
-  // Two tabs: 'coins' (عملات معدنية) and 'diamonds' (ألماسي)
-  const [activeTab, setActiveTab] = useState<'coins' | 'diamonds'>('coins');
   const [rechargePacks, setRechargePacks] = useState<RechargePack[]>([]);
   const [selectedPack, setSelectedPack] = useState<RechargePack | null>(null);
   const [packagesLoading, setPackagesLoading] = useState(false);

@@ -80,7 +80,9 @@ interface AppContextType {
   openGiftStore: boolean;
   setOpenGiftStore: (open: boolean) => void;
   openRechargeModal: boolean;
-  setOpenRechargeModal: (open: boolean) => void;
+  setOpenRechargeModal: (open: boolean, tab?: 'coins' | 'diamonds') => void;
+  rechargeTab: 'coins' | 'diamonds';
+  setRechargeTab: (tab: 'coins' | 'diamonds') => void;
   openLevelsModal: boolean;
   setOpenLevelsModal: (open: boolean) => void;
   levelsModalTab: 'wealth' | 'charm' | 'games' | 'room';
@@ -987,7 +989,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Modals
   const [openGiftStore, setOpenGiftStore] = useState(false);
-  const [openRechargeModal, setOpenRechargeModal] = useState(false);
+  const [openRechargeModal, setRechargeOpen] = useState(false);
+  const [rechargeTab, setRechargeTab] = useState<'coins' | 'diamonds'>('coins');
+  const setOpenRechargeModal = React.useCallback((open: boolean, tab: 'coins' | 'diamonds' = 'coins') => {
+    if (open) setRechargeTab(tab);
+    setRechargeOpen(open);
+  }, []);
   const [openLevelsModal, setOpenLevelsModal] = useState(false);
   const [levelsModalTab, setLevelsModalTab] = useState<'wealth' | 'charm' | 'games' | 'room'>('wealth');
   const [openVipModal, setOpenVipModal] = useState(false);
@@ -2378,6 +2385,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setOpenGiftStore,
         openRechargeModal,
         setOpenRechargeModal,
+        rechargeTab,
+        setRechargeTab,
         openLevelsModal,
         setOpenLevelsModal,
         levelsModalTab,
