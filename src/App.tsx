@@ -1,5 +1,6 @@
 import React from 'react';
 import { AppProvider, useApp } from './context/AppContext';
+import { AndroidSystemBack } from './components/AndroidSystemBack';
 import { Header } from './components/Header';
 import { BottomNav } from './components/BottomNav';
 import { HomeView } from './views/HomeView';
@@ -316,6 +317,7 @@ const AppContent: React.FC = () => {
         {/* Bottom Navigation */}
         <BottomNav />
 
+        <AndroidSystemBack />
         {/* Global Overlays & Modals */}
         <VoiceRoomModal />
         <GiftStoreModal />

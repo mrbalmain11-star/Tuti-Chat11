@@ -64,6 +64,15 @@ const AdminDailyRewardsReadOnly: React.FC = () => {
 type Props = { onClose: () => void };
 export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
   const [adminPage, setAdminPage] = useState<string | null>(null);
+  useEffect(() => {
+    const onBack = (event: Event) => {
+      event.preventDefault();
+      if (adminPage) setAdminPage(null);
+      else onClose();
+    };
+    window.addEventListener('totichat:back:admin', onBack);
+    return () => window.removeEventListener('totichat:back:admin', onBack);
+  }, [adminPage, onClose]);
   const [access, setAccess] = useState<AdminAccess | null>(null);
   const [counts, setCounts] = useState<OwnerDashboardCounts | null>(null);
   const [recent, setRecent] = useState<OwnerDashboardRecent | null>(null);

@@ -8,7 +8,6 @@ import { WealthBadge, CharmBadge } from './LevelBadgeIcons';
 import { fetchIdentityBadgeKind, stagingBackend, type IdentityBadgeKind } from '../services/stagingBackend';
 import { IdentityBadge } from './IdentityBadge';
 import { RoomManagementPanel } from './RoomManagementPanel';
-import { App as CapacitorApp } from '@capacitor/app';
 import { playRoomMusic, pauseRoomMusic, resumeRoomMusic, stopRoomMusic, getRoomMusicProgress, seekRoomMusic, setRoomMusicVolume } from '../services/isolatedRoomMusic';
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { RoyalGiftIcon } from './RoyalGiftIcon';
@@ -1246,9 +1245,8 @@ export const VoiceRoomModal: React.FC = () => {
   // Android system back must never leave an active voice session abruptly.
   useEffect(() => {
     if (!activeRoom) return;
-    let disposed = false;
-    let listener: { remove: () => Promise<void> } | undefined;
-    void CapacitorApp.addListener('backButton', () => {
+    const onBack = (event: Event) => {
+      event.preventDefault();
       // Android's native document picker emits back while handing the file to WebView.
       // Ignore it until the file input has received its change event.
       if (musicPickerPendingRef.current || Date.now() - musicPickerReturnAtRef.current < 2000) return;
@@ -1294,8 +1292,9 @@ export const VoiceRoomModal: React.FC = () => {
       } else {
         setShowExitOptions(true);
       }
-    }).then(handle => { if (disposed) void handle.remove(); else listener = handle; });
-    return () => { disposed = true; if (listener) void listener.remove(); };
+    };
+    window.addEventListener('totichat:back:room', onBack);
+    return () => window.removeEventListener('totichat:back:room', onBack);
   }, [activeRoom?.id, isRoomMinimized, showExitOptions, showChatInput, showEmojiPicker, showMusicPlayerModal, showTasksModal, showChangeBgModal, showDecorationsModal, showRoomStatsModal, showHostCenterModal, showAgencyInfoModal, showMembersModal, showMessagesSheet, showToolsDrawer, showRoomModeModal, showRoomInfoModal, selectedMicUser, selectedEmptySeat, setIsRoomMinimized]);
 
   // Reconcile messages missed while the room was minimized before showing the chat again.
