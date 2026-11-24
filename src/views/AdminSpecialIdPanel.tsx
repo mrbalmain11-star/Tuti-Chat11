@@ -1,6 +1,18 @@
 import React, { useState } from 'react';
 import { stagingBackend } from '../services/stagingBackend';
 
+function operationError(error: unknown): string {
+  const detail = typeof error === 'object' && error !== null && 'message' in error
+    && typeof error.message === 'string' ? error.message : '';
+  if (detail === 'OTP_VERIFICATION_REQUIRED' || detail === 'Session expired') {
+    return 'انتهت صلاحية التحقق. سجّل الدخول مرة ثانية.';
+  }
+  if (detail === 'Owner approval required') return 'حسابك ما عنده صلاحية منح آيدي مميز.';
+  if (detail === 'Public ID already reserved') return 'هذا الآيدي المميز محجوز.';
+  if (detail === 'Public ID already assigned and cannot be changed') return 'هذا الحساب عنده آيدي مميز مثبت مسبقاً.';
+  return detail || 'تعذّر إكمال الطلب. جرّب مرة ثانية.';
+}
+
 export const AdminSpecialIdPanel: React.FC = () => {
   const [target, setTarget] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
@@ -24,7 +36,7 @@ export const AdminSpecialIdPanel: React.FC = () => {
       if (!found) throw new Error('الحساب غير موجود');
       setTarget(String(found.user_id));
       setAccountLabel(String(found.display_name || 'مستخدم') + ' (' + String(found.normal_id) + ')');
-    } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+    } catch (e) { setError(operationError(e)); }
     finally { setBusy(false); }
   };
   const grant = async () => {
@@ -42,7 +54,7 @@ export const AdminSpecialIdPanel: React.FC = () => {
       if (rpcError) throw rpcError;
       setNotice('تم منح الآيدي المميز بنجاح وتسجيل العملية في سجل التدقيق');
       setSpecialId(''); setReason(''); setConfirmation(false);
-    } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+    } catch (e) { setError(operationError(e)); }
     finally { setBusy(false); }
   };
   return <section className="rounded-2xl border border-amber-200 bg-white p-4 mb-5">
@@ -50,7 +62,7 @@ export const AdminSpecialIdPanel: React.FC = () => {
     <p className="text-sm text-slate-500 mb-4">للمالك فقط. المنح نهائي لحساب موثق ولا يمكن تغيير الآيدي بعد تخصيصه. لا يتم استبدال رقم الحساب الأصلي.</p>
     <label className="block text-sm mb-1">رقم حساب المستخدم الأصلي</label>
     <div className="flex gap-2 mb-2">
-      <input className="border rounded-xl p-3 flex-1 min-w-0" inputMode="numeric" value={accountNumber} onChange={e => { setAccountNumber(e.target.value); setTarget(''); setAccountLabel(''); setConfirmation(false); }} placeholder="100000" />
+      <input className="border rounded-xl p-3 flex-1 min-w-0" inputMode="numeric" disabled={busy} value={accountNumber} onChange={e => { setAccountNumber(e.target.value); setTarget(''); setAccountLabel(''); setConfirmation(false); }} placeholder="100000" />
       <button type="button" disabled={busy} onClick={() => void findAccount()} className="border border-amber-500 rounded-xl px-3">تحقق</button>
     </div>
     {accountLabel && <p className="text-green-700 text-sm mb-2">الحساب: {accountLabel}</p>}
