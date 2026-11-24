@@ -36,6 +36,7 @@ export type BackendRoom = {
   cover_url?: string;
   owner_name?: string;
   owner_avatar?: string;
+  owner_country?: string | null;
 };
 
 export type BackendProfile = {
@@ -56,7 +57,7 @@ function requireBackend() {
   return stagingBackend;
 }
 
-export async function fetchRealRooms(): Promise<BackendRoom[]> {
+export async function fetchRealRooms(requireOwnerCountry = false): Promise<BackendRoom[]> {
   const client = requireBackend();
   const { data: auth, error: authError } = await client.auth.getUser();
   if (authError) throw authError;
@@ -76,13 +77,17 @@ export async function fetchRealRooms(): Promise<BackendRoom[]> {
   const ownerIds = [...new Set(rooms.map(room => room.owner_id))];
   if (ownerIds.length) {
     const { data: owners, error: ownersError } = await client.from('profiles')
-      .select('id,display_name,avatar_url').in('id', ownerIds);
-    if (ownersError) console.warn('Room owner profiles unavailable:', ownersError.message);
+      .select('id,display_name,avatar_url,country').in('id', ownerIds);
+    if (ownersError) {
+      if (requireOwnerCountry) throw ownersError;
+      console.warn('Room owner profiles unavailable:', ownersError.message);
+    }
     const ownerById = new Map((owners ?? []).map(owner => [owner.id, owner]));
     for (const room of rooms) {
       const owner = ownerById.get(room.owner_id);
       room.owner_name = owner?.display_name ?? '';
       room.owner_avatar = imageUrl(owner?.avatar_url, 'profile-avatars');
+      room.owner_country = owner?.country ?? null;
     }
   }
   for (const room of rooms) {

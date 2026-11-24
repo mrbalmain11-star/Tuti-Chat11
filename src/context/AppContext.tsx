@@ -1,3 +1,4 @@
+import type { RankingPeriod } from '../services/liveRankings';
 import { activeVipTier, hasVipEntrance } from '../utils/vipPerks';
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { imageUrl } from '../services/imageUrl';
@@ -55,6 +56,8 @@ interface AppContextType {
   roomMessages: Record<string, ChatMessage[]>;
   sendRoomMessage: (roomId: string, text: string) => void;
   selectedCountry: string;
+  homeRoomsStatus: 'loading' | 'ready' | 'error';
+  refreshHomeRooms: () => void;
   setSelectedCountry: (c: string) => void;
   conversations: DirectConversation[];
   sendDirectMessage: (convId: string, text: string) => void;
@@ -125,6 +128,8 @@ interface AppContextType {
   openWealthLeaderboardModal: boolean;
   setOpenWealthLeaderboardModal: (open: boolean) => void;
   leaderboardTab: 'wealth' | 'charm' | 'room';
+  leaderboardPeriod: RankingPeriod;
+  setLeaderboardPeriod: (period: RankingPeriod) => void;
   setLeaderboardTab: (tab: 'wealth' | 'charm' | 'room') => void;
   internalProfileUser: UserProfile | null;
   setInternalProfileUser: (user: UserProfile | null) => void;
@@ -542,8 +547,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [activeTab, setActiveTab] = useState<'home' | 'messages' | 'profile'>('home');
   const [homeSubTab, setHomeSubTab] = useState<'party' | 'royal' | 'discover'>('party');
   const [rooms, setRooms] = useState<VoiceRoom[]>([]);
+  const [homeRoomsStatus, setHomeRoomsStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const homeRoomsRefresh = useRef<() => void>(() => {});
+  const refreshHomeRooms = () => { setHomeRoomsStatus('loading'); homeRoomsRefresh.current(); };
   useEffect(() => {
-    if (!isLoggedIn) { setRooms([]); return; }
+    if (!isLoggedIn) { setRooms([]); setHomeRoomsStatus('loading'); return; }
     let active = true;
     let refreshInFlight = false;
     let refreshPending = false;
@@ -553,16 +561,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       try {
         do {
           refreshPending = false;
-          const rows = await fetchRealRooms();
-          if (active) setRooms(rows.map(mapRoomToUi));
+          const rows = await fetchRealRooms(true);
+          if (active) { setRooms(rows.map(mapRoomToUi)); setHomeRoomsStatus('ready'); }
         } while (active && refreshPending);
       } catch (error) {
         console.error('Failed to refresh real staging rooms:', error);
+        if (active) setHomeRoomsStatus('error');
       } finally {
         refreshInFlight = false;
       }
     };
+    homeRoomsRefresh.current = refreshRooms;
     void refreshRooms();
+    const refreshVisible = () => { if (!document.hidden) void refreshRooms(); };
+    window.addEventListener('focus', refreshVisible);
+    window.addEventListener('online', refreshVisible);
+    const fallback = window.setInterval(refreshVisible, 30000);
     const client = stagingBackend;
     const channel = client?.channel('staging-public-rooms')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'rooms' }, () => {
@@ -576,6 +590,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
     return () => {
       active = false;
+      homeRoomsRefresh.current = () => {};
+      window.clearInterval(fallback);
+      window.removeEventListener('focus', refreshVisible);
+      window.removeEventListener('online', refreshVisible);
       if (channel && client) void client.removeChannel(channel);
     };
   }, [isLoggedIn]);
@@ -646,7 +664,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsRoomMinimized(false);
     setMyMicMuted(false);
   }, [isLoggedIn]);
-  const [selectedCountry, setSelectedCountry] = useState<string>('شائع 🔥');
+  const [selectedCountry, setSelectedCountry] = useState<string>('all');
   const [realGifts, setRealGifts] = useState<GiftItem[]>([]);
   useEffect(() => {
     if (!isLoggedIn || !stagingBackend) {
@@ -1137,6 +1155,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [openInviteModal, setOpenInviteModal] = useState(false);
   const [openInternalProfileModal, setOpenInternalProfileModal] = useState(false);
   const [openWealthLeaderboardModal, setOpenWealthLeaderboardModal] = useState(false);
+  const [leaderboardPeriod, setLeaderboardPeriod] = useState<RankingPeriod>('daily');
   const [leaderboardTab, setLeaderboardTab] = useState<'wealth' | 'charm' | 'room'>('wealth');
   const [internalProfileUser, setInternalProfileUser] = useState<UserProfile | null>(null);
   const [selectedGiftReceiver, setSelectedGiftReceiver] = useState<{ id: string; name: string; avatar?: string } | null>(null);
@@ -2379,6 +2398,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         roomMessages,
         sendRoomMessage,
         selectedCountry,
+        homeRoomsStatus,
+        refreshHomeRooms,
         setSelectedCountry,
         conversations,
         sendDirectMessage,
@@ -2449,6 +2470,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         openWealthLeaderboardModal,
         setOpenWealthLeaderboardModal,
         leaderboardTab,
+        leaderboardPeriod,
+        setLeaderboardPeriod,
         setLeaderboardTab,
         internalProfileUser,
         setInternalProfileUser,

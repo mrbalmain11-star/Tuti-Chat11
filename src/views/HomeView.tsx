@@ -6,10 +6,11 @@ import { CountryFilter } from '../components/CountryFilter';
 import { RoomCard } from '../components/RoomCard';
 import { RoyalRoomsView } from '../components/RoyalRoomsView';
 import { DiscoverRoomsView } from '../components/DiscoverRoomsView';
+import { filterRoomsByCountry } from '../data/roomCountries';
 import { useApp } from '../context/AppContext';
 
 export const HomeView: React.FC = () => {
-  const { rooms, selectedCountry, homeSubTab, isRtl } = useApp();
+  const { rooms, selectedCountry, homeSubTab, isRtl, homeRoomsStatus, refreshHomeRooms } = useApp();
   // 1. Royal Sub-Tab: ملكي (غرفتي والغرف الذي أتابعها)
   if (homeSubTab === 'royal') {
     return <RoyalRoomsView />;
@@ -21,10 +22,7 @@ export const HomeView: React.FC = () => {
   }
 
   // 3. Default Party Sub-Tab: حفلة (Filtered by country)
-  const filteredRooms = rooms.filter((r) => {
-    if (selectedCountry === 'الكل' || selectedCountry === 'شائع 🔥') return true;
-    return r.country === selectedCountry || r.countryFlag === selectedCountry;
-  });
+  const filteredRooms = filterRoomsByCountry(rooms, selectedCountry);
 
 
   return (
@@ -45,11 +43,14 @@ export const HomeView: React.FC = () => {
 
       {/* 4. Rooms 2x2 Grid (NOOR, حكاية قدر, OMAN, داعمين العراق) */}
       <div className="px-4 pt-1 pb-6">
-        <div className="grid grid-cols-2 gap-3.5">
-          {filteredRooms.map((room) => (
-            <RoomCard key={room.id} room={room} />
-          ))}
-        </div>
+        {homeRoomsStatus === 'loading' ? <p role="status" className="py-5 text-center text-sm">جارٍ تحميل الغرف…</p>
+          : homeRoomsStatus === 'error' ? <p role="alert" className="py-5 text-center text-sm text-red-800">
+            تعذر تحميل الغرف. <button type="button" className="underline" onClick={refreshHomeRooms}>إعادة المحاولة</button>
+          </p> : !filteredRooms.length ? <p className="py-5 text-center text-sm">
+            {selectedCountry === 'all' ? 'لا توجد غرف متاحة حالياً' : 'لا توجد غرف متاحة في هذه الدولة حالياً'}
+          </p> : <div className="grid grid-cols-2 gap-3.5">
+            {filteredRooms.map(room => <RoomCard key={room.id} room={room} />)}
+          </div>}
       </div>
     </div>
   );

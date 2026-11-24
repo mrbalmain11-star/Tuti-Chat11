@@ -1,5 +1,5 @@
-import React, { useEffect, useId, useState } from 'react';
-import { stagingBackend } from '../services/stagingBackend';
+import React, { useId, useState } from 'react';
+import { useLiveRanking, type RankingPeriod as TimePeriod, type RankingRow } from '../services/liveRankings';
 import { imageUrl } from '../services/imageUrl';
 
 const rankingImageFallback = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="50" fill="#e9d5a1"/><circle cx="50" cy="38" r="17" fill="#94753e"/><path d="M17 91c3-27 18-38 33-38s30 11 33 38" fill="#94753e"/></svg>');
@@ -69,13 +69,13 @@ export interface RoomLeaderboardItem {
   activeListeners: number;
 }
 
-type TimePeriod = 'daily' | 'weekly' | 'monthly';
-
 export const WealthLeaderboardModal: React.FC = () => {
   const {
     openWealthLeaderboardModal,
     setOpenWealthLeaderboardModal,
     leaderboardTab,
+    leaderboardPeriod: period,
+    setLeaderboardPeriod: setPeriod,
     setLeaderboardTab,
     setInternalProfileUser,
     setOpenInternalProfileModal,
@@ -86,63 +86,8 @@ export const WealthLeaderboardModal: React.FC = () => {
     isRtl,
   } = useApp();
 
-  const [period, setPeriod] = useState<TimePeriod>('daily');
   const [showResetRulesModal, setShowResetRulesModal] = useState(false);
-  type RankingRow={entity_id:string;public_id:number;display_name:string;avatar_url:string|null;score:number};
-  const [rankingState,setRankingState]=useState<{period:TimePeriod;tab:string;rows:RankingRow[]}|null>(null);
-  const ranking=openWealthLeaderboardModal && rankingState?.period===period && rankingState?.tab===leaderboardTab ? rankingState.rows : [];
-  useEffect(()=>{
-    if(!openWealthLeaderboardModal||!stagingBackend)return;
-    let alive=true;
-    let requestId=0;
-    let inFlight=false;
-    // Never show results from the previously selected tab or period.
-    setRankingState(null);
-    const refresh=async()=>{
-      // Avoid piling up network requests when the server takes over 30 seconds.
-      if(!alive||inFlight)return;
-      inFlight=true;
-      const currentRequest=++requestId;
-      try {
-        const {data,error}=await stagingBackend!.rpc('live_rankings',{p_period:period,p_kind:leaderboardTab});
-        if(!alive||currentRequest!==requestId)return;
-        if(error)throw error;
-        if (!Array.isArray(data)) throw new Error('Invalid leaderboard response');
-        const rows = data.filter((item):item is RankingRow =>
-              item !== null && typeof item === 'object' &&
-              typeof item.entity_id === 'string' && item.entity_id.trim().length > 0 &&
-              typeof item.display_name === 'string' &&
-              item.display_name.trim().length > 0 &&
-              (item.avatar_url === null || typeof item.avatar_url === 'string')
-            );
-        // One account or room can occupy only one position in a ranking.
-        const seenEntities = new Set<string>();
-        const uniqueRows = rows.filter(row => {
-          const entityKey = row.entity_id.trim();
-          if (seenEntities.has(entityKey)) return false;
-          seenEntities.add(entityKey);
-          return true;
-        });
-        // Ranking rows are already ordered by the backend; render at most ten.
-        setRankingState({period,tab:leaderboardTab,rows:uniqueRows.slice(0,10)});
-      } catch(error) {
-        if(!alive||currentRequest!==requestId)return;
-        console.error('Rankings load failed',error);
-        // Preserve the last valid ranking for this tab/period during a transient outage.
-        // On initial load (or after switching tabs), no stale results are displayed.
-        setRankingState(previous =>
-          previous?.period===period && previous?.tab===leaderboardTab
-            ? previous
-            : {period,tab:leaderboardTab,rows:[]}
-        );
-      } finally {
-        inFlight=false;
-      }
-    };
-    void refresh();
-    const interval=setInterval(()=>void refresh(),30000);
-    return()=>{alive=false;clearInterval(interval);};
-  },[openWealthLeaderboardModal,period,leaderboardTab]);
+  const ranking = useLiveRanking(currentUser.id, period, leaderboardTab, openWealthLeaderboardModal);
   // Ranking RPC does not return VIP, role or level metadata: never copy the viewer's badges or privileges to another user.
   const profileFor=(r:RankingRow):UserProfile=>({
     id:r.entity_id,
