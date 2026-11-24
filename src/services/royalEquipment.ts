@@ -32,6 +32,7 @@ export async function equipEarnedRoyalFrame(track: RoyalTrack, level: number, ro
     .upsert({ scope, subject_id, track, level, updated_at: new Date().toISOString() }, { onConflict: 'scope,subject_id' })
     .select('scope,subject_id,track,level').single();
   if (error) throw error;
+  window.dispatchEvent(new Event('totichat:profile-decoration-changed'));
   return data as EquippedRoyalFrame;
 }
 

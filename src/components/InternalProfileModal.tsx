@@ -1,5 +1,8 @@
+import { ProfileSections, useProfileSections, type ProfileSection } from './ProfileSections';
+import { RoyalLevelEmblem } from './RoyalLevelEmblem';
 import { ProfileSocialStats } from './ProfileSocialStats';
-import { StoreAvatarFrame } from './StoreAvatarFrame';
+import { StorageItemVisual } from './StorageItemVisual';
+import { getStorageAsset } from '../data/storageItems';
 import { VipAvatarFrame } from './VipAvatarFrame';
 import { CpWingAvatarFrame } from './CpWingAvatarFrame';
 import { useConfirmedCpFrame, getCpFramePreference, setCpFramePreference } from '../services/cpFramePreference';
@@ -25,9 +28,6 @@ import {
   LogOut,
   Crown,
   Sparkles,
-  Trophy,
-  Award,
-  Car,
   Shield,
   EllipsisVertical,
   Ban,
@@ -46,7 +46,6 @@ import { CpSearchModal } from './CpSearchModal';
 import { ProfileCpCard } from './ProfileCpCard';
 import { imageUrl } from '../services/imageUrl';
 import { IdentityBadge, useIdentityBadgeKind } from './IdentityBadge';
-import { fetchMyVerifiedRoyalXp, type VerifiedRoyalXp } from '../services/royalXp';
 import { royalProgress } from '../utils/royalLevels';
 import { ProfileReportForm } from './ProfileReportForm';
 
@@ -75,9 +74,6 @@ export const InternalProfileModal: React.FC = () => {
     setOpenAgencyModal,
     setOpenVipModal,
     agencyMemberCount,
-    bagItems,
-    equippedFrame,
-    equippedMount,
   } = useApp();
 
   // The user being displayed: either targeted user or current user
@@ -90,8 +86,6 @@ export const InternalProfileModal: React.FC = () => {
       .catch(error => console.error('Profile visit could not be recorded:', error));
   }, [openInternalProfileModal, isSelf, user.id]);
 
-  const equippedFrameItem = isSelf ? bagItems.find(item => item.id === equippedFrame && item.category === 'frames') : undefined;
-  const equippedMountItem = isSelf ? bagItems.find(item => item.id === equippedMount && item.category === 'mounts') : undefined;
   const [showCpSearch,setShowCpSearch] = useState(false);
   const [cpRefreshKey, setCpRefreshKey] = useState(0);
   const [cpPartnerAvatar, setCpPartnerAvatar] = useState<string | null>(null);
@@ -162,23 +156,17 @@ export const InternalProfileModal: React.FC = () => {
     return () => { active = false; };
   }, [openInternalProfileModal, isSelf, user.id]);
   const displayedUser = openInternalProfileModal && !isSelf && visitorStatus?.userId === user.id ? { ...user, ...visitorStatus } : user;
-  const [verifiedProfileXp, setVerifiedProfileXp] = useState<VerifiedRoyalXp | null>(null);
-  useEffect(() => {
-    let active = true;
-    setVerifiedProfileXp(null);
-    if (!openInternalProfileModal || !isSelf || !currentUser.id) return;
-    void fetchMyVerifiedRoyalXp().then(value => {
-      if (active) setVerifiedProfileXp(value);
-    }).catch(() => { if (active) setVerifiedProfileXp(null); });
-    return () => { active = false; };
-  }, [openInternalProfileModal, isSelf, currentUser.id]);
-  // The visitor-status RPC exposes XP totals but does not certify the royal
-  // gift-event ledger. Do not fabricate an official level for other accounts.
-  const verifiedWealthLevel = isSelf && verifiedProfileXp ? royalProgress(BigInt(verifiedProfileXp.wealth_lifetime_xp)).level : null;
-  const verifiedCharmLevel = isSelf && verifiedProfileXp ? royalProgress(BigInt(verifiedProfileXp.charm_lifetime_xp)).level : null;
-  // Never mix unverified profile totals with the verified gift-event ledger.
-  const wealthProgress = isSelf && verifiedProfileXp ? royalProgress(BigInt(verifiedProfileXp.wealth_lifetime_xp)) : null;
-  const charmProgress = isSelf && verifiedProfileXp ? royalProgress(BigInt(verifiedProfileXp.charm_lifetime_xp)) : null;
+  const [activeTab, setActiveTab] = useState<ProfileSection>('frame');
+  const sections = useProfileSections(user.id, activeTab, openInternalProfileModal);
+  const wealthProgress = sections.summary ? royalProgress(sections.summary.wealth) : null;
+  const charmProgress = sections.summary ? royalProgress(sections.summary.charm) : null;
+  const verifiedWealthLevel = wealthProgress?.level ?? null;
+  const verifiedCharmLevel = charmProgress?.level ?? null;
+  const activeFrame = sections.summary?.activeFrame;
+  const storeFrame = activeFrame?.source === 'store' ? getStorageAsset(activeFrame.id, activeFrame.asset) : null;
+  const unavailableLevel = sections.result?.error === 'forbidden' ? 'العرض غير مسموح' :
+    sections.result?.error ? 'تعذر تحميل المستوى' : 'جارٍ تحميل المستوى…';
+  useEffect(() => { setActiveTab('frame'); }, [user.id, openInternalProfileModal]);
   const [visitorAssets, setVisitorAssets] = useState<{ userId: string; publicId: string; cover: string; avatar: string; bio: string; name: string } | null>(null);
   const visitorAssetsForUser = openInternalProfileModal && !isSelf && visitorAssets?.userId === user.id ? visitorAssets : null;
   const visitorPublicId = visitorAssetsForUser?.publicId || '';
@@ -249,7 +237,6 @@ export const InternalProfileModal: React.FC = () => {
   }, [openInternalProfileModal, isSelf, currentUser.id]);
 
   // Active inventory tab: 'frame' (الإطار) | 'vehicle' (المركبة) | 'gifts' (لوحة الهدايا) | 'honor' (لوحة الشرف)
-  const [activeTab, setActiveTab] = useState<'frame' | 'vehicle' | 'gifts' | 'honor'>('frame');
 
   // Follow & Toast state
   const isUserFollowed = followedRoomHosts?.has(user.id);
@@ -567,8 +554,12 @@ export const InternalProfileModal: React.FC = () => {
               )}
             </div>
             <CpWingAvatarFrame enabled={cpAvatarFrameEnabled} name={user.name} />
-            {!cpAvatarFrameEnabled && <StoreAvatarFrame userId={user.id}
-              fallback={<VipAvatarFrame level={displayedUser.vipLevel} />} />}
+            {!cpAvatarFrameEnabled && (storeFrame ? <div data-avatar-frame className="pointer-events-none absolute -inset-[15%] z-20">
+              <StorageItemVisual key={storeFrame} url={storeFrame} name={activeFrame?.name ?? ''} play />
+            </div> : activeFrame?.source === 'level' && activeFrame.track && activeFrame.level ?
+              <div className="pointer-events-none absolute -inset-3 z-20 grid place-items-center">
+                <RoyalLevelEmblem track={activeFrame.track} level={activeFrame.level} kind="frame" size={96} />
+              </div> : activeFrame?.source === 'vip' ? <VipAvatarFrame level={activeFrame.level ?? 0} /> : null)}
           </div>
         </div>
 
@@ -817,6 +808,7 @@ export const InternalProfileModal: React.FC = () => {
           <h2 className="text-base font-black text-amber-950 text-right mb-2.5">
             مستوى الحساب
           </h2>
+          {sections.result?.error && <button type="button" onClick={sections.retry} className="mb-2 text-xs font-bold text-amber-900 underline">إعادة تحميل المستوى</button>}
 
           <div className="grid grid-cols-2 gap-3">
             {/* Card 1 (Right in RTL): مستوى الثروة (Wealth Level) - Distinct Gold Heraldic Theme */}
@@ -831,7 +823,7 @@ export const InternalProfileModal: React.FC = () => {
               {/* Text on Right in RTL */}
               <div className="text-right">
                 <span className="text-sm font-black text-amber-950 block font-sans tracking-wide">
-                  {verifiedWealthLevel !== null ? `Lv. ${verifiedWealthLevel}` : 'المستوى الرسمي غير متاح'}
+                  {verifiedWealthLevel !== null ? `Lv. ${verifiedWealthLevel}` : unavailableLevel}
                 </span>
                 <span className="mt-1 block text-[10px] font-bold text-amber-800">
                   إجمالي الخبرة الموثقة: {wealthProgress ? wealthProgress.lifetimeXp.toLocaleString() : 'غير متاحة'}
@@ -840,7 +832,7 @@ export const InternalProfileModal: React.FC = () => {
                   <div className="h-2 overflow-hidden rounded-full border border-amber-400/60 bg-amber-950/20">
                     <div className="h-full rounded-full bg-gradient-to-l from-yellow-200 via-amber-400 to-amber-600 transition-[width]" style={{width: `${wealthProgress.progressPercent}%`}} />
                   </div>
-                  <span className="mt-1 block text-[9px] font-bold text-amber-900" dir="ltr">{wealthProgress.xpToNextLevel === null ? 'MAX 200' : `${wealthProgress.progressPercent.toFixed(1)}% · ${wealthProgress.xpToNextLevel.toLocaleString()} XP remaining`}</span>
+                  <span className="mt-1 block text-[9px] font-bold text-amber-900">{wealthProgress.xpToNextLevel === null ? 'الحد الأعلى 200' : `${wealthProgress.progressPercent.toFixed(1)}% · ${wealthProgress.xpToNextLevel.toLocaleString()} نقطة متبقية`}</span>
                 </div>}
                 <span className="text-xs text-amber-800 font-black mt-0.5 block flex items-center gap-1">
                   <span>👑</span>
@@ -850,7 +842,7 @@ export const InternalProfileModal: React.FC = () => {
 
               {/* 3D Gold Imperial Seal Icon */}
               <div className="w-11 h-11 flex items-center justify-center shrink-0">
-                <svg viewBox="0 0 40 40" className="w-10 h-10 drop-shadow-[0_2px_8px_rgba(245,158,11,0.5)]">
+                {verifiedWealthLevel !== null ? <RoyalLevelEmblem track="wealth" level={verifiedWealthLevel} kind="badge" size={44} /> : <svg viewBox="0 0 40 40" className="w-10 h-10 drop-shadow-[0_2px_8px_rgba(245,158,11,0.5)]">
                   <circle cx="20" cy="20" r="18" fill="url(#goldSealGrad)" stroke="#FEF08A" strokeWidth="1.5" />
                   <circle cx="20" cy="20" r="14" fill="#78350F" stroke="#F59E0B" strokeWidth="1" />
                   {/* Central Crown & Diamond Motif */}
@@ -864,7 +856,7 @@ export const InternalProfileModal: React.FC = () => {
                       <stop offset="100%" stopColor="#78350F" />
                     </linearGradient>
                   </defs>
-                </svg>
+                </svg>}
               </div>
             </div>
 
@@ -880,7 +872,7 @@ export const InternalProfileModal: React.FC = () => {
               {/* Text on Right in RTL */}
               <div className="text-right">
                 <span className="text-sm font-black text-purple-950 block font-sans tracking-wide">
-                  {verifiedCharmLevel !== null ? `Lv. ${verifiedCharmLevel}` : 'المستوى الرسمي غير متاح'}
+                  {verifiedCharmLevel !== null ? `Lv. ${verifiedCharmLevel}` : unavailableLevel}
                 </span>
                 <span className="mt-1 block text-[10px] font-bold text-purple-800">
                   إجمالي الخبرة الموثقة: {charmProgress ? charmProgress.lifetimeXp.toLocaleString() : 'غير متاحة'}
@@ -889,7 +881,7 @@ export const InternalProfileModal: React.FC = () => {
                   <div className="h-2 overflow-hidden rounded-full border border-fuchsia-400/60 bg-purple-950/20">
                     <div className="h-full rounded-full bg-gradient-to-l from-pink-200 via-fuchsia-400 to-purple-600 transition-[width]" style={{width: `${charmProgress.progressPercent}%`}} />
                   </div>
-                  <span className="mt-1 block text-[9px] font-bold text-purple-900" dir="ltr">{charmProgress.xpToNextLevel === null ? 'MAX 200' : `${charmProgress.progressPercent.toFixed(1)}% · ${charmProgress.xpToNextLevel.toLocaleString()} XP remaining`}</span>
+                  <span className="mt-1 block text-[9px] font-bold text-purple-900">{charmProgress.xpToNextLevel === null ? 'الحد الأعلى 200' : `${charmProgress.progressPercent.toFixed(1)}% · ${charmProgress.xpToNextLevel.toLocaleString()} نقطة متبقية`}</span>
                 </div>}
                 <span className="text-xs text-purple-800 font-black mt-0.5 block flex items-center gap-1">
                   <span>✨</span>
@@ -899,7 +891,7 @@ export const InternalProfileModal: React.FC = () => {
 
               {/* 3D Purple Faceted Crystal Star Amulet */}
               <div className="w-11 h-11 flex items-center justify-center shrink-0">
-                <svg viewBox="0 0 40 40" className="w-10 h-10 drop-shadow-[0_2px_8px_rgba(168,85,247,0.45)]">
+                {verifiedCharmLevel !== null ? <RoyalLevelEmblem track="charm" level={verifiedCharmLevel} kind="badge" size={44} /> : <svg viewBox="0 0 40 40" className="w-10 h-10 drop-shadow-[0_2px_8px_rgba(168,85,247,0.45)]">
                   {/* Hexagon Crystal Base */}
                   <polygon
                     points="20,3 36,11.5 36,28.5 20,37 4,28.5 4,11.5"
@@ -922,7 +914,7 @@ export const InternalProfileModal: React.FC = () => {
                       <stop offset="100%" stopColor="#3B0764" />
                     </linearGradient>
                   </defs>
-                </svg>
+                </svg>}
               </div>
             </div>
           </div>
@@ -1053,80 +1045,8 @@ export const InternalProfileModal: React.FC = () => {
             5. Tab Content Area
             ========================================================================= */}
         <div className="flex-1 flex flex-col items-center justify-center py-6 px-6">
-          {/* TAB 1: Equipped frame from the authenticated inventory */}
-          {activeTab === 'frame' && (
-            <div className="w-full max-w-sm rounded-2xl border border-amber-300/70 bg-gradient-to-br from-white via-amber-50 to-emerald-50 p-5 text-center shadow-sm">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-amber-300 bg-amber-100 text-amber-800">
-                <Award className="h-8 w-8" aria-hidden="true" />
-              </div>
-              <h3 className="mt-3 text-sm font-black text-amber-950">الإطار المجهز</h3>
-              {isSelf && equippedFrameItem ? (
-                <p className="mt-1 text-sm font-bold text-emerald-900">{equippedFrameItem.name}</p>
-              ) : (
-                <p className="mt-1 text-xs leading-6 text-slate-600">
-                  {isSelf ? 'لا توجد بيانات إطار مجهز متاحة حالياً.' : 'بيانات الإطار المجهز لهذا الحساب غير متاحة للعرض.'}
-                </p>
-              )}
-              {isSelf && equippedFrameItem && <p className="mt-1 text-xs text-slate-500">الصلاحية: {equippedFrameItem.expiry}</p>}
-              {isSelf && (
-                <button type="button" onClick={() => { sounds.playClick(); setOpenStorageModal(true); }} className="mt-4 rounded-full border border-amber-400 bg-white px-4 py-2 text-xs font-black text-amber-950 active:scale-95">
-                  فتح التخزين
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* TAB 2: Equipped vehicle from the authenticated inventory */}
-          {activeTab === 'vehicle' && (
-            <div className="w-full max-w-sm rounded-2xl border border-amber-300/70 bg-gradient-to-br from-white via-amber-50 to-emerald-50 p-5 text-center shadow-sm">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-amber-300 bg-amber-100 text-amber-800">
-                <Car className="h-8 w-8" aria-hidden="true" />
-              </div>
-              <h3 className="mt-3 text-sm font-black text-amber-950">المركبة المجهزة</h3>
-              {isSelf && equippedMountItem ? (
-                <p className="mt-1 text-sm font-bold text-emerald-900">{equippedMountItem.name}</p>
-              ) : (
-                <p className="mt-1 text-xs leading-6 text-slate-600">
-                  {isSelf ? 'لا توجد بيانات مركبة مجهزة متاحة حالياً.' : 'بيانات المركبة المجهزة لهذا الحساب غير متاحة للعرض.'}
-                </p>
-              )}
-              {isSelf && equippedMountItem && <p className="mt-1 text-xs text-slate-500">الصلاحية: {equippedMountItem.expiry}</p>}
-              {isSelf && (
-                <button type="button" onClick={() => { sounds.playClick(); setOpenStorageModal(true); }} className="mt-4 rounded-full border border-amber-400 bg-white px-4 py-2 text-xs font-black text-amber-950 active:scale-95">
-                  فتح التخزين
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* TAB 3: Gift history is hidden until the server exposes verified records. */}
-          {activeTab === 'gifts' && (
-            <div className="w-full max-w-sm rounded-2xl border border-rose-200 bg-rose-50/70 px-5 py-8 text-center" role="status">
-              <Gift className="mx-auto h-8 w-8 text-rose-500" aria-hidden="true" />
-              <h3 className="mt-3 text-sm font-black text-rose-950">لوحة الهدايا</h3>
-              <p className="mt-1 text-xs leading-6 text-rose-900/75">لا يعرض التطبيق أعداداً أو هدايا افتراضية؛ سجل الهدايا الموثق غير متاح للواجهة حالياً.</p>
-            </div>
-          )}
-
-          {/* TAB 4: لوحة الشرف (Honor Board) - Top Supporters Podium & Honorary Badges */}
-          {activeTab === 'honor' && (
-            <div className="w-full flex flex-col items-center animate-in fade-in duration-200">
-              <div className="w-full flex items-center justify-between mb-2.5 px-1">
-                <span className="text-xs font-black text-amber-950 flex items-center gap-1">
-                  <Trophy className="w-3.5 h-3.5 text-amber-500" />
-                  كبار الداعمين في لوحة الشرف
-                </span>
-                <span className="text-[11px] font-bold text-amber-800 bg-amber-100/70 border border-amber-300 px-2 py-0.5 rounded-full">
-                  الرتب الشرفية 👑
-                </span>
-              </div>
-
-              {/* No rankings or badges are shown without verified backend records. */}
-              <div className="w-full rounded-2xl border border-amber-200 bg-amber-50/70 px-4 py-8 text-center text-sm font-bold text-amber-900" role="status">
-                لا توجد بيانات موثقة في لوحة الشرف حالياً
-              </div>
-            </div>
-          )}
+          <ProfileSections key={user.id + activeTab} section={activeTab} state={sections} isSelf={isSelf}
+            cpFrame={cpAvatarFrameEnabled} openStorage={() => { sounds.playClick(); setOpenStorageModal(true); }} />
         </div>
 
         {/* =========================================================================
