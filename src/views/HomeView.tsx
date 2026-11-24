@@ -9,16 +9,20 @@ import { DiscoverRoomsView } from '../components/DiscoverRoomsView';
 import { filterRoomsByCountry } from '../data/roomCountries';
 import { useApp } from '../context/AppContext';
 
+// Official public support room in TotiChat Staging. Use its room UUID, not its owner's public ID.
+const customerServiceRoomId = '2704b9ff-ad64-4a6d-9c7a-2eb75f33799a';
+
 export const HomeView: React.FC = () => {
   const { rooms, selectedCountry, homeSubTab, isRtl, homeRoomsStatus, refreshHomeRooms } = useApp();
+  const supportRoom = rooms.find(room => room.id === customerServiceRoomId);
   // 1. Royal Sub-Tab: ملكي (غرفتي والغرف الذي أتابعها)
   if (homeSubTab === 'royal') {
-    return <RoyalRoomsView />;
+    return <RoyalRoomsView supportRoom={supportRoom} />;
   }
 
   // 2. Discover Sub-Tab: اكتشف
   if (homeSubTab === 'discover') {
-    return <DiscoverRoomsView />;
+    return <DiscoverRoomsView supportRoom={supportRoom} />;
   }
 
   // 3. Default Party Sub-Tab: حفلة (Filtered by country)
@@ -46,11 +50,12 @@ export const HomeView: React.FC = () => {
         {homeRoomsStatus === 'loading' ? <p role="status" className="py-5 text-center text-sm">جارٍ تحميل الغرف…</p>
           : homeRoomsStatus === 'error' ? <p role="alert" className="py-5 text-center text-sm text-red-800">
             تعذر تحميل الغرف. <button type="button" className="underline" onClick={refreshHomeRooms}>إعادة المحاولة</button>
-          </p> : !filteredRooms.length ? <p className="py-5 text-center text-sm">
+          </p> : <><div className="grid grid-cols-2 gap-3.5">
+            {supportRoom && <RoomCard key={supportRoom.id} room={supportRoom} />}
+            {filteredRooms.filter(room => room.id !== supportRoom?.id).map(room => <RoomCard key={room.id} room={room} />)}
+          </div>{!filteredRooms.length && <p className="py-5 text-center text-sm">
             {selectedCountry === 'all' ? 'لا توجد غرف متاحة حالياً' : 'لا توجد غرف متاحة في هذه الدولة حالياً'}
-          </p> : <div className="grid grid-cols-2 gap-3.5">
-            {filteredRooms.map(room => <RoomCard key={room.id} room={room} />)}
-          </div>}
+          </p>}</>}
       </div>
     </div>
   );

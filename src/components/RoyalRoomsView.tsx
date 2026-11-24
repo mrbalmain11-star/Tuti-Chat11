@@ -1,3 +1,5 @@
+import { RoomCard } from './RoomCard';
+import type { VoiceRoom as SupportRoom } from '../types';
 import React, { useEffect, useState } from 'react';
 import {
   Crown,
@@ -19,7 +21,7 @@ import { VipName } from './VipName';
 import { RoyalRoomFollowIcon } from './RoyalRoomFollowIcon';
 import { fetchMyProfile, stagingBackend } from '../services/stagingBackend';
 
-export const RoyalRoomsView: React.FC = () => {
+export const RoyalRoomsView: React.FC<{ supportRoom?: SupportRoom }> = ({ supportRoom }) => {
   const {
     currentUser,
     rooms,
@@ -153,13 +155,14 @@ export const RoyalRoomsView: React.FC = () => {
   };
 
   // 2. Followed Rooms (الغرف الذي اتابعها)
-  const followedRooms = rooms.filter((r) => r.hostId !== currentUser.id && followedRoomIds.has(r.id));
+  const followedRooms = rooms.filter((r) => r.hostId !== currentUser.id && r.id !== supportRoom?.id && followedRoomIds.has(r.id));
 
   return (
     <div
       className="pb-28 px-4 pt-2 font-['Cairo',sans-serif] bg-gradient-to-b from-[#FDFBF7] via-[#FAF6ED] to-[#F5EFE0] min-h-screen text-slate-800 select-none"
       dir="rtl"
     >
+      {supportRoom && supportRoom.id !== myRoom?.id && <div className="mb-3 grid grid-cols-2 gap-3.5"><RoomCard room={supportRoom} /></div>}
       {/* Toast Alert */}
       {toastMessage && (
         <div className="fixed top-16 right-1/2 translate-x-1/2 z-50 px-4 py-2 rounded-full bg-slate-900/90 text-amber-300 text-xs font-bold shadow-2xl backdrop-blur-md border border-amber-400/30 animate-in fade-in slide-in-from-top-2">
