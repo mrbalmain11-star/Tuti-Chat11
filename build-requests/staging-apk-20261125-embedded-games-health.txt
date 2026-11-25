@@ -1,0 +1,1 @@
+Build the staging APK for the embedded games health and permissions verification.

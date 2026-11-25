@@ -1,3 +1,4 @@
+import { reportGameIssue } from './gameHealth';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { stagingBackend } from '../../services/stagingBackend';
 import { imageUrl } from '../../services/imageUrl';
@@ -23,16 +24,26 @@ export function useFreeGame<Result>(code: string, accountId: string) {
   const locking = useRef(false);
   useEffect(() => {
     active.current = true;
+    let disposed = false;
+    let loading = false;
     const refresh = async () => {
-      if (!stagingBackend) return;
-      const response = await stagingBackend.rpc('totichat_embedded_state', { p_code: code });
-      if (active.current && !response.error) setState(response.data as State);
-      if (active.current) setError(Boolean(response.error));
+      if (!stagingBackend || loading) return;
+      loading = true;
+      try {
+        const response = await stagingBackend.rpc('totichat_embedded_state', { p_code: code });
+        if (response.error) throw response.error;
+        if (!disposed) { setState(response.data as State); setError(false); }
+      } catch {
+        if (!disposed) { setError(true); reportGameIssue(accountId, code, 'connection'); }
+      } finally {
+        loading = false;
+      }
     };
     void refresh();
     const interval = window.setInterval(refresh, 10000);
     window.addEventListener('online', refresh);
     return () => {
+      disposed = true;
       active.current = false;
       window.clearInterval(interval);
       window.removeEventListener('online', refresh);
@@ -58,6 +69,7 @@ export function useFreeGame<Result>(code: string, accountId: string) {
       if (active.current) return data as Result;
     } catch {
       if (active.current) setError(true);
+      if (request.current) reportGameIssue(accountId, code, 'connection');
     } finally {
       locking.current = false;
       if (active.current) setBusy(false);

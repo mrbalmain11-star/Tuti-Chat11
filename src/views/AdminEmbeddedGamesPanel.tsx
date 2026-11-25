@@ -3,19 +3,26 @@ import { freeGameNames } from '../features/games/freeGame';
 import { stagingBackend } from '../services/stagingBackend';
 
 type Game = { code: string; enabled: boolean; maintenance: boolean; version: string; plays: number; players: number };
+type Issue = { code: string; kind: 'screen' | 'connection'; accounts: number; last_seen: string };
 type Report = { games: Game[]; audit: { at: string; actor: string; code: string; current: Game }[] };
 
 export function AdminEmbeddedGamesPanel() {
   const [report, setReport] = useState<Report>();
+  const [issues, setIssues] = useState<Issue[]>();
+  const [healthError, setHealthError] = useState(false);
   const [error, setError] = useState(false);
   const [saving, setSaving] = useState(false);
   const [revision, refresh] = useState(0);
   useEffect(() => {
     let active = true;
     async function load() {
-      const response = await stagingBackend?.rpc('totichat_embedded_admin');
+      const [response, health] = await Promise.all([
+        stagingBackend?.rpc('totichat_embedded_admin'), stagingBackend?.rpc('totichat_embedded_health'),
+      ]);
       if (!active) return;
       setError(!response || Boolean(response.error));
+      setHealthError(!health || Boolean(health.error));
+      if (health?.data) setIssues(health.data as Issue[]);
       if (response?.data) setReport(response.data as Report);
     }
     void load();
@@ -52,6 +59,17 @@ export function AdminEmbeddedGamesPanel() {
         pattern="[0-9]+[.][0-9]+[.][0-9]+" maxLength={30} required /></label>
       <button type="submit" disabled={saving} className="rounded bg-emerald-900 p-2 text-white">حفظ</button>
     </form>)}
+    <details>
+      <summary>بلاغات أخطاء الألعاب خلال 24 ساعة</summary>
+      <button type="button" className="underline" onClick={() => refresh(value => value + 1)}>تحديث البلاغات</button>
+      {healthError && <p role="alert">تعذر تحميل البلاغات.</p>}
+      {!healthError && issues?.length === 0 && <p>لا توجد بلاغات مسجّلة.</p>}
+      {issues?.map(issue => <p key={issue.code + issue.kind} className="border-b py-2 text-sm">
+        {freeGameNames[issue.code] ?? issue.code} · {issue.kind === 'screen' ? 'تعذر فتح الشاشة' : 'تعذر الاتصال'}
+        {' · '}<bdi>{issue.accounts}</bdi> حساب
+        {' · '}<bdi>{new Date(issue.last_seen).toLocaleString('ar-IQ-u-nu-latn', { timeZone: 'Asia/Baghdad' })}</bdi>
+      </p>)}
+    </details>
     {report && <details>
       <summary>سجل إدارة الألعاب</summary>
       {report.audit.length === 0 && <p>لا توجد عمليات مسجّلة.</p>}

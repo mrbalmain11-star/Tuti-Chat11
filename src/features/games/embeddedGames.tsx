@@ -1,5 +1,6 @@
 import { Component, lazy, Suspense, type ReactNode, type ComponentType } from 'react';
 
+import { reportGameIssue } from './gameHealth';
 import { freeGameNames } from './freeGame';
 import palace from './royal-cars/assets/palace.webp';
 import gem from './fortune-gem/assets/images/wild_garuda_mask_1791473301525.webp';
@@ -23,9 +24,10 @@ const embeddedGames: Readonly<Record<string, GameModule>> = {
 
 export const getEmbeddedGame = (code: string | undefined) => code && Object.hasOwn(embeddedGames, code) ? embeddedGames[code] : undefined;
 
-class GameErrorBoundary extends Component<{ children: ReactNode; onClose: () => void }, { failed: boolean }> {
+class GameErrorBoundary extends Component<{ children: ReactNode; onClose: () => void; onError: () => void }, { failed: boolean }> {
   state = { failed: false };
   static getDerivedStateFromError() { return { failed: true }; }
+  componentDidCatch() { this.props.onError(); }
   render() {
     if (!this.state.failed) return this.props.children;
     return <div role="alert" className="p-4 text-amber-100">تعذر فتح اللعبة.
@@ -36,7 +38,7 @@ class GameErrorBoundary extends Component<{ children: ReactNode; onClose: () => 
 
 export function EmbeddedGame({ game, accountId, onClose }: GameScreenProps & { game: GameModule }) {
   const { Screen, id } = game;
-  return <GameErrorBoundary onClose={onClose} key={id}>
+  return <GameErrorBoundary onClose={onClose} key={id} onError={() => reportGameIssue(accountId, id, 'screen')}>
     <Suspense fallback={<p role="status" className="p-3">جارٍ فتح اللعبة…</p>}>
       <Screen accountId={accountId} onClose={onClose} />
     </Suspense>
