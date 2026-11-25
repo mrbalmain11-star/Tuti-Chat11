@@ -55,6 +55,25 @@ function clearPendingRoomLink(roomId: string) {
 
 const GOOGLE_EMAIL_OTP_ENFORCED = import.meta.env.VITE_GOOGLE_EMAIL_OTP_ENFORCED !== 'false';
 
+async function withSessionDeadline<T>(work: (signal: AbortSignal) => Promise<T>): Promise<T> {
+  const controller = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => {
+          controller.abort();
+          reject(new Error('Session verification timed out'));
+        }, 12000);
+      }),
+      work(controller.signal),
+    ]);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
+}
+
+
 
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -145,38 +164,49 @@ const AppContent: React.FC = () => {
   }, [isLoggedIn, otpState, onboardingRetry]);
   React.useEffect(() => {
     if (!GOOGLE_EMAIL_OTP_ENFORCED || !stagingBackend) return;
+    const client = stagingBackend;
     let mounted = true;
+    let attempt = 0;
     const check = async () => {
-      // Supabase may emit SIGNED_IN again when Android returns from the file picker.
-      // Never unmount the active room by switching an already verified session to 'checking'.
+      const current = ++attempt;
       try {
-        const { data: session, error: sessionError } = await stagingBackend!.auth.getSession();
-        if (!mounted) return;
-        if (sessionError) { setOtpState('error'); return; }
-        if (!session.session) { setOtpState('error'); return; }
-        setOtpEmail(session.session.user.email ?? '');
-        const { data, error } = await stagingBackend!.rpc('otp_session_verified');
-        if (!mounted) return;
-        setOtpState(error ? 'error' : data === true ? 'verified' : 'pending');
+        const result = await withSessionDeadline(async signal => {
+          const { data: { session }, error: sessionError } = await client.auth.getSession();
+          if (sessionError || !session) throw sessionError ?? new Error('Session unavailable');
+          if (signal.aborted) throw new Error('Session verification timed out');
+          const { data, error } = await client.rpc('otp_session_verified').abortSignal(signal);
+          if (error) throw error;
+          return { email: session.user.email ?? '', verified: data === true };
+        });
+        if (!mounted || current !== attempt) return;
+        setOtpEmail(result.email);
+        setOtpState(result.verified ? 'verified' : 'pending');
       } catch (error) {
+        if (!mounted || current !== attempt) return;
         console.error('OTP session check failed:', error);
-        if (mounted) setOtpState('error');
+        setOtpState('error');
       }
     };
     void check();
-    // Supabase auth callbacks run under an internal auth lock. Defer client calls
-    // outside the callback to avoid getSession()/RPC deadlocks.
+    // Defer client calls until Supabase releases its auth callback lock.
     let scheduled: ReturnType<typeof setTimeout> | undefined;
-    const { data: { subscription } } = stagingBackend.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
-        if (scheduled !== undefined) clearTimeout(scheduled);
-        scheduled = setTimeout(() => { void check(); }, 0);
+    const { data: { subscription } } = client.auth.onAuthStateChange((event) => {
+      if (event !== 'SIGNED_IN' && event !== 'SIGNED_OUT') return;
+      if (scheduled !== undefined) clearTimeout(scheduled);
+      if (event === 'SIGNED_OUT') {
+        attempt += 1;
+        setOtpEmail('');
+        setOtpState('checking');
+        return;
       }
+      scheduled = setTimeout(() => { void check(); }, 0);
     });
+    window.addEventListener('online', check);
     return () => {
       mounted = false;
       if (scheduled !== undefined) clearTimeout(scheduled);
       subscription.unsubscribe();
+      window.removeEventListener('online', check);
     };
   }, [otpRetry]);
 
@@ -285,7 +315,7 @@ const AppContent: React.FC = () => {
     if (otpState === 'error') return (
       <div dir="rtl" className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#001d18] px-6 text-center text-white">
         <p className="text-lg font-bold">تعذر فحص التحقق الأمني</p>
-        <p className="text-sm text-slate-300">تحقق من الاتصال ثم حاول مجدداً. لن يتم تجاوز التحقق من OTP.</p>
+        <p className="text-sm text-slate-300">تحقق من الاتصال ثم حاول مجدداً.</p>
         <button type="button" onClick={() => { setOtpState('checking'); setOtpRetry(value => value + 1); }} className="rounded-xl bg-emerald-600 px-6 py-3 font-bold">إعادة المحاولة</button>
         <button type="button" onClick={() => { void stagingBackend?.auth.signOut(); }} className="rounded-xl border border-emerald-300/40 px-6 py-3 font-bold text-emerald-100">تسجيل الخروج والدخول مجدداً</button>
       </div>
@@ -294,7 +324,7 @@ const AppContent: React.FC = () => {
       onVerified={() => {
         void (async () => {
           try {
-            const { data, error } = await stagingBackend!.rpc('otp_session_verified');
+            const { data, error } = await withSessionDeadline(async signal => stagingBackend!.rpc('otp_session_verified').abortSignal(signal));
             if (error || data !== true) {
               setOtpState('error');
               return;
