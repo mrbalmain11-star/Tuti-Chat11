@@ -14,6 +14,7 @@ import { AdminAgencyRegistrationRequestsPanel } from './AdminAgencyRegistrationR
 import { AdminReportsPanel } from './AdminReportsPanel';
 import { AdminUserReportsPanel } from './AdminUserReportsPanel';
 import { AdminRechargePanel } from './AdminRechargePanel';
+import { SupplyReview } from '../features/rechargeAgent/SupplyReview';
 import { AdminAccountResetPanel } from './AdminAccountResetPanel';
 import { AdminGamesTreasuryPanel } from './AdminGamesTreasuryPanel';
 import { AdminStaffPanel } from './AdminStaffPanel';
@@ -183,6 +184,7 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
                 {adminPage === 'reports' && <AdminUserReportsPanel />}
                 {adminPage === 'financeReports' && <AdminReportsPanel />}
                 {adminPage === 'recharge' && <AdminRechargePanel />}
+                {adminPage === 'agencySupplyRequests' && <SupplyReview />}
                 {adminPage === 'accountReset' && <AdminAccountResetPanel />}
                 {adminPage === 'gamesTreasury' && <AdminGamesTreasuryPanel />}
                 {adminPage === 'appBans' && <AdminAppBansPanel />}

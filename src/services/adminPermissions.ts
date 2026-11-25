@@ -15,6 +15,7 @@ export const adminSections = [
   { id: 'reports', label: 'البلاغات', permission: 'reports.moderate' },
   { id: 'financeReports', label: 'التقارير المالية', permission: 'reports.read' },
   { id: 'recharge', label: 'الشحن', permission: 'recharge.manage', ownerOnly: true },
+  { id: 'agencySupplyRequests', label: 'طلبات شحن الوكالة', permission: 'recharge.manage', ownerOnly: true },
   { id: 'gamesTreasury', label: 'محفظة الألعاب', permission: 'games.manage' },
   { id: 'staff', label: 'الصلاحيات', permission: 'staff.manage', ownerOnly: true },
   { id: 'banners', label: 'البنرات', permission: 'banners.manage' },

@@ -1,5 +1,4 @@
 import { latinDigits } from '../utils/digits';
-import { SupplyReview } from '../features/rechargeAgent/SupplyReview';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { stagingBackend } from '../services/stagingBackend';
 import { completedResult, documentedReason, integerInput, rpcForIntent, STAGING_ISSUANCE, STAGING_ISSUANCE_REFERENCE } from '../services/treasuryProtocol';
@@ -265,7 +264,6 @@ export const AdminRechargePanel: React.FC = () => {
         {!state.ledger.length && <p className="text-sm">لا توجد قيود</p>}
         {state.ledger.map((r, i) => <div key={String(r.id ?? i)} className="border-b py-2 text-sm">{String(r.amount)} — الرصيد: {String(r.balance_after)}<p className="text-xs break-all">مرجع العملية: {String(r.operation_id)}</p></div>)}
       </div>
-      {state.isOwner && <SupplyReview />}
       {state.isOwner && <div><h3 className="font-black">سجل العمليات — آخر 100 عملية</h3>
         {!history.length && <p className="text-sm">لا توجد عمليات</p>}
         {history.map(r => <div key={String(r.id)} className="border-b py-2 text-sm"><p>{String(r.operation)} — {String(r.status)} — {String(r.created_at)}</p><p className="text-xs break-all">المرجع: {String(r.id)}</p></div>)}

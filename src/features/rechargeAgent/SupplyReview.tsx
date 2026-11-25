@@ -7,14 +7,29 @@ export function SupplyReview() {
   const [note, setNote] = useState('');
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const loadVersion = useRef(0);
   const lock = useRef(false);
 
   async function load() {
-    try { setRows(await agentRpc<Decision[]>('admin_list')); }
-    catch { setMessage('تعذر تحميل طلبات التزويد.'); }
+    const version = ++loadVersion.current;
+    setLoading(true);
+    setLoadError(false);
+    try {
+      const requests = await agentRpc<Decision[]>('admin_list');
+      if (version === loadVersion.current) setRows(requests);
+    } catch {
+      if (version === loadVersion.current) setLoadError(true);
+    } finally {
+      if (version === loadVersion.current) setLoading(false);
+    }
   }
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => {
+    void load();
+    return () => { loadVersion.current += 1; };
+  }, []);
 
   async function decide(approve: boolean) {
     if (!selected || lock.current || note.trim().length < 10) return;
@@ -35,12 +50,16 @@ export function SupplyReview() {
   }
 
   return <section dir="rtl" className="space-y-2 rounded-xl border p-3">
-    <h3 className="font-bold">طلبات تزويد وكلاء الشحن</h3>
-    <button type="button" className="underline" disabled={busy} onClick={() => void load()}>تحديث الطلبات</button>
-    {rows?.length === 0 && <p>لا توجد طلبات معلّقة.</p>}
+    <button type="button" className="rounded-lg border bg-white px-3 py-2 font-bold disabled:opacity-50"
+      disabled={busy || loading} onClick={() => void load()}>تحديث الطلبات</button>
+    {loading && <p role="status">جارٍ تحميل الطلبات…</p>}
+    {loadError && <p role="alert">تعذر تحميل طلبات التزويد.</p>}
+    {!loading && !loadError && rows?.length === 0 && <p>لا توجد طلبات معلّقة.</p>}
     {rows?.map(row => <button type="button" key={row.id} className="block w-full rounded-lg border p-2 text-start" disabled={busy}
       onClick={() => { setSelected(row); setNote(''); setMessage(''); }}>
-      {row.agency_name} · {num(row.coins)} عملة <small>{timestamp(row.created_at)}</small>
+      <strong className="block">{row.agency_name}</strong>
+      <span><bdi>{num(row.coins)}</bdi> عملة</span>
+      <small className="block text-slate-600">{timestamp(row.created_at)}</small>
     </button>)}
     {selected && <div className="space-y-2 rounded-lg bg-emerald-50 p-2">
       <p>قرار تزويد {selected.agency_name} بمبلغ {num(selected.coins)} عملة</p>
