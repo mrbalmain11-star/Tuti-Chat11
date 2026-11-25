@@ -41,3 +41,31 @@ export const loadGameAdmin = (code?: string, enabled?: boolean) =>
 
 export type ArcadeInput = { p_code: string; p_request: string; p_stake: number; p_pick: number };
 export const playArcade = (input: ArcadeInput) => rpc<Round>('practice_games_play', input);
+
+export type SharedResult = { outcome: number | null; draw: number[]; scores: number[] | null; refunded?: boolean; winner?: number };
+export type SharedEntry = {
+  request_id: string; starts_at: string; stake: number; paid: number | null;
+  status: 'pending' | 'settled' | 'refunded';
+  selection: { pick?: number; rows?: number; risk?: Risk; payouts?: number[] };
+  result: SharedResult | null;
+};
+export type SharedSnapshot = {
+  server_time: string; round_start: string; closes_at: string;
+  balance: number | null; funded: boolean; ludo: LudoMatch | null;
+  catalog: Omit<Game, 'implemented'>[];
+  entries: SharedEntry[];
+  rounds: { starts_at: string; result: SharedResult }[];
+};
+export type SharedRequest = {
+  p_request: string; p_code: string; p_start: string; p_stake: number;
+  p_pick?: number; p_rows?: number; p_risk?: Risk;
+};
+export const loadSharedGames = (code?: string) => rpc<SharedSnapshot>('games_rounds_snapshot', { p_code: code ?? null });
+export const joinSharedRound = (request: SharedRequest) => rpc<SharedEntry>('games_join_round', request);
+
+export type LudoMatch = {
+  starts_at: string; pieces_one: number[]; pieces_two: number[];
+  seat: 1 | 2; turn: 1 | 2; die: number; turn_number: number; deadline: string;
+};
+export const moveSharedLudo = (start: string, turn: number, piece: number | null) =>
+  rpc<void>('games_ludo_move', { p_start: start, p_turn: turn, p_piece: piece });

@@ -1,7 +1,7 @@
 import { WinNotice } from './WinNotice';
 import { useState } from 'react';
 
-const track = [
+export const track = [
   [6,1],[6,2],[6,3],[6,4],[6,5],[5,6],[4,6],[3,6],[2,6],[1,6],[0,6],[0,7],[0,8],
   [1,8],[2,8],[3,8],[4,8],[5,8],[6,9],[6,10],[6,11],[6,12],[6,13],[6,14],[7,14],[8,14],
   [8,13],[8,12],[8,11],[8,10],[8,9],[9,8],[10,8],[11,8],[12,8],[13,8],[14,8],[14,7],[14,6],
@@ -25,7 +25,7 @@ function move(own: number[], other: number[], index: number, die: number, offset
   ] as const;
 }
 
-function squareFor(position: number, index: number, bot: boolean) {
+export function squareFor(position: number, index: number, bot: boolean) {
   if (position < 0) return [2 + (index >> 1) + (bot ? 9 : 0), 2 + index % 2 + (bot ? 9 : 0)];
   if (position >= 51) return [7, bot ? 13 - (position - 51) : 1 + (position - 51)];
   return track[(position + (bot ? 26 : 0)) % 52];

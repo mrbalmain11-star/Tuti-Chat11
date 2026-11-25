@@ -6,31 +6,30 @@ const foods = ['🍕 بيتزا', '🍗 دجاج', '🍅 طماطم', '🌽 ذر
 const hands = ['أ', 'ب', 'ج'];
 const wheel = ['0×', '0.5×', '1×', '0×', '2×', '0×', '4×', '0×'];
 const symbols = { slot: ['7️⃣', '🔔', '⭐', '💎', '👑', '🪙'], fruit: ['🍒', '🍇', '🍋', '🍉', '🍊', '🍓'] };
-const picks: Record<string, { label: string; values: [number, string][] }> = {
+export const picks: Record<string, { label: string; values: [number, string][] }> = {
   greedy: { label: 'اختر الأكلة', values: foods.map((name, index) => [index, name]) },
   teen_patti: { label: 'اختر اليد الفائزة', values: hands.map((name, index) => [index, name]) },
   roulette: { label: 'اختر الرقم', values: Array.from({ length: 37 }, (_, number) => [number, String(number)]) },
   crash: { label: 'اختر مضاعف الخروج التلقائي', values: [125, 150, 200, 300, 500, 1000].map(value => [value, value / 100 + '×']) },
 };
 
-function Result({ round }: { round: Round }) {
-  const result = round.arcade;
+export function Result({ code, result }: { code: string; result: Round['arcade'] }) {
   if (!result) return null;
   const drawn = result.draw ?? [];
   const scores = result.scores ?? [];
-  if (round.game_code === 'teen_patti') return <div className="grid grid-cols-3 gap-1" dir="ltr">
+  if (code === 'teen_patti') return <div className="grid grid-cols-3 gap-1" dir="ltr">
     {hands.map((hand, index) => <div key={hand} className={scores[index] === result.outcome ? 'text-amber-300' : ''}>
       {hand}<div className="whitespace-nowrap text-xs">{drawn.slice(index * 3, index * 3 + 3).map(card =>
         (['2','3','4','5','6','7','8','9','10','J','Q','K','A'][card % 13] + ['♠', '♥', '♦', '♣'][Math.floor(card / 13)])).join(' ')}</div>
     </div>)}
   </div>;
-  if (round.game_code === 'slot' || round.game_code === 'fruit') {
-    const reel = symbols[round.game_code];
+  if (code === 'slot' || code === 'fruit') {
+    const reel = symbols[code];
     return <p className="text-3xl" aria-label="نتيجة البكرات">{drawn.map(value => reel[value]).join(' ')}</p>;
   }
-  const value = round.game_code === 'greedy' ? foods[result.outcome]
-    : round.game_code === 'lucky_wheel' ? wheel[result.outcome]
-    : round.game_code === 'crash' ? (result.outcome / 100).toFixed(2) + '×' : result.outcome;
+  const value = code === 'greedy' ? foods[result.outcome]
+    : code === 'lucky_wheel' ? wheel[result.outcome]
+    : code === 'crash' ? (result.outcome / 100).toFixed(2) + '×' : result.outcome;
   return <p className="text-xl text-amber-200">النتيجة <bdi>{value}</bdi></p>;
 }
 
@@ -111,7 +110,7 @@ export function Arcade({ code, accountId, history, enabled, onRound }: {
     </button>
     {error && <p role="alert" className="text-red-300">{error}</p>}
     {result && <div role="status" className="space-y-1 rounded-xl bg-black/20 p-2">
-      <Result round={result} />
+      <Result code={result.game_code} result={result.arcade} />
       <p>الجائزة <bdi>{result.reward.toLocaleString('ar-IQ-u-nu-latn')}</bdi></p>
     </div>}
     {rounds.length > 0 && <details className="text-sm">
