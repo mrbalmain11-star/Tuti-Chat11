@@ -17,6 +17,7 @@ import { VipMessageFrame } from './VipMessageFrame';
 import { WealthBadge, CharmBadge } from './LevelBadgeIcons';
 import { fetchIdentityBadgeKind, stagingBackend, type IdentityBadgeKind } from '../services/stagingBackend';
 import { IdentityBadge } from './IdentityBadge';
+import { RoomMembersDialog } from './RoomMembersDialog';
 import { RoomManagementPanel } from './RoomManagementPanel';
 import { App as CapacitorApp } from '@capacitor/app';
 import { playRoomMusic, pauseRoomMusic, resumeRoomMusic, stopRoomMusic, getRoomMusicProgress, seekRoomMusic, setRoomMusicVolume } from '../services/isolatedRoomMusic';
@@ -1035,7 +1036,7 @@ export const VoiceRoomModal: React.FC = () => {
     }
   };
 
-  const handleVoiceModeration = async (userId: string, action: 'kick' | 'ban' | 'mute' | 'release_seat') => {
+  const handleVoiceModeration = async (userId: string, action: 'kick' | 'ban' | 'mute' | 'release_seat', banType?: 'temporary' | 'permanent') => {
     if (!activeRoom || !stagingBackend || (!isOwner && !isModerator)) {
       showToast('هذا الأمر متاح لمالك الغرفة والمشرف فقط.');
       return;
@@ -1045,17 +1046,17 @@ export const VoiceRoomModal: React.FC = () => {
       return;
     }
     let durationSeconds: number | null = null;
-    if (action === 'ban') {
+    if (action === 'ban' && banType !== 'permanent') {
       const durationChoice = window.prompt(
         'مدة حظر الغرفة: دائم، 10د، 30د، 1س، 6س، 12س، 24س، 3أيام، 7أيام، 30يوماً',
-        'دائم',
+        banType === 'temporary' ? '10د' : 'دائم',
       );
       if (durationChoice === null) return;
       const durations: Record<string, number | null> = {
         'دائم': null, '10د': 600, '30د': 1800, '1س': 3600, '6س': 21600,
         '12س': 43200, '24س': 86400, '3أيام': 259200, '7أيام': 604800, '30يوماً': 2592000,
       };
-      if (!Object.prototype.hasOwnProperty.call(durations, durationChoice.trim())) {
+      if (!Object.prototype.hasOwnProperty.call(durations, durationChoice.trim()) || (banType === 'temporary' && durationChoice.trim() === 'دائم')) {
         showToast('اختر مدة من القائمة المحددة.');
         return;
       }
@@ -1193,9 +1194,7 @@ export const VoiceRoomModal: React.FC = () => {
     } finally { setModerationBusy(false); }
   };
 
-  const handleKickMember = (userId: string, _userName: string) => {
-    void handleVoiceModeration(userId, 'kick');
-  };
+
 
   const handleApplyDecoration = (type: 'mic' | 'frame' | 'title', value: string) => {
     if (!activeRoom) return;
@@ -3312,144 +3311,51 @@ export const VoiceRoomModal: React.FC = () => {
             MEMBERS & MODERATORS MODAL (أعضاء ومشرفو الغرفة 👥)
             ========================================================================= */}
         {showMembersModal && (
-          <div
-            onClick={() => setShowMembersModal(false)}
-            className="fixed inset-0 z-60 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in"
-          >
-            <div
-              onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-sm bg-gradient-to-b from-[#180d36] to-[#0d061f] border border-purple-400/40 rounded-3xl p-5 shadow-2xl text-white space-y-4 max-h-[85vh] flex flex-col"
-            >
-              <div className="flex items-center justify-between pb-3 border-b border-white/10">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-cyan-500/20 text-cyan-300 flex items-center justify-center">
-                    <Users className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="font-black text-sm text-white">أعضاء ومشرفو الغرفة 👥</h3>
-                    <p className="text-[10px] text-purple-200">
-                      {isOwner ? 'إدارة الصلاحيات والمشرفين' : 'قائمة المتواجدين في الغرفة'}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowMembersModal(false)}
-                  className="w-7 h-7 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <div className="flex-1 overflow-y-auto space-y-2.5 pr-0.5">
-                {serverMembersStatus === 'loading' && <p className="text-xs text-slate-300">جارٍ جلب الأعضاء...</p>}
-                {serverMembersStatus === 'error' && <p className="text-xs text-rose-300">تعذر تحميل القائمة المباشرة من الخادم</p>}
-                {serverMembersStatus === 'ready' && <p className="text-xs text-emerald-300">الأعضاء المسجلون بالغرفة: {serverRoomMembers.length}</p>}
-                {serverMembersStatus === 'ready' && serverRoomMembers.filter(member => member.seat_no == null && member.user_id !== activeRoom.hostId && !activeRoom.seats.some(seat => seat.user?.id === member.user_id)).map(member => (
-                  <button type="button" key={member.user_id} onClick={() => {
-                    setInternalProfileUser({
-                      ...currentUser,
-                      id: member.user_id,
-                      name: member.display_name || 'مستخدم',
-                      nickname: member.display_name || 'مستخدم',
-                      avatar: member.avatar_url || '',
-                      wealthExp: 0,
-                      charmExp: 0,
-                      coins: 0,
-                      diamonds: 0,
-                      vipLevel: 0,
+          <RoomMembersDialog key={activeRoom.id} roomId={activeRoom.id} actorId={currentUser.id}
+            pending={moderationBusy || banActionBusy} blockedIds={personalBlocks.map(item => item.userId)}
+            onClose={() => setShowMembersModal(false)}
+            onAction={async (action, member) => {
+              const { id, name } = member;
+              switch (action) {
+                case 'profile':
+                  setShowMembersModal(false);
+                  handleOpenUserProfile({
+                    id, name: name || 'مستخدم', nickname: name || 'مستخدم', avatar: imageUrl(member.avatar),
+                  } as UserProfile);
+                  break;
+                case 'grant': case 'revoke': await handleSetModerator(id, name || 'العضو', action === 'grant'); break;
+                case 'warn': await handleRoomWarning(id); break;
+                case 'mute': case 'kick': case 'release_seat': await handleVoiceModeration(id, action); break;
+                case 'allowMic': await handleAllowMic(id); break;
+                case 'temporaryBan': case 'permanentBan':
+                  await handleVoiceModeration(id, 'ban', action === 'temporaryBan' ? 'temporary' : 'permanent'); break;
+                case 'unban': await unbanRoomUser(id); break;
+                case 'personalBlock': await setPersonalBlock(id, !personalBlocks.some(item => item.userId === id)); break;
+                case 'muteChat': case 'unmuteChat': {
+                  const input = action === 'muteChat'
+                    ? window.prompt('مدة كتم الكتابة بالدقائق: 5، 15، 30، 60، 180، 720، 1440', '5') : '0';
+                  if (input === null) break;
+                  const value = latinDigits(input.trim());
+                  const minutes = Number(value);
+                  if (!/^[0-9]+$/.test(value) || (action === 'muteChat' && ![5, 15, 30, 60, 180, 720, 1440].includes(minutes))) {
+                    showToast('اختر مدة من القائمة المحددة.');
+                    break;
+                  }
+                  try {
+                    const response = await stagingBackend?.rpc('totichat_room_set_chat_mute', {
+                      p_room_id: activeRoom.id, p_target: id, p_minutes: minutes,
                     });
-                    setOpenInternalProfileModal(true);
-                    setShowMembersModal(false);
-                  }} className="flex w-full items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 p-3 text-right hover:bg-white/10" aria-label={`فتح ملف ${member.display_name || 'مستخدم'}`}>
-                    <div className="flex min-w-0 items-center gap-2.5">
-                      {member.avatar_url && /^https?:\/\//i.test(member.avatar_url) ? (
-                        <img src={member.avatar_url} alt="" className="h-9 w-9 shrink-0 rounded-full border border-emerald-300/40 object-cover" />
-                      ) : (
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-900/40"><Users className="h-4 w-4 text-emerald-200" /></div>
-                      )}
-                      <span className="truncate text-xs font-bold text-white">{member.display_name || 'مستخدم'}</span>
-                    </div>
-                    <span className="shrink-0 text-[10px] text-slate-300">عرض الملف</span>
-                  </button>
-                ))}
-                {/* Host User */}
-                <div className="p-2.5 rounded-2xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-amber-400">
-                      <img src={activeRoom.hostAvatar} alt={activeRoom.hostName} className="w-full h-full object-cover" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-black text-white">{activeRoom.hostName}</span>
-                        <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-amber-500 text-slate-950">مالك 👑</span>
-                      </div>
-                      <span className="text-[10px] text-slate-300 font-mono">ID:{hostAccountId}</span>
-                    </div>
-                  </div>
-                  <span className="text-[11px] text-amber-300 font-bold">صاحب الغرفة</span>
-                </div>
-
-                {/* Other Users on seats */}
-                {activeRoom.seats
-                  .filter((s) => s.user && s.user.id !== activeRoom.hostId)
-                  .map((seat) => {
-                    if (!seat.user) return null;
-                    const user = seat.user;
-                    const isMod = (activeRoom.moderatorIds || []).includes(user.id);
-
-                    return (
-                      <div key={user.id} className="p-2.5 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between">
-                        <div
-                          onClick={() => handleOpenUserProfile(user)}
-                          className="flex items-center gap-2.5 cursor-pointer hover:opacity-90 transition"
-                        >
-                          <div className="relative w-10 h-10 rounded-full overflow-hidden border border-purple-300">
-                            <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-xs font-bold text-white">{user.name}</span>
-                              {isMod && (
-                                <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-cyan-600 text-white">مشرف 🛡️</span>
-                              )}
-                            </div>
-                            <span className="text-[10px] text-slate-400 font-mono">المايك NO {seat.seatNumber}</span>
-                          </div>
-                        </div>
-
-                        {(isOwner || isModerator) && user.id !== currentUser.id && user.id !== activeRoom.hostId && (
-                          <div className="flex items-center gap-1.5">
-                            {isOwner && <button
-                              disabled={moderationBusy}
-                              onClick={() => void handleSetModerator(user.id, user.name, !isMod)}
-                              className={`p-1.5 rounded-lg text-[10px] font-bold transition active:scale-95 ${
-                                isMod
-                                  ? 'bg-rose-500/20 text-rose-300 hover:bg-rose-500/30'
-                                  : 'bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30'
-                              }`}
-                              title={isMod ? 'إلغاء الإشراف' : 'ترقية إلى مشرف'}
-                            >
-                              {isMod ? <UserMinus className="w-3.5 h-3.5" /> : <UserPlus className="w-3.5 h-3.5" />}
-                            </button>}
-                            <button
-                              disabled={moderationBusy}
-                              onClick={() => handleKickMember(user.id, user.name)}
-                              className="p-1.5 rounded-lg bg-rose-900/30 hover:bg-rose-900/50 text-rose-400 text-[10px] font-bold transition active:scale-95"
-                              title="طرد من الغرفة"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                            {(isOwner || isModerator) && <button type="button" disabled={moderationBusy} onClick={() => void handleVoiceModeration(user.id, 'ban')} className="rounded-lg bg-red-800/50 px-2 py-1.5 text-[10px] font-bold text-red-200" title="حظر مؤقت أو دائم من الغرفة">حظر الغرفة</button>}
-                            {(isOwner || (isModerator && !isMod)) && <button type="button" disabled={moderationBusy} onClick={() => void handleRoomWarning(user.id)} className="rounded-lg bg-amber-700/60 px-2 py-1.5 text-[10px] font-bold text-amber-100">تحذير</button>}
-                            <button type="button" onClick={() => void setPersonalBlock(user.id, !personalBlocks.some(item => item.userId === user.id))} className="rounded-lg bg-slate-700 px-2 py-1.5 text-[10px] text-white">{personalBlocks.some(item => item.userId === user.id) ? 'فك الحظر الشخصي' : 'حظر شخصي'}</button>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-              </div>
-            </div>
-          </div>
+                    if (response?.error || response?.data !== true) throw response?.error ?? new Error('Unconfirmed text moderation');
+                    showToast(minutes ? 'تم كتم كتابة العضو في الغرفة' : 'تم رفع كتم الكتابة');
+                  } catch (error) {
+                    console.error('Room text moderation failed:', error);
+                    showToast('تعذر تغيير كتم الكتابة. تحقق من الصلاحيات.');
+                  }
+                  break;
+                }
+              }
+            }}
+          />
         )}
 
         {/* =========================================================================
