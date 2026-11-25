@@ -600,6 +600,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [activeRoom, setActiveRoom] = useState<VoiceRoom | null>(null);
   const [isRoomMinimized, setIsRoomMinimized] = useState(false);
   const [myMicMuted, setMyMicMuted] = useState(false);
+  const seatReservationVersion = useRef(0);
   const voiceRoomId = activeRoom?.id ?? null;
   const voiceSeat = activeRoom?.seats.some(seat => seat.user?.id === currentUser.id) ?? false;
   const voiceShouldPublish = isLoggedIn && voiceSeat && !myMicMuted;
@@ -1325,6 +1326,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       try {
         do {
           pending = false;
+          const reservationVersion = seatReservationVersion.current;
           const members = await resolveRoomAvatars(await fetchRoomVisualMembers(roomId));
           const hostMember = members.find(member => member.user_id === hostId);
           const { data: hostProfile } = !hostMember && hostId
@@ -1336,6 +1338,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const moderatorMutedIds = new Set(rawMembers.filter(m => m.moderation_muted).map(m => m.user_id));
           const { data: moderatorIds, error: moderatorsError } = await roomClient.rpc('totichat_room_moderator_ids', { p_room_id: roomId });
           if (!alive) return;
+          if (reservationVersion !== seatReservationVersion.current) {
+            pending = true;
+            continue;
+          }
           const currentVipRoomMemberIds = new Set(members.map(member => member.user_id));
           for (const member of members) {
             const newArrival = previousVipRoomMemberIds
@@ -1708,11 +1714,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const seatReservationPendingRef = useRef(false);
   const seatReleasePendingRef = useRef(false);
   const takeSeat = (seatNumber: number): void => {
-    if (!activeRoom || seatReservationPendingRef.current || seatReleasePendingRef.current) return;
+    if (!activeRoom || seatReservationPendingRef.current || seatReleasePendingRef.current || micUpdatePendingRef.current) return;
     seatReservationPendingRef.current = true;
     const roomId = activeRoom.id;
     const transitionAtStart = roomTransitionVersion.current;
-    let reservationConfirmed = false;
     void reserveSeat(roomId, seatNumber).catch(async error => {
       // Membership can expire while a room remains open; rejoin once and retry.
       const reason = error instanceof Error ? error.message.toLowerCase() : '';
@@ -1725,8 +1730,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (roomTransitionVersion.current !== transitionAtStart) throw new Error('Room changed during seat reservation');
       return reserveSeat(roomId, seatNumber);
     }).then(() => {
-      reservationConfirmed = true;
       if (roomTransitionVersion.current !== transitionAtStart) return;
+      seatReservationVersion.current += 1;
       setMyMicMuted(true);
       window.dispatchEvent(new CustomEvent('totichat:room-seat-changed', { detail: roomId }));
       setActiveRoom(prev => {
@@ -1750,31 +1755,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           })),
         };
       });
-      // Joining a seat must also reconcile the server mute flag. Otherwise
-      // LiveKit stays unpublished even though the seat is visibly occupied.
-      return setMyRoomMute(roomId, false).then(confirmed => {
-        if (confirmed !== false) throw new Error('Microphone unmute not confirmed');
-        if (roomTransitionVersion.current !== transitionAtStart) return;
-        setMyMicMuted(false);
-        setActiveRoom(prev => prev?.id !== roomId ? prev : ({
-          ...prev,
-          seats: prev.seats.map(seat => seat.seatNumber === seatNumber && seat.user?.id === currentUser.id
-            ? { ...seat, isMuted: false } : seat),
-        }));
-      });
     }).catch(error => {
       if (roomTransitionVersion.current !== transitionAtStart) return;
-      if (reservationConfirmed) {
-        // Seat assignment succeeded; only the separate microphone unmute failed.
-        // Do not report a failed reservation or clear the server-confirmed seat.
-        console.error('Seat reserved but microphone could not be enabled:', error);
-        setMyMicMuted(true);
-        const moderatorMuted = error instanceof Error && error.message.includes('ROOM_MODERATOR_MUTED');
-        alert(moderatorMuted
-          ? 'تم حجز المقعد، لكن المايك مكتوم من إدارة الغرفة حتى يرفع المشرف الكتم.'
-          : 'تم حجز المقعد، لكن تعذر فتح المايك. حاول تشغيله مجدداً.');
-        return;
-      }
       console.error('Seat reservation failed:', error);
       const reason = error instanceof Error ? error.message.toLowerCase() : '';
       alert(reason.includes('seat locked') ? 'هذا المقعد مقفول من إدارة الغرفة.' :
