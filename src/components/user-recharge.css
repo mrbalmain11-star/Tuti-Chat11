@@ -2,8 +2,10 @@
   position: fixed;
   inset: 0;
   z-index: 55;
+  isolation: isolate;
+  background-color: #021511;
   color: #f5fffa;
-  background: radial-gradient(ellipse at 50% 42%, #073829, #031f1a 60%, #021511);
+  background-image: radial-gradient(ellipse at 50% 42%, #073829, #031f1a 60%, #021511);
   font-family: Cairo, sans-serif;
 }
 .tu-frame {
@@ -27,7 +29,7 @@
 .tu-header { justify-content: space-between; }
 .tu-header h2 { white-space: nowrap; font-size: clamp(17px, 5vw, 29px); font-weight: 900; }
 .tu-header h2 span { width: clamp(23px, 8vw, 42px); filter: drop-shadow(0 1px 6px #cda83160); }
-.tu-header h2 svg, .tu-pack-art svg, .tu-balance-art svg { width: 100%; height: 100%; display: block; }
+.tu-header h2 svg, .tu-balance-art svg { width: 100%; height: 100%; display: block; }
 .tu-header button, .tu-tabs button, .tu-pack, .tu-agent, .tu-info {
   border: 1px solid #50b59c9e;
   background: linear-gradient(145deg, #0b3e32, #032820 72%);
@@ -65,7 +67,7 @@
 .tu-pack { border-radius: clamp(8px, 3vw, 20px); display: grid; grid-template-rows: minmax(18px, 1fr) auto auto; gap: 2px; position: relative; justify-items: center; padding: clamp(3px, .9dvh, 10px); min-height: 0; }
 .tu-pack[aria-pressed='true'] { border-color: #bdffaa; box-shadow: inset 0 0 6px #67ff6d, 0 0 7px #43f345; }
 .tu-pack-check { position: absolute; top: 4px; inset-inline-start: 4px; width: clamp(12px, 4vw, 21px); padding: 2px; border-radius: 50%; height: auto; background: #168943; color: white; }
-.tu-pack-art { height: 100%; width: 72%; min-height: 0; max-height: 78px; align-self: center; }
+.tu-pack-art { display: block; height: 100%; width: 72%; min-height: 0; max-height: 78px; align-self: center; object-fit: contain; }
 .tu-pack strong { font-size: clamp(11px, 4.2vw, 24px); font-weight: 900; line-height: 1.12; }
 .tu-pack bdi { border-radius: 99px; background: linear-gradient(#1bb75c, #056331); border: 1px solid #64d784; width: 100%; line-height: 1.3; font-weight: 800; font-size: clamp(11px, 3.8vw, 18px); padding: 1px 2px; }
 .tu-pages, .tu-history header { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
@@ -102,3 +104,8 @@
 .tu-agent-frame img { position: relative; }
 .tu-agent-frame img[hidden] { display: none; }
 .tu-balance-art > div { display: grid; place-items: center; }
+
+/* Keep each package's drawing inside its own bounds on Android WebView. */
+html.android-webview .tu-header h2 span { filter: none; }
+html.android-webview .tu-pack { contain: paint; }
+html.android-webview .tu-pack[aria-pressed='true'] { box-shadow: inset 0 0 6px #67ff6d; }

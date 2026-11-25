@@ -538,7 +538,7 @@ export const RechargeModal: React.FC = () => {
                   <button key={pack.id} type="button" className="tu-pack" aria-pressed={selectedPack?.id === pack.id}
                     onClick={() => { sounds.playClick(); setSelectedPack(pack); }}>
                     {selectedPack?.id === pack.id && <Check className="tu-pack-check" />}
-                    <span className="tu-pack-art" aria-hidden="true"><CoinStack24500 /></span>
+                    <img className="tu-pack-art" src="/assets/recharge/coin-pack.png" alt="" draggable={false} />
                     <strong dir="ltr">{pack.coins.toLocaleString('en-US')}</strong>
                     <bdi>{pack.price}</bdi>
                   </button>)}
