@@ -39,3 +39,5 @@
 .room-member-menu button{min-width:0;min-height:35px;padding:3px;border:1px solid #d2ab5866;border-radius:7px;background:#08271d;color:#ffe3a1;font-size:11px;overflow-wrap:anywhere}
 .room-member-ban{margin-top:4px;color:#f6d999;font-size:11px;overflow-wrap:anywhere}
 .room-members-jewel{position:absolute;bottom:-8px;left:calc(50% - 7px);width:14px;height:14px;transform:rotate(45deg);background:linear-gradient(#9cf6d5,#00815a);border:2px solid #f9dd82;box-shadow:0 0 8px #dbbf6a}
+.room-members-crown span{height:16px;background:repeating-linear-gradient(164deg,#fff0ab 0 2px,#d08b22 3px,#84510d 4px,#f2c665 5px 7px);border:1px solid #eccc79;box-shadow:0 2px 3px #b7893d77}
+.room-member-presence{z-index:25}

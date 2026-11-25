@@ -7,10 +7,10 @@ import { VipAvatarFrame } from './VipAvatarFrame';
 import { RoyalProfileFrame } from './RoyalProfileFrame';
 import './room-profile-card.css';
 
-export function RoomProfileAvatarFrame({ userId, name, isSelf, vipTier }: { userId: string; name: string; isSelf: boolean; vipTier: number }) {
+export function RoomProfileAvatarFrame({ userId, name, isSelf, vipTier, royalFallback }: { userId: string; name: string; isSelf: boolean; vipTier: number; royalFallback?: ReactNode }) {
   const cpFrame = useConfirmedCpFrame(userId);
   if (cpFrame) return <CpWingAvatarFrame enabled name={name} />;
-  return <StoreAvatarFrame userId={userId} fallback={vipTier ? <VipAvatarFrame level={vipTier} /> : isSelf ? <RoyalProfileFrame /> : null} />;
+  return <StoreAvatarFrame userId={userId} fallback={royalFallback ?? (vipTier ? <VipAvatarFrame level={vipTier} /> : isSelf ? <RoyalProfileFrame /> : null)} />;
 }
 
 export function RoomProfileCard({ children, onClose }: { children: ReactNode; onClose: () => void }) {

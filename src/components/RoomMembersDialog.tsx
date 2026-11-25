@@ -4,6 +4,7 @@ import { stagingBackend } from '../services/stagingBackend';
 import { imageUrl } from '../services/imageUrl';
 import { latinDigits } from '../utils/digits';
 import { activeVipTier } from '../utils/vipPerks';
+import { RoyalLevelEmblem } from './RoyalLevelEmblem';
 import { RoomProfileAvatarFrame } from './RoomProfileCard';
 import './room-members-dialog.css';
 
@@ -13,6 +14,7 @@ export type DirectoryMember = {
   id: string; name: string | null; avatar: string | null; publicId: number | null; specialId: string | null;
   role: Role; seat: number | null; isMember: boolean; vip: number; online: boolean;
   chatMuted: boolean; micMuted: boolean; chatMuteByOwner: boolean; micMuteByOwner: boolean;
+  royalFrame?: { track: 'wealth' | 'charm'; level: number } | null;
   ban: { createdAt: string; expiresAt: string | null; reason: string | null; canLift: boolean } | null;
 };
 type State = { role: Role; rows: DirectoryMember[] };
@@ -148,7 +150,10 @@ export function RoomMembersDialog({ roomId, actorId, pending, blockedIds, onClos
             <div className="room-member-avatar">
               {row.avatar ? <img src={imageUrl(row.avatar)} alt="" onError={event => { event.currentTarget.hidden = true; }} /> : null}
               <UserRound className="room-member-placeholder" aria-hidden="true" />
-              <RoomProfileAvatarFrame userId={row.id} name={row.name ?? ''} isSelf={false} vipTier={activeVipTier(row.vip)} />
+              <RoomProfileAvatarFrame userId={row.id} name={row.name ?? ''} isSelf={false} vipTier={activeVipTier(row.vip)}
+                royalFallback={row.royalFrame && <div className="pointer-events-none absolute -inset-2 z-20 grid place-items-center">
+                  <RoyalLevelEmblem track={row.royalFrame.track} level={row.royalFrame.level} size={60} kind="frame" animated={false} />
+                </div>} />
               <span className="room-member-presence" data-online={row.online} aria-label={row.online ? 'متصل' : 'غير متصل'} title={row.online ? 'متصل' : 'غير متصل'} />
             </div>
             <div className="room-member-identity"><strong title={row.name ?? undefined}>{row.name || 'مستخدم'}</strong>
