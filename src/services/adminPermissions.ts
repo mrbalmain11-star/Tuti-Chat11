@@ -1,6 +1,7 @@
 export const adminSections = [
   { id: 'stats', label: 'الإحصائيات', permission: 'stats.read' },
   { id: 'users', label: 'المستخدمون', permission: 'users.manage' },
+  { id: 'accountReset', label: 'تصفير حساب', permission: 'users.manage', ownerOnly: true },
   { id: 'agencies', label: 'الوكالات', permission: 'agencies.read' },
   { id: 'rooms', label: 'الغرف', permission: 'rooms.read' },
   { id: 'operations', label: 'العمليات', permission: 'operations.read', ownerOnly: true },
