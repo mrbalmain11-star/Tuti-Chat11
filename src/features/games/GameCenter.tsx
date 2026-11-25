@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { gameAsset, gameName, games, loadSharedGames, type SharedSnapshot } from './api';
+import { EmbeddedGame, getEmbeddedGame } from './embeddedGames';
 import { SharedRoundPanel } from './SharedRoundPanel';
 
 export function GameCenter({ accountId, onClose }: { accountId: string; onClose: () => void }) {
   const [snapshot, setSnapshot] = useState<SharedSnapshot>();
   const [error, setError] = useState(false);
   const [selected, setSelected] = useState<string>();
+  const embedded = getEmbeddedGame(selected);
   const [minimized, setMinimized] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const reload = useRef(() => {});
@@ -24,7 +26,7 @@ export function GameCenter({ accountId, onClose }: { accountId: string; onClose:
       inFlight = true;
       const id = ++request;
       const sent = performance.now();
-      void loadSharedGames(selected).then(data => {
+      void loadSharedGames(getEmbeddedGame(selected) ? undefined : selected).then(data => {
         if (!active || id !== request) return;
         const duration = Date.parse(data.closes_at) - Date.parse(data.server_time);
         deadline = sent + duration;
@@ -60,7 +62,7 @@ export function GameCenter({ accountId, onClose }: { accountId: string; onClose:
         border-t border-amber-500/70 bg-[#101c16] p-3 pb-[max(1rem,env(safe-area-inset-bottom))] text-white shadow-2xl">
       <header className="flex flex-wrap items-center gap-2 border-b border-white/15 pb-2">
         <img src="/icon.svg" alt="" className="h-9 w-9 rounded-lg" />
-        <h2 className="font-bold">{selected ? gameName(selected) : 'مركز الألعاب'}</h2>
+        <h2 className="font-bold">{embedded?.name ?? (selected ? gameName(selected) : 'مركز الألعاب')}</h2>
         <button type="button" className="ms-auto px-2" onClick={() => setMinimized(true)}>تصغير</button>
         <button type="button" className="px-2" onClick={onClose}>إغلاق</button>
       </header>
@@ -71,18 +73,22 @@ export function GameCenter({ accountId, onClose }: { accountId: string; onClose:
       {error && <p role="alert" className="my-3 text-red-300">تعذر الاتصال بخادم الألعاب. يُعاد الاتصال تلقائياً.</p>}
       {!snapshot && !error && <p role="status">جارٍ تحميل الألعاب…</p>}
       {snapshot && !snapshot.funded && <p role="status" className="mb-3 text-amber-200">محفظة الألعاب غير ممولة.</p>}
-      {selected && snapshot ? (
+      {embedded && !minimized ? (
+        <EmbeddedGame game={embedded} accountId={accountId} onClose={() => setSelected(undefined)} />
+      ) : selected && !embedded && snapshot ? (
         <SharedRoundPanel key={selected} code={selected} accountId={accountId} snapshot={snapshot}
           seconds={seconds} online={!error} refresh={() => reload.current()} />
       ) : !selected && <div className="grid grid-cols-3 gap-2">
         {games.map(([code, name, icon]) => {
           const game = snapshot?.catalog.find(item => item.code === code);
-          return <button key={code} type="button" disabled={!game?.enabled || error}
+          const gameModule = getEmbeddedGame(code);
+          const enabled = gameModule ? gameModule.enabled : game?.enabled && !error;
+          return <button key={code} type="button" disabled={!enabled}
             className="grid min-w-0 justify-items-center rounded-xl border border-white/10 bg-white/5 p-1.5 text-xs disabled:opacity-65"
             onClick={() => setSelected(code)}>
-            <img src={gameAsset + icon + '.png'} alt="" className="aspect-square w-full rounded-lg object-cover" />
-            <strong className="mt-1">{name}</strong>
-            {snapshot?.funded && !game?.enabled && <span>غير متاحة</span>}
+            <img src={gameAsset + (gameModule?.icon ?? icon) + '.png'} alt="" className="aspect-square w-full rounded-lg object-cover" />
+            <strong className="mt-1">{gameModule?.name ?? name}</strong>
+            {snapshot?.funded && !enabled && <span>غير متاحة</span>}
           </button>;
         })}
       </div>}
