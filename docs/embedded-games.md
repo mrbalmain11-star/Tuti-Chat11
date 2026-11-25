@@ -38,3 +38,20 @@ The first integration is Toti Wheel from Games-3 main, pinned to source commit
 Run `npm run lint` and `npm run build`. For the database checks, append
 `tests/sql/original-greedy-rollback.sql` inside the migration transaction
 before its final `commit`, and end the test transaction with `rollback`.
+
+## Royal Cars and Fortune Gem
+
+- Games-4 source: `2d68c6c3bbea49751b33c2936a754065a0cb9e77`.
+- 5-Games source: `38fe80c8dab7c7cc433dd2643b51a20193f72e21`.
+- The room game center loads each game lazily. The original wheels, reels,
+  visual assets and audio effects live under `royal-cars/` and `fortune-gem/`.
+- `freeGame.tsx` uses the current authenticated account. The server stores each
+  result once per request ID. It owns the draw, rankings and maintenance
+  switches. Displayed balances use the existing wallet read path.
+- The existing games administration section controls availability, maintenance
+  and displayed version metadata, and shows participation and configuration
+  changes. Changing a version label does not deploy new game code.
+- Apply the embedded free games migration to Staging and run
+  `tests/sql/embedded-free-games-rollback.sql` in a transaction ending in
+  `rollback`. The test covers identity, duplicate requests, rate limiting,
+  the maintenance gate, anonymous grants and unchanged wallet balance.

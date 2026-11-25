@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { gameAsset, gameName, games, loadSharedGames, type SharedSnapshot } from './api';
-import { EmbeddedGame, getEmbeddedGame } from './embeddedGames';
+import { EmbeddedGame, additionalGameCards, getEmbeddedGame } from './embeddedGames';
 import { SharedRoundPanel } from './SharedRoundPanel';
 
 export function GameCenter({ accountId, onClose }: { accountId: string; onClose: () => void }) {
@@ -79,14 +79,14 @@ export function GameCenter({ accountId, onClose }: { accountId: string; onClose:
         <SharedRoundPanel key={selected} code={selected} accountId={accountId} snapshot={snapshot}
           seconds={seconds} online={!error} refresh={() => reload.current()} />
       ) : !selected && <div className="grid grid-cols-3 gap-2">
-        {games.map(([code, name, icon]) => {
+        {[...games, ...additionalGameCards].map(([code, name, icon]) => {
           const game = snapshot?.catalog.find(item => item.code === code);
           const gameModule = getEmbeddedGame(code);
           const enabled = gameModule ? gameModule.enabled : game?.enabled && !error;
           return <button key={code} type="button" disabled={!enabled}
             className="grid min-w-0 justify-items-center rounded-xl border border-white/10 bg-white/5 p-1.5 text-xs disabled:opacity-65"
             onClick={() => setSelected(code)}>
-            <img src={gameAsset + (gameModule?.icon ?? icon) + '.png'} alt="" className="aspect-square w-full rounded-lg object-cover" />
+            <img src={icon.startsWith('/') ? icon : gameAsset + (gameModule?.icon ?? icon) + '.png'} alt="" className="aspect-square w-full rounded-lg object-cover" />
             <strong className="mt-1">{gameModule?.name ?? name}</strong>
             {snapshot?.funded && !enabled && <span>غير متاحة</span>}
           </button>;
