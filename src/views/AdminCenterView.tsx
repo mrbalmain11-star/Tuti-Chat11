@@ -14,6 +14,7 @@ import { AdminAgencyRegistrationRequestsPanel } from './AdminAgencyRegistrationR
 import { AdminReportsPanel } from './AdminReportsPanel';
 import { AdminUserReportsPanel } from './AdminUserReportsPanel';
 import { AdminRechargePanel } from './AdminRechargePanel';
+import { AdminGamesTreasuryPanel } from './AdminGamesTreasuryPanel';
 import { AdminStaffPanel } from './AdminStaffPanel';
 import { AdminTesterBadgesPanel } from './AdminTesterBadgesPanel';
 import { ArrowRight, RefreshCw, ShieldCheck, Users, Building2, Radio, Gift } from 'lucide-react';
@@ -181,6 +182,7 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
                 {adminPage === 'reports' && <AdminUserReportsPanel />}
                 {adminPage === 'financeReports' && <AdminReportsPanel />}
                 {adminPage === 'recharge' && <AdminRechargePanel />}
+                {adminPage === 'gamesTreasury' && <AdminGamesTreasuryPanel />}
                 {adminPage === 'appBans' && <AdminAppBansPanel />}
                 {adminPage === 'staff' && <AdminStaffPanel />}
                 {adminPage === 'banners' && <AdminBannersPanel />}
