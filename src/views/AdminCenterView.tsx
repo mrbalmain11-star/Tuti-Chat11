@@ -13,14 +13,14 @@ import { AdminAgencyActionsPanel } from './AdminAgencyActionsPanel';
 import { AdminAgencyRegistrationRequestsPanel } from './AdminAgencyRegistrationRequestsPanel';
 import { AdminReportsPanel } from './AdminReportsPanel';
 import { AdminUserReportsPanel } from './AdminUserReportsPanel';
-import { AdminRechargePanel } from './AdminRechargePanel';
+import { AdminFinance } from '../features/finance/AdminFinance';
 import { SupplyReview } from '../features/rechargeAgent/SupplyReview';
 import { AdminAccountResetPanel } from './AdminAccountResetPanel';
-import { AdminGamesTreasuryPanel } from './AdminGamesTreasuryPanel';
+import { AdminEmbeddedGamesPanel } from './AdminEmbeddedGamesPanel';
 import { AdminStaffPanel } from './AdminStaffPanel';
 import { AdminTesterBadgesPanel } from './AdminTesterBadgesPanel';
 import { ArrowRight, RefreshCw, ShieldCheck, Users, Building2, Radio, Gift } from 'lucide-react';
-import { fetchMyAdminAccess, fetchOwnerDashboardCounts, fetchOwnerDashboardRecent, type OwnerDashboardRecent, type AdminAccess, type OwnerDashboardCounts } from '../services/stagingBackend';
+import { fetchMyAdminAccess, fetchOwnerDashboardCounts, fetchOwnerDashboardRecent, type OwnerDashboardRecent, type AdminAccess, type OwnerDashboardCounts, stagingBackend } from '../services/stagingBackend';
 
 const AdminDailyRewardsReadOnly: React.FC = () => {
   const [schedule, setSchedule] = useState<number[] | null>(null);
@@ -81,6 +81,7 @@ function AdminRecentRecords({ items }: { items: OwnerDashboardRecent['rooms'] })
 
 type Props = { onClose: () => void };
 export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
+  const [financeActor, setFinanceActor] = useState<string>();
   const [adminPage, setAdminPage] = useState<string | null>(null);
   const [access, setAccess] = useState<AdminAccess | null>(null);
   const [counts, setCounts] = useState<OwnerDashboardCounts | null>(null);
@@ -95,6 +96,7 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
       const verified = await fetchMyAdminAccess();
       if (!verified) throw new Error('ليس لديك تصريح لدخول مركز الإدارة');
       setAccess(verified);
+      void stagingBackend?.auth.getUser().then(({data})=>setFinanceActor(data.user?.id));
       const all = verified.role === 'owner';
       const [totals, records] = await Promise.allSettled([
         all || verified.permissions.includes('stats.read') ? fetchOwnerDashboardCounts() : null,
@@ -155,13 +157,15 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
                 access.permissions.includes(item.permission)))
               .map(item => ({ ...item, Icon: item.id === 'decorations' ? Gift : ShieldCheck }));
             return <div className="space-y-5">
-              {!adminPage || !tiles.some(tile => tile.id === adminPage) ? <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {!adminPage || !tiles.some(tile => tile.id === adminPage) ? <>
+                {financeActor && <AdminFinance key={financeActor} accountId={financeActor}/>}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {tiles.map(({id,label,Icon}) => <button key={id} type="button" onClick={() => setAdminPage(id)}
                   className="rounded-2xl bg-white border border-amber-200 p-3 sm:p-4 min-h-24 sm:min-h-28 min-w-0 shadow-sm flex flex-col items-center justify-center gap-2 sm:gap-3 active:bg-amber-50">
                   <Icon size={28} className="text-amber-700" />
                   <span className="text-xs sm:text-sm font-bold text-center leading-snug break-words max-w-full">{label}</span>
                 </button>)}
-              </div> : <>
+              </div></> : <>
                 <button type="button" onClick={() => setAdminPage(null)} className="rounded-xl bg-white border border-amber-200 px-4 py-2 text-amber-800 font-bold">رجوع للأقسام</button>
                 <h2 className="font-black text-xl">{tiles.find(t => t.id === adminPage)?.label}</h2>
                 {((adminPage === 'stats' && dashboardErrors.counts) ||
@@ -183,10 +187,9 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
                 {adminPage === 'agencyRegistrations' && <AdminAgencyRegistrationRequestsPanel />}
                 {adminPage === 'reports' && <AdminUserReportsPanel />}
                 {adminPage === 'financeReports' && <AdminReportsPanel />}
-                {adminPage === 'recharge' && <AdminRechargePanel />}
                 {adminPage === 'agencySupplyRequests' && <SupplyReview />}
                 {adminPage === 'accountReset' && <AdminAccountResetPanel />}
-                {adminPage === 'gamesTreasury' && <AdminGamesTreasuryPanel />}
+                {adminPage === 'gamesTreasury' && <AdminEmbeddedGamesPanel />}
                 {adminPage === 'appBans' && <AdminAppBansPanel />}
                 {adminPage === 'staff' && <AdminStaffPanel />}
                 {adminPage === 'banners' && <AdminBannersPanel />}
