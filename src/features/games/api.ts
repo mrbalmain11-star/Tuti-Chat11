@@ -13,6 +13,8 @@ export type Risk = 'low' | 'normal' | 'high';
 export type Rules = { min_stake: number; max_stake: number; payouts: Record<Risk, Record<number, number[]>> };
 export type Game = { code: string; enabled: boolean; implemented: boolean; rules: Partial<Rules> };
 export type Round = {
+  game_code: string;
+  arcade?: { pick: number; outcome: number; draw: number[] | null; scores: number[] | null };
   request_id: string; rows: number; risk: Risk; stake: number;
   path: number[]; bucket: number; multiplier: number; reward: number; balance_after: number; created_at: string;
 };
@@ -32,7 +34,10 @@ async function rpc<T>(name: string, args?: Record<string, unknown>): Promise<T> 
   return data as T;
 }
 
-export const loadGames = () => rpc<Snapshot>('practice_games_snapshot');
+export const loadGames = () => rpc<Snapshot>('practice_games_snapshot_v2');
 export const dropBall = (pending: Pending) => rpc<Round>('practice_games_drop', pending);
 export const loadGameAdmin = (code?: string, enabled?: boolean) =>
   rpc<AdminSnapshot>('practice_games_admin', code ? { p_code: code, p_enabled: enabled } : undefined);
+
+export type ArcadeInput = { p_code: string; p_request: string; p_stake: number; p_pick: number };
+export const playArcade = (input: ArcadeInput) => rpc<Round>('practice_games_play', input);

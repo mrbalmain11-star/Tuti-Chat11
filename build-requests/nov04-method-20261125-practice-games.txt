@@ -1,0 +1,1 @@
+Build the Android staging APK with the enabled practice game catalog.
