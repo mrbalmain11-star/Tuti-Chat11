@@ -9,6 +9,7 @@ import { imageUrl } from '../services/imageUrl';
 import { Flag, Ban } from 'lucide-react';
 import './roomHeader.css';
 import { RoomTheater } from './RoomTheater';
+import { RoomTapHearts } from './RoomTapHearts';
 import { StorageItemVisual } from './StorageItemVisual';
 import { useRoomDecorations } from '../services/roomDecorations';
 import { CpFrameForUser } from './CpFrameForUser';
@@ -756,6 +757,7 @@ export const VoiceRoomModal: React.FC = () => {
   const [audioModeHQ, setAudioModeHQ] = useState(true);
 
   // Floating animated emojis
+  const roomTapViewport = useRef<HTMLDivElement>(null);
   const [floatingEmojis, setFloatingEmojis] = useState<{ id: number; char: string; left: number }[]>([]);
 
   const chatScrollRef = useRef<HTMLDivElement>(null);
@@ -1577,7 +1579,7 @@ export const VoiceRoomModal: React.FC = () => {
       )}
 
       {/* Main Room Viewport Container (Matching Mobile Aspect Ratio) */}
-      <div className="relative w-full max-w-md h-full flex flex-col overflow-hidden overscroll-none shadow-2xl bg-[#0d0426] box-border" style={{ paddingTop: "max(10px, env(safe-area-inset-top, 0px))", paddingBottom: "max(10px, env(safe-area-inset-bottom, 0px))" }}>
+      <div ref={roomTapViewport} className="relative w-full max-w-md h-full flex flex-col overflow-hidden overscroll-none shadow-2xl bg-[#0d0426] box-border" style={{ paddingTop: "max(10px, env(safe-area-inset-top, 0px))", paddingBottom: "max(10px, env(safe-area-inset-bottom, 0px))" }}>
         {storeArrival && (
           <div className="pointer-events-none absolute inset-x-4 top-24 z-40 flex h-44 items-center justify-center gap-2">
             {storeArrival.mountUrl && <div className="h-full w-1/2">
@@ -1611,6 +1613,8 @@ export const VoiceRoomModal: React.FC = () => {
             ✦
           </div>
         </div>
+
+        {!isRoomMinimized && <RoomTapHearts key={activeRoom.id} viewport={roomTapViewport} />}
 
         {/* Floating animated emojis */}
         <div className="absolute inset-0 pointer-events-none z-30 overflow-hidden">
@@ -1736,7 +1740,7 @@ export const VoiceRoomModal: React.FC = () => {
         </div>
 
         {seatLayout === 'stage' && <RoomTheater key={activeRoom.id} roomId={activeRoom.id} isOwner={isOwner} />}
-        <div className={"relative z-10 mx-auto w-full max-w-[540px] shrink-0 px-2 py-1"}>
+        <div data-room-tap-surface className={"relative z-10 mx-auto w-full max-w-[540px] shrink-0 px-2 py-1"}>
           <div dir={seatLayout === 'stage' ? 'ltr' : undefined} className={"grid grid-cols-5 gap-x-1 gap-y-[clamp(2px,1.5dvh,12px)] items-start justify-items-center"}>
 {Array.from({length:seatLayout === 'stage' ? 10 : 15},(_,i)=>i+1).map((seatNum) => {
               const seat = getSeat(seatNum);
@@ -1897,7 +1901,7 @@ export const VoiceRoomModal: React.FC = () => {
             </div>
 
             {/* 5. CHAT STREAM & WELCOME NOTICES */}
-            <div className="relative z-10 min-h-0 px-4 flex-1 flex flex-col justify-end pb-2 overflow-hidden">
+            <div data-room-tap-surface className="relative z-10 min-h-0 px-4 flex-1 flex flex-col justify-end pb-2 overflow-hidden">
               <div className="w-full flex min-h-0 max-h-full items-end justify-between gap-3">
                 {/* Left side floating badges: 🚀, 🎮, •• */}
                 <div className="flex flex-col items-center gap-2 pb-1 shrink-0">

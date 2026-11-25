@@ -1,0 +1,31 @@
+.room-tap-hearts {
+  position: absolute;
+  inset: 0;
+  z-index: 29;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.room-tap-heart {
+  position: absolute;
+  color: #ff4e87;
+  stroke: #ffc4d8;
+  stroke-width: 1.2;
+  animation: room-tap-heart-rise 900ms ease-out both;
+}
+
+.room-tap-heart:nth-child(even) { color: #f86cae; }
+
+@keyframes room-tap-heart-rise {
+  0% { transform: translate(-50%, -45%) scale(.65); opacity: .8; }
+  22% { transform: translate(-50%, -75%) scale(1.16); opacity: 1; }
+  100% { transform: translate(-35%, calc(-50% - 92px)) scale(.85); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .room-tap-heart { animation: room-tap-heart-fade 400ms ease-out both; }
+  @keyframes room-tap-heart-fade {
+    from { transform: translate(-50%, -50%); opacity: 1; }
+    to { transform: translate(-50%, -50%); opacity: 0; }
+  }
+}
