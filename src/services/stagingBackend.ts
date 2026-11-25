@@ -28,6 +28,7 @@ export type BackendRoom = {
   owner_id: string;
   title: string;
   is_private: boolean;
+  access_locked?: boolean;
   welcome_message: string;
   tag: string;
   cover_path: string | null;
@@ -62,7 +63,7 @@ export async function fetchRealRooms(requireOwnerCountry = false): Promise<Backe
   const { data: auth, error: authError } = await client.auth.getUser();
   if (authError) throw authError;
   if (!auth.user) return [];
-  const fields = 'id,public_id,owner_id,title,is_private,welcome_message,tag,cover_path,background_path';
+  const fields = 'id,public_id,owner_id,title,is_private,access_locked,welcome_message,tag,cover_path,background_path';
   const [publicRooms, ownedRooms] = await Promise.all([
     client.from('rooms').select(fields).eq('is_private', false).order('created_at', { ascending: false }),
     client.from('rooms').select(fields).eq('owner_id', auth.user.id).order('created_at', { ascending: false }),

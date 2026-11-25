@@ -1,3 +1,4 @@
+import { RoomLockBadge } from './RoomLockBadge';
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
@@ -68,7 +69,7 @@ function RoomResult({ room, onOpen }: { room: SearchRoom; onOpen: () => void }) 
       {cover ? <img src={cover} alt="" className="royal-search-cover" /> : <DoorOpen />}
       {room.rank && <img src={'/assets/TOP' + room.rank + '.png'} alt={'Top ' + room.rank} className="royal-search-frame" />}
     </span>
-    <span className="royal-search-result-text"><strong>{room.title}</strong>
+    <span className="royal-search-result-text"><strong>{room.title}<RoomLockBadge roomId={room.id} locked={room.access_locked}/></strong>
       {room.public_id != null && <bdi>ID: {room.public_id}</bdi>}
       {room.level === null || room.members === null ? <small>غرفة مغلقة · دخول VIP12</small> :
         <small>مستوى الغرفة {room.level} · <Users size={13} aria-hidden="true" /> {room.members}</small>}

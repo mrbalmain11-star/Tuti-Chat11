@@ -1,3 +1,5 @@
+import { RoomPinDialog } from './RoomPinDialog';
+import { LockOpen } from 'lucide-react';
 import { latinDigits } from '../utils/digits';
 import { activeVipTier, hasVipEntrance } from '../utils/vipPerks';
 import { RoomShareDialog } from './RoomShareDialog';
@@ -137,6 +139,7 @@ function RoomMessageAvatar({ name, src, alternateSrc }: { name: string; src: str
 export const VoiceRoomModal: React.FC = () => {
   const {
     activeRoom,
+    rooms,
     leaveRoom,
     isRoomMinimized,
     setIsRoomMinimized,
@@ -650,6 +653,13 @@ export const VoiceRoomModal: React.FC = () => {
   // Bottom Sheets & Popups
   const [gamesRoomId, setGamesRoomId] = useState<string | null>(null);
   const [showToolsDrawer, setShowToolsDrawer] = useState(false);
+  const [managePin, setManagePin] = useState(false);
+  const [pinOverride, setPinOverride] = useState<{roomId: string; locked: boolean}>();
+  const lockFromServer = rooms.find(room=>room.id===activeRoom?.id)?.accessLocked ?? activeRoom?.accessLocked ?? false;
+  const roomLocked = pinOverride?.roomId===activeRoom?.id ? pinOverride?.locked ?? lockFromServer : lockFromServer;
+  useEffect(()=>{
+    if (pinOverride && (pinOverride.roomId!==activeRoom?.id || pinOverride.locked===lockFromServer)) setPinOverride(undefined);
+  },[pinOverride,activeRoom?.id,lockFromServer]);
   const [showMessagesSheet, setShowMessagesSheet] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
@@ -1281,7 +1291,7 @@ export const VoiceRoomModal: React.FC = () => {
     void CapacitorApp.addListener('backButton', () => {
       // Android's native document picker emits back while handing the file to WebView.
       // Ignore it until the file input has received its change event.
-      if (musicPickerPendingRef.current || Date.now() - musicPickerReturnAtRef.current < 2000) return;
+      if (musicPickerPendingRef.current || Date.now() - musicPickerReturnAtRef.current < 2000 || document.querySelector('.room-pin-overlay')) return;
       if (isRoomMinimized) {
         setIsRoomMinimized(false);
       } else if (gamesRoomId === activeRoom.id) {
@@ -2220,6 +2230,11 @@ export const VoiceRoomModal: React.FC = () => {
             - Agency Center
             ========================================================================= */}
         {!isRoomMinimized && gamesRoomId === activeRoom.id && <GameCenter key={activeRoom.id + currentUser.id} accountId={currentUser.id} onClose={() => setGamesRoomId(null)} />}
+        {managePin && isOwner && <RoomPinDialog key={activeRoom.id} roomId={activeRoom.id} locked={roomLocked}
+          onClose={()=>setManagePin(false)} onChanged={locked=>{
+            setPinOverride({roomId:activeRoom.id,locked});
+            window.dispatchEvent(new CustomEvent('totichat:room-lock-changed', { detail: { roomId:activeRoom.id,locked } }));
+          }} />}
         {showToolsDrawer && (
           <div
             onClick={() => setShowToolsDrawer(false)}
@@ -2311,20 +2326,14 @@ export const VoiceRoomModal: React.FC = () => {
 
                 {/* 6 Grid Icons: وضع الصوت | الرسوم | استبدال العملات | الصوت | مسح الشاشة | تحميل التطبيق */}
                 <div className="grid grid-cols-4 gap-2 text-center">
-                  {/* وضع الصوت */}
-                  <div
-                    onClick={() => {
-                      sounds.playClick();
-                      setAudioModeHQ(!audioModeHQ);
-                      showToast(audioModeHQ ? 'وضع الصوت: عالي الدقة HD 🎵' : 'وضع الصوت: قياسي منخفض البث 🎙️');
-                    }}
-                    className="flex flex-col items-center gap-1.5 cursor-pointer group active:scale-95 transition"
-                  >
-                    <div className="w-13 h-13 rounded-2xl bg-[#281a4b] border border-white/10 flex items-center justify-center shadow-md group-hover:border-purple-400/50">
-                      <Radio className="w-6 h-6 text-white stroke-[2]" />
-                    </div>
-                    <span className="text-xs font-bold text-slate-200">وضع الصوت</span>
-                  </div>
+                  {isOwner ? <button type="button"
+                    onClick={() => { sounds.playClick(); setShowToolsDrawer(false); setManagePin(true); }}
+                    className="flex flex-col items-center gap-1.5 cursor-pointer group active:scale-95 transition">
+                    <span className="w-13 h-13 rounded-2xl bg-[#281a4b] border border-white/10 flex items-center justify-center shadow-md">
+                      {roomLocked ? <Lock className="size-6 text-amber-400"/> : <LockOpen className="size-6 text-amber-300"/>}
+                    </span>
+                    <span className="text-xs font-bold text-slate-200">قفل الغرفة</span>
+                  </button> : <span aria-hidden="true"/>}
 
                   {/* الرسوم */}
                   <div

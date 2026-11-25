@@ -17,11 +17,20 @@ export async function reserveSeat(roomId: string, seatNumber: number): Promise<n
   return data;
 }
 
-export async function joinRoomMembership(roomId: string): Promise<void> {
+export async function joinRoomMembership(roomId: string, pin?: string): Promise<void> {
   if (!stagingBackend) throw new Error('Staging not configured');
   const { data: auth, error: authError } = await stagingBackend.auth.getUser();
   if (authError) throw authError;
   if (!auth.user) throw new Error('Not authenticated');
+  if (pin !== undefined) {
+    const { data, error } = await stagingBackend.rpc('totichat_room_enter_with_pin', {p_room_id: roomId,p_pin: pin});
+    if (error) throw error;
+    if (data?.status !== 'joined') {
+      const wait = typeof data?.seconds === 'number' && data.seconds > 0 ? data.seconds : 0;
+      throw Object.assign(new Error(data?.status === 'wrong' ? 'ROOM_PIN_WRONG' : data?.status === 'wait' ? 'ROOM_PIN_WAIT' : 'ROOM_PIN_UNCONFIRMED'), { wait });
+    }
+    return;
+  }
   const { data, error } = await stagingBackend.rpc('phase2_room_join', {
     p_room_id: roomId,
   });

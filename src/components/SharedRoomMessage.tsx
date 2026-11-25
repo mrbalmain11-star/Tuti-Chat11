@@ -1,3 +1,4 @@
+import { RoomLockBadge } from './RoomLockBadge';
 import { useEffect, useState } from 'react';
 import { Mic, Users } from 'lucide-react';
 import { useApp } from '../context/AppContext';
@@ -35,7 +36,7 @@ export function SharedRoomMessage({ roomId }: { roomId: string }) {
       onClick={() => void open()} disabled={busy} dir="rtl">
       {room?.cover_url ? <img src={room.cover_url} alt="" className="h-10 w-10 shrink-0 rounded-lg object-cover" /> : <Mic className="h-5 w-5 shrink-0" />}
       <span className="flex min-w-0 flex-col">
-        <strong className="truncate">{room?.title ?? 'مشاركة غرفة'}</strong>
+        <strong className="truncate">{room?.title ?? 'مشاركة غرفة'}<RoomLockBadge roomId={roomId} locked={room?.access_locked}/></strong>
         {room?.public_id != null && <bdi className="text-xs">ID {room.public_id}</bdi>}
         {room && <small className="flex items-center gap-1"><Users size={13} />{room.members}</small>}
         <span className="mt-1 rounded-md border border-amber-300/60 px-2 text-xs">{busy ? 'جارٍ التحقق…' : 'دخول الغرفة'}</span>

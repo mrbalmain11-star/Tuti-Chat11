@@ -1,3 +1,4 @@
+import { RoomLockBadge } from './RoomLockBadge';
 import { RoomCard } from './RoomCard';
 import type { VoiceRoom as SupportRoom } from '../types';
 import React, { useEffect, useState } from 'react';
@@ -397,7 +398,7 @@ export const RoyalRoomsView: React.FC<{ supportRoom?: SupportRoom }> = ({ suppor
                   <div className="mt-2 flex flex-col text-right px-0.5">
                     <div className="flex items-center gap-1 justify-start">
                       <span className="text-xs font-black text-slate-800 truncate group-hover:text-emerald-700 transition">
-                        {room.title}
+                        {room.title}<RoomLockBadge roomId={room.id} locked={room.accessLocked}/>
                       </span>
                       {room.countryFlag && (
                         <span className="text-xs shrink-0 leading-none">{room.countryFlag}</span>

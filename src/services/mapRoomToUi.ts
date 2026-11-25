@@ -8,6 +8,7 @@ export function mapRoomToUi(room: BackendRoom): VoiceRoom {
     id: room.id,
     publicId: room.public_id,
     title: room.title,
+    accessLocked: room.access_locked,
     hostId: room.owner_id,
     hostName: room.owner_name ?? '',
     hostAvatar: room.owner_avatar ?? '',

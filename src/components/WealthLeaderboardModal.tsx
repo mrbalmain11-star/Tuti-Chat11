@@ -1,3 +1,4 @@
+import { RoomLockBadge } from './RoomLockBadge';
 import React, { useId, useState } from 'react';
 import { useLiveRanking, type RankingPeriod as TimePeriod, type RankingRow } from '../services/liveRankings';
 import { imageUrl } from '../services/imageUrl';
@@ -747,7 +748,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                         {/* Room Info */}
                         <div className="text-right min-w-0">
                           <span className="text-xs font-black text-slate-900 block truncate max-w-[140px] group-hover:text-amber-900 transition">
-                            {room.title}
+                            {room.title}<RoomLockBadge roomId={room.id}/>
                           </span>
                           <div className="flex items-center gap-2 mt-0.5">
                             <span className="text-[10px] text-slate-500 truncate max-w-[80px]">

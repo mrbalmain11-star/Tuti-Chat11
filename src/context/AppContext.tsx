@@ -1,3 +1,4 @@
+import { RoomPinDialog } from '../components/RoomPinDialog';
 import type { RankingPeriod } from '../services/liveRankings';
 import { activeVipTier, hasVipEntrance } from '../utils/vipPerks';
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
@@ -546,6 +547,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [activeTab, setActiveTab] = useState<'home' | 'messages' | 'profile'>('home');
   const [homeSubTab, setHomeSubTab] = useState<'party' | 'royal' | 'discover'>('party');
+  const [pinEntry, setPinEntry] = useState<{room: VoiceRoom; busy?: boolean; error?: string}>();
   const [rooms, setRooms] = useState<VoiceRoom[]>([]);
   const [homeRoomsStatus, setHomeRoomsStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const homeRoomsRefresh = useRef<() => void>(() => {});
@@ -574,12 +576,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     homeRoomsRefresh.current = refreshRooms;
     void refreshRooms();
     const refreshVisible = () => { if (!document.hidden) void refreshRooms(); };
+    const updateRoomLock = (id: string, locked: boolean) => {
+      setRooms(previous => previous.map(room => room.id===id ? { ...room, accessLocked:locked } : room));
+    };
+    const onLocalLock = (event: Event) => {
+      const { roomId, locked } = (event as CustomEvent<{roomId:string;locked:boolean}>).detail;
+      updateRoomLock(roomId,locked);
+      void refreshRooms();
+    };
     window.addEventListener('focus', refreshVisible);
     window.addEventListener('online', refreshVisible);
+    window.addEventListener('totichat:room-lock-changed', onLocalLock);
     const fallback = window.setInterval(refreshVisible, 30000);
     const client = stagingBackend;
     const channel = client?.channel('staging-public-rooms')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'rooms' }, () => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'rooms' }, payload => {
+        if (payload.eventType==='UPDATE' && typeof payload.new.id==='string' && typeof payload.new.access_locked==='boolean') {
+          updateRoomLock(payload.new.id,payload.new.access_locked);
+        }
         void refreshRooms();
       })
       .subscribe(status => {
@@ -593,6 +607,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       homeRoomsRefresh.current = () => {};
       window.clearInterval(fallback);
       window.removeEventListener('focus', refreshVisible);
+      window.removeEventListener('totichat:room-lock-changed', onLocalLock);
       window.removeEventListener('online', refreshVisible);
       if (channel && client) void client.removeChannel(channel);
     };
@@ -1557,9 +1572,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     membershipTransitionQueue.current = next.catch(() => {});
     return next;
   };
-  const enterRoom = (roomId: string, newlyCreatedRoom?: VoiceRoom): void => {
+  const enterRoom = (roomId: string, newlyCreatedRoom?: VoiceRoom, pin?: string): void => {
     const room = newlyCreatedRoom?.id === roomId ? newlyCreatedRoom : rooms.find(r => r.id === roomId);
     if (!room) return;
+    if (pin === undefined) setPinEntry(undefined);
+    else setPinEntry({ room, busy: true });
     const transition = ++roomTransitionVersion.current;
     void queueMembershipTransition(async () => {
       if (transition !== roomTransitionVersion.current) return;
@@ -1567,7 +1584,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // rejects entry, and never activate two room audio sessions in the UI.
       const previousRoomId = activeRoom?.id;
       if (previousRoomId === roomId) return;
-      await joinRoomMembership(roomId);
+      await joinRoomMembership(roomId, pin);
       if (previousRoomId && previousRoomId !== roomId) {
         try {
           await leaveRoomMembership(previousRoomId);
@@ -1581,6 +1598,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     }).then(async () => {
       if (transition !== roomTransitionVersion.current) return;
+      setPinEntry(undefined);
       setActiveRoom(room);
       setIsRoomMinimized(false);
       setMyMicMuted(true);
@@ -1635,8 +1653,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
     }).catch(error => {
       if (transition !== roomTransitionVersion.current) return;
+      const joinError = error as { code?: string; message?: string; wait?: number } | null;
+      const reason = joinError?.message ?? '';
+      if (reason.includes('ROOM_PIN_REQUIRED')) { setPinEntry({room}); return; }
+      if (reason === 'ROOM_PIN_WRONG' || reason === 'ROOM_PIN_WAIT') {
+        const wait = joinError?.wait ? ' انتظر ' + joinError.wait + ' ثانية.' : '';
+        setPinEntry({ room, error: (reason === 'ROOM_PIN_WRONG' ? 'رمز الدخول غير صحيح.' : 'محاولات كثيرة.') + wait });
+        return;
+      }
+      if (pin !== undefined) {
+        setPinEntry(undefined);
+      }
       console.error('Room join or membership fetch failed:', error);
-      const joinError = error as { code?: string; message?: string } | null;
       const banned = joinError?.message?.includes('ROOM_BANNED') === true;
       if (banned) {
         const wantsAppeal = window.confirm('أنت محظور من هذه الغرفة. هل تريد تقديم اعتراض إلى مالك الغرفة؟');
@@ -2472,6 +2500,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }}
     >
       {children}
+      {isLoggedIn && pinEntry && <RoomPinDialog key={pinEntry.room.id} roomId={pinEntry.room.id} entryError={pinEntry.error}
+        entryBusy={pinEntry.busy} onClose={()=>setPinEntry(undefined)}
+        onEnter={pin=>enterRoom(pinEntry.room.id,pinEntry.room,pin)} />}
     </AppContext.Provider>
   );
 };

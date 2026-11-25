@@ -58,6 +58,7 @@ export interface MicSeat {
 }
 
 export interface VoiceRoom {
+  accessLocked?: boolean;
   id: string;
   publicId?: number;
   title: string;

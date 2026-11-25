@@ -1,3 +1,4 @@
+import { RoomLockBadge } from './RoomLockBadge';
 import React, { useEffect, useState } from 'react';
 import { VoiceRoom } from '../types';
 import { useApp } from '../context/AppContext';
@@ -226,7 +227,7 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
       {/* Room Title with Flag Underneath (Matching Screenshot 1:1) */}
       <div className="mt-1.5 flex items-center justify-center gap-1 px-1">
         <span className="text-xs font-black text-slate-800 truncate group-hover:text-emerald-700 transition">
-          {room.title}
+          {room.title}<RoomLockBadge roomId={room.id} locked={room.accessLocked}/>
         </span>
         {room.countryFlag && (
           <span className="text-sm leading-none shrink-0">
