@@ -17,6 +17,8 @@ import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/audio';
 import { imageUrl } from '../services/imageUrl';
 import { AgencyDataCenter } from './AgencyDataCenter';
+import { RechargeAgent } from '../features/rechargeAgent/RechargeAgent';
+import { agentRpc } from '../features/rechargeAgent/api';
 
 export const AgencyModal: React.FC = () => {
   const {
@@ -33,7 +35,9 @@ export const AgencyModal: React.FC = () => {
   // 'agent' -> وكيل مفعّل: تظهر له بطاقات الوكيل الثلاث (اعضاء الوكالة، مركز البيانات، المكافأة)
   const [hasApprovedAgency, setHasApprovedAgency] = useState(false);
   const [agencyRoleLoading, setAgencyRoleLoading] = useState(false);
-  const [role, setRole] = useState<'user' | 'host' | 'agent'>('user');
+  const [role, setRole] = useState<'user' | 'host' | 'agent' | 'recharge'>('user');
+  const [agencyRoleError, setAgencyRoleError] = useState(false);
+  const [agencyRoleAttempt, setAgencyRoleAttempt] = useState(0);
 
   // Resolve the approved agency from the authenticated backend, not a stale local role.
   useEffect(() => {
@@ -43,13 +47,25 @@ export const AgencyModal: React.FC = () => {
     setRole('user');
     setActiveSubView(null);
     setAgencyRoleLoading(true);
+    setAgencyRoleError(false);
     void (async () => {
       const { stagingBackend } = await import('../services/stagingBackend');
-      if (!stagingBackend) return;
+      if (!stagingBackend) throw new Error('Agency service unavailable');
       const { data: auth, error: authError } = await stagingBackend.auth.getUser();
-      if (authError || !auth.user) return;
+      if (authError || !auth.user || auth.user.id !== currentUser.id) {
+        throw authError ?? new Error('Agency session unavailable');
+      }
+      const canRecharge = await agentRpc<boolean>('access');
+      if (!active) return;
+      if (canRecharge === true) {
+        setHasApprovedAgency(true);
+        setRole('recharge');
+        return;
+      }
+      if (canRecharge !== false) throw new Error('Invalid recharge access response');
       const { data, error } = await stagingBackend.rpc('staging_profile_agency', { p_user_id: auth.user.id });
-      if (error || !active || !data) return;
+      if (error) throw error;
+      if (!active || !data) return;
       setHasApprovedAgency(
         (String(data.role ?? '').includes('مالك') || String(data.role ?? '').includes('وكيل')) &&
         Number(data.public_id) > 0
@@ -58,11 +74,14 @@ export const AgencyModal: React.FC = () => {
       if (verifiedRole.includes('مالك') || verifiedRole.includes('وكيل')) setRole('agent');
       else if (verifiedRole.includes('مضيف')) setRole('host');
       else setRole('user');
-    })().catch(error => console.error('Agency role lookup failed:', error)).finally(() => {
+    })().catch(error => {
+      if (active) setAgencyRoleError(true);
+      console.error('Agency role lookup failed:', error);
+    }).finally(() => {
       if (active) setAgencyRoleLoading(false);
     });
     return () => { active = false; };
-  }, [openAgencyModal, currentUser.id]);
+  }, [openAgencyModal, currentUser.id, agencyRoleAttempt]);
 
   // Sub-views for Host and Agent:
   // null: Main view for the selected role
@@ -71,7 +90,7 @@ export const AgencyModal: React.FC = () => {
   // 'agent_members': Agent Members management modal (أعضاء الوكالة)
   // 'agent_rewards': Agent Rewards modal (سجل الأرباح والمكافأة)
   const [activeSubView, setActiveSubView] = useState<
-    'host_data_details' | 'agent_data_details' | 'agent_members' | 'agent_rewards' | null
+    'host_data_details' | 'agent_data_details' | 'recharge_data' | 'agent_members' | 'agent_rewards' | null
   >(null);
 
   // Incoming Join Request from an Agent (Available for User role)
@@ -257,7 +276,7 @@ export const AgencyModal: React.FC = () => {
           </div>
         </div>
       )}
-      {!agencyRoleLoading && !hasApprovedAgency && <button onClick={() => { setApplicationStatus(''); setApplicationOpen(true); }} className="absolute z-[85] bottom-5 left-5 rounded-full bg-amber-500 text-black px-4 py-3 text-xs font-black shadow-xl border-2 border-amber-200">+ طلب فتح وكالة</button>}
+      {!agencyRoleLoading && !agencyRoleError && !hasApprovedAgency && <button onClick={() => { setApplicationStatus(''); setApplicationOpen(true); }} className="absolute z-[85] bottom-5 left-5 rounded-full bg-amber-500 text-black px-4 py-3 text-xs font-black shadow-xl border-2 border-amber-200">+ طلب فتح وكالة</button>}
       {/* Toast Notification */}
       {toastMessage && (
         <div className="absolute top-6 z-50 px-5 py-2.5 rounded-full bg-slate-900/95 border border-amber-400 text-amber-200 text-xs font-bold shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-4 max-w-[90%] text-center">
@@ -268,7 +287,9 @@ export const AgencyModal: React.FC = () => {
       {/* Main Screen Container */}
       <div className="relative w-full max-w-[390px] h-full sm:h-[92vh] sm:max-h-[820px] sm:rounded-[36px] overflow-hidden shadow-[0_12px_50px_rgba(0,0,0,0.95)] border-0 sm:border border-[#C59B27]/40 flex flex-col justify-between bg-[#040814]">
 
-        {activeSubView === 'host_data_details' || activeSubView === 'agent_data_details' ? (
+        {activeSubView === 'recharge_data' && role === 'recharge' ? (
+          <RechargeAgent key={currentUser.id} actor={currentUser.id} onClose={() => setActiveSubView(null)} />
+        ) : activeSubView === 'host_data_details' || activeSubView === 'agent_data_details' ? (
           <AgencyDataCenter
             key={currentUser.id + activeSubView}
             view={activeSubView === 'host_data_details' ? 'host' : 'agent'}
@@ -305,7 +326,7 @@ export const AgencyModal: React.FC = () => {
               {/* Role Switcher Pill Bar (فرق ونسق كذالك اجعل قابل للنقر والتطبيق) */}
               <div className="flex items-center gap-1 bg-black/70 backdrop-blur-md p-1 rounded-full border border-amber-400/30 shadow-lg">
                 <span className="px-3 py-1 text-xs font-bold text-amber-200" aria-label="الدور المعتمد">
-                  {role === 'agent' ? '👑 وكيل' : role === 'host' ? '🎙️ مضيف' : '👤 مستخدم'}
+                  {role === 'recharge' ? 'وكيل شحن' : role === 'agent' ? '👑 وكيل' : role === 'host' ? '🎙️ مضيف' : '👤 مستخدم'}
                 </span>
               </div>
 
@@ -326,7 +347,16 @@ export const AgencyModal: React.FC = () => {
                 ROLE 1: USER VIEW (اذا كنت مستخدم يضهر لي فقط لا توجد بيانات)
                 تظهر له فقط لا توجد بيانات أو بطاقة قبول/رفض طلب انضمام وكيل
                 ========================================================================= */}
-            {role === 'user' && (
+            {(agencyRoleLoading || agencyRoleError) && (
+              <div className="relative z-20 m-auto space-y-3 text-center text-white" role="status">
+                <p>{agencyRoleLoading ? 'جارٍ التحقق من نوع الوكالة…' : 'تعذر تحميل بيانات الوكالة.'}</p>
+                {agencyRoleError && (
+                  <button type="button" className="rounded-xl bg-emerald-700 px-4 py-2"
+                    onClick={() => setAgencyRoleAttempt(attempt => attempt + 1)}>إعادة المحاولة</button>
+                )}
+              </div>
+            )}
+            {role === 'user' && !agencyRoleLoading && !agencyRoleError && (
               <div className="relative z-20 flex-1 flex flex-col justify-between px-4 pb-6 pt-0 animate-in fade-in duration-200">
                 {/* Spacer for Crest at top */}
                 <div className="w-full h-48 sm:h-52 pointer-events-none" />
@@ -419,7 +449,7 @@ export const AgencyModal: React.FC = () => {
                 ROLE 2: HOST VIEW (واذا كنت مضيف يضهر لي مركز البيانات وبياناتي فقط ك مضيف)
                 تظهر له فقط بطاقة مركز البيانات الفاخرة بدون أي بطاقات أخرى
                 ========================================================================= */}
-            {role === 'host' && (
+            {(role === 'host' || role === 'recharge') && (
               <div className="relative z-20 flex-1 flex flex-col justify-between px-4 pb-6 pt-0 animate-in fade-in duration-200">
                 {/* Spacer for Crest at top */}
                 <div className="w-full h-48 sm:h-52 pointer-events-none" />
@@ -429,7 +459,7 @@ export const AgencyModal: React.FC = () => {
                   <button
                     onClick={() => {
                       sounds.playLevelUp();
-                      setActiveSubView('host_data_details');
+                      setActiveSubView(role === 'recharge' ? 'recharge_data' : 'host_data_details');
                     }}
                     className="group relative w-full h-[155px] rounded-[30px] p-[2.5px] bg-gradient-to-r from-[#DFB748] via-[#38BDF8] to-[#0284C7] shadow-[0_0_30px_rgba(14,165,233,0.7),0_8px_25px_rgba(0,0,0,0.9)] transition-all active:scale-[0.98] cursor-pointer overflow-hidden block"
                   >
@@ -449,7 +479,7 @@ export const AgencyModal: React.FC = () => {
                         </div>
 
                         <span className="inline-block mt-2.5 text-[10px] font-bold text-cyan-300 bg-cyan-950/60 border border-cyan-400/30 px-2 py-0.5 rounded-full">
-                          انقر لعرض بيانات المضيف 🎙️
+                          {role === 'recharge' ? 'عرض رصيد الوكيل وعمليات الشحن' : 'انقر لعرض بيانات المضيف 🎙️'}
                         </span>
                       </div>
 
