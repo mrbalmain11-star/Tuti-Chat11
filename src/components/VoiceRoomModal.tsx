@@ -6,7 +6,7 @@ import { GameCenter } from '../features/games/GameCenter';
 import { RoomProfileCard, RoomProfileAvatarFrame } from './RoomProfileCard';
 import { ProfileReportForm } from './ProfileReportForm';
 import { imageUrl } from '../services/imageUrl';
-import { Flag, Ban, Ellipsis } from 'lucide-react';
+import { Flag, Ban } from 'lucide-react';
 import './roomHeader.css';
 import { RoomTheater } from './RoomTheater';
 import { StorageItemVisual } from './StorageItemVisual';
@@ -979,7 +979,7 @@ export const VoiceRoomModal: React.FC = () => {
     }
   };
 
-  const handleToggleModerator = async (userId: string, userName: string) => {
+  const handleSetModerator = async (userId: string, userName: string, shouldBeModerator: boolean) => {
     if (!activeRoom || !isOwner || !stagingBackend) {
       showToast('تعيين المشرفين يتطلب ملكية الغرفة والاتصال بالخادم.');
       return;
@@ -989,18 +989,13 @@ export const VoiceRoomModal: React.FC = () => {
     moderationPendingRef.current.add(userId);
     setModerationBusy(true);
     try {
-      // Read the current server role before deciding whether this is a grant or revoke.
-      // The local moderator list may lag behind a change made on another device.
-      const { data: serverModeratorIds, error: rosterError } = await stagingBackend.rpc('totichat_room_moderator_ids', { p_room_id: roomId });
-      if (rosterError || !Array.isArray(serverModeratorIds)) throw rosterError ?? new Error('Moderator roster unavailable');
-      const isMod = serverModeratorIds.includes(userId);
       const { data, error } = await stagingBackend.rpc('phase2_room_moderate', {
         p_room_id: roomId, p_target: userId,
-        p_action: isMod ? 'revoke_moderator' : 'grant_moderator',
+        p_action: shouldBeModerator ? 'grant_moderator' : 'revoke_moderator',
         p_request_id: crypto.randomUUID(),
       });
       if (error || !data?.success) throw error ?? new Error('Server did not confirm role change');
-      showToast(isMod ? `تم سحب إشراف ${userName}` : `تم منح ${userName} صلاحية المشرف`);
+      showToast(shouldBeModerator ? `تم منح ${userName} صلاحية المشرف` : `تم سحب إشراف ${userName}`);
       window.dispatchEvent(new CustomEvent('totichat:room-moderators-changed', { detail: roomId }));
       // Preserve the active voice session; do not reload the entire app.
     } catch (error) {
@@ -2824,8 +2819,10 @@ export const VoiceRoomModal: React.FC = () => {
           const status = selectedMicVerifiedStatus?.userId === target.id ? selectedMicVerifiedStatus : null;
           const following = followedRoomHosts.has(target.id);
           const blocked = personalBlocks.some(item => item.userId === target.id);
+          const canSetModerator = isOwner && !isSelf && target.id !== activeRoom.hostId;
+          const targetIsModerator = activeRoom.moderatorIds?.includes(target.id) ?? false;
           const close = () => setSelectedMicUser(null);
-          const more = () => { close(); handleOpenUserProfile(target); };
+          const openFullProfile = () => { close(); handleOpenUserProfile(target); };
           const message = () => {
             const existing = conversations.find(thread => thread.userId === target.id);
             close();
@@ -2836,7 +2833,7 @@ export const VoiceRoomModal: React.FC = () => {
           };
           return <RoomProfileCard onClose={close}>
             <div className="room-profile-avatar">
-              <button type="button" onClick={more} aria-label="فتح الملف الشخصي الكامل">
+              <button type="button" onClick={openFullProfile} aria-label="فتح الملف الشخصي الكامل">
                 <img src={avatar || '/placeholder-avatar.svg'} alt={name} className="room-profile-photo"
                   onError={event => { if (!event.currentTarget.src.endsWith('/placeholder-avatar.svg')) event.currentTarget.src = '/placeholder-avatar.svg'; }} />
               </button>
@@ -2877,7 +2874,13 @@ export const VoiceRoomModal: React.FC = () => {
                 <button type="button" className="room-profile-action danger" aria-pressed={blocked}
                   onClick={() => void setPersonalBlock(target.id, !blocked)}><Ban />{blocked ? 'فك الحظر الشخصي' : 'حظر شخصي'}</button>
               </>}
-              <button type="button" className="room-profile-action" onClick={more}><Ellipsis />المزيد</button>
+              {canSetModerator && (
+                <button type="button" className="room-profile-action" disabled={moderationBusy}
+                  onClick={() => void handleSetModerator(target.id, name, !targetIsModerator)}>
+                  {targetIsModerator ? <UserMinus /> : <UserPlus />}
+                  {targetIsModerator ? 'إزالة مشرف' : 'تعيين مشرف'}
+                </button>
+              )}
               {isSelf && profileTargetSeat && <>
                 <button type="button" className="room-profile-action" onClick={() => { sounds.playClick(); toggleMyMic(); close(); }}>
                   {myMicMuted ? <MicOff /> : <Mic />}{myMicMuted ? 'فتح المايك' : 'كتم المايك'}
@@ -3414,7 +3417,7 @@ export const VoiceRoomModal: React.FC = () => {
                           <div className="flex items-center gap-1.5">
                             {isOwner && <button
                               disabled={moderationBusy}
-                              onClick={() => handleToggleModerator(user.id, user.name)}
+                              onClick={() => void handleSetModerator(user.id, user.name, !isMod)}
                               className={`p-1.5 rounded-lg text-[10px] font-bold transition active:scale-95 ${
                                 isMod
                                   ? 'bg-rose-500/20 text-rose-300 hover:bg-rose-500/30'
