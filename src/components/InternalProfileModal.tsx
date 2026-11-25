@@ -826,13 +826,13 @@ export const InternalProfileModal: React.FC = () => {
                   {verifiedWealthLevel !== null ? `Lv. ${verifiedWealthLevel}` : unavailableLevel}
                 </span>
                 <span className="mt-1 block text-[10px] font-bold text-amber-800">
-                  إجمالي الخبرة الموثقة: {wealthProgress ? wealthProgress.lifetimeXp.toLocaleString() : 'غير متاحة'}
+                  إجمالي الخبرة الموثقة: {wealthProgress ? wealthProgress.lifetimeXp.toLocaleString('en-US') : 'غير متاحة'}
                 </span>
                 {wealthProgress && <div className="mt-2" aria-label="تقدم مستوى الثروة">
                   <div className="h-2 overflow-hidden rounded-full border border-amber-400/60 bg-amber-950/20">
                     <div className="h-full rounded-full bg-gradient-to-l from-yellow-200 via-amber-400 to-amber-600 transition-[width]" style={{width: `${wealthProgress.progressPercent}%`}} />
                   </div>
-                  <span className="mt-1 block text-[9px] font-bold text-amber-900">{wealthProgress.xpToNextLevel === null ? 'الحد الأعلى 200' : `${wealthProgress.progressPercent.toFixed(1)}% · ${wealthProgress.xpToNextLevel.toLocaleString()} نقطة متبقية`}</span>
+                  <span className="mt-1 block text-[9px] font-bold text-amber-900">{wealthProgress.xpToNextLevel === null ? 'الحد الأعلى 200' : `${wealthProgress.progressPercent.toFixed(1)}% · ${wealthProgress.xpToNextLevel.toLocaleString('en-US')} نقطة متبقية`}</span>
                 </div>}
                 <span className="text-xs text-amber-800 font-black mt-0.5 block flex items-center gap-1">
                   <span>👑</span>
@@ -875,13 +875,13 @@ export const InternalProfileModal: React.FC = () => {
                   {verifiedCharmLevel !== null ? `Lv. ${verifiedCharmLevel}` : unavailableLevel}
                 </span>
                 <span className="mt-1 block text-[10px] font-bold text-purple-800">
-                  إجمالي الخبرة الموثقة: {charmProgress ? charmProgress.lifetimeXp.toLocaleString() : 'غير متاحة'}
+                  إجمالي الخبرة الموثقة: {charmProgress ? charmProgress.lifetimeXp.toLocaleString('en-US') : 'غير متاحة'}
                 </span>
                 {charmProgress && <div className="mt-2" aria-label="تقدم مستوى الجاذبية">
                   <div className="h-2 overflow-hidden rounded-full border border-fuchsia-400/60 bg-purple-950/20">
                     <div className="h-full rounded-full bg-gradient-to-l from-pink-200 via-fuchsia-400 to-purple-600 transition-[width]" style={{width: `${charmProgress.progressPercent}%`}} />
                   </div>
-                  <span className="mt-1 block text-[9px] font-bold text-purple-900">{charmProgress.xpToNextLevel === null ? 'الحد الأعلى 200' : `${charmProgress.progressPercent.toFixed(1)}% · ${charmProgress.xpToNextLevel.toLocaleString()} نقطة متبقية`}</span>
+                  <span className="mt-1 block text-[9px] font-bold text-purple-900">{charmProgress.xpToNextLevel === null ? 'الحد الأعلى 200' : `${charmProgress.progressPercent.toFixed(1)}% · ${charmProgress.xpToNextLevel.toLocaleString('en-US')} نقطة متبقية`}</span>
                 </div>}
                 <span className="text-xs text-purple-800 font-black mt-0.5 block flex items-center gap-1">
                   <span>✨</span>

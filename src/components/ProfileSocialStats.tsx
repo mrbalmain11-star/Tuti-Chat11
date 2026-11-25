@@ -17,7 +17,7 @@ type Kind = keyof typeof labels;
 type SocialUser = SearchUser & { following: boolean; cp_frame: boolean; visited_at: string | null };
 type Stats = Record<Kind, number | null> & { matches: number; rows: SocialUser[] };
 const pageSize = 30;
-const visitsFormat = new Intl.DateTimeFormat('ar-IQ', { dateStyle: 'medium', timeStyle: 'short' });
+const visitsFormat = new Intl.DateTimeFormat('ar-IQ-u-nu-latn', { dateStyle: 'medium', timeStyle: 'short' });
 
 export function ProfileSocialStats({ viewerId, targetId, enabled, compact = false }: {
   viewerId: string;

@@ -28,7 +28,7 @@ type ProfileData = {
 };
 type Failure = 'forbidden' | 'connection';
 const pageSize = 20;
-const format = (value: string) => BigInt(value).toLocaleString('ar-IQ');
+const format = (value: string) => BigInt(value).toLocaleString('ar-IQ-u-nu-latn');
 const sources = { store: 'المتجر', level: 'مكافأة المستوى', vip: 'اشتراك VIP' };
 const titles = { frame: 'الإطارات', vehicle: 'المركبات', gifts: 'لوحة الهدايا', honor: 'لوحة الشرف' };
 
@@ -172,7 +172,7 @@ export function ProfileSections({ section, state, isSelf, cpFrame, openStorage }
                 </span>
                 <strong className="block break-words text-xs">{item.name}</strong>
                 <small className="block">{sources[item.source]}{equipped ? ' · مفعّل' : ''}</small>
-                {item.expires_at && <small className="block">حتى {new Date(item.expires_at).toLocaleDateString('ar-IQ')}</small>}
+                {item.expires_at && <small className="block">حتى {new Date(item.expires_at).toLocaleDateString('ar-IQ-u-nu-latn')}</small>}
               </button>;
             })}
           </div>

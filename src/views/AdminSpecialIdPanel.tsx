@@ -1,3 +1,4 @@
+import { integerDigits } from '../utils/digits';
 import React, { useState } from 'react';
 import { stagingBackend } from '../services/stagingBackend';
 
@@ -50,14 +51,14 @@ export const AdminSpecialIdPanel: React.FC = () => {
     <p className="text-sm text-slate-500 mb-4">للمالك فقط. المنح نهائي لحساب موثق ولا يمكن تغيير الآيدي بعد تخصيصه. لا يتم استبدال رقم الحساب الأصلي.</p>
     <label className="block text-sm mb-1">رقم حساب المستخدم الأصلي</label>
     <div className="flex gap-2 mb-2">
-      <input className="border rounded-xl p-3 flex-1 min-w-0" inputMode="numeric" value={accountNumber} onChange={e => { setAccountNumber(e.target.value); setTarget(''); setAccountLabel(''); setConfirmation(false); }} placeholder="100000" />
+      <input className="border rounded-xl p-3 flex-1 min-w-0" inputMode="numeric" value={accountNumber} onChange={e => { setAccountNumber(integerDigits(e.target.value)); setTarget(''); setAccountLabel(''); setConfirmation(false); }} placeholder="100000" />
       <button type="button" disabled={busy} onClick={() => void findAccount()} className="border border-amber-500 rounded-xl px-3">تحقق</button>
     </div>
     {accountLabel && <p className="text-green-700 text-sm mb-2">الحساب: {accountLabel}</p>}
     <label className="block text-sm mb-1">معرّف الحساب UUID (تلقائي)</label>
     <input className="w-full border rounded-xl p-3 mb-3" dir="ltr" value={target} readOnly placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
     <label className="block text-sm mb-1">الآيدي المميز المطلوب</label>
-    <input className="w-full border rounded-xl p-3 mb-3" dir="ltr" inputMode="numeric" maxLength={10} value={specialId} onChange={e => setSpecialId(e.target.value)} placeholder="12345" />
+    <input className="w-full border rounded-xl p-3 mb-3" dir="ltr" inputMode="numeric" maxLength={10} value={specialId} onChange={e => setSpecialId(integerDigits(e.target.value))} placeholder="12345" />
     <label className="block text-sm mb-1">سبب المنح (إلزامي للتدقيق)</label>
     <textarea className="w-full border rounded-xl p-3 mb-3" maxLength={300} rows={2} value={reason} onChange={e => setReason(e.target.value)} />
     <label className="flex gap-2 text-sm mb-3"><input type="checkbox" checked={confirmation} onChange={e => setConfirmation(e.target.checked)} /> أؤكد أن هذا الآيدي سيُمنح بشكل نهائي</label>

@@ -59,7 +59,7 @@ export function GameCenter({ accountId, onClose }: { accountId: string; onClose:
       </header>
       <div className="my-3 flex justify-between gap-2 text-sm text-amber-200">
         {selected && <button type="button" onClick={() => setSelected(undefined)}>الألعاب</button>}
-        {snapshot && <span>الرصيد التجريبي {snapshot.balance?.toLocaleString('ar-IQ') ?? 'يُفتح عند أول جولة'}</span>}
+        {snapshot && <span>الرصيد التجريبي {snapshot.balance?.toLocaleString('ar-IQ-u-nu-latn') ?? 'يُفتح عند أول جولة'}</span>}
       </div>
       {error && <p role="alert" className="my-3 text-red-300">تعذر الاتصال بخادم الألعاب. يُعاد الاتصال تلقائياً.</p>}
       {!snapshot && !error && <p role="status">جارٍ تحميل الألعاب…</p>}

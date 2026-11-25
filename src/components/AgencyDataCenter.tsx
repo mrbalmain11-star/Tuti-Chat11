@@ -8,7 +8,7 @@ type Report = { agencies: Agency[] };
 type ReportState = { key: string; report?: Report; error?: string };
 
 const monthFormat = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Baghdad', year: 'numeric', month: '2-digit' });
-const formatCoins = new Intl.NumberFormat('ar-IQ');
+const formatCoins = new Intl.NumberFormat('ar-IQ-u-nu-latn');
 const card = 'rounded-2xl border border-emerald-100 bg-white p-4';
 
 function Activity() {

@@ -1,3 +1,4 @@
+import { integerDigits } from '../utils/digits';
 import { useState } from 'react';
 import { adminSections, canAssignSection, staffRoles, type StaffRole } from '../services/adminPermissions';
 import { stagingBackend } from '../services/stagingBackend';
@@ -37,7 +38,7 @@ export function AdminStaffPanel() {
     <label className="block text-sm font-bold">ID الموظف
       <input dir="ltr" inputMode="numeric" maxLength={6} value={target} disabled={busy}
         onChange={event => {
-          setTarget(event.target.value.replace(/[٠-٩۰-۹]/g, char => String(char.charCodeAt(0) % 16)).replace(/[^0-9]/g, ''));
+          setTarget(integerDigits(event.target.value));
           setPerson(null); setPermissions([]); setMessage('');
         }}
         placeholder="123456" className="mt-2 w-full rounded-xl border p-3" />

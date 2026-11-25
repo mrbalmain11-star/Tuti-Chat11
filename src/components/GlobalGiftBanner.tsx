@@ -130,7 +130,7 @@ export const GlobalGiftBanner: React.FC = () => {
           style={{ top: '38%', left: '28%', width: '44%', height: '28%', direction: 'rtl' }}
         >
           <span className="block max-w-full truncate">{announcement.sender_name} أهدى إلى {announcement.recipient_name}</span>
-          <span className="block max-w-full truncate text-xs">{announcement.gift_name} ×{announcement.quantity} · {announcement.total_coins.toLocaleString('ar-IQ')} عملة</span>
+          <span className="block max-w-full truncate text-xs">{announcement.gift_name} ×{announcement.quantity} · {announcement.total_coins.toLocaleString('ar-IQ-u-nu-latn')} عملة</span>
         </span>
       </span>
     </button>

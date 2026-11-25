@@ -390,7 +390,7 @@ export const VipModal: React.FC = () => {
             className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-950/70 border border-amber-500/40 text-amber-300 text-xs font-bold cursor-pointer hover:bg-amber-900 transition active:scale-95"
             title="انقر للشحن"
           >
-            <span className="font-mono font-black">{(currentUser.coins ?? 0).toLocaleString()}</span>
+            <span className="font-mono font-black">{(currentUser.coins ?? 0).toLocaleString('en-US')}</span>
             <span>🪙</span>
           </div>
         </header>
@@ -597,7 +597,7 @@ export const VipModal: React.FC = () => {
           <div className="text-right">
             <span className="text-[10px] text-slate-400 block font-bold">سعر الاشتراك:</span>
             <div className="flex items-center gap-1 font-mono font-black text-amber-300 text-sm">
-              <span>{VIP_PURCHASE_PRICES_RECONCILED ? activeTier.price.toLocaleString() : 'غير متاح'}</span>
+              <span>{VIP_PURCHASE_PRICES_RECONCILED ? activeTier.price.toLocaleString('en-US') : 'غير متاح'}</span>
               {VIP_PURCHASE_PRICES_RECONCILED && <span className="text-xs font-sans text-amber-400">كوينز 🪙</span>}
             </div>
           </div>
@@ -792,7 +792,7 @@ export const VipModal: React.FC = () => {
                         className="w-full h-12.5 rounded-full bg-gradient-to-r from-[#FFE58A] via-[#FFD666] to-[#F5A623] hover:brightness-105 active:scale-98 transition shadow-[0_4px_18px_rgba(245,166,35,0.45)] cursor-pointer flex items-center justify-center gap-2 text-[#3D2105] font-black text-sm"
                       >
                         <span>إلى الشحن</span>
-                        {VIP_PURCHASE_PRICES_RECONCILED && <span className="font-mono text-xs opacity-80">({activeTier.price.toLocaleString()} 🪙)</span>}
+                        {VIP_PURCHASE_PRICES_RECONCILED && <span className="font-mono text-xs opacity-80">({activeTier.price.toLocaleString('en-US')} 🪙)</span>}
                       </button>
                     )}
                   </div>
@@ -947,7 +947,7 @@ export const VipModal: React.FC = () => {
               <div className="p-3 rounded-xl bg-amber-950/40 border border-amber-500/30 flex items-center justify-between text-xs">
                 <span className="text-slate-300">سعر الاشتراك:</span>
                 <span className="font-bold text-amber-300 font-mono">
-                  {`${activeTier.price.toLocaleString()} كوينز 🪙`}
+                  {`${activeTier.price.toLocaleString('en-US')} كوينز 🪙`}
                 </span>
               </div>
 

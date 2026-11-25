@@ -1,3 +1,4 @@
+import { latinDigits } from '../utils/digits';
 import { SupplyReview } from '../features/rechargeAgent/SupplyReview';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { stagingBackend } from '../services/stagingBackend';
@@ -9,7 +10,7 @@ type Agency = { id: string; name: string; is_active: boolean; is_own_treasury: b
 type Recharge = { treasury: number; issued: number | null; agencies: Agency[]; requests: Row[]; ledger: Row[]; isOwner: boolean };
 const storageKey = (actor: string) => `totichat:staging:treasury:pending:${actor}`;
 const message = (error: unknown) => error && typeof error === 'object' && 'message' in error ? String(error.message) : String(error);
-const money = (value: number) => value.toLocaleString('ar-EG');
+const money = (value: number) => value.toLocaleString('ar-EG-u-nu-latn');
 const inputClass = 'w-full border border-slate-300 rounded-xl p-3 bg-white';
 const buttonClass = 'rounded-xl px-4 py-3 bg-amber-700 text-white font-bold disabled:opacity-50';
 
@@ -232,10 +233,10 @@ export const AdminRechargePanel: React.FC = () => {
         </div>
         <fieldset disabled={blocked} className="border rounded-xl p-3 space-y-3">
           <legend className="font-black px-2">شحن مستخدم بواسطة ID</legend>
-          <label className="block">ID المستخدم<input className={inputClass} inputMode="numeric" value={recipientId} onChange={e => { setRecipientId(e.target.value); setRecipient(null); }} /></label>
+          <label className="block">ID المستخدم<input className={inputClass} inputMode="numeric" value={recipientId} onChange={e => { setRecipientId(latinDigits(e.target.value)); setRecipient(null); }} /></label>
           <button type="button" className={buttonClass} onClick={() => void findRecipient()}>البحث والتحقق من المستلم</button>
           {recipient && <p role="status">المستلم: <strong>{recipient.display_name}</strong> — ID {recipient.public_id}</p>}
-          <label className="block">عدد العملات<input className={inputClass} inputMode="numeric" value={coins} onChange={e => setCoins(e.target.value)} /></label>
+          <label className="block">عدد العملات<input className={inputClass} inputMode="numeric" value={coins} onChange={e => setCoins(latinDigits(e.target.value))} /></label>
           <label className="block">سبب الشحن<textarea className={inputClass} value={note} maxLength={500} onChange={e => setNote(e.target.value)} /></label>
           <p className="text-xs">من 1 إلى مليار عملة؛ تخصم من خزينة المالك.</p>
           <button type="button" className={buttonClass} disabled={!recipient} onClick={() => prepare('topup')}>مراجعة شحن المستخدم</button>
@@ -246,7 +247,7 @@ export const AdminRechargePanel: React.FC = () => {
             <option value="">اختر وكالة فعالة</option>
             {state.agencies.filter(a => a.is_active && !a.is_own_treasury).map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
           </select></label>
-          <label className="block">عدد العملات<input className={inputClass} inputMode="numeric" value={allocation} onChange={e => setAllocation(e.target.value)} /></label>
+          <label className="block">عدد العملات<input className={inputClass} inputMode="numeric" value={allocation} onChange={e => setAllocation(latinDigits(e.target.value))} /></label>
           <label className="block">سبب التخصيص<textarea className={inputClass} value={allocationNote} maxLength={500} onChange={e => setAllocationNote(e.target.value)} /></label>
           <button type="button" className={buttonClass} onClick={() => prepare('allocate')}>مراجعة تخصيص الوكالة</button>
         </fieldset>
@@ -276,7 +277,7 @@ export const AdminRechargePanel: React.FC = () => {
         <p>{confirmation.label}</p><p className="text-xl font-black">{money(confirmation.coins)} عملة</p>
         <p className="break-words">السبب: {confirmation.note}</p>
         <p>{confirmation.action === 'issue' ? 'سيزيد رصيد الخزينة وإجمالي الإصدار.' : 'سيخصم المبلغ من خزينة المالك ويضاف إلى المستلم.'} لا يمكن التراجع عن العملية.</p>
-        {confirmation.action === 'issue' && <label className="block">اكتب 900000000000 للتأكيد<input autoFocus className={inputClass} inputMode="numeric" value={typedAmount} onChange={e => setTypedAmount(e.target.value)} /></label>}
+        {confirmation.action === 'issue' && <label className="block">اكتب 900000000000 للتأكيد<input autoFocus className={inputClass} inputMode="numeric" value={typedAmount} onChange={e => setTypedAmount(latinDigits(e.target.value))} /></label>}
         <div className="flex gap-3"><button type="button" className={buttonClass} disabled={busy || (confirmation.action === 'issue' && typedAmount !== String(STAGING_ISSUANCE))} onClick={() => void execute(confirmation)}>تأكيد وتنفيذ</button>
           <button type="button" className="border rounded-xl p-3" disabled={busy} onClick={() => setConfirmation(null)}>إلغاء</button></div>
       </div>

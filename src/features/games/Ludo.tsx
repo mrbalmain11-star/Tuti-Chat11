@@ -1,3 +1,4 @@
+import { WinNotice } from './WinNotice';
 import { useState } from 'react';
 
 const track = [
@@ -34,8 +35,9 @@ export function Ludo({ enabled }: { enabled: boolean }) {
   const [player, setPlayer] = useState(base);
   const [bot, setBot] = useState(base);
   const [die, setDie] = useState(0);
-  const [message, setMessage] = useState('ارمِ النرد، تحتاج ٦ لإخراج قطعة.');
+  const [message, setMessage] = useState('ارمِ النرد، تحتاج 6 لإخراج قطعة.');
   const [finished, setFinished] = useState(false);
+  const [won, setWon] = useState(false);
   const choices = die ? valid(player, die) : [];
 
   function botTurn(currentPlayer: number[], currentBot: number[], prefix = '') {
@@ -75,11 +77,12 @@ export function Ludo({ enabled }: { enabled: boolean }) {
     if (nextPlayer.every(position => position === finish)) {
       setPlayer(nextPlayer);
       setFinished(true);
-      setMessage('فزت!');
+      setMessage('انتهت المباراة.');
+      setWon(true);
     } else if (die === 6) {
       setPlayer(nextPlayer);
       setBot(nextBot);
-      setMessage('جبت ٦، ارمِ مرة ثانية.');
+      setMessage('جبت 6، ارمِ مرة ثانية.');
     } else botTurn(nextPlayer, nextBot);
   }
 
@@ -93,6 +96,7 @@ export function Ludo({ enabled }: { enabled: boolean }) {
   });
 
   return <section className="space-y-3 rounded-xl border border-amber-500/40 bg-emerald-950 p-3 text-center">
+    {won && <WinNotice game="لودو" onClose={() => setWon(false)} />}
     <h3 className="font-bold">لودو ضد الكمبيوتر</h3>
     <div dir="ltr" className="mx-auto grid aspect-square max-w-xs gap-px rounded bg-black/30 p-1"
       style={{ gridTemplate: 'repeat(15,minmax(0,1fr)) / repeat(15,minmax(0,1fr))' }}>
@@ -110,7 +114,7 @@ export function Ludo({ enabled }: { enabled: boolean }) {
     </div>}
     <button type="button" disabled={!enabled || die > 0} className="w-full rounded-xl bg-emerald-600 p-2 font-bold disabled:opacity-50"
       onClick={() => {
-        if (finished) { setPlayer(base()); setBot(base()); setFinished(false); setMessage('ارمِ النرد للبدء.'); }
+        if (finished) { setPlayer(base()); setBot(base()); setFinished(false); setWon(false); setMessage('ارمِ النرد للبدء.'); }
         else roll();
       }}>{finished ? 'مباراة جديدة' : 'ارمِ النرد'}</button>
   </section>;

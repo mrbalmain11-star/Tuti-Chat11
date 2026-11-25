@@ -1,3 +1,4 @@
+import { WinNotice } from './WinNotice';
 import { useRef, useState } from 'react';
 import { gameName, playArcade, type ArcadeInput, type Round } from './api';
 
@@ -47,6 +48,7 @@ export function Arcade({ code, accountId, history, enabled, onRound }: {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [latest, setLatest] = useState<Round>();
+  const [win, setWin] = useState<Round>();
   const inFlight = useRef(false);
   const rounds = history.filter(round => round.game_code === code);
   const result = latest ?? rounds[0];
@@ -64,12 +66,14 @@ export function Arcade({ code, accountId, history, enabled, onRound }: {
     inFlight.current = true;
     setBusy(true);
     setError('');
+    setWin(undefined);
     try {
       const input = pending ?? { p_code: code, p_request: crypto.randomUUID(), p_stake: stake, p_pick: pick };
       remember(input);
       const round = await playArcade(input);
       remember(null);
       setLatest(round);
+      if (round.reward > round.stake) setWin(round);
       onRound(round);
     } catch (cause) {
       const message = (cause as Error).message;
@@ -89,6 +93,7 @@ export function Arcade({ code, accountId, history, enabled, onRound }: {
   }
 
   return <section className="space-y-3 rounded-2xl border border-amber-500/40 bg-emerald-950 p-3 text-center">
+    {win && <WinNotice game={gameName(code)} prize={win.reward} onClose={() => setWin(undefined)} />}
     <p className="font-bold">{gameName(code)} · وضع تجريبي</p>
     {options && <label className="flex items-center justify-between gap-2">{options.label}
       <select className="rounded-lg bg-emerald-900 px-2 py-1" value={pick} onChange={event => setPick(Number(event.target.value))} disabled={busy || !!pending}>
@@ -107,7 +112,7 @@ export function Arcade({ code, accountId, history, enabled, onRound }: {
     {error && <p role="alert" className="text-red-300">{error}</p>}
     {result && <div role="status" className="space-y-1 rounded-xl bg-black/20 p-2">
       <Result round={result} />
-      <p>الجائزة <bdi>{result.reward.toLocaleString('ar-IQ')}</bdi></p>
+      <p>الجائزة <bdi>{result.reward.toLocaleString('ar-IQ-u-nu-latn')}</bdi></p>
     </div>}
     {rounds.length > 0 && <details className="text-sm">
       <summary>سجل الجولات</summary>

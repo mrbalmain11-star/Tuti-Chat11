@@ -57,7 +57,7 @@ const AdminDailyRewardsReadOnly: React.FC = () => {
     {loading && !schedule && <p role="status" className="text-slate-600">جارٍ قراءة القيم المعتمدة من الخادم...</p>}
     {error && <p role="alert" className="text-red-700">{error}</p>}
     {schedule && <p role="status" className="text-xs text-emerald-800">تم تحميل جدول المكافآت من الخادم بنجاح.</p>}
-    {schedule && <div className="grid grid-cols-2 gap-3">{schedule.map((coins, i) => <div key={i} className="rounded-xl border border-amber-200 bg-white p-3 text-center"><strong className="block text-emerald-900">اليوم {i + 1}</strong><span className="font-bold text-amber-800">{coins.toLocaleString('ar-IQ')} عملة</span></div>)}</div>}
+    {schedule && <div className="grid grid-cols-2 gap-3">{schedule.map((coins, i) => <div key={i} className="rounded-xl border border-amber-200 bg-white p-3 text-center"><strong className="block text-emerald-900">اليوم {i + 1}</strong><span className="font-bold text-amber-800">{coins.toLocaleString('ar-IQ-u-nu-latn')} عملة</span></div>)}</div>}
   </section>;
 };
 

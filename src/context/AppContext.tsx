@@ -1065,7 +1065,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           name: catalog.name,
           category,
           assetUrl: getStorageAsset(row.item_id, catalog.preview_url),
-          expiry: row.expires_at ? new Date(row.expires_at).toLocaleDateString('ar-IQ') : 'دائم',
+          expiry: row.expires_at ? new Date(row.expires_at).toLocaleDateString('ar-IQ-u-nu-latn') : 'دائم',
           isEquipped: Boolean(row.equipped),
         }];
       });

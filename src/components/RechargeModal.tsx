@@ -1,3 +1,4 @@
+import { latinDigits } from '../utils/digits';
 import React, { useState, useEffect, useRef, useEffectEvent } from 'react';
 import { ArrowLeft, ChevronLeft, BadgeCheck, ShieldCheck, Info, Headset, MessageCircle, Zap, FileText, X, Check, ArrowRightLeft, Sparkles, AlertCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -471,7 +472,7 @@ export const RechargeModal: React.FC = () => {
       setPendingExchange(undefined);
       window.dispatchEvent(new Event('totichat:wallet-changed'));
       setShowExchangeModal(false);
-      showToast(`تم تحويل الألماس وإضافة ${data.coins.toLocaleString('ar-IQ')} كوينز.`);
+      showToast(`تم تحويل الألماس وإضافة ${data.coins.toLocaleString('ar-IQ-u-nu-latn')} كوينز.`);
       confetti({ particleCount: 70, spread: 65, origin: { y: 0.5 } });
     } catch {
       setExchangeError('تعذر إكمال الطلب. جرّب مرة ثانية.');
@@ -565,7 +566,7 @@ export const RechargeModal: React.FC = () => {
                 history.length === 0 ? <p>لا توجد عمليات شحن سابقة.</p> : history.map(row => (
                   <article key={row.id}><strong>{row.coins.toLocaleString('en-US')} عملة</strong>
                     <span>{row.status === 'completed' ? 'ناجحة' : row.status === 'pending' ? 'قيد المراجعة' : 'فاشلة'}</span>
-                    <small>{new Date(row.date).toLocaleString('ar-IQ')}</small></article>
+                    <small>{new Date(row.date).toLocaleString('ar-IQ-u-nu-latn')}</small></article>
                 ))}
             </div>
           </section>
@@ -598,7 +599,7 @@ export const RechargeModal: React.FC = () => {
               <div className="bg-sky-50 rounded-2xl p-3 flex items-center justify-between text-xs border border-sky-100">
                 <span className="text-slate-600 font-bold">رصيدك المتاح من الألماس:</span>
                 <span className="font-black text-sky-700 text-sm">
-                  {(wallet?.diamonds ?? 0).toLocaleString('ar-EG')} 💎
+                  {(wallet?.diamonds ?? 0).toLocaleString('ar-EG-u-nu-latn')} 💎
                 </span>
               </div>
 
@@ -643,13 +644,13 @@ export const RechargeModal: React.FC = () => {
                 </label>
                 <div className="relative">
                   <input
-                    type="number"
-                    min="1"
-                    step="1000"
-                    max={wallet?.diamonds}
+                    type="text" dir="ltr" inputMode="numeric"
                     value={pendingExchange?.amount ?? (exchangeAmount || '')}
                     disabled={exchangeBusy || !!pendingExchange}
-                    onChange={(e) => setExchangeAmount(Math.max(0, Number(e.target.value)))}
+                    onChange={(e) => {
+                      const value = latinDigits(e.target.value);
+                      if (/^[0-9]*$/.test(value)) setExchangeAmount(Number(value));
+                    }}
                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-center font-black text-sm text-slate-800 focus:outline-sky-500"
                     placeholder="أدخل عدد الألماس..."
                   />
@@ -665,10 +666,10 @@ export const RechargeModal: React.FC = () => {
                   الكوينز المحصلة بعد التحويل
                 </span>
                 <span className="text-xl font-black text-emerald-600 block mt-0.5">
-                  {exchangeCoins?.toLocaleString('ar-EG') ?? '—'} 🪙
+                  {exchangeCoins?.toLocaleString('ar-EG-u-nu-latn') ?? '—'} 🪙
                 </span>
                 <span className="text-[10px] text-emerald-700 font-semibold mt-1 block">
-                  (خصم {(pendingExchange?.amount ?? exchangeAmount).toLocaleString('ar-EG')} 💎 ➜ إضافة {exchangeCoins?.toLocaleString('ar-EG') ?? '—'} 🪙)
+                  (خصم {(pendingExchange?.amount ?? exchangeAmount).toLocaleString('ar-EG-u-nu-latn')} 💎 ➜ إضافة {exchangeCoins?.toLocaleString('ar-EG-u-nu-latn') ?? '—'} 🪙)
                 </span>
               </div>
             </div>

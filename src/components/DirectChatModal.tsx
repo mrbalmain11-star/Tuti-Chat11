@@ -8,7 +8,7 @@ import { stagingBackend } from '../services/stagingBackend';
 
 const formatTime = (value: string) => {
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? '' : date.toLocaleTimeString('ar-IQ', { hour: '2-digit', minute: '2-digit' });
+  return Number.isNaN(date.getTime()) ? '' : date.toLocaleTimeString('ar-IQ-u-nu-latn', { hour: '2-digit', minute: '2-digit' });
 };
 
 export const DirectChatModal: React.FC = () => {

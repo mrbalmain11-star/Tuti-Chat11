@@ -299,7 +299,7 @@ export const GiftStoreModal: React.FC = () => {
                 {/* Price in Coins */}
                 <div className="flex items-center gap-1 text-[11px] font-black text-amber-400 mt-1">
                   <span>🪙</span>
-                  <span>{gift.price.toLocaleString('ar-EG')}</span>
+                  <span>{gift.price.toLocaleString('ar-EG-u-nu-latn')}</span>
                 </div>
               </button>
             );

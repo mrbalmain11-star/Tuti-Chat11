@@ -1,3 +1,4 @@
+import { latinDigits } from '../utils/digits';
 import { activeVipTier, hasVipEntrance } from '../utils/vipPerks';
 import { RoomShareDialog } from './RoomShareDialog';
 import { RoomOptionsDialog } from './RoomOptionsDialog';
@@ -1169,7 +1170,7 @@ export const VoiceRoomModal: React.FC = () => {
       showToast('تقديم الاعتراضات متاح لمشرفي غرفة خدمة العملاء فقط.');
       return;
     }
-    const publicIdText = window.prompt('رقم حساب المستخدم المحظور (6 أرقام):');
+    const publicIdText = latinDigits(window.prompt('رقم حساب المستخدم المحظور (6 أرقام):') ?? '').trim();
     if (!publicIdText || !/^\d{6}$/.test(publicIdText.trim())) {
       showToast('أدخل رقم الحساب المكوّن من 6 أرقام.');
       return;
@@ -1495,7 +1496,7 @@ export const VoiceRoomModal: React.FC = () => {
     if (seatLayout === 'stage') return { gridColumn: 5 - ((n - 1) % 5), gridRow: Math.floor((n - 1) / 5) + 1 };
     return {};
   };
-  const saveSeatLayout=async(layout:'grid'|'classic'|'circle'|'stage')=>{if(!activeRoom||!stagingBackend||layoutSaving||(!isOwner&&!currentUser.isSuperAdmin))return;if(layout==='stage' && roomSeats.some(seat=>seat.seatNumber>10 && seat.user)){showToast('انقل المتحدثين إلى المايكات ١–١٠ قبل تشغيل المسرح');return;}setLayoutSaving(true);try{const {data,error}=await stagingBackend.rpc('totichat_room_seat_layout',{p_room_id:activeRoom.id,p_layout:layout});if(error||data!==layout)throw error||new Error('لم يؤكد الخادم الحفظ');setSeatLayout(layout);setShowSeatLayouts(false);showToast('تم حفظ ترتيب المقاعد لجميع الأعضاء');}catch(e){showToast(e instanceof Error?e.message:'تعذر حفظ ترتيب المقاعد');}finally{setLayoutSaving(false);}};
+  const saveSeatLayout=async(layout:'grid'|'classic'|'circle'|'stage')=>{if(!activeRoom||!stagingBackend||layoutSaving||(!isOwner&&!currentUser.isSuperAdmin))return;if(layout==='stage' && roomSeats.some(seat=>seat.seatNumber>10 && seat.user)){showToast('انقل المتحدثين إلى المايكات 1–10 قبل تشغيل المسرح');return;}setLayoutSaving(true);try{const {data,error}=await stagingBackend.rpc('totichat_room_seat_layout',{p_room_id:activeRoom.id,p_layout:layout});if(error||data!==layout)throw error||new Error('لم يؤكد الخادم الحفظ');setSeatLayout(layout);setShowSeatLayouts(false);showToast('تم حفظ ترتيب المقاعد لجميع الأعضاء');}catch(e){showToast(e instanceof Error?e.message:'تعذر حفظ ترتيب المقاعد');}finally{setLayoutSaving(false);}};
   // 15 Seats Layout: 3 Rows of 5 Seats
   // Row 1: NO 01, NO 02, NO 03, NO 04, NO 05
   const row1Numbers = [1, 2, 3, 4, 5];
@@ -3741,7 +3742,7 @@ export const VoiceRoomModal: React.FC = () => {
                 {roomBans.map(item => <div key={item.userId} className="mb-2 rounded-xl bg-white/5 p-3 text-xs">
                   <div className="flex items-center gap-2">{item.avatar ? <img src={item.avatar} alt="" className="h-9 w-9 rounded-full object-cover" /> : <CircleUserRound className="h-9 w-9 text-slate-400" />}<div className="min-w-0"><p className="truncate font-bold">{item.name || 'مستخدم'}</p><p className="text-slate-400">ID: {item.publicId ?? '—'}</p></div></div>
                   {item.reason && <p className="mt-1 text-slate-400">السبب: {item.reason}</p>}
-                  {item.expiresAt && <p className="mt-1 text-amber-300">ينتهي: {new Date(item.expiresAt).toLocaleString('ar-IQ')}</p>}
+                  {item.expiresAt && <p className="mt-1 text-amber-300">ينتهي: {new Date(item.expiresAt).toLocaleString('ar-IQ-u-nu-latn')}</p>}
                   <button disabled={banActionBusy || (!isOwner && item.bannedByOwner)} onClick={() => void unbanRoomUser(item.userId)} className="mt-2 rounded-lg bg-emerald-700 px-3 py-2 disabled:opacity-50">{!isOwner && item.bannedByOwner ? "حظر المالك" : "فك حظر الغرفة"}</button>
                 </div>)}
               </section>}

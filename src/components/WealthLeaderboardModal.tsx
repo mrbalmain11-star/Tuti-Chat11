@@ -331,7 +331,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                       />
 
                       <div className="mt-1 flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-300 text-amber-950 text-[10px] font-bold shadow-2xs font-sans">
-                        <span>{topWealth2.supportAmount.toLocaleString()}</span>
+                        <span>{topWealth2.supportAmount.toLocaleString('en-US')}</span>
                         <span>🪙</span>
                       </div>
                     </div>
@@ -353,7 +353,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                       />
 
                       <div className="mt-1.5 flex items-center gap-1 px-3 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 border border-amber-500 text-slate-950 text-xs font-black shadow-xs font-sans">
-                        <span>{topWealth1.supportAmount.toLocaleString()}</span>
+                        <span>{topWealth1.supportAmount.toLocaleString('en-US')}</span>
                         <span className="text-amber-900">🪙</span>
                       </div>
                     </div>
@@ -377,7 +377,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                       />
 
                       <div className="mt-1 flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-300 text-amber-950 text-[10px] font-bold shadow-2xs font-sans">
-                        <span>{topWealth3.supportAmount.toLocaleString()}</span>
+                        <span>{topWealth3.supportAmount.toLocaleString('en-US')}</span>
                         <span>🪙</span>
                       </div>
                     </div>
@@ -445,7 +445,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                       <div className="flex items-center gap-2 shrink-0">
                         <div className="flex flex-col items-end">
                           <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-300/80 text-amber-950 font-black text-xs font-sans shadow-2xs">
-                            <span>{supporter.supportAmount.toLocaleString()}</span>
+                            <span>{supporter.supportAmount.toLocaleString('en-US')}</span>
                             <span className="text-amber-500 text-xs">🪙</span>
                           </div>
                           <span className="text-[9px] text-amber-700/80 mt-0.5 font-bold">
@@ -491,7 +491,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                       {/* مستوى السحر (Magic Level Badge) */}
                       {/* قيمة المرمي للحساب (Received Gifts Value) */}
                       <div className="mt-1 flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-300 text-amber-950 text-[10px] font-bold shadow-2xs font-sans">
-                        <span>{topCharm2.charmReceived.toLocaleString()}</span>
+                        <span>{topCharm2.charmReceived.toLocaleString('en-US')}</span>
                         <span>💎</span>
                       </div>
                       <span className="text-[8px] font-bold text-amber-800 mt-0.5">مرمي للحساب</span>
@@ -516,7 +516,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                       {/* مستوى السحر (Magic Level Badge) */}
                       {/* قيمة المرمي للحساب */}
                       <div className="mt-1.5 flex items-center gap-1 px-3 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 border border-amber-500 text-slate-950 text-xs font-black shadow-xs font-sans">
-                        <span>{topCharm1.charmReceived.toLocaleString()}</span>
+                        <span>{topCharm1.charmReceived.toLocaleString('en-US')}</span>
                         <span>💎</span>
                       </div>
                       <span className="text-[9px] font-black text-amber-900 mt-0.5">مرمي للحساب (مرسل له)</span>
@@ -542,7 +542,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                       {/* مستوى السحر (Magic Level Badge) */}
                       {/* قيمة المرمي للحساب */}
                       <div className="mt-1 flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-300 text-amber-950 text-[10px] font-bold shadow-2xs font-sans">
-                        <span>{topCharm3.charmReceived.toLocaleString()}</span>
+                        <span>{topCharm3.charmReceived.toLocaleString('en-US')}</span>
                         <span>💎</span>
                       </div>
                       <span className="text-[8px] font-bold text-amber-800 mt-0.5">مرمي للحساب</span>
@@ -613,7 +613,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                       <div className="flex items-center gap-2 shrink-0">
                         <div className="flex flex-col items-end">
                           <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-300 text-amber-950 font-black text-xs font-sans shadow-2xs">
-                            <span>{item.charmReceived.toLocaleString()}</span>
+                            <span>{item.charmReceived.toLocaleString('en-US')}</span>
                             <span className="text-amber-500 text-xs">💎</span>
                           </div>
                           <span className="text-[9px] text-amber-700 mt-0.5 font-bold">
@@ -656,7 +656,7 @@ export const WealthLeaderboardModal: React.FC = () => {
 
                       {/* قيمة المرمي للروم */}
                       <div className="mt-1 flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-300 text-amber-950 text-[10px] font-bold shadow-2xs font-sans">
-                        <span>{topRoom2.roomGiftsAmount.toLocaleString()}</span>
+                        <span>{topRoom2.roomGiftsAmount.toLocaleString('en-US')}</span>
                         <span>💎</span>
                       </div>
                       <span className="text-[9px] font-bold text-amber-800 mt-0.5">مرمي للروم</span>
@@ -678,7 +678,7 @@ export const WealthLeaderboardModal: React.FC = () => {
 
                       {/* قيمة المرمي للروم */}
                       <div className="mt-1.5 flex items-center gap-1 px-3 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 border border-amber-500 text-slate-950 text-xs font-black shadow-xs font-sans">
-                        <span>{topRoom1.roomGiftsAmount.toLocaleString()}</span>
+                        <span>{topRoom1.roomGiftsAmount.toLocaleString('en-US')}</span>
                         <span>💎 مرمي للروم</span>
                       </div>
                     </div>
@@ -700,7 +700,7 @@ export const WealthLeaderboardModal: React.FC = () => {
 
                       {/* قيمة المرمي للروم */}
                       <div className="mt-1 flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-300 text-amber-950 text-[10px] font-bold shadow-2xs font-sans">
-                        <span>{topRoom3.roomGiftsAmount.toLocaleString()}</span>
+                        <span>{topRoom3.roomGiftsAmount.toLocaleString('en-US')}</span>
                         <span>💎</span>
                       </div>
                       <span className="text-[9px] font-bold text-amber-800 mt-0.5">مرمي للروم</span>
@@ -764,7 +764,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                       <div className="flex items-center gap-2 shrink-0">
                         <div className="flex flex-col items-end">
                           <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-300 text-amber-950 font-black text-xs font-sans shadow-2xs">
-                            <span>{room.roomGiftsAmount.toLocaleString()}</span>
+                            <span>{room.roomGiftsAmount.toLocaleString('en-US')}</span>
                             <span className="text-amber-500 text-xs">💎</span>
                           </div>
                           <span className="text-[9px] text-amber-800 mt-0.5 font-bold">
@@ -799,7 +799,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                     إجمالي دعمك:
                   </span>
                   <div className="flex items-center gap-1 text-xs font-black text-amber-900 font-sans">
-                    <span>{(currentUser.wealthExp || 0).toLocaleString()} 🪙</span>
+                    <span>{(currentUser.wealthExp || 0).toLocaleString('en-US')} 🪙</span>
                   </div>
                 </>
               )}
@@ -807,7 +807,7 @@ export const WealthLeaderboardModal: React.FC = () => {
               {leaderboardTab === 'charm' && (
                 <>
                   <div className="flex items-center gap-1 text-xs font-black text-amber-950 font-sans">
-                    <span>مرمي لك: {(currentUser.charmExp || 0).toLocaleString()} 💎</span>
+                    <span>مرمي لك: {(currentUser.charmExp || 0).toLocaleString('en-US')} 💎</span>
                   </div>
                 </>
               )}

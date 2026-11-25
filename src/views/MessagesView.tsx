@@ -27,7 +27,7 @@ export const MessagesView: React.FC = () => {
       const messages = entries.map((item: any) => ({
         id: String(item.id), sender: 'them' as const, timestamp: String(item.created_at),
         text: item.event_type === 'wallet_topup'
-          ? `تم شحن حسابك بمبلغ ${Number(item.context?.amount || 0).toLocaleString('ar-IQ')} عملة بنجاح.`
+          ? `تم شحن حسابك بمبلغ ${Number(item.context?.amount || 0).toLocaleString('ar-IQ-u-nu-latn')} عملة بنجاح.`
           : `إشعار نظام: ${String(item.event_type || 'تحديث الحساب')}`,
       })).reverse();
       if (active && messages.length > 0) {
@@ -116,7 +116,7 @@ export const MessagesView: React.FC = () => {
 
           {/* Left side: Date & Unread Badge */}
           <div className="flex flex-col items-center gap-1.5 shrink-0 pl-1">
-            <span className="text-[11px] text-[#8aa192] font-semibold">{systemConv?.lastTime ? new Date(systemConv.lastTime).toLocaleDateString('ar-IQ') : ''}</span>
+            <span className="text-[11px] text-[#8aa192] font-semibold">{systemConv?.lastTime ? new Date(systemConv.lastTime).toLocaleDateString('ar-IQ-u-nu-latn') : ''}</span>
             {systemUnread > 0 && <span className="min-w-5 h-5 px-1 rounded-full bg-[#f43f5e] text-white text-[10px] font-black flex items-center justify-center shadow-sm" aria-label={`${systemUnread} إشعارات غير مقروءة`}>
               {systemUnread > 99 ? '99+' : systemUnread}
             </span>}

@@ -1,3 +1,4 @@
+import { latinDigits } from '../utils/digits';
 import React, { useCallback, useEffect, useState } from 'react';
 import { stagingBackend } from '../services/stagingBackend';
 
@@ -42,10 +43,10 @@ export const AdminAgencyRegistrationRequestsPanel: React.FC = () => {
       <h3 className="font-black">{item.name}</h3>
       <p className="text-sm">النوع: {item.kind === 'host' ? 'وكالة مضيفين' : item.kind === 'recharge' ? 'وكالة شحن' : item.kind}</p>
       <p className="text-xs text-slate-600" dir="ltr">Applicant: {item.applicant_id}</p>
-      <p className="text-xs text-slate-600">{new Date(item.created_at).toLocaleString('ar-IQ')}</p>
+      <p className="text-xs text-slate-600">{new Date(item.created_at).toLocaleString('ar-IQ-u-nu-latn')}</p>
       {item.details && Object.entries(item.details).map(([key,value]) => <p key={key} className="text-xs break-words">{key}: {typeof value === 'string' || typeof value === 'number' ? String(value) : '—'}</p>)}
-      <input className="w-full border rounded-xl p-3" placeholder="سبب القرار" value={note[item.id] ?? ''} onChange={e => setNote(n => ({...n,[item.id]:e.target.value}))}/>
-      <input className="w-full border rounded-xl p-3" type="number" min="0" max="100" placeholder="نسبة العمولة % للموافقة" value={commission[item.id] ?? ''} onChange={e => setCommission(n => ({...n,[item.id]:e.target.value}))}/>
+      <input className="w-full border rounded-xl p-3" placeholder="سبب القرار" value={note[item.id] ?? ''} onChange={e => setNote(n => ({...n,[item.id]:latinDigits(e.target.value).replace(/٫/g, '.')}))}/>
+      <input className="w-full border rounded-xl p-3" type="text" dir="ltr" inputMode="decimal" placeholder="نسبة العمولة % للموافقة" value={commission[item.id] ?? ''} onChange={e => setCommission(n => ({...n,[item.id]:latinDigits(e.target.value).replace(/٫/g, '.')}))}/>
       <div className="flex gap-2">
         <button type="button" disabled={busy !== null} onClick={() => void decide(item,true)} className="bg-emerald-700 text-white rounded-xl px-4 py-2 disabled:opacity-50">موافقة</button>
         <button type="button" disabled={busy !== null} onClick={() => void decide(item,false)} className="border border-red-300 text-red-700 rounded-xl px-4 py-2 disabled:opacity-50">رفض</button>
