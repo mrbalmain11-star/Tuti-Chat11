@@ -209,7 +209,8 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
   const bet = (pick: number) => {
     if (canEnter && state) void submit({ p_request: crypto.randomUUID(), p_start: state.round_start, p_pick: pick, p_stake: stake });
   };
-  const status = connected === false ? 'تعذر الاتصال بخادم اللعبة' : !state ? 'جارٍ الاتصال…' : !state.enabled ? 'المشاركات متوقفة' : '';
+  const connectionStatus = connected === false ? 'تعذر الاتصال بخادم اللعبة' : !state ? 'جارٍ الاتصال…' : '';
+  const status = connectionStatus || (state && !state.enabled ? 'المشاركات متوقفة' : '');
   const picture = state?.player.avatar;
   const winners = shownResult?.winners;
   const hasHeader = page !== 'result';
@@ -284,7 +285,7 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
         {state?.rounds.length ? state.rounds.map(round => <div key={round.starts_at}>
           <span>#{roundNumber(round.starts_at)}</span><span>{shortDate(round.starts_at)}</span><span>{round.result.refunded ? 'مستردة' : food[round.result.outcome ?? -1]}</span>
           <span>{round.multiplier == null ? '—' : '×' + round.multiplier}</span>
-        </div>) : <p>{status || 'لا توجد جولات مكتملة'}</p>}
+        </div>) : <p>{connectionStatus || 'لا توجد جولات مكتملة'}</p>}
       </Field>
       <Field x={8} y={84} w={84} h={8}>الجولات المعروضة {state?.rounds.length ?? '—'}</Field>
     </>}
@@ -294,7 +295,7 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
         {state?.entries.length ? state.entries.slice(historyPage * 10, (historyPage + 1) * 10).map(entry => <div key={entry.request_id}>
           <span>#{roundNumber(entry.starts_at)}</span><span>{shortDate(entry.starts_at)}</span><span>{food[entry.pick]}</span><span>{formatted(entry.stake)}</span>
           <span>{entry.status === 'pending' ? 'قيد التسوية' : entry.status === 'refunded' ? 'مستردة' : entry.paid ? `ربح ${formatted(entry.paid)}` : 'خسارة'}</span>
-        </div>) : <p>{status || 'لا توجد مشاركات'}</p>}
+        </div>) : <p>{connectionStatus || 'لا توجد مشاركات'}</p>}
       </Field>
       <Field x={41} y={85.8} w={18} h={3}>{historyPage + 1} / {Math.max(1, Math.ceil((state?.entries.length ?? 0) / 10))}</Field>
       <Hit x={17} y={85.5} w={12} h={4} label="أول صفحة" action={() => setHistoryPage(0)} />
@@ -303,15 +304,18 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
       <Hit x={72} y={85.5} w={11} h={4} label="آخر صفحة" action={() => setHistoryPage(Math.max(0, Math.ceil((state?.entries.length ?? 0) / 10) - 1))} />
     </>}
     {page === 'leaders' && <>
-      {(['month', 'week', 'day'] as const).map((range, index) => <Hit key={range} x={8 + index * 28} y={23} w={27} h={4.7}
-        label={['شهري', 'أسبوعي', 'يومي'][index]} action={() => setPeriod(range)} active={period === range} />)}
-      {[[50, 34, 42], [77, 36.5, 43.4], [22.5, 36.5, 43.4]].map(([x, portraitY, textY], index) => {
+      {(['month', 'week', 'day'] as const).map((range, index) => {
+        const label = ['الشهري', 'الأسبوعي', 'اليومي'][index];
+        return <Hit key={range} x={9 + index * 27.3} y={23.4} w={26} h={3.8}
+          label={label} action={() => setPeriod(range)} active={period === range} className="toti-food-stake">{label}</Hit>;
+      })}
+      {[[50, 34, 40.9], [77, 36.5, 41.4], [22.5, 36.5, 41.4]].map(([x, portraitY, textY], index) => {
         const leader = leaderboard?.leaders[index];
         return <div key={x}>
           <Field x={x - 7} y={portraitY - 3.8} w={14} h={7.5} className="toti-food-portrait">
             {leader?.avatar && <img src={leader.avatar} alt="" />}
           </Field>
-          <Field x={x - 10} y={textY} w={20} h={5.1} className="toti-food-podium">
+          <Field x={x - 10} y={textY} w={20} h={7.4} className="toti-food-podium">
             <strong>{leader?.name ?? '—'}</strong><small>{leader?.public_id ?? '—'}</small><small>{formatted(leader?.points)}</small>
           </Field>
         </div>;
