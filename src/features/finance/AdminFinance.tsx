@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Gamepad2, Landmark, Users, Building2 } from 'lucide-react';
+import { Gamepad2, Landmark, Users, Building2, Coins } from 'lucide-react';
 import { stagingBackend } from '../../services/stagingBackend';
 import { imageUrl } from '../../services/imageUrl';
 
@@ -171,17 +171,18 @@ export function AdminFinance({ accountId }: { accountId: string }) {
     } catch { setError('تعذّر تحديث صلاحيات المسؤول.'); }
   }
   if (overview && !overview.owner && overview.scopes.length===0) return null;
-  return <section dir="rtl" className="space-y-3 rounded-2xl border border-amber-300 bg-[#faf7e9] p-3">
-    <div className="rounded-xl bg-emerald-950 p-3 text-amber-100">
+  return <section dir="rtl" className="royal-admin-finance space-y-3">
+    <div className="royal-admin-treasury">
       <h2 className="flex items-center gap-2 font-black"><Landmark size={20}/> الإدارة المالية</h2>
+      <Coins className="royal-treasury-coins" size={47} aria-hidden="true" />
       {overview?.treasury!=null && <p>خزينة التطبيق <bdi>{money(overview.treasury)} Coins</bdi></p>}
     </div>
     {error && <p role="alert" className="rounded-lg bg-red-50 p-2 text-red-800">{error}</p>}
     {result && <p role="status" className="break-all text-emerald-900">تمت العملية · <bdi>{result}</bdi></p>}
     {!overview && <button type="button" className={button} onClick={()=>setRevision(value=>value+1)}>تحديث البيانات</button>}
     {page===null ? <>
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-        {allowedPools.map(pool=>{ const { name,Icon }=pools[pool]; return <button key={pool} type="button" className="rounded-xl border border-amber-500 bg-emerald-900 p-3 text-amber-100" onClick={()=>navigate(pool)}>
+      <div className="grid grid-cols-3 gap-1.5">
+        {allowedPools.map(pool=>{ const { name,Icon }=pools[pool]; return <button key={pool} type="button" className="royal-admin-wallet" onClick={()=>navigate(pool)}>
           <Icon className="mx-auto mb-1" size={24}/><strong className="block">{name}</strong><bdi>{money(overview?.balances[pool])} Coins</bdi>
         </button>; })}
       </div>

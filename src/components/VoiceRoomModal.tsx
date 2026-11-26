@@ -1291,7 +1291,7 @@ export const VoiceRoomModal: React.FC = () => {
     void CapacitorApp.addListener('backButton', () => {
       // Android's native document picker emits back while handing the file to WebView.
       // Ignore it until the file input has received its change event.
-      if (musicPickerPendingRef.current || Date.now() - musicPickerReturnAtRef.current < 2000 || document.querySelector('.room-pin-overlay')) return;
+      if (musicPickerPendingRef.current || Date.now() - musicPickerReturnAtRef.current < 2000 || document.querySelector('.room-pin-overlay, .royal-gift-sheet')) return;
       if (isRoomMinimized) {
         setIsRoomMinimized(false);
       } else if (gamesRoomId === activeRoom.id) {

@@ -1,3 +1,6 @@
+import { createPortal } from 'react-dom';
+import { EpicGiftArtwork } from '../components/EpicGiftArtwork';
+import './royal-admin.css';
 import { adminSections } from '../services/adminPermissions';
 import { AdminAppBansPanel } from './AdminAppBansPanel';
 import React, { useEffect, useState } from 'react';
@@ -19,8 +22,38 @@ import { AdminAccountResetPanel } from './AdminAccountResetPanel';
 import { AdminEmbeddedGamesPanel } from './AdminEmbeddedGamesPanel';
 import { AdminStaffPanel } from './AdminStaffPanel';
 import { AdminTesterBadgesPanel } from './AdminTesterBadgesPanel';
-import { ArrowRight, RefreshCw, ShieldCheck, Users, Building2, Radio, Gift } from 'lucide-react';
-import { fetchMyAdminAccess, fetchOwnerDashboardCounts, fetchOwnerDashboardRecent, type OwnerDashboardRecent, type AdminAccess, type OwnerDashboardCounts, stagingBackend } from '../services/stagingBackend';
+import { ArrowRight, RefreshCw, ShieldCheck, Users, Building2, Radio, Gift, BarChart3, UserCog,
+  ScrollText, BadgeCheck, Gavel, ClipboardCheck, Ban, Handshake, UserPlus, Flag, Wallet, Coins, Gamepad2,
+  KeyRound, Image, Sparkles, CalendarCheck, Award } from 'lucide-react';
+import { fetchMyAdminAccess, fetchOwnerDashboardRecent, type OwnerDashboardRecent, type AdminAccess, stagingBackend } from '../services/stagingBackend';
+
+const sectionIcons = {
+  stats: BarChart3, users: Users, accountReset: UserCog, agencies: Building2, rooms: Radio,
+  operations: ScrollText, ids: BadgeCheck, moderation: ShieldCheck, roomAppeals: Gavel,
+  customerServiceAppeals: ClipboardCheck, appBans: Ban, agencyActions: Handshake,
+  agencyRegistrations: UserPlus, reports: Flag, financeReports: Wallet, agencySupplyRequests: Coins,
+  gamesTreasury: Gamepad2, staff: KeyRound, banners: Image, decorations: Gift, offers: Sparkles,
+  dailyRewards: CalendarCheck, testerBadges: Award,
+} satisfies Record<(typeof adminSections)[number]['id'], typeof ShieldCheck>;
+
+const statistics = [
+  ['users','المستخدمون',Users,'users'],['online','المتصلون الآن',Users,null],
+  ['banned','المحظورون',Ban,'appBans'],['rooms','الغرف',Radio,'rooms'],
+  ['activeRooms','الغرف التي فيها أعضاء',Radio,null],['agencies','الوكالات',Building2,'agencies'],
+  ['agents','وكلاء الشحن المعتمدون',Handshake,'agencies'],['gifts','عمليات الإهداء المكتملة',Gift,null],
+  ['recharges','عمليات الشحن المكتملة',Coins,null],['financial','العمليات المالية المكتملة',Wallet,'financeReports'],
+  ['audit','السجلات الإدارية والأمنية',ScrollText,'operations'],
+] as const;
+type StatKey = (typeof statistics)[number][0];
+
+async function loadActivitySummary(): Promise<Record<StatKey, number>> {
+  if (!stagingBackend) throw new Error('الخادم غير متاح');
+  const { data,error } = await stagingBackend.rpc('totichat_admin_activity_summary');
+  if (error || !data || !statistics.every(([key])=>Number.isSafeInteger(data[key]) && data[key]>=0)) {
+    throw error ?? new Error('تعذر قراءة الإحصائيات');
+  }
+  return data;
+}
 
 const AdminDailyRewardsReadOnly: React.FC = () => {
   const [schedule, setSchedule] = useState<number[] | null>(null);
@@ -84,25 +117,29 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
   const [financeActor, setFinanceActor] = useState<string>();
   const [adminPage, setAdminPage] = useState<string | null>(null);
   const [access, setAccess] = useState<AdminAccess | null>(null);
-  const [counts, setCounts] = useState<OwnerDashboardCounts | null>(null);
+  const [counts, setCounts] = useState<Record<StatKey,number> | null>(null);
+  const reloadVersion = React.useRef(0);
   const [recent, setRecent] = useState<OwnerDashboardRecent | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dashboardErrors, setDashboardErrors] = useState({ counts: false, recent: false });
   const reload = async () => {
+    const version=++reloadVersion.current;
     setLoading(true); setError(null); setAccess(null); setCounts(null); setRecent(null);
     setDashboardErrors({ counts: false, recent: false });
     try {
       const verified = await fetchMyAdminAccess();
+      if (version!==reloadVersion.current) return;
       if (!verified) throw new Error('ليس لديك تصريح لدخول مركز الإدارة');
       setAccess(verified);
-      void stagingBackend?.auth.getUser().then(({data})=>setFinanceActor(data.user?.id));
+      void stagingBackend?.auth.getUser().then(({data})=>{if(version===reloadVersion.current)setFinanceActor(data.user?.id);});
       const all = verified.role === 'owner';
       const [totals, records] = await Promise.allSettled([
-        all || verified.permissions.includes('stats.read') ? fetchOwnerDashboardCounts() : null,
+        all || verified.permissions.includes('stats.read') ? loadActivitySummary() : null,
         all || ['users.manage','agencies.read','rooms.read'].some(key => verified.permissions.includes(key))
           ? fetchOwnerDashboardRecent() : null,
       ]);
+      if (version!==reloadVersion.current) return;
       if (totals.status === 'fulfilled') setCounts(totals.value);
       else console.warn('Admin dashboard totals unavailable:', totals.reason);
       if (records.status === 'fulfilled') setRecent(records.value);
@@ -110,10 +147,11 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
       setDashboardErrors({ counts: totals.status === 'rejected' || ((all || verified.permissions.includes('stats.read')) && !totals.value), recent: records.status === 'rejected' });
     } catch (err) {
       console.warn('Admin access verification failed:', err);
+      if (version!==reloadVersion.current) return;
       setError(err instanceof Error ? err.message : 'تعذر التحقق من صلاحيات مركز الإدارة');
-    } finally { setLoading(false); }
+    } finally { if(version===reloadVersion.current)setLoading(false); }
   };
-  useEffect(() => { void reload(); }, []);
+  useEffect(() => { void reload(); return ()=>{++reloadVersion.current;}; }, []);
   useEffect(() => {
     const recheck = () => { if (document.visibilityState === 'visible') void reload(); };
     document.addEventListener('visibilitychange', recheck);
@@ -141,11 +179,21 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
     }, 15000);
     return () => { active = false; window.clearInterval(timer); };
   }, [access]);
-  return (
-    <div className="fixed inset-0 z-[100] bg-[#FDFBF7] text-slate-900 overflow-y-auto font-['Cairo',sans-serif]" dir="rtl">
-      <header className="sticky top-0 bg-white/95 border-b border-amber-200 px-5 py-4 flex items-center justify-between z-10">
-        <h1 className="font-black text-xl flex items-center gap-2"><ShieldCheck className="text-amber-700" /> مركز الإدارة</h1>
-        <button type="button" onClick={onClose} className="rounded-xl border border-amber-200 px-3 py-2 flex items-center gap-2"><ArrowRight size={18}/> رجوع</button>
+  const [navHeight,setNavHeight] = useState(72);
+  useEffect(()=>{
+    const nav = document.querySelector('nav.fixed.bottom-0');
+    if (!nav) return;
+    const resize = () => setNavHeight(Math.ceil(nav.getBoundingClientRect().height));
+    const observer = new ResizeObserver(resize);
+    resize(); observer.observe(nav);
+    return ()=>observer.disconnect();
+  },[]);
+  return createPortal(
+    <div style={{bottom:navHeight}} className="royal-admin fixed inset-x-0 top-0 z-[39] overflow-y-auto font-['Cairo',sans-serif]" dir="rtl">
+      <header className="royal-admin-header">
+        <button type="button" onClick={onClose} className="royal-admin-back"><ArrowRight size={16}/> رجوع</button>
+        <div className="royal-admin-emblem" aria-hidden="true"><EpicGiftArtwork kind="falcon"/></div>
+        <h1>مركز الإدارة</h1><p>TotiChat</p>
       </header>
       <main className="p-3 sm:p-5 max-w-3xl mx-auto pb-20">
         {loading && <p className="text-slate-500">جاري التحقق من صلاحياتك وقراءة البيانات...</p>}
@@ -155,14 +203,14 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
             const tiles = adminSections.filter(item => access.role === 'owner' ||
               (!('ownerOnly' in item) && (!('superOnly' in item) || access.role === 'super_admin') &&
                 access.permissions.includes(item.permission)))
-              .map(item => ({ ...item, Icon: item.id === 'decorations' ? Gift : ShieldCheck }));
+              .map(item => ({ ...item, Icon: sectionIcons[item.id] }));
             return <div className="space-y-5">
               {!adminPage || !tiles.some(tile => tile.id === adminPage) ? <>
                 {financeActor && <AdminFinance key={financeActor} accountId={financeActor}/>}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div className="royal-admin-tiles">
                 {tiles.map(({id,label,Icon}) => <button key={id} type="button" onClick={() => setAdminPage(id)}
-                  className="rounded-2xl bg-white border border-amber-200 p-3 sm:p-4 min-h-24 sm:min-h-28 min-w-0 shadow-sm flex flex-col items-center justify-center gap-2 sm:gap-3 active:bg-amber-50">
-                  <Icon size={28} className="text-amber-700" />
+                  className="royal-admin-tile">
+                  <Icon size={24} aria-hidden="true"/>
                   <span className="text-xs sm:text-sm font-bold text-center leading-snug break-words max-w-full">{label}</span>
                 </button>)}
               </div></> : <>
@@ -175,7 +223,12 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
                     <button type="button" onClick={() => void reload()} className="ms-2 font-bold underline">إعادة المحاولة</button>
                   </div>
                 )}
-                {adminPage === 'stats' && <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{([{label:'المستخدمون',value:counts?.users_count,Icon:Users},{label:'الوكالات',value:counts?.agencies_count,Icon:Building2},{label:'الغرف',value:counts?.rooms_count,Icon:Radio}]).map(({label,value,Icon}) => <div key={label} className="rounded-2xl bg-white border border-amber-200 p-3 text-center"><Icon className="mx-auto text-amber-700"/><strong className="block text-xl">{value ?? '—'}</strong><span className="text-xs">{label}</span></div>)}</div>}
+                {adminPage==='stats' && counts && <div className="royal-admin-tiles">
+                  {statistics.map(([key,label,Icon,target])=><button type="button" key={key} className="royal-admin-tile royal-admin-stat"
+                    disabled={!target||!tiles.some(tile=>tile.id===target)} onClick={()=>target&&setAdminPage(target)}>
+                    <Icon size={22} aria-hidden="true"/><strong><bdi>{counts[key].toLocaleString('en-US')}</bdi></strong><span>{label}</span>
+                  </button>)}
+                </div>}
                 {recent && (adminPage === 'users' || adminPage === 'agencies' || adminPage === 'rooms') &&
                   <AdminRecentRecords items={recent[adminPage]} />}
                 {adminPage === 'operations' && <AdminOperationsPanel />}
@@ -202,6 +255,6 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
           })()}
         </>}
       </main>
-    </div>
+    </div>, document.body
   );
 };

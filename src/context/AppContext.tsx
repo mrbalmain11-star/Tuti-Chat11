@@ -1,3 +1,4 @@
+import { giftCategory } from '../services/giftCategory';
 import { RoomPinDialog } from '../components/RoomPinDialog';
 import type { RankingPeriod } from '../services/liveRankings';
 import { activeVipTier, hasVipEntrance } from '../utils/vipPerks';
@@ -66,7 +67,7 @@ interface AppContextType {
   setOpenChatThread: (conv: DirectConversation | null) => void;
   unreadCount: number;
   gifts: GiftItem[];
-  sendGift: (gift: GiftItem, receiver: { id: string; name: string; avatar?: string }, count?: number) => Promise<boolean>;
+  sendGift: (gift: GiftItem, receiver: { id: string; name: string; avatar?: string }, count?: number, requestId?: string) => Promise<boolean>;
   sendGiftToRoom: (gift: GiftItem, receivers: Array<{ id: string; name: string; avatar?: string }>, count: number, requestId: string) => Promise<boolean>;
   activeGiftAnimation: GiftAnimationPayload | null;
   clearGiftAnimation: () => void;
@@ -708,7 +709,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           assetFormat: typeof g.preview_url === 'string' && /\.svga(?:[?#]|$)/i.test(g.preview_url) ? 'svga' as const
             : typeof g.preview_url === 'string' && /\.lottie(?:[?#]|$)/i.test(g.preview_url) ? 'lottie' as const
             : typeof g.preview_url === 'string' && /\.json(?:[?#]|$)/i.test(g.preview_url) ? 'json' as const : undefined,
-          category: (g.category_id === 'luck' ? 'حظ' : g.category_id === 'cp' ? 'CP' : 'هدية') as GiftItem['category'],
+          category: giftCategory(g.category_id),
           animationType: (allowedAnimation.has(g.animation_type as GiftItem['animationType'])
             ? g.animation_type : 'rose') as GiftItem['animationType'],
           rarity: (['legendary','epic','rare','common'].includes(g.rarity ?? '')
@@ -769,7 +770,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           icon: String(serverGift.icon),
           assetUrl: typeof serverGift.preview_url === 'string' && /^https:\/\//i.test(serverGift.preview_url) ? serverGift.preview_url : undefined,
           assetFormat: typeof serverGift.preview_url === 'string' && /\.json(?:[?#]|$)/i.test(serverGift.preview_url) ? 'json' as const : undefined,
-          category: (serverGift.category_id === 'luck' ? 'حظ' : serverGift.category_id === 'cp' ? 'CP' : 'هدية') as GiftItem['category'],
+          category: giftCategory(serverGift.category_id),
           animationType: (['lion', 'mosque', 'sword', 'samurai', 'crown', 'car', 'diamond', 'rose'].includes(String(serverGift.animation_type))
             ? serverGift.animation_type : 'rose') as GiftItem['animationType'],
           rarity: (['legendary', 'epic', 'rare', 'common'].includes(String(serverGift.rarity))
@@ -1987,7 +1988,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       alert('لا يوجد اتصال بالإنترنت. احتفظنا بالنص لإعادة المحاولة.');
       return;
     }
-    const requestId = crypto.randomUUID();
+    const requestId: string = crypto.randomUUID();
     const dmClient = stagingBackend;
     void Promise.resolve(dmClient.rpc('staging_send_dm', {
       p_to: recipientId, p_text: body, p_nonce: requestId,
@@ -2049,7 +2050,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const sendGift = async (
     gift: GiftItem,
     receiver: { id: string; name: string; avatar?: string },
-    count: number = 1
+    count: number = 1,
+    requestId: string = crypto.randomUUID()
   ): Promise<boolean> => {
     if (!stagingBackend || !activeRoom || !gift || !receiver?.id ||
         ![1, 7, 17, 77, 777].includes(count) || !Number.isSafeInteger(gift.price) || gift.price < 0) {
@@ -2063,7 +2065,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             p_room_id: activeRoom.id,
             p_gift_id: gift.id,
             p_quantity: count,
-            p_request_id: crypto.randomUUID(),
+            p_request_id: requestId,
             p_expected_price: gift.price,
           })
         : await stagingBackend.rpc('phase3_send_gift', {
@@ -2071,7 +2073,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             p_recipient_id: receiver.id,
             p_gift_id: gift.id,
             p_quantity: count,
-            p_request_id: crypto.randomUUID(),
+            p_request_id: requestId,
             p_expected_price: gift.price,
           });
       if (error) throw error;

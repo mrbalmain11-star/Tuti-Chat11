@@ -1,0 +1,38 @@
+.royal-gift-layer {position:fixed;inset:0;z-index:80;display:flex;align-items:flex-end;font-family:Cairo,sans-serif}
+.royal-gift-dismiss {position:absolute;inset:0;background:#0003}
+.royal-gift-sheet {position:relative;width:100%;height:50dvh;min-height:0;box-sizing:border-box;display:flex;flex-direction:column;gap:.28rem;padding:.42rem .65rem max(.42rem,env(safe-area-inset-bottom));color:#f6fffa;border:2px solid #c99a3e;border-radius:1.55rem 1.55rem 0 0;background:radial-gradient(ellipse at top,#14523a,#061e16 52%,#031711);box-shadow:0 -4px 22px #052c1a99,inset 0 0 11px #c999453e;animation:royal-gift-in .2s ease-out}
+.royal-gift-sheet[data-closing=true] {animation:royal-gift-out .2s ease-in both;pointer-events:none}
+@keyframes royal-gift-in {from {transform:translateY(100%)}}
+@keyframes royal-gift-out {to {transform:translateY(100%)}}
+.royal-gift-heading {position:relative;display:grid;place-items:center;color:#fbe19a}
+.royal-gift-heading h2 {display:flex;align-items:center;gap:.35rem;font-weight:900;padding:.18rem .48rem}
+.royal-gift-heading button {position:absolute;inset-inline-end:.1rem;border:1px solid #b58b41;border-radius:50%;padding:.15rem}
+.royal-gift-crown {position:absolute;top:-1.45rem;inset-inline-start:calc(50% - .75rem);width:1.5rem;color:#ffdc7e;filter:drop-shadow(0 0 5px #b3812a)}
+.royal-gift-tabs,.royal-gift-send,.royal-gift-totals,.royal-gift-recipients {display:flex;align-items:center;gap:.35rem;font-size:.73rem}
+.royal-gift-tabs button {flex:1;min-width:0;border:1px solid #497753;border-radius:1rem;padding:.15rem .06rem;font-weight:800}
+.royal-gift-layer [aria-pressed=true] {border-color:#f8d678;box-shadow:inset 0 0 9px #e9bd5640;color:#ffdf7f}
+.royal-gift-recipients {min-height:1.75rem}
+.royal-gift-recipients label {display:flex;align-items:center;gap:.25rem;min-width:0}
+.royal-gift-recipients img {width:1.35rem;height:1.35rem;border-radius:50%;object-fit:cover}
+.royal-gift-layer select,.royal-gift-recipients button,.royal-gift-send button {background:#092d20;color:#fff6d4;border:1px solid #a48340;border-radius:.65rem;padding:.15rem .4rem;min-width:0}
+.royal-gift-send button {display:flex;align-items:center;justify-content:center;gap:.2rem;min-height:1.6rem}
+.royal-gift-send .royal-gift-submit {flex:1;background:linear-gradient(#ffdc75,#c58823);color:#231500;font-weight:900}
+.royal-gift-submit:disabled {opacity:.55}
+.royal-gift-grid {flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-content:start;gap:.4rem;overflow:auto;overscroll-behavior:contain;padding:.2rem}
+.royal-gift-grid p {grid-column:1/-1;text-align:center;font-size:.8rem;padding:.5rem}
+.royal-gift-card {position:relative;min-width:0;display:grid;place-items:center;gap:.12rem;padding:.26rem;border:1px solid #b68b45;border-radius:.85rem;background:linear-gradient(#0d402d,#051f17);color:#fff7dc;font-size:.72rem}
+.royal-gift-card strong {width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.royal-gift-card bdi {color:#ffdf80}
+.royal-gift-art {display:grid;place-items:center;width:100%;height:2.75rem;font-size:1.85rem}
+.royal-gift-art img,.royal-gift-art svg {width:3.1rem;height:100%;object-fit:contain}
+.royal-gift-check {position:absolute;inset-inline-end:.3rem;top:.28rem;background:#ffd664;color:#312000;border-radius:50%;padding:.15rem}
+.royal-gift-footer {flex:none;border-top:1px solid #987539;padding-top:.2rem}
+.royal-gift-totals {justify-content:space-between;flex-wrap:wrap;color:#ffde8b}
+@media(prefers-reduced-motion:reduce) {.royal-gift-sheet {animation:none}}
+.royal-gift-heading::before,.royal-gift-heading::after {
+  content:"";position:absolute;top:-.6rem;width:2.2rem;height:.5rem;pointer-events:none;
+  border-top:1px solid #ffe7a1;border-bottom:1px solid #9f6b29;background:linear-gradient(160deg,#f8d88b,#755324);
+  border-radius:85% 0 85% 0;opacity:.9
+}
+.royal-gift-heading::before {right:calc(50% + .8rem);transform:rotate(13deg)}
+.royal-gift-heading::after {left:calc(50% + .8rem);transform:scaleX(-1) rotate(13deg)}

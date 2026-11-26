@@ -31,7 +31,7 @@ export const AdminSpecialIdPanel: React.FC = () => {
   const grant = async () => {
     setError(''); setNotice('');
     if (!stagingBackend) { setError('خادم Staging غير متصل'); return; }
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(target.trim())) { setError('أدخل معرّف الحساب UUID الصحيح'); return; }
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(target.trim())) { setError('تحقّق من رقم حساب المستخدم أولاً'); return; }
     if (!/^[1-9][0-9]{3,9}$/.test(specialId)) { setError('الآيدي المميز يجب أن يكون 4 إلى 10 أرقام ولا يبدأ بصفر'); return; }
     if (reason.trim().length < 10 || reason.trim().length > 300) { setError('سبب المنح يجب أن يكون من 10 إلى 300 حرف'); return; }
     if (!confirmation) { setError('يجب تأكيد أن المنح نهائي'); return; }
@@ -48,15 +48,13 @@ export const AdminSpecialIdPanel: React.FC = () => {
   };
   return <section className="rounded-2xl border border-amber-200 bg-white p-4 mb-5">
     <h2 className="font-black text-lg mb-2">منح آيدي مميز</h2>
-    <p className="text-sm text-slate-500 mb-4">للمالك فقط. المنح نهائي لحساب موثق ولا يمكن تغيير الآيدي بعد تخصيصه. لا يتم استبدال رقم الحساب الأصلي.</p>
+    <p className="text-sm text-slate-500 mb-4">يتطلب صلاحية إدارة الآيديات. المنح نهائي لحساب موثق ولا يمكن تغيير الآيدي بعد تخصيصه. لا يتم استبدال رقم الحساب الأصلي.</p>
     <label className="block text-sm mb-1">رقم حساب المستخدم الأصلي</label>
     <div className="flex gap-2 mb-2">
       <input className="border rounded-xl p-3 flex-1 min-w-0" inputMode="numeric" value={accountNumber} onChange={e => { setAccountNumber(integerDigits(e.target.value)); setTarget(''); setAccountLabel(''); setConfirmation(false); }} placeholder="100000" />
       <button type="button" disabled={busy} onClick={() => void findAccount()} className="border border-amber-500 rounded-xl px-3">تحقق</button>
     </div>
     {accountLabel && <p className="text-green-700 text-sm mb-2">الحساب: {accountLabel}</p>}
-    <label className="block text-sm mb-1">معرّف الحساب UUID (تلقائي)</label>
-    <input className="w-full border rounded-xl p-3 mb-3" dir="ltr" value={target} readOnly placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
     <label className="block text-sm mb-1">الآيدي المميز المطلوب</label>
     <input className="w-full border rounded-xl p-3 mb-3" dir="ltr" inputMode="numeric" maxLength={10} value={specialId} onChange={e => setSpecialId(integerDigits(e.target.value))} placeholder="12345" />
     <label className="block text-sm mb-1">سبب المنح (إلزامي للتدقيق)</label>

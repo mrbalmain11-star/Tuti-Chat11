@@ -99,6 +99,7 @@ export const ProfileView: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const [adminAccess, setAdminAccess] = useState<AdminAccess | null>(null);
   const [adminPanelOpen, setAdminPanelOpen] = useState(false);
+  useEffect(() => { if (activeTab !== 'profile') setAdminPanelOpen(false); }, [activeTab]);
   useEffect(() => {
     let active = true;
     setAdminAccess(null);
@@ -291,7 +292,7 @@ export const ProfileView: React.FC = () => {
       className="min-h-screen pb-28 profile-android-safe font-['Cairo',sans-serif] bg-gradient-to-b from-[#FDFBF7] via-[#FAF6ED] to-[#F5EFE0] text-slate-800 select-none relative overflow-x-hidden"
       dir={isRtl ? 'rtl' : 'ltr'}
     >
-      {adminPanelOpen && adminAccess && <AdminCenterView onClose={() => setAdminPanelOpen(false)} />}
+      {activeTab === 'profile' && adminPanelOpen && adminAccess && <AdminCenterView onClose={() => setAdminPanelOpen(false)} />}
       {/* Toast Alert */}
       {toastMessage && (
         <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-white/95 border border-amber-400 text-slate-900 text-xs font-bold px-5 py-2.5 rounded-full shadow-xl flex items-center gap-2 backdrop-blur-md animate-in fade-in slide-in-from-top-3">

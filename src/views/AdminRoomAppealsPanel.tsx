@@ -1,3 +1,4 @@
+import { latinDigits } from '../utils/digits';
 import React, { useState } from 'react';
 import { stagingBackend } from '../services/stagingBackend';
 
@@ -24,8 +25,12 @@ export const AdminRoomAppealsPanel: React.FC = () => {
     if (!stagingBackend) { setError('الخادم غير متصل'); return; }
     setBusy(true); setError(''); setNotice(''); setAppeals([]);
     try {
+      const { data: internalId, error: lookupError } = await stagingBackend.rpc('totichat_admin_room_id', {
+        p_public_id: Number(roomId), p_section: 'room.appeals',
+      });
+      if (lookupError || !internalId) throw lookupError ?? new Error('الغرفة غير موجودة');
       const { data, error: rpcError } = await stagingBackend.rpc('phase2_room_ban_appeal_action', {
-        p_action: 'list', p_room_id: roomId.trim(),
+        p_action: 'list', p_room_id: internalId,
       });
       if (rpcError) throw rpcError;
       const rows = (data as { rows?: Appeal[] } | null)?.rows;
@@ -69,14 +74,12 @@ export const AdminRoomAppealsPanel: React.FC = () => {
     <h2 className="font-black text-lg mb-2">اعتراضات باند الغرف</h2>
     <p className="text-xs text-slate-500 mb-3">مالك الغرفة يراجع الاعتراض أولاً. الإدارة تراجع الاعتراض المصعّد. كل قرار يتحقق منه الخادم ويسجل.</p>
     <div className="flex gap-2 mb-3">
-      <input dir="ltr" className="border rounded-xl p-2 flex-1 min-w-0" value={roomId} onChange={e => { setRoomId(e.target.value); setAppeals([]); }} placeholder="Room UUID" />
-      <button disabled={busy || !roomId.trim()} onClick={() => void load()} className="rounded-xl border border-amber-400 px-3">عرض</button>
+      <input dir="ltr" className="border rounded-xl p-2 flex-1 min-w-0" value={roomId} onChange={e => { setRoomId(latinDigits(e.target.value).replace(/[^0-9]/g,'').slice(0,6)); setAppeals([]); }} placeholder="ID الغرفة" inputMode="numeric" />
+      <button disabled={busy || roomId.length!==6} onClick={() => void load()} className="rounded-xl border border-amber-400 px-3">عرض</button>
     </div>
     {appeals.map(appeal => <article key={appeal.id} className="rounded-xl border border-slate-200 p-3 mb-3">
       <p className="font-bold">{statusLabel[appeal.status] ?? appeal.status}</p>
       <p className="text-xs text-slate-500 break-all">رقم الاعتراض: {appeal.id}</p>
-      <p className="text-xs text-slate-500 break-all">حساب مقدّم الاعتراض: {appeal.submittedBy}</p>
-      <p className="text-xs text-slate-500 break-all">الحساب المستهدف: {appeal.targetId}</p>
       <p className="mt-2 whitespace-pre-wrap">{appeal.reason}</p>
       {appeal.ownerDecisionReason && <p className="mt-2 text-sm text-slate-600">سبب قرار المالك: {appeal.ownerDecisionReason}</p>}
       {['pending_owner','escalated'].includes(appeal.status) && <div className="mt-3">
