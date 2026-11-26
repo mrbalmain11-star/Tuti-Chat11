@@ -28,6 +28,8 @@ await db.exec(`
   create table toti_practice_games.catalog(code text primary key, enabled boolean default false, implemented boolean default false);
   create function toti_practice_games.player() returns uuid language sql stable as $$ select current_setting('test.actor')::uuid $$;
   create function cron.schedule(text,text,text) returns bigint language sql as $$ select 1::bigint $$;
+  create function phase3.admin_section_allowed(text) returns boolean language sql stable
+    as $$ select current_setting('test.actor') = '00000000-0000-4000-8000-000000000001' and $1 = 'games.manage' $$;
   create function phase3.level_xp_since_reset(uuid,timestamptz) returns boolean language sql as $$ select true $$;
   create function public.staging_royal_level_for_xp(bigint) returns integer language sql as $$ select case when $1 >= 10 then 100 else 1 end $$;
   ${core.slice(core.indexOf('create schema toti_games'), core.indexOf('create table toti_games.monthly'))}
@@ -44,6 +46,7 @@ await db.exec(`
   insert into toti_games.treasury(principal,funded_by,coins) values (5000000,'${first}',5000000);
 `);
 await db.exec(migration);
+await db.exec(file('20261126223000_toti_food_admin.sql'));
 await useActor(first);
 assert.equal(await one("select totichat_food_state()->'enabled' as value"), false);
 assert.equal(await one("select totichat_food_state()->'royal_eligible' as value"), false);
@@ -56,7 +59,15 @@ const ids = Array.from({length: 8}, (_, i) => '00000000-0000-4000-8000-000000000
 const slotQuery = "select date_bin(interval '30 seconds', clock_timestamp(), timestamptz '2000-01-01')::text as value";
 let slot = await one(slotQuery);
 await assert.rejects(enter(first,ids[0],slot,4,1000), /GAMES_DISABLED/);
-await db.exec('update toti_games.food_config set enabled = true');
+await useActor(second);
+await assert.rejects(one('select totichat_food_admin() as value'), /GAMES_ADMIN_REQUIRED/);
+await useActor(first);
+assert.equal((await one('select totichat_food_admin() as value')).enabled, false);
+await assert.rejects(one('select totichat_food_admin(true) as value'), /GAMES_RELEASE_APPROVAL_REQUIRED/);
+await db.exec('update toti_games.food_config set release_approved = true');
+assert.equal((await one('select totichat_food_admin(true) as value')).enabled, true);
+await one('select totichat_food_admin(true) as value');
+assert.equal((await one('select totichat_food_admin() as value')).audit.length, 1);
 const offset = await one("select extract(epoch from clock_timestamp()-date_bin(interval '30 seconds',clock_timestamp(),timestamptz '2000-01-01'))::float as value");
 if (offset > 7) await new Promise(resolve => setTimeout(resolve,(30-offset)*1000+100));
 slot = await one(slotQuery);
@@ -102,5 +113,15 @@ const secondState = await one('select totichat_food_state() as value');
 assert.equal(secondState.player.balance,2500);
 assert.equal(secondState.entries.length,1);
 assert.deepEqual(secondState.rounds,settled.rounds);
+await useActor(first);
+const stopped = await one('select totichat_food_admin(false) as value');
+assert.equal(stopped.enabled, false);
+assert.equal(stopped.audit.length, 2);
+assert.equal(stopped.audit[0].public_id, 100001);
+assert.equal(stopped.rounds[0].players, 2);
+assert.equal(stopped.rounds[0].entries, 4);
+assert.equal(stopped.rounds[0].staked, '17000');
+assert.equal(stopped.rounds[0].payouts, '10500');
+assert.equal((await one('select totichat_food_state() as value')).enabled, false);
 await db.close();
 console.log('Toti Food SQL tests passed');

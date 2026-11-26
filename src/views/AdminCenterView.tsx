@@ -19,6 +19,7 @@ import { AdminUserReportsPanel } from './AdminUserReportsPanel';
 import { AdminFinance } from '../features/finance/AdminFinance';
 import { SupplyReview } from '../features/rechargeAgent/SupplyReview';
 import { AdminAccountResetPanel } from './AdminAccountResetPanel';
+import { AdminTotiFood } from '../features/games/toti-food/AdminTotiFood';
 import { AdminDomino } from '../features/games/AdminDomino';
 import { AdminEmbeddedGamesPanel } from './AdminEmbeddedGamesPanel';
 import { AdminGamesTreasuryPanel } from './AdminGamesTreasuryPanel';
@@ -244,7 +245,7 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
                 {adminPage === 'financeReports' && <AdminReportsPanel />}
                 {adminPage === 'agencySupplyRequests' && <SupplyReview />}
                 {adminPage === 'accountReset' && <AdminAccountResetPanel />}
-                {adminPage === 'gamesTreasury' && <><AdminEmbeddedGamesPanel /><AdminGamesTreasuryPanel /><AdminDomino /></>}
+                {adminPage === 'gamesTreasury' && <><AdminEmbeddedGamesPanel /><AdminGamesTreasuryPanel /><AdminTotiFood /><AdminDomino /></>}
                 {adminPage === 'appBans' && <AdminAppBansPanel />}
                 {adminPage === 'staff' && <AdminStaffPanel />}
                 {adminPage === 'banners' && <AdminBannersPanel />}
