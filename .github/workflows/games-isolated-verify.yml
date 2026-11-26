@@ -1,0 +1,43 @@
+name: Verify isolated games
+
+on:
+  push:
+    branches: [integration/games-isolated]
+  pull_request:
+    paths:
+      - 'src/features/games/**'
+      - 'public/assets/games/**'
+      - 'supabase/migrations/*domino_tables.sql'
+      - 'tests/*practice.test.ts'
+      - 'tests/domino-integration.mjs'
+      - '.github/workflows/games-isolated-verify.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: isolated-games-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install app and SQL test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund @electric-sql/pglite@0.6.0
+      - name: Check TypeScript
+        run: npm run lint
+      - name: Test local practice rules
+        run: |
+          for test in tests/*practice.test.ts; do
+            node --import tsx "$test"
+          done
+      - name: Test Domino with a local database
+        run: node tests/domino-integration.mjs
+      - name: Build web app
+        run: npm run build
