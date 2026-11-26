@@ -4,6 +4,7 @@ import { EmbeddedGame, additionalGameCards, getEmbeddedGame } from './embeddedGa
 import { UnoPractice } from './uno/UnoPractice';
 import { FishingPractice } from './fishing/FishingPractice';
 import { KnifePractice } from './knife/KnifePractice';
+import { OkeyPractice } from './okey/OkeyPractice';
 import { Domino } from './Domino';
 import { SharedRoundPanel } from './SharedRoundPanel';
 
@@ -18,7 +19,8 @@ export function GameCenter({ accountId, onClose }: { accountId: string; onClose:
       .map(([code, name, icon]) => ({ code, name, english: code, icon })),
   ].filter(({ code, name, english }) => [name, english, getEmbeddedGame(code)?.name ?? '']
     .some(label => label.toLowerCase().includes(query.trim().toLowerCase())));
-  const standalone = selected === 'domino' || selected === 'uno' || selected === 'fishing' || selected === 'knife';
+  const practiceGames = ['uno', 'fishing', 'knife', 'okey'];
+  const standalone = selected === 'domino' || (selected !== undefined && practiceGames.includes(selected));
   const embedded = getEmbeddedGame(selected);
   const [minimized, setMinimized] = useState(false);
   const [seconds, setSeconds] = useState(0);
@@ -88,7 +90,8 @@ export function GameCenter({ accountId, onClose }: { accountId: string; onClose:
       {!standalone && snapshot && !snapshot.funded && <p role="status" className="mb-3 text-amber-200">محفظة الألعاب غير ممولة.</p>}
       {selected === 'domino' ? <Domino paused={minimized} /> : selected === 'uno' ? <UnoPractice paused={minimized} />
       : selected === 'fishing' ? <FishingPractice paused={minimized} />
-      : selected === 'knife' ? <KnifePractice paused={minimized} /> : embedded && !minimized ? (
+      : selected === 'knife' ? <KnifePractice paused={minimized} />
+      : selected === 'okey' ? <OkeyPractice /> : embedded && !minimized ? (
         <EmbeddedGame game={embedded} accountId={accountId} onClose={() => setSelected(undefined)} />
       ) : selected && !embedded && snapshot ? (
         <SharedRoundPanel key={selected} code={selected} accountId={accountId} snapshot={snapshot}
@@ -101,13 +104,13 @@ export function GameCenter({ accountId, onClose }: { accountId: string; onClose:
         {catalog.map(({ code, name, icon }) => {
           const game = snapshot?.catalog.find(item => item.code === code);
           const gameModule = getEmbeddedGame(code);
-          const enabled = code === 'domino' || code === 'uno' || code === 'fishing' || code === 'knife' || (gameModule ? gameModule.enabled : game?.enabled && !error);
+          const enabled = code === 'domino' || practiceGames.includes(code) || (gameModule ? gameModule.enabled : game?.enabled && !error);
           return <button key={code} type="button" disabled={!enabled}
             className="grid min-w-0 justify-items-center rounded-xl border border-white/10 bg-white/5 p-1.5 text-xs disabled:opacity-65"
             onClick={() => setSelected(code)}>
             <img src={icon.startsWith('/') ? icon : gameAsset + (gameModule?.icon ?? icon) + '.png'} alt="" loading="lazy" className="aspect-square w-full rounded-lg object-cover" />
             <strong className="mt-1">{gameModule?.name ?? name}</strong>
-            {(code === 'uno' || code === 'fishing' || code === 'knife') && <span>تدريب محلي</span>}
+            {practiceGames.includes(code) && <span>تدريب محلي</span>}
             {!enabled && <span>غير متاحة</span>}
           </button>;
         })}
