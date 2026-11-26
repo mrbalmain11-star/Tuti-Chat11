@@ -26,7 +26,7 @@ begin
 end;
 $$;
 `);
-await db.exec(readFileSync(new URL('../supabase/migrations/20261126090000_domino_tables.sql', import.meta.url), 'utf8'));
+await db.exec(readFileSync(new URL('../supabase/migrations/20261126053641_domino_tables.sql', import.meta.url), 'utf8'));
 const players = Array.from({ length: 3 }, () => randomUUID());
 for (const [index, id] of players.entries()) {
   await db.query('insert into profiles values ($1, $2, null, $3)', [id, 'Test ' + index, 100001 + index]);
