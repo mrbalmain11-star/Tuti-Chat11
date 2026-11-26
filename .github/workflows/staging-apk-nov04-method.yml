@@ -1,6 +1,14 @@
 name: Build TotiChat Staging APK - Nov 4 Method
 on:
   workflow_dispatch: {}
+  workflow_call:
+    inputs:
+      artifact_only:
+        type: boolean
+        default: true
+    secrets:
+      STAGING_SUPABASE_PUBLISHABLE_KEY:
+        required: true
   push:
     branches:
       - integration/legacy-backend-staging
@@ -248,9 +256,18 @@ jobs:
             adb logcat -d -t 2500 | grep -E -A 45 -B 12 'FATAL EXCEPTION|AndroidRuntime|Fatal signal|Process: com.numyar.totichat.staging|com.numyar.totichat.staging' | tail -n 240 || true
             echo "=== CHECK APP PROCESS AFTER LAUNCH ==="
             adb shell pidof com.numyar.totichat.staging
-      # Do not upload Actions artifacts: GitHub wraps them in ZIP files.
-      # The single user-facing download is the direct .apk under Releases.
+      - name: Upload isolated Android test build
+        if: ${{ inputs.artifact_only }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: totichat-games-android-test
+          path: |
+            android/app/build/outputs/apk/debug/app-debug.apk
+            android/app/build/outputs/apk/debug/app-debug.apk.sha256
+          if-no-files-found: error
+          retention-days: 7
       - name: Publish directly downloadable staging APK
+        if: ${{ !inputs.artifact_only && github.ref == 'refs/heads/integration/legacy-backend-staging' }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -266,6 +283,7 @@ jobs:
             --notes "Android staging debug APK for testing. Direct APK download; no ZIP extraction needed." \
             --prerelease
       - name: Verify published APK bytes and v2 signature after GitHub download
+        if: ${{ !inputs.artifact_only && github.ref == 'refs/heads/integration/legacy-backend-staging' }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

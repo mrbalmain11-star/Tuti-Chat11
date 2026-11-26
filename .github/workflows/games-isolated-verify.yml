@@ -1,6 +1,7 @@
 name: Verify isolated games
 
 on:
+  workflow_dispatch: {}
   push:
     branches: [integration/games-isolated]
   pull_request:
@@ -41,3 +42,13 @@ jobs:
         run: node tests/domino-integration.mjs
       - name: Build web app
         run: npm run build
+  android:
+    if: ${{ github.ref == 'refs/heads/integration/games-isolated' }}
+    needs: verify
+    permissions:
+      contents: write
+    uses: ./.github/workflows/staging-apk-nov04-method.yml
+    with:
+      artifact_only: true
+    secrets:
+      STAGING_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.STAGING_SUPABASE_PUBLISHABLE_KEY }}
