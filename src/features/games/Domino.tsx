@@ -14,6 +14,19 @@ const errors: Record<string, string> = {
   DOMINO_TURN: 'انتهى الدور أو حان دور اللاعب الآخر.',
 };
 
+const pipPositions = [
+  [], [4], [0, 8], [0, 4, 8], [0, 2, 6, 8], [0, 2, 4, 6, 8], [0, 2, 3, 5, 6, 8],
+];
+
+function DominoTile({ first, second }: { first: number; second: number }) {
+  return <span className="inline-flex shrink-0 divide-x divide-emerald-950/35 rounded-md bg-amber-50 p-0.5 text-emerald-950 shadow">
+    {[first, second].map((count, half) => <span key={half} className="grid h-6 w-6 grid-cols-3 grid-rows-3 place-items-center p-0.5">
+      {Array.from({ length: 9 }, (_, index) => <span key={index}
+        className={pipPositions[count].includes(index) ? 'h-1 w-1 rounded-full bg-current' : ''} />)}
+    </span>)}
+  </span>;
+}
+
 function Player({ player }: { player: DominoMatch['guest'] }) {
   if (!player) return <span>بانتظار لاعب</span>;
   return <span className="flex min-w-0 items-center gap-2">
@@ -82,6 +95,7 @@ export function Domino({ paused }: { paused: boolean }) {
   }, [refresh]);
 
   const match = lobby?.current;
+  const lastRound = lobby?.history[0];
   const first = match?.board[0]?.[0];
   const last = match?.board.at(-1)?.[1];
   const canPlay = match?.hand.some(tile => first == null ||
@@ -98,12 +112,16 @@ export function Domino({ paused }: { paused: boolean }) {
     {!lobby && !loadFailed && <p role="status">جارٍ تحميل الطاولات…</p>}
     {lobby && <>
       <p>اللاعبون في الجولات العامة الجارية: {lobby.public_players}</p>
+      {!match && lastRound?.outcome && <p role="status" className="rounded-xl border border-amber-400/35 bg-amber-400/10 p-2 text-amber-100">
+        نتيجة آخر جولة: {outcomes[lastRound.outcome]}
+      </p>}
       {match ? <>
         <div className="grid grid-cols-2 gap-2"><Player player={match.host} /><Player player={match.guest} /></div>
         {match.status === 'waiting' ? <p>الطاولة جاهزة للانضمام.</p> : <>
           <p>{match.my_turn ? 'دورك' : 'دور اللاعب الآخر'} · {seconds} ث · السحب {match.stock_count} · قطع الخصم {match.other_count}</p>
           <div className="flex flex-wrap gap-1 rounded-xl bg-black/30 p-2" dir="ltr" aria-label="لوحة اللعب">
-            {match.board.map(([a, b], index) => <span key={index} className="rounded bg-amber-100 px-2 py-1 font-bold text-emerald-950">{a} │ {b}</span>)}
+            {match.board.map(([a, b]) => <span key={Math.min(a, b) * 7 + Math.max(a, b)} role="img" aria-label={`${a}، ${b}`}
+              className="animate-in fade-in zoom-in duration-200"><DominoTile first={a} second={b} /></span>)}
             {!match.board.length && <span dir="rtl">اللوحة فارغة</span>}
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -118,9 +136,12 @@ export function Domino({ paused }: { paused: boolean }) {
               const a = Math.floor(tile / 7);
               const b = tile % 7;
               const end = left ? match.board[0]?.[0] : match.board.at(-1)?.[1];
-              return <button key={tile} type="button" className={button}
+              return <button key={tile} type="button" aria-label={`العب قطعة ${a}، ${b}`}
+                className="grid min-h-11 place-items-center rounded-lg border border-amber-300/35 p-1 disabled:opacity-50"
                 disabled={busy || !match.my_turn || !seconds || (end != null && end !== a && end !== b)}
-                onClick={() => actionForTable('play', { p_tile: tile, p_left: left })}>{a} │ {b}</button>;
+                onClick={() => actionForTable('play', { p_tile: tile, p_left: left })}>
+                <DominoTile first={a} second={b} />
+              </button>;
             })}
           </div>
         </>}
@@ -141,7 +162,7 @@ export function Domino({ paused }: { paused: boolean }) {
       <details><summary>آخر 10 جولات</summary>
         {!lobby.history.length && <p>لا توجد جولات مكتملة.</p>}
         {lobby.history.map(round => <p key={round.id} className="py-1">
-          {new Date(round.updated_at).toLocaleString('ar-IQ')} · {round.outcome && outcomes[round.outcome]}
+          {new Date(round.updated_at).toLocaleString('ar-IQ', { timeZone: 'Asia/Baghdad' })} · {round.outcome && outcomes[round.outcome]}
         </p>)}
       </details>
     </>}
