@@ -47,8 +47,12 @@ await db.exec(`
 `);
 await db.exec(migration);
 await db.exec(file('20261126223000_toti_food_admin.sql'));
+await db.exec(file('20261126224500_toti_food_rewards.sql'));
+await db.exec(file('20261126224600_toti_food_royal.sql'));
 await useActor(first);
 assert.equal(await one("select totichat_food_state()->'enabled' as value"), false);
+assert.equal(await one("select totichat_food_rewards()->'enabled' as value"), false);
+await assert.rejects(one("select totichat_food_reward_claim('daily',1,current_date) as value"), /GAMES_DISABLED/);
 assert.equal(await one("select totichat_food_state()->'royal_eligible' as value"), false);
 assert.equal(await one("select has_function_privilege('anon','public.totichat_food_enter(uuid,timestamptz,integer,bigint)','execute') as value"), false);
 assert.equal(await one("select array_agg(toti_games.food_multiplier(p) order by p) = array[10,5,3,2,1.5,10,5,3] as value from generate_series(0,7) p"), true);
@@ -79,7 +83,19 @@ const firstEntry = await enter(first,ids[0],slot,4,1000);
 assert.deepEqual(await enter(first,ids[0],slot,4,1000), firstEntry);
 await assert.rejects(enter(first,ids[0],slot,2,1000), /GAMES_REQUEST_CONFLICT/);
 await enter(first,ids[1],slot,4,5000);
-await enter(first,ids[2],slot,2,10000);
+const royalEnter = () => one('select totichat_food_royal_enter($1,$2,2,10000) as value', [ids[2],slot]);
+await assert.rejects(royalEnter(), /FOOD_ROYAL_INELIGIBLE/);
+await db.exec(`
+  with gift as (
+    insert into public.financial_operations(actor_id, request_id, operation, status)
+    values ('${first}', gen_random_uuid(), 'gift', 'completed') returning id
+  )
+  insert into public.gift_events select id, '${first}', 10, now() from gift;
+  insert into public.vip_entitlements values ('${first}', 6, now() + interval '1 day');
+`);
+await royalEnter();
+await db.exec("update public.vip_entitlements set expires_at = now() - interval '1 second'");
+await royalEnter();
 await enter(second,ids[3],slot,4,1000);
 await assert.rejects(enter(second,ids[4],slot,4,5000), /GAMES_INSUFFICIENT_BALANCE/);
 await useActor(first);
@@ -105,6 +121,22 @@ assert.equal(settled.rounds[0].multiplier,1.5);
 assert.equal(settled.player.balance,143000);
 assert.equal(await one("select count(*)::int as value from toti_games.ledger where kind='payout'"),3);
 assert.equal(await one("select reserved as value from toti_games.treasury"),0);
+const rewardOptions = await one('select totichat_food_rewards() as value');
+const daily = rewardOptions.items.find(item => item.kind === 'daily' && item.item === 1);
+assert.equal(daily.available, true);
+const claim = (kind, item, period) => one('select totichat_food_reward_claim($1,$2,$3) as value', [kind,item,period]);
+await assert.rejects(claim('daily',2,daily.period), /FOOD_REWARD_INELIGIBLE/);
+await assert.rejects(claim('chest',1,daily.period), /FOOD_REWARD_INELIGIBLE/);
+await db.query("update toti_games.treasury set coins=reserved");
+await assert.rejects(claim('daily',1,daily.period), /GAMES_POOL_CAPACITY/);
+await db.query("update toti_games.treasury set coins=5006500");
+assert.deepEqual(await claim('daily',1,daily.period), { coins: 100 });
+assert.deepEqual(await claim('daily',1,daily.period), { coins: 100 });
+const card = (await one('select totichat_food_rewards() as value')).items.find(item => item.kind === 'card' && item.item === 1);
+assert.equal(card.available, true);
+assert.deepEqual(await claim('card',1,card.period), { coins: 100 });
+assert.equal(await one("select coins as value from public.wallets where user_id=$1", [first]), 143200);
+assert.equal(await one("select count(*)::int as value from toti_games.food_rewards"), 2);
 const leaders = await one("select public.totichat_food_leaders('day') as value");
 assert.equal(leaders.leaders[0].public_id,100001);
 assert.equal(leaders.player.rank,1);

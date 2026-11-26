@@ -43,6 +43,22 @@ async function rpc<T>(name: string, args?: Record<string, unknown>, signal?: Abo
 }
 
 export const loadFood = (signal: AbortSignal) => rpc<FoodState>('totichat_food_state', undefined, signal);
-export const enterFood = (request: FoodRequest) => rpc<FoodEntry>('totichat_food_enter', request);
+export const enterFood = (request: FoodRequest, royal = false) =>
+  rpc<FoodEntry>(royal ? 'totichat_food_royal_enter' : 'totichat_food_enter', request);
 export const loadFoodLeaders = (period: FoodPeriod, signal: AbortSignal) =>
   rpc<{ leaders: FoodLeader[]; player: FoodLeader | null }>('totichat_food_leaders', { p_period: period }, signal);
+
+export type FoodReward = {
+  kind: 'daily' | 'chest' | 'card';
+  item: number;
+  period: string;
+  coins: number;
+  requirement: number;
+  progress: number;
+  claimed: boolean;
+  available: boolean;
+};
+export const loadFoodRewards = (signal: AbortSignal) =>
+  rpc<{ enabled: boolean; items: FoodReward[] }>('totichat_food_rewards', undefined, signal);
+export const claimFoodReward = ({ kind, item, period }: FoodReward) =>
+  rpc<{ coins: number }>('totichat_food_reward_claim', { p_kind: kind, p_item: item, p_period: period });

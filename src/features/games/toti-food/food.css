@@ -182,3 +182,10 @@
 .toti-food-podium small {
   font-size: 2.2cqw;
 }
+.toti-food-reward-ready {
+  color: #ffe39a;
+  box-shadow: inset 0 0 6px #d2a42c;
+}
+.toti-food-list button:disabled, .toti-food-stake:disabled {
+  opacity: 0.55;
+}

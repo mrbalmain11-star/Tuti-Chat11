@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { enterFood, loadFood, loadFoodLeaders, type FoodPeriod, type FoodRequest, type FoodRound, type FoodState } from './api';
+import { claimFoodReward, enterFood, loadFood, loadFoodLeaders, loadFoodRewards, type FoodReward, type FoodPeriod, type FoodRequest, type FoodRound, type FoodState } from './api';
 import './food.css';
 
 const root = '/assets/games/toti-food/';
@@ -34,6 +34,8 @@ const messages: Record<string, string> = {
   GAMES_POOL_CAPACITY: 'المشاركة متوقفة مؤقتاً لعدم كفاية رصيد الخزينة',
   GAMES_RATE_LIMITED: 'وصلت إلى حد المشاركات لهذه الجولة',
   GAMES_DISABLED: 'المشاركات متوقفة',
+  FOOD_ROYAL_INELIGIBLE: 'يتطلب المستوى 100 وVIP6 معاً',
+  FOOD_REWARD_INELIGIBLE: 'شروط الجائزة لم تتحقق أو انتهت مدتها',
   GAMES_INVALID_ENTRY: 'قيمة المشاركة غير صالحة',
   GAMES_REQUEST_CONFLICT: 'سبق تسجيل طلب مختلف بهذا المعرف',
 };
@@ -52,6 +54,7 @@ function Hit({ x, y, w, h, label, action, active = false, disabled = false, clas
 }
 
 export default function TotiFood({ accountId, onClose }: { accountId: string; onClose: () => void }) {
+  const [royal, setRoyal] = useState(false);
   const [page, setPage] = useState<Page>('play');
   const [state, setState] = useState<FoodState>();
   const [clock, setClock] = useState(0);
@@ -62,10 +65,10 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
   const [connected, setConnected] = useState<boolean>();
   const [busy, setBusy] = useState(false);
   const pendingKey = 'totichat-food-request:' + accountId;
-  const [pending, setPending] = useState<FoodRequest | undefined>(() => {
+  const [pending, setPending] = useState<(FoodRequest & { royal?: boolean }) | undefined>(() => {
     try {
       const saved = localStorage.getItem(pendingKey);
-      return saved ? JSON.parse(saved) as FoodRequest : undefined;
+      return saved ? JSON.parse(saved) as FoodRequest & { royal?: boolean } : undefined;
     } catch {
       return undefined;
     }
@@ -75,6 +78,11 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
   const [spin, setSpin] = useState<number>();
   const [resultSeconds, setResultSeconds] = useState(3);
   const [offset, setOffset] = useState(0);
+  const [rewardState, setRewardState] = useState<Awaited<ReturnType<typeof loadFoodRewards>>>();
+  const [rewardError, setRewardError] = useState('');
+  const [rewardBusy, setRewardBusy] = useState(false);
+  const [rewardRevision, reloadRewards] = useState(0);
+  const [rewardRules, showRewardRules] = useState(false);
   const [rewardsTab, setRewardsTab] = useState('المكافآت اليومية');
   const [historyPage, setHistoryPage] = useState(0);
   const refresh = useRef<() => void>(() => {});
@@ -145,6 +153,39 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
     return () => { controller.abort(); window.clearInterval(poll); };
   }, [page, period]);
 
+  useEffect(() => {
+    if (page !== 'rewards') return;
+    const controller = new AbortController();
+    const sync = async () => {
+      try {
+        const next = await loadFoodRewards(controller.signal);
+        if (!controller.signal.aborted) setRewardState(next);
+      } catch {
+        if (!controller.signal.aborted) setRewardState(undefined);
+      }
+    };
+    void sync();
+    const poll = window.setInterval(sync, 4000);
+    window.addEventListener('online', sync);
+    return () => { controller.abort(); window.clearInterval(poll); window.removeEventListener('online', sync); };
+  }, [page, rewardRevision]);
+
+  async function claim(reward: FoodReward) {
+    if (rewardBusy) return;
+    setRewardBusy(true);
+    setRewardError('');
+    try {
+      const result = await claimFoodReward(reward);
+      setRewardError(`تم استلام ${formatted(result.coins)} كوينز`);
+    } catch (error) {
+      setRewardError(messages[(error as { message?: string })?.message ?? ''] ?? 'تعذر تأكيد الاستلام. يمكنك إعادة المحاولة');
+    } finally {
+      reloadRewards(value => value + 1);
+      refresh.current();
+      setRewardBusy(false);
+    }
+  }
+
   const latest = state?.rounds[0];
   const roundKey = latest?.starts_at;
   useEffect(() => {
@@ -178,22 +219,22 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
   }, [page]);
 
   const seconds = state ? Math.max(0, Math.ceil((Date.parse(state.closes_at) - clock - offset) / 1000)) : null;
-  const canEnter = Boolean(connected && state?.enabled && seconds && !busy && !pending);
+  const canEnter = Boolean(connected && state?.enabled && (!royal || state.royal_eligible) && seconds && !busy && !pending);
   const go = (target: Page) => { setNotice(''); setPage(target); };
-  const rewards = (label: string) => { setRewardsTab(label); go('rewards'); };
-  const submit = async (request: FoodRequest) => {
+  const rewards = (label: string) => { setRewardsTab(label); showRewardRules(false); setRewardError(''); go('rewards'); };
+  const submit = async ({ royal: royalEntry, ...request }: FoodRequest & { royal?: boolean }) => {
     if (inFlight.current) return;
     inFlight.current = true;
     setBusy(true);
     setNotice('');
-    setPending(request);
-    try { localStorage.setItem(pendingKey, JSON.stringify(request)); } catch { /* Storage may be unavailable. */ }
+    setPending({ ...request, royal: royalEntry });
+    try { localStorage.setItem(pendingKey, JSON.stringify({ ...request, royal: royalEntry })); } catch { /* Storage may be unavailable. */ }
     const clearPending = () => {
       setPending(undefined);
       try { localStorage.removeItem(pendingKey); } catch { /* Storage may be unavailable. */ }
     };
     try {
-      await enterFood(request);
+      await enterFood(request, royalEntry);
       clearPending();
     } catch (error) {
       const message = (error as { message?: string })?.message ?? '';
@@ -207,7 +248,7 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
     }
   };
   const bet = (pick: number) => {
-    if (canEnter && state) void submit({ p_request: crypto.randomUUID(), p_start: state.round_start, p_pick: pick, p_stake: stake });
+    if (canEnter && state) void submit({ p_request: crypto.randomUUID(), p_start: state.round_start, p_pick: pick, p_stake: stake, royal });
   };
   const connectionStatus = connected === false ? 'تعذر الاتصال بخادم اللعبة' : !state ? 'جارٍ الاتصال…' : '';
   const status = connectionStatus || (state && !state.enabled ? 'المشاركات متوقفة' : '');
@@ -227,10 +268,11 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
       <Hit x={72} y={6.4} w={27} h={5} label="لوحة المتصدرين" action={() => go('leaders')} />
       {page !== 'rewards' && <>
         <Hit x={9} y={12} w={40} h={5} label="الوضع الملكي" action={() => go('royal')} />
-        <Hit x={51} y={12} w={40} h={5} label="الوضع العادي" action={() => go('play')} />
+        <Hit x={51} y={12} w={40} h={5} label="الوضع العادي" action={() => { setRoyal(false); go('play'); }} />
       </>}
     </>}
     {page === 'play' && <>
+      {royal && <Field x={9} y={12.4} w={40} h={4}>الوضع الملكي مفعّل</Field>}
       <Field x={16.3} y={21.4} w={63.3} h={2.1} className="toti-food-progress">
         <span style={{ width: Math.min(100, Number(state?.monthly_stake ?? 0) / 1e7) + '%' }} />
         <b>{formatted(state?.monthly_stake)} / 1,000,000,000</b>
@@ -242,7 +284,7 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
       <Hit x={12} y={28} w={9} h={5} label="قواعد اللعبة" action={() => go('rules')} />
       <Hit x={79} y={28} w={9} h={5} label="سجل مشاركاتي" action={() => { setHistoryPage(0); go('personal'); }} />
       {stakes.map((amount, index) => <Hit key={amount} x={5.1 + index * 18.2} y={77.4} w={17} h={3.1}
-        label={formatted(amount)} action={() => setStake(amount)} active={stake === amount} className="toti-food-stake">{formatted(amount)}</Hit>)}
+        label={formatted(amount)} action={() => setStake(amount)} active={stake === amount} disabled={royal && amount < 10000} className="toti-food-stake">{formatted(amount)}</Hit>)}
       <svg className="toti-food-wheel" viewBox="0 0 865 1536" aria-hidden="true">
         {sectors.map((path, index) => <path key={path} d={path}
           className={spin === index ? 'spin' : state?.bets[index] ? 'chosen' : undefined} />)}
@@ -273,9 +315,15 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
       <Field x={85} y={50.5} w={6} h={2.7}>{state && state.level >= 100 ? '✓' : '—'}</Field>
       <Field x={85} y={54.7} w={6} h={2.7}>{state && state.vip >= 6 ? '✓' : '—'}</Field>
       <Field x={85} y={58.8} w={6} h={2.7}>{Number(state?.monthly_stake) >= 1e9 ? '✓' : '—'}</Field>
-      <Hit x={20} y={84} w={60} h={8} label="الوضع الملكي" action={() => setNotice(
-        !state ? status : state.royal_eligible ? 'حسابك مؤهل. الجولات الملكية متوقفة' : 'يتطلب المستوى 100 وVIP6 معاً',
-      )} />
+      <Hit x={20} y={84} w={60} h={8} label="فتح الوضع الملكي" action={() => {
+        if (!state?.royal_eligible) {
+          setNotice(!state ? status : 'يتطلب المستوى 100 وVIP6 معاً');
+          return;
+        }
+        setRoyal(true);
+        setStake(10000);
+        go('play');
+      }} />
       {notice && <Field x={12} y={92} w={76} h={4} className="toti-food-status">{notice}</Field>}
     </>}
     {page === 'recent' && <>
@@ -330,11 +378,27 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
     </>}
     {page === 'rewards' && <>
       {['الصناديق الملكية', 'المكافآت اليومية', 'بطاقات الجوائز'].map((label, index) => <Hit key={label} x={3 + index * 33} y={12} w={30} h={5}
-        label={label} action={() => setRewardsTab(label)} active={label === rewardsTab} />)}
-      <Field x={5} y={18.5} w={90} h={72} className="toti-food-status">
-        <span>{rewardsTab} · الاستلام غير متاح حالياً</span>
+        label={label} action={() => { setRewardsTab(label); showRewardRules(false); }} active={label === rewardsTab} />)}
+      <Field x={5} y={18.5} w={90} h={72} className="toti-food-list">
+        {rewardRules ? <p>يُحسب التقدم بتوقيت بغداد. تتطلب المكافأة اليومية مشاركة مسوّاة بقيمة 1,000 كوينز على الأقل. يعيد غياب يوم السلسلة إلى اليوم الأول. تستحق الصناديق يومياً حسب إجمالي المشاركات المسوّاة، وتُفتح البطاقات شهرياً حسب عدد المكافآت اليومية المستلمة.</p>
+          : !rewardState ? <p>تعذر تحميل حالة المكافآت</p>
+          : rewardState.items.filter(item => item.kind === (
+            rewardsTab === 'المكافآت اليومية' ? 'daily' : rewardsTab === 'الصناديق الملكية' ? 'chest' : 'card'
+          )).map(item => {
+            const name = item.kind === 'daily' ? `اليوم ${item.item}` : item.kind === 'chest'
+              ? ['الفضي', 'الذهبي', 'الماسي', 'النخبة'][item.item - 1]
+              : ['VIP', 'الجواهر', 'العملات', 'الطاقة', 'المفاجآت'][item.item - 1];
+            return <div key={item.item} className={item.kind === 'daily' && item.available ? 'toti-food-reward-ready' : undefined}>
+              <strong>{name}</strong><span>{formatted(item.coins)} كوينز</span>
+              {item.kind !== 'daily' && <span>{formatted(item.progress)} / {formatted(item.requirement)}</span>}
+              <button type="button" disabled={rewardBusy || !rewardState.enabled || !item.available}
+                onClick={() => void claim(item)}>{item.claimed ? 'مستلمة' : item.kind === 'card' ? 'استخدام' : item.kind === 'chest' ? 'فتح' : 'استلام'}</button>
+            </div>;
+          })}
+        {rewardError && <p role="status">{rewardError}</p>}
       </Field>
-      <Hit x={15} y={91} w={70} h={6} label="القواعد" action={() => go('rules')} />
+      <Hit x={15} y={91} w={70} h={6} label="قواعد المكافآت" action={() => showRewardRules(value => !value)} />
+
     </>}
     {page === 'result' && shownResult && <>
       <Field x={88} y={1.4} w={8} h={5}>{resultSeconds}</Field>
