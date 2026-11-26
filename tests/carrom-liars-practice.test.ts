@@ -1,0 +1,41 @@
+import assert from 'node:assert/strict';
+import { carromMoving, shoot, startCarrom, stepCarrom } from '../src/features/games/carrom/rules';
+import { playBluff, resolveBluff, startBluff } from '../src/features/games/liars/rules';
+
+const board = startCarrom();
+assert.equal(board.pieces.length, 12);
+assert.equal(shoot(board, 200, 360, 1), board);
+assert.equal(shoot(board, 200, 200, Infinity), board);
+let strike = shoot(board, 200, 200, 0.65);
+assert.ok(carromMoving(strike));
+assert.equal(shoot(strike, 80, 90, 1), strike);
+for (let tick = 0; tick < 2_000 && carromMoving(strike); tick++) strike = stepCarrom(strike);
+assert.equal(carromMoving(strike), false);
+assert.equal(strike.seat, 1);
+assert.equal(strike.pieces.length + strike.scores[0] + strike.scores[1], 12);
+
+const last = { ...board, pieces: [{ ...board.pieces[0], x: 42, y: 22, vx: -12 }] };
+const scored = stepCarrom(last);
+assert.equal(scored.pieces.length, 0);
+assert.deepEqual(scored.scores, [1, 0]);
+assert.equal(carromMoving(scored), false);
+
+const bluff = startBluff(() => 0.5);
+assert.deepEqual(bluff.hands.map(hand => hand.length), [6, 6]);
+assert.equal(playBluff(bluff, 1, [bluff.hands[1][0].id]), bluff);
+assert.equal(resolveBluff(bluff, 0, true), bluff);
+const truthful = bluff.hands[0].find(card => card.rank === bluff.target)!;
+const falseCard = bluff.hands[0].find(card => card.rank !== bluff.target)!;
+assert.ok(truthful && falseCard);
+assert.equal(playBluff(bluff, 0, [truthful.id, truthful.id]), bluff);
+const honest = playBluff(bluff, 0, [truthful.id]);
+assert.equal(honest.turn, 1);
+assert.equal(resolveBluff(honest, 0, true), honest);
+assert.equal(resolveBluff(honest, 1, true).winner, 0);
+const challenged = resolveBluff(playBluff(bluff, 0, [truthful.id, falseCard.id]), 1, true);
+assert.equal(challenged.winner, 1);
+assert.equal(challenged.revealed.length, 2);
+const final = playBluff({ ...bluff, hands: [[truthful], bluff.hands[1]] }, 0, [truthful.id]);
+assert.equal(playBluff(final, 1, [bluff.hands[1][0].id]), final);
+assert.equal(resolveBluff(final, 1, false).winner, 0);
+console.log('Carrom and Liar’s Bar practice rules passed.');

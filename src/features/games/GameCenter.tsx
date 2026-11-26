@@ -5,6 +5,8 @@ import { UnoPractice } from './uno/UnoPractice';
 import { FishingPractice } from './fishing/FishingPractice';
 import { KnifePractice } from './knife/KnifePractice';
 import { OkeyPractice } from './okey/OkeyPractice';
+import { CarromPractice } from './carrom/CarromPractice';
+import { LiarsPractice } from './liars/LiarsPractice';
 import { Domino } from './Domino';
 import { SharedRoundPanel } from './SharedRoundPanel';
 
@@ -19,7 +21,7 @@ export function GameCenter({ accountId, onClose }: { accountId: string; onClose:
       .map(([code, name, icon]) => ({ code, name, english: code, icon })),
   ].filter(({ code, name, english }) => [name, english, getEmbeddedGame(code)?.name ?? '']
     .some(label => label.toLowerCase().includes(query.trim().toLowerCase())));
-  const practiceGames = ['uno', 'fishing', 'knife', 'okey'];
+  const practiceGames = ['uno', 'fishing', 'knife', 'okey', 'carrom', 'liars-bar'];
   const standalone = selected === 'domino' || (selected !== undefined && practiceGames.includes(selected));
   const embedded = getEmbeddedGame(selected);
   const [minimized, setMinimized] = useState(false);
@@ -91,7 +93,9 @@ export function GameCenter({ accountId, onClose }: { accountId: string; onClose:
       {selected === 'domino' ? <Domino paused={minimized} /> : selected === 'uno' ? <UnoPractice paused={minimized} />
       : selected === 'fishing' ? <FishingPractice paused={minimized} />
       : selected === 'knife' ? <KnifePractice paused={minimized} />
-      : selected === 'okey' ? <OkeyPractice /> : embedded && !minimized ? (
+      : selected === 'okey' ? <OkeyPractice />
+      : selected === 'carrom' ? <CarromPractice paused={minimized} />
+      : selected === 'liars-bar' ? <LiarsPractice /> : embedded && !minimized ? (
         <EmbeddedGame game={embedded} accountId={accountId} onClose={() => setSelected(undefined)} />
       ) : selected && !embedded && snapshot ? (
         <SharedRoundPanel key={selected} code={selected} accountId={accountId} snapshot={snapshot}
