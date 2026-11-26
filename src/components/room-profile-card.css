@@ -1,0 +1,30 @@
+.room-profile-overlay { position:fixed; inset:0; z-index:55; display:grid; place-items:center; padding:max(22px,env(safe-area-inset-top)) 12px max(22px,env(safe-area-inset-bottom)); background:#000a; backdrop-filter:blur(6px); }
+.room-profile-card { width:min(100%,27rem); min-width:0; position:relative; border:3px solid transparent; border-radius:26px; background:radial-gradient(ellipse at 50% 21%,#06422d,#03261b 53%,#021710 88%) padding-box,linear-gradient(130deg,#fdedb2,#ad6511 16%,#ffce4d 25%,#ffec96 45%,#846139 54%,#ffe998 74%,#b2711a 83%,#fff0a0) border-box; box-shadow:inset 0 0 0 1px #17996e,0 0 17px #db9d3349; color:#f5fff8; }
+.room-profile-content { max-height:min(88dvh,750px); overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; padding:12px clamp(8px,3vw,15px) 14px; border-radius:22px; }
+.room-profile-crown { position:absolute; z-index:2; inset-block-start:-21px; left:50%; transform:translateX(-50%); display:flex; align-items:center; pointer-events:none; color:#ffdf7e; filter:drop-shadow(0 0 5px #ecb43d80); }
+.room-profile-crown svg { width:45px; height:35px; fill:#b97416; stroke-width:1.65; }
+.room-profile-crown span { width:clamp(35px,15vw,75px); height:12px; background:linear-gradient(155deg,#d2ffe6,#0cbf79 30%,#075337 55%,#e3a635 82%,#ffe9a3); border-radius:0 99% 0 99%; transform:rotate(10deg); }
+.room-profile-crown span:last-child { transform:scaleX(-1) rotate(10deg); }
+.room-profile-jewel { position:absolute; left:50%; inset-block-end:-8px; transform:translateX(-50%) rotate(45deg); width:17px; height:17px; border:2px solid #ffe67b; background:conic-gradient(#a4ffd9,#0c8f61,#023e2a,#42ef9f,#a4ffd9); box-shadow:0 0 9px #f4bb41; pointer-events:none; }
+.room-profile-header { display:flex; justify-content:space-between; align-items:center; gap:6px; }
+.room-profile-header span,.room-profile-header button,.room-profile-id { display:inline-flex; align-items:center; justify-content:center; gap:5px; border:1px solid #e5bc62a3; border-radius:99px; background:#052d21; padding:4px 8px; font-weight:700; font-size:12px; }
+.room-profile-header button { padding:6px; }
+.room-profile-header span svg,.room-profile-id svg { color:#edca76; }
+.room-profile-avatar { width:clamp(63px,19vw,91px); aspect-ratio:1; position:relative; margin:6px auto 10px; }
+.room-profile-avatar button { display:block; width:100%; height:100%; border-radius:50%; overflow:hidden; background:#092d22; }
+.room-profile-avatar img.room-profile-photo { width:100%; height:100%; object-fit:cover; }
+.room-profile-name { text-align:center; font-weight:900; font-size:clamp(17px,5vw,24px); overflow-wrap:anywhere; }
+.room-profile-status { max-width:100%; width:fit-content; margin:4px auto 5px; padding:2px 12px; border:1px solid #c79946; border-radius:999px; background:linear-gradient(135deg,#741f17,#421313); color:#ffe3a3; font-size:12px; text-align:center; overflow-wrap:anywhere; }
+.room-profile-levels { display:flex; align-items:center; justify-content:center; gap:clamp(4px,2vw,10px); padding:1px 5px; margin-top:7px; border:1px solid #d8b65596; border-radius:13px; background:#03291d; }
+.room-profile-level { display:flex; align-items:center; flex:1; min-width:0; justify-content:center; gap:4px; }
+.room-profile-level span { font-size:11px; text-align:center; }
+.room-profile-level span b { display:block; }
+.room-profile-level + .room-profile-level { border-inline-start:1px solid #69c39f5c; }
+.room-profile-actions { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; padding:6px; margin-top:8px; border:1px solid #a78b486e; border-radius:14px; background:#022b1d; }
+.room-profile-action { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:4px; min-height:48px; padding:3px; min-width:0; border:1px solid #d9b55ca8; border-radius:10px; background:linear-gradient(#10543c,#03261a); font-size:11px; font-weight:800; }
+.room-profile-action svg { width:17px; height:17px; color:#f6d07d; }
+.room-profile-action.primary { border-color:#b5ffcf; box-shadow:inset 0 0 7px #61e9a5,0 0 5px #29bf77; }
+.room-profile-action.danger { color:#ffd0cc; }
+.room-profile-action.danger svg { color:#ff8985; }
+.room-profile-action:disabled,.room-profile-id:disabled { opacity:.55; }
+.room-profile-id { margin:9px auto 0; display:flex; width:fit-content; }

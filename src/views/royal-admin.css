@@ -1,0 +1,32 @@
+.royal-admin {color:#fff6de;background:radial-gradient(ellipse at top,#14523a,#042219 44%,#041913)}
+.royal-admin-header {position:relative;text-align:center;padding:.45rem 1rem .7rem;border-bottom:1px solid #9e7131;background:radial-gradient(ellipse at top,#145438,#052418 58%);color:#ffe08a}
+.royal-admin-header h1 {font-size:1.34rem;font-weight:900;line-height:1.2;text-shadow:0 2px 7px #c89226b0}
+.royal-admin-header p {color:#8be5bd;font-weight:800}
+.royal-admin-emblem {height:3.45rem;margin:auto;width:5.2rem;display:grid;place-items:center}
+.royal-admin-emblem svg {width:100%;height:100%;color:#ffd870}
+.royal-admin-back {position:absolute;inset-inline-start:.75rem;top:.9rem;border:1px solid #c39644;border-radius:2rem;padding:.28rem .55rem;display:flex;align-items:center;gap:.23rem;font-size:.8rem}
+.royal-admin-tiles {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem}
+.royal-admin-tile,.royal-admin-wallet,.royal-admin-treasury {border:1px solid #c79949;border-radius:.9rem;background:linear-gradient(155deg,#124b34,#06291e 55%,#051f16);box-shadow:inset 0 0 9px #e2a8432b;color:#fff1cf}
+.royal-admin-tile {min-height:3.65rem;min-width:0;display:flex;align-items:center;gap:.45rem;justify-content:center;padding:.4rem;transition:transform .14s}
+.royal-admin-tile:active,.royal-admin-wallet:active {transform:scale(.97)}
+.royal-admin-tile svg,.royal-admin-wallet svg,.royal-admin-treasury svg {color:#ffd26b;flex-shrink:0;filter:drop-shadow(0 0 4px #bd852280)}
+.royal-admin-wallet {min-width:0;padding:.42rem .1rem;font-size:clamp(.61rem,2.8vw,.87rem);overflow-wrap:anywhere}
+.royal-admin-treasury {position:relative;padding:.8rem}
+.royal-admin-treasury .royal-treasury-coins {position:absolute;inset-inline-end:.72rem;top:.7rem}
+.royal-admin-treasury p {margin-top:.35rem;color:#ffdf82;overflow-wrap:anywhere;padding-inline-end:3.4rem}
+.royal-admin-finance {color:#ffedbf}
+.royal-admin-finance :is(form,article,details) {border-color:#aa8349}
+.royal-admin-stat {flex-direction:column}
+.royal-admin .text-slate-500,.royal-admin .text-slate-600 {color:#a9cbbb}
+.royal-admin main :is(section,article,div).bg-white {background-color:#103527;color:#fff4d5}
+.royal-admin main :is(section,article,div).bg-white :is(input,select,textarea) {background:#fffdf4;color:#142a24}
+.royal-admin-emblem {position:relative}
+.royal-admin-emblem::before,.royal-admin-emblem::after {
+  content:"";position:absolute;bottom:.15rem;width:3rem;height:.95rem;border:1px solid #edbc63;
+  background:linear-gradient(160deg,#f7d78b,#8c5f21);border-radius:90% 0 90% 0
+}
+.royal-admin-emblem::before {right:90%;transform:rotate(18deg)}
+.royal-admin-emblem::after {left:90%;transform:scaleX(-1) rotate(18deg)}
+.royal-admin-tile:disabled {cursor:default}
+.royal-admin-finance .bg-amber-50 {background:#173b29;color:#fff3ce}
+.royal-admin-finance .bg-red-50 {background:#3b2522;color:#ffc2ab}

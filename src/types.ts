@@ -1,4 +1,5 @@
 export interface UserProfile {
+  publicId?: number;
   id: string;
   name: string;
   nickname: string;
@@ -57,6 +58,7 @@ export interface MicSeat {
 }
 
 export interface VoiceRoom {
+  accessLocked?: boolean;
   id: string;
   publicId?: number;
   title: string;

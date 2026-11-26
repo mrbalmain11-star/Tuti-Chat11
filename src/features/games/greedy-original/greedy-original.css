@@ -1,0 +1,10 @@
+.greedy-original { min-width: 0; overflow: hidden; }
+.greedy-original .greedy-food-card { width: clamp(36px, 14vw, 67px); aspect-ratio: 1; }
+.greedy-original .gold-glow-pulse { animation: greedy-gold-glow 2s ease-in-out infinite; }
+@keyframes greedy-gold-glow {
+  0%,100% { filter: drop-shadow(0 0 4px #ffd76666); }
+  50% { filter: drop-shadow(0 0 13px #ffd766cb); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .greedy-original .gold-glow-pulse { animation: none; }
+}

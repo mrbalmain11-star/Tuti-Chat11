@@ -1,0 +1,29 @@
+.room-pin-overlay {
+  position: fixed; inset: 0; z-index: 1300; display: grid; place-items: center; padding: 1rem;
+  background: #020c09c9; backdrop-filter: blur(5px);
+}
+.room-pin-panel {
+  position: relative; width: min(100%, 25rem); padding: 1rem; border: 2px solid #dba94d;
+  border-radius: 1.5rem; background: radial-gradient(ellipse at bottom,#104834,#041d15 65%);
+  color: #fff9e8; text-align: center; box-shadow: 0 0 22px #e6b25545,inset 0 0 12px #ffd67432;
+}
+.room-pin-panel h2 { margin: 0 2rem .55rem; display: flex; justify-content: center; align-items: center; gap: .45rem; color: #f4d17d; font-weight: 900; border-bottom: 1px solid #cc9b4291; padding-bottom: .4rem; }
+.room-pin-panel p { margin-block: .25rem; }
+.room-pin-crown { position: absolute; top: -1rem; inset-inline-start: calc(50% - .9rem); color: #f8ce67; width: 1.8rem; background: #0b2d21; }
+.room-pin-panel form { display: grid; gap: .4rem; }
+.room-pin-panel button { border: 1px solid #ae8842; border-radius: .75rem; min-height: 2.1rem; padding: .2rem .45rem; }
+.room-pin-panel button:disabled { opacity: .55; }
+.room-pin-panel .room-pin-x { position: absolute; top: .65rem; left: .6rem; display: grid; place-items: center; width: 1.95rem; min-height: 1.95rem; padding: 0; border-radius: 50%; }
+.room-pin-panel .room-pin-primary { background: linear-gradient(#ffe5a3,#b28126,#ffe295); color: #171103; font-weight: 900; }
+.room-pin-fields { position: relative; display: grid; grid-template-columns: repeat(6,1fr); gap: .3rem; margin-block: .18rem; }
+.room-pin-fields input { position: absolute; inset: 0; opacity: 0; width: 100%; cursor: text; }
+.room-pin-fields span { display: grid; place-items: center; height: 2.35rem; border: 1px solid #5ca773; border-radius: .5rem; color: #f3d885; }
+.room-pin-fields:focus-within { outline: 1px solid #e4c363; border-radius: .5rem; }
+.room-pin-keys { display: grid; grid-template-columns: repeat(3,1fr); gap: .2rem; margin: auto; width: min(100%,15rem); }
+.room-pin-keys button { display: grid; place-items: center; min-height: clamp(1.5rem,5dvh,2.1rem); padding: 0; }
+.room-pin-error { color: #ffb4a8; font-size: .875rem; }
+@media(max-height: 450px) {
+  .room-pin-panel { padding: .5rem; }
+  .room-pin-panel form { gap: .18rem; }
+  .room-pin-fields span { height: 1.6rem; }
+}

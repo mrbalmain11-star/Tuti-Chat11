@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { X, Plus, ChevronDown, Check } from 'lucide-react';
+import { App as CapacitorApp } from '@capacitor/app';
+import { Check, ChevronDown, Crown, Gift, Plus } from 'lucide-react';
+import './royal-gifts.css';
 import { useApp } from '../context/AppContext';
-import { GiftItem } from '../types';
 import { EpicGiftArtwork } from './EpicGiftArtwork';
 import { SwordArt } from './GiftAnimationOverlay';
 import { sounds } from '../utils/audio';
@@ -19,16 +20,19 @@ export const GiftStoreModal: React.FC = () => {
     sendGiftToRoom,
     setOpenRechargeModal,
     selectedGiftReceiver,
-    setSelectedGiftReceiver,
   } = useApp();
 
   const [activeCategory, setActiveCategory] = useState<string>('هدية');
   const [selectedGiftId, setSelectedGiftId] = useState<string | null>(null);
-  const selectedGift = gifts.find(g => g.id === selectedGiftId) ?? gifts[0] ?? null;
+  const filteredGifts = gifts.filter(g => g.category === activeCategory);
+  const selectedGift = filteredGifts.find(g => g.id === selectedGiftId) ?? filteredGifts[0] ?? null;
   const [selectedCount, setSelectedCount] = useState<number>(1);
-  const [selectedReceiverIndex, setSelectedReceiverIndex] = useState<number>(0);
+  const [receiverId, setReceiverId] = useState<string>();
   const [sendToAll, setSendToAll] = useState(false);
-  const [showCountDropdown, setShowCountDropdown] = useState<boolean>(false);
+  const [closing, setClosing] = useState(false);
+  const requestPending = useRef(false);
+  const groupRequestStorage = useRef<string | null>(null);
+  const grid = useRef<HTMLDivElement>(null);
   const [sending, setSending] = useState(false);
   const groupRequestId = useRef<string | null>(null);
 
@@ -36,12 +40,28 @@ export const GiftStoreModal: React.FC = () => {
     if (openGiftStore) window.dispatchEvent(new Event('totichat:gift-store-opened'));
   }, [openGiftStore]);
 
+  useEffect(() => {
+    if (!openGiftStore || !closing) return;
+    const timer = window.setTimeout(() => { setOpenGiftStore(false); setClosing(false); }, 200);
+    return () => window.clearTimeout(timer);
+  }, [openGiftStore, closing, setOpenGiftStore]);
+  useEffect(() => {
+    if (!openGiftStore) { setClosing(false); return; }
+    let current = true;
+    const listener = CapacitorApp.addListener('backButton', () => {
+      if (current && !requestPending.current) setClosing(true);
+    });
+    void listener.catch(() => {});
+    return () => { current = false; void listener.then(handle => handle.remove()).catch(() => {}); };
+  }, [openGiftStore]);
+  useEffect(() => { if (grid.current) grid.current.scrollTop=0; }, [activeCategory]);
+  useEffect(() => { setReceiverId(selectedGiftReceiver?.id); }, [selectedGiftReceiver?.id, activeRoom?.id]);
   if (!openGiftStore) return null;
 
   // Self support receiver option (allowed only from inside room)
   const selfReceiver = {
     id: currentUser.id,
-    name: `${currentUser.nickname || currentUser.name} (دعم حسابي 🌟)`,
+    name: `${currentUser.nickname || currentUser.name} (أنت)`,
     avatar: currentUser.avatar,
     isSelf: true,
   };
@@ -77,20 +97,15 @@ export const GiftStoreModal: React.FC = () => {
       ]
     : baseReceivers;
 
-  const currentReceiver = receivers[selectedReceiverIndex] || receivers[0] || null;
-  const isSupportingSelf = Boolean(activeRoom && currentReceiver?.id === currentUser.id);
-  const recipientCount = sendToAll ? roomUserReceivers.length : currentReceiver ? 1 : 0;
+  const currentReceiver = receivers.find(receiver => receiver.id === receiverId) ?? receivers[0] ?? null;
+  const effectiveGroup = sendToAll && Boolean(activeRoom);
+  const recipientCount = effectiveGroup ? roomUserReceivers.length : currentReceiver ? 1 : 0;
   const totalCost = selectedGift ? selectedGift.price * selectedCount * recipientCount : 0;
   const hasEnoughCoins = Number.isSafeInteger(totalCost) && totalCost > 0 && totalCost <= currentUser.coins;
 
-  const filteredGifts = gifts.filter((g) => {
-    if (activeCategory === 'الكل') return true;
-    return g.category === activeCategory;
-  });
-
   const handleSend = async () => {
-    if (sending) return;
-    if (!selectedGift || (sendToAll ? roomUserReceivers.length === 0 : !currentReceiver?.id)) {
+    if (requestPending.current || closing) return;
+    if (!selectedGift || (effectiveGroup ? roomUserReceivers.length === 0 : !currentReceiver?.id)) {
       window.alert('لا توجد هدية أو مستلم متاح. حاول مجدداً بعد تحميل البيانات.');
       return;
     }
@@ -103,284 +118,100 @@ export const GiftStoreModal: React.FC = () => {
       return;
     }
     sounds.playClick();
+    requestPending.current = true;
     setSending(true);
     let groupRequestStorageKey: string | null = null;
     try {
       let success: boolean;
-      if (sendToAll) {
-        const recipientKey = roomUserReceivers.map(receiver => receiver.id).sort().join(',');
-        groupRequestStorageKey = `totichat:group-gift:${currentUser.id}:${activeRoom!.id}:${selectedGift.id}:${selectedCount}:${recipientKey}`;
-        if (!groupRequestId.current) {
-          try {
-            const savedRequestId = localStorage.getItem(groupRequestStorageKey);
-            groupRequestId.current = savedRequestId && /^[0-9a-f-]{36}$/i.test(savedRequestId)
-              ? savedRequestId
-              : crypto.randomUUID();
-            localStorage.setItem(groupRequestStorageKey, groupRequestId.current);
-          } catch {
-            groupRequestId.current = crypto.randomUUID();
-          }
-        }
-        success = await sendGiftToRoom(selectedGift, roomUserReceivers, selectedCount, groupRequestId.current);
-      } else {
-        success = await sendGift(selectedGift, currentReceiver!, selectedCount);
+      const recipientKey = effectiveGroup ? roomUserReceivers.map(receiver=>receiver.id).sort().join(',') : currentReceiver!.id;
+      groupRequestStorageKey = `totichat:gift-intent:${currentUser.id}:${activeRoom?.id}:${selectedGift.id}:${selectedGift.price}:${selectedCount}:${recipientKey}`;
+      if (groupRequestStorage.current !== groupRequestStorageKey) {
+        groupRequestStorage.current = groupRequestStorageKey;
+        groupRequestId.current = null;
       }
+      if (!groupRequestId.current) {
+        groupRequestId.current = crypto.randomUUID();
+        try {
+          const saved = localStorage.getItem(groupRequestStorageKey);
+          if (saved && /^[0-9a-f-]{36}$/i.test(saved)) groupRequestId.current = saved;
+          localStorage.setItem(groupRequestStorageKey, groupRequestId.current);
+        } catch { /* keep the retry identifier for this session */ }
+      }
+      if (effectiveGroup) success = await sendGiftToRoom(selectedGift,roomUserReceivers,selectedCount,groupRequestId.current);
+      else success = await sendGift(selectedGift,currentReceiver!,selectedCount,groupRequestId.current);
       if (success) {
         if (groupRequestStorageKey) {
           try { localStorage.removeItem(groupRequestStorageKey); } catch { /* browser storage may be unavailable */ }
         }
         groupRequestId.current = null;
-        setOpenGiftStore(false);
+        setClosing(true);
       }
     } catch (error) {
       console.error('Gift sheet send handler failed:', error);
       window.alert('تعذر إكمال إرسال الهدية. افحص رصيدك وسجل العمليات قبل إعادة المحاولة.');
     } finally {
+      requestPending.current = false;
       setSending(false);
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm font-['Cairo',sans-serif] animate-in fade-in">
-      <div className="w-full max-w-md h-[min(74dvh,620px)] min-h-0 bg-gradient-to-b from-[#172434] via-[#101b29] to-[#0b1420] border-t border-amber-400/40 text-white rounded-t-[28px] px-4 pt-3 pb-[max(14px,env(safe-area-inset-bottom))] shadow-[0_-16px_60px_rgba(0,0,0,0.55)] flex flex-col overflow-hidden">
-        {/* Top Header & Categories (Exact Screenshot 18) */}
-        <div className="flex-none flex items-center justify-between gap-2 pb-3 border-b border-amber-500/20">
-          {/* Categories Tab */}
-          <div className="flex items-center gap-3 text-xs font-bold overflow-x-auto whitespace-nowrap no-scrollbar min-w-0">
-            {['هدية', 'الأمة', 'مخصص', 'حظ', 'CP'].map((cat) => (
-              <button
-                key={cat}
-                onClick={() => {
-                  sounds.playClick();
-                  setActiveCategory(cat);
-                }}
-                className={`relative pb-1.5 transition ${
-                  activeCategory === cat
-                    ? 'text-amber-400 font-black'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                {cat}
-                {activeCategory === cat && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-400 rounded-full" />
-                )}
-              </button>
-            ))}
-          </div>
 
-          {/* Close */}
-          <button
-            onClick={() => {
-              sounds.playClick();
-              setOpenGiftStore(false);
-            }}
-            className="w-7 h-7 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* Receiver Select Bar with Self Support Quick Toggle, 1 Coin = 1 EXP & Diamonds Guarantee */}
-        {receivers.length > 0 && (
-          <div className="flex-none py-2 flex flex-col gap-1.5 border-b border-slate-700/50">
-            <div className="flex items-center justify-between text-xs gap-2">
-              <span className="text-slate-400 font-medium shrink-0">إرسال الدعم إلى:</span>
-              
-              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-                {activeRoom && roomUserReceivers.length > 0 && (
-                  <button
-                    type="button"
-                    aria-pressed={sendToAll}
-                    onClick={() => {
-                      sounds.playClick();
-                      groupRequestId.current = null;
-                      setSendToAll(value => !value);
-                    }}
-                    className={`shrink-0 rounded-lg border px-2 py-1 text-[11px] font-black transition ${sendToAll
-                      ? 'border-emerald-300 bg-emerald-500 text-emerald-950'
-                      : 'border-emerald-700/60 bg-emerald-950/60 text-emerald-200 hover:bg-emerald-900/70'}`}
-                  >
-                    {sendToAll ? 'إلى الجميع ✓' : `إلى الجميع (${roomUserReceivers.length})`}
-                  </button>
-                )}
-                {/* Direct Quick Button to Support Self - Inside Room Only */}
-                {activeRoom && (
-                  <button
-                    disabled={sendToAll}
-                    type="button"
-                    onClick={() => {
-                      sounds.playClick();
-                      const selfIdx = receivers.findIndex((r) => r.id === currentUser.id);
-                      if (selfIdx !== -1) {
-                        setSelectedReceiverIndex(selfIdx);
-                      }
-                    }}
-                    className={`px-2 py-0.5 rounded-lg text-[11px] font-bold flex items-center gap-1 transition disabled:opacity-40 ${
-                      isSupportingSelf
-                        ? 'bg-amber-500 text-slate-950 font-black shadow-xs'
-                        : 'bg-amber-950/50 text-amber-300 border border-amber-500/40 hover:bg-amber-900/60'
-                    }`}
-                    title="دعم حسابي الشخصي من داخل الروم ورفع المستوى واستلام الألماس"
-                  >
-                    <span>🌟</span>
-                    <span>دعم نفسي</span>
-                  </button>
-                )}
-
-                {/* Receiver Dropdown */}
-                {!sendToAll && <select
-                  value={selectedReceiverIndex}
-                  onChange={(e) => {
-                    groupRequestId.current = null;
-                    setSelectedReceiverIndex(Number(e.target.value));
-                  }}
-                  className="bg-slate-900 border border-amber-500/30 text-amber-300 rounded-lg px-2 py-1 text-xs focus:outline-none max-w-[150px] truncate font-bold"
-                >
-                  {receivers.map((r, idx) => (
-                    <option key={r.id} value={idx}>
-                      {r.name}
-                    </option>
-                  ))}
-                </select>}
-              </div>
-            </div>
-
-            <div className="text-[10px] text-slate-400 px-1">{sendToAll ? `الإرسال إلى ${roomUserReceivers.length} مستلمين جالسين؛ يعيد الخادم التحقق قبل الخصم.` : 'اختر المستلم والهدية والكمية قبل الإرسال'}</div>
-          </div>
-        )}
-
-        {/* Gifts Grid (matching Screenshot 18) */}
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain no-scrollbar py-3 grid grid-cols-3 auto-rows-[144px] content-start gap-2">
-          {filteredGifts.length === 0 && (
-            <div className="col-span-3 text-center text-slate-300 text-sm py-8">لا توجد هدايا متاحة في هذا القسم حالياً.</div>
-          )}
-          {filteredGifts.map((gift) => {
-            const isSelected = selectedGift?.id === gift.id;
-            const cinematic = gift.price >= 10000 && gift.id.startsWith('epic-');
-            const epicKind = gift.id === 'epic-imperial-falcon' ? 'falcon' : gift.id === 'epic-royal-throne' ? 'throne' : gift.id === 'epic-legendary-dragon' ? 'dragon' : gift.id === 'epic-royal-jet' ? 'jet' : gift.id === 'epic-royal-lovers-heart' ? 'heart' : null;
-            const palette = cinematic ? 'from-[#183c32] via-[#142a27] to-[#0a1716]' : 'from-[#16342d] via-[#142622] to-[#0c1918]';
-
-            return (
-              <button
-                type="button"
-                key={gift.id}
-                onClick={() => {
-                  sounds.playClick();
-                    groupRequestId.current = null;
-                  setSelectedGiftId(gift.id);
-                }}
-                aria-pressed={isSelected}
-                aria-label={`${gift.name}، ${gift.price.toLocaleString('en-US')} عملة`}
-                className={`relative min-w-0 w-full rounded-2xl p-2 flex flex-col items-center justify-between text-white cursor-pointer border transition-all duration-200 bg-gradient-to-b ${palette} ${
-                  isSelected
-                    ? 'border-amber-300 bg-gradient-to-b from-emerald-500/25 to-slate-900 shadow-[0_0_18px_rgba(16,185,129,.18)] scale-[1.02]'
-                    : 'border-emerald-900/70 bg-emerald-950/30 hover:border-emerald-700'
-                }`}
-              >
-                {cinematic && <span className="absolute top-1 right-1 text-[8px] font-black text-amber-200 bg-amber-800/60 border border-amber-400/40 rounded-full px-1.5 py-0.5">سينمائية</span>}
-                {/* Selected Checkmark */}
-                {isSelected && (
-                  <div className="absolute top-1 left-1 w-4 h-4 rounded-full bg-amber-400 text-slate-950 flex items-center justify-center shadow-xs">
-                    <Check className="w-2.5 h-2.5 stroke-[3]" />
-                  </div>
-                )}
-
-                {/* Gift Large Animated Icon */}
-                <div className="relative w-[74px] h-[74px] flex-none flex items-center justify-center text-[35px] my-1 rounded-2xl border border-amber-300/30 shadow-[inset_0_0_15px_rgba(251,191,36,0.12),0_0_16px_rgba(16,185,129,0.16)]">
-                  <span className="absolute inset-0 rounded-full bg-emerald-300/10 blur-md" aria-hidden="true" />
-                  {gift.id==='epic-zulfiqar'?<div className="relative z-10 w-full h-full flex items-center justify-center [&_svg]:!w-[45px] [&_svg]:!h-[75px]"><SwordArt /></div> : epicKind ? <div className="relative z-10 w-full h-full flex items-center justify-center [&_svg]:!w-[72px] [&_svg]:!h-[72px]"><EpicGiftArtwork kind={epicKind} /></div> : <span className="relative z-10 drop-shadow-[0_0_12px_rgba(255,206,116,0.7)]">{gift.icon}</span>}
-                </div>
-
-                {/* Name */}
-                <span className="text-[11px] font-bold text-slate-200 text-center truncate w-full">
-                  {gift.name}
-                </span>
-
-                {/* Price in Coins */}
-                <div className="flex items-center gap-1 text-[11px] font-black text-amber-400 mt-1">
-                  <span>🪙</span>
-                  <span>{gift.price.toLocaleString('ar-EG')}</span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="flex-none flex items-center justify-between px-1 py-1.5 text-[11px]" dir="rtl">
-          <span className="text-slate-300">{sendToAll ? `الإجمالي لـ ${recipientCount} مستخدم ×${selectedCount}` : `إجمالي الهدية ×${selectedCount}`}</span>
-          <span className={hasEnoughCoins ? 'text-amber-300 font-black' : 'text-red-400 font-black'}>{totalCost.toLocaleString('en-US')} 🪙{!hasEnoughCoins ? ' · رصيد غير كافٍ' : ''}</span>
-        </div>
-        {/* Bottom Bar: Coins Balance + Recharging + Count Selector + Send Button */}
-        <div className="flex-none pt-3 border-t border-amber-500/20 flex items-center justify-between gap-2 bg-[#0b1420]">
-          {/* User Balance & Recharge Button */}
-          <div className="flex items-center gap-1.5 min-w-0">
-            <div
-              className="flex items-center gap-1 text-xs font-bold text-amber-400 bg-amber-950/40 border border-amber-500/30 px-2.5 py-1 rounded-full"
-              title={currentUser.coins.toLocaleString('en-US')}
-            >
-              <span>🪙</span>
-              <span>
-                {currentUser.coins >= 1000000000
-                  ? `${(currentUser.coins / 1000000000).toFixed(0)}B`
-                  : currentUser.coins.toLocaleString('en-US')}
-              </span>
-            </div>
-
-            <button
-              onClick={() => {
-                sounds.playClick();
-                setOpenRechargeModal(true);
-              }}
-              className="text-[11px] font-bold text-amber-300 hover:text-amber-200 flex items-center gap-0.5 bg-amber-500/20 px-2 py-1 rounded-full border border-amber-400/40"
-            >
-              <Plus className="w-3 h-3" />
-              <span>شحن</span>
-            </button>
-          </div>
-
-          {/* Right Controls: Count Selector & Royal Send Button */}
-          <div className="flex items-center gap-2 relative">
-            {/* Multiplier / Count button */}
-            <div className="relative">
-              <button
-                onClick={() => setShowCountDropdown(!showCountDropdown)}
-                className="flex items-center gap-1 bg-slate-900 border border-slate-700 px-2.5 py-1 rounded-full text-xs font-bold text-white hover:border-amber-400"
-              >
-                <span>x{selectedCount}</span>
-                <ChevronDown className="w-3 h-3 text-slate-400" />
-              </button>
-
-              {showCountDropdown && (
-                <div className="absolute bottom-10 left-0 bg-slate-900 border border-slate-700 rounded-xl p-1 shadow-xl z-20 flex flex-col gap-1 w-20">
-                  {giftCounts.map((count) => (
-                    <button
-                      key={count}
-                      onClick={() => {
-                        sounds.playClick();
-                        groupRequestId.current = null;
-                        setSelectedCount(count);
-                        setShowCountDropdown(false);
-                      }}
-                      className="px-2 py-1 text-xs text-center font-bold hover:bg-amber-500/20 hover:text-amber-400 rounded"
-                    >
-                      x{count}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Royal Send Button */}
-            <button
-              onClick={handleSend} disabled={sending || !hasEnoughCoins || !selectedGift || (sendToAll ? roomUserReceivers.length === 0 : !currentReceiver)}
-              title={selectedGift ? `الإجمالي: ${totalCost.toLocaleString('en-US')} عملة` : 'اختر هدية'}
-              className="bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 text-slate-950 font-black text-xs px-5 py-2 rounded-full shadow-lg active:scale-95 hover:brightness-110 transition flex items-center gap-1"
-            >
-              <span>{sending ? 'جارٍ الإرسال…' : sendToAll ? `إرسال للجميع (${roomUserReceivers.length})` : isSupportingSelf ? 'دعم حسابي 🌟' : 'إرسال'}</span>
-            </button>
-          </div>
-        </div>
+  return <div className="royal-gift-layer" dir="rtl">
+    <button className="royal-gift-dismiss" type="button" aria-label="إغلاق صندوق الهدايا" disabled={sending}
+      onClick={()=>setClosing(true)}/>
+    <section role="dialog" aria-label="إرسال الهدايا" className="royal-gift-sheet" data-closing={closing}
+      onKeyDown={event=>{if(event.key==='Escape'&&!sending)setClosing(true);}}>
+      <header className="royal-gift-heading">
+        <Crown className="royal-gift-crown" aria-hidden="true"/><button type="button" aria-label="إغلاق" disabled={sending} onClick={()=>setClosing(true)}><ChevronDown size={18}/></button>
+        <h2><Gift size={16} aria-hidden="true"/> إرسال الهدايا</h2>
+      </header>
+      <div className="royal-gift-tabs" aria-label="أقسام الهدايا">
+        {['هدية','الأمة','مخصص','حظ','CP'].map(category=><button type="button" key={category}
+          disabled={sending} aria-pressed={activeCategory===category} onClick={()=>{setActiveCategory(category);setSelectedGiftId(null);}}>{category}</button>)}
       </div>
-    </div>
-  );
+      <div className="royal-gift-recipients">
+        {!effectiveGroup && <label>
+          المستلم
+          <select aria-label="مستلم الهدية" value={currentReceiver?.id??''} disabled={sending||receivers.length===0}
+            onChange={event=>setReceiverId(event.target.value)}>
+            {receivers.length===0 && <option value="">لا يوجد مستلم</option>}
+            {receivers.map(receiver=><option key={receiver.id} value={receiver.id}>{receiver.name}</option>)}
+          </select>
+        </label>}
+        {!effectiveGroup && currentReceiver?.avatar && <img src={currentReceiver.avatar} alt="" />}
+        {(roomUserReceivers.length>0||effectiveGroup) && <button type="button" disabled={sending} aria-pressed={effectiveGroup} onClick={()=>setSendToAll(value=>!value)}>
+          إلى الجميع ({roomUserReceivers.length})
+        </button>}
+      </div>
+      <div className="royal-gift-grid" ref={grid}>
+        {!filteredGifts.length && <p role="status">لا توجد هدايا متاحة في هذا القسم حالياً.</p>}
+        {filteredGifts.map(gift=>{
+          const selected = selectedGift?.id===gift.id;
+          const epicKind = gift.id==='epic-imperial-falcon'?'falcon':gift.id==='epic-royal-throne'?'throne':
+            gift.id==='epic-legendary-dragon'?'dragon':gift.id==='epic-royal-jet'?'jet':gift.id==='epic-royal-lovers-heart'?'heart':null;
+          const image = gift.assetUrl && /\.(?:png|jpg|jpeg|webp|gif|avif|svg)(?:[?#]|$)/i.test(gift.assetUrl);
+          return <button type="button" className="royal-gift-card" aria-pressed={selected} key={gift.id} disabled={sending}
+            onClick={()=>setSelectedGiftId(gift.id)}>
+            {selected&&<Check className="royal-gift-check" size={15} aria-hidden="true"/>}
+            <span className="royal-gift-art" aria-hidden="true">{image?<img src={gift.assetUrl} alt="" loading="lazy" decoding="async"/>:
+              gift.id==='epic-zulfiqar'?<SwordArt/>:epicKind?<EpicGiftArtwork kind={epicKind}/>:gift.icon}</span>
+            <strong>{gift.name}</strong><bdi>{gift.price.toLocaleString('en-US')} 🪙</bdi>
+          </button>;
+        })}
+      </div>
+      <footer className="royal-gift-footer">
+        <div className="royal-gift-totals"><span>الرصيد <bdi>{currentUser.coins.toLocaleString('en-US')}</bdi></span>
+          <span>الإجمالي <bdi>{totalCost.toLocaleString('en-US')}</bdi></span>
+          {totalCost>0&&!hasEnoughCoins&&<span role="status">الرصيد غير كافٍ</span>}</div>
+        <div className="royal-gift-send">
+          <button type="button" disabled={sending} onClick={()=>{setOpenGiftStore(false);setOpenRechargeModal(true);}}><Plus size={14}/> شحن</button>
+          <select aria-label="كمية الهدية" value={selectedCount} disabled={sending} onChange={event=>setSelectedCount(Number(event.target.value))}>
+            {giftCounts.map(count=><option key={count} value={count}>×{count}</option>)}
+          </select>
+          <button type="button" className="royal-gift-submit" onClick={()=>void handleSend()}
+            disabled={sending||closing||!activeRoom||!hasEnoughCoins}>{sending?'جارٍ الإرسال…':'إرسال'}</button>
+        </div>
+      </footer>
+    </section>
+  </div>;
 };

@@ -23,3 +23,16 @@ if (!result.includes('android:scheme="com.numyar.totichat.staging"') ||
   throw new Error('Native Google OAuth callback intent filter missing from Android manifest');
 }
 console.log('Native Google OAuth callback intent filter verified');
+
+// The room link uses a separate host so the existing OAuth callback is untouched.
+if (!result.includes('android:host="room"')) {
+  const activity = /(<activity\b(?=[^>]*android:name="\.MainActivity")[^>]*>)/;
+  if (!activity.test(result)) throw new Error('Capacitor MainActivity not found in manifest');
+  const roomFilter = `        <intent-filter>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="com.numyar.totichat.staging" android:host="room" android:pathPrefix="/" />
+        </intent-filter>`;
+  writeFileSync(file, result.replace(activity, '$1\n' + roomFilter));
+}

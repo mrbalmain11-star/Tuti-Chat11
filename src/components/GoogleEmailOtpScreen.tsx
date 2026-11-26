@@ -1,3 +1,4 @@
+import { integerDigits } from '../utils/digits';
 import React, { useEffect, useRef, useState } from 'react';
 import { ArrowRight, Check, Clock3, LockKeyhole, Mail, RefreshCw, ShieldCheck } from 'lucide-react';
 import { requestGoogleEmailOtp, verifyGoogleEmailOtp } from '../services/googleEmailOtp';
@@ -74,7 +75,7 @@ export const GoogleEmailOtpScreen: React.FC<Props> = ({ email, onVerified, onBac
   }, []);
 
   const update = (index: number, value: string) => {
-    const clean = value.replace(/[^0-9]/g, '');
+    const clean = integerDigits(value);
     if (!clean) {
       setDigits(prev => prev.map((digit, i) => i === index ? '' : digit));
       return;

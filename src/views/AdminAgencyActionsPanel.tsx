@@ -1,3 +1,4 @@
+import { latinDigits } from '../utils/digits';
 import React, { useState } from 'react';
 import { stagingBackend } from '../services/stagingBackend';
 
@@ -43,7 +44,7 @@ export const AdminAgencyActionsPanel: React.FC = () => {
     </select>
     <input dir="ltr" className="w-full border rounded-xl p-3 mb-3" value={id} onChange={e => setId(e.target.value)} placeholder="UUID" />
     {kind === 'edit' && <input className="w-full border rounded-xl p-3 mb-3" value={name} onChange={e => setName(e.target.value)} placeholder="اسم الوكالة الجديد" />}
-    {(kind === 'edit' || kind === 'approve_registration') && <input type="number" min={0} max={100} step="0.01" className="w-full border rounded-xl p-3 mb-3" value={commission} onChange={e => setCommission(e.target.value)} placeholder="نسبة العمولة %" />}
+    {(kind === 'edit' || kind === 'approve_registration') && <input type="text" dir="ltr" inputMode="decimal" className="w-full border rounded-xl p-3 mb-3" value={commission} onChange={e => setCommission(latinDigits(e.target.value).replace(/٫/g, '.'))} placeholder="نسبة العمولة %" />}
     <textarea className="w-full border rounded-xl p-3 mb-3" rows={2} maxLength={500} value={note} onChange={e => setNote(e.target.value)} placeholder="سبب القرار / ملاحظة المراجعة" />
     <button type="button" disabled={busy} onClick={() => void submit()} className="bg-amber-700 text-white rounded-xl px-4 py-3 disabled:opacity-40">{busy ? 'جاري التنفيذ...' : 'تنفيذ القرار'}</button>
     {error && <p role="alert" className="text-red-700 mt-2">{error}</p>}

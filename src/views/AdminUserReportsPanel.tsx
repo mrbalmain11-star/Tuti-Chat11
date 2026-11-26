@@ -33,7 +33,7 @@ export const AdminUserReportsPanel:React.FC=()=>{
   {!busy&&reports.length===0&&<p className="rounded-xl bg-white p-4 text-slate-500">لا توجد بلاغات مسجلة</p>}
   {reports.map(report=><article key={report.id} className="rounded-2xl border border-amber-200 bg-white p-4 shadow-sm">
    <p className="text-sm font-black">{report.targetName} · ID {report.targetId}</p>
-   <p className="text-xs text-slate-500">المُبلّغ ID {report.reporterId} · {new Date(report.createdAt).toLocaleString('ar-IQ')}</p>
+   <p className="text-xs text-slate-500">المُبلّغ ID {report.reporterId} · {new Date(report.createdAt).toLocaleString('ar-IQ-u-nu-latn')}</p>
    <p className="mt-2 text-sm font-bold">{report.category} · {report.status}</p>
    <p className="mt-2 whitespace-pre-wrap text-sm">{report.details}</p>
    {report.evidencePaths.length>0&&<div className="mt-3 grid grid-cols-3 gap-2">{report.evidencePaths.map(path=><div key={path}>{evidence[path]?<a href={evidence[path]} target="_blank" rel="noreferrer"><img src={evidence[path]} alt="دليل البلاغ" className="h-24 w-full rounded-lg object-cover"/></a>:<button type="button" onClick={()=>void showEvidence(path)} className="rounded-lg border p-2 text-xs">عرض الدليل</button>}</div>)}</div>}

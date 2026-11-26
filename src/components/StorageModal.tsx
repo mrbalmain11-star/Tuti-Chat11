@@ -312,7 +312,7 @@ export const StorageModal: React.FC = () => {
                     </div>
                     <span className="text-sm font-bold">{item.name}</span>
                     <span className="text-xs font-bold text-amber-300">
-                      {item.price.toLocaleString('ar-IQ')} عملة · {item.durationDays === null ? 'دائم' : item.durationDays + ' يوم'}
+                      {item.price.toLocaleString('ar-IQ-u-nu-latn')} عملة · {item.durationDays === null ? 'دائم' : item.durationDays + ' يوم'}
                     </span>
                   </button>
                 ))}

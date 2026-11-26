@@ -1,3 +1,5 @@
+import { RoomCard } from './RoomCard';
+import type { VoiceRoom } from '../types';
 import React, { useState } from 'react';
 import {
   Gift,
@@ -70,7 +72,7 @@ const ACTIVITY_BANNERS: ActivityBanner[] = [
   },
 ];
 
-export const DiscoverRoomsView: React.FC = () => {
+export const DiscoverRoomsView: React.FC<{ supportRoom?: VoiceRoom }> = ({ supportRoom }) => {
   const { setOpenRechargeModal, setOpenAgencyModal, isRtl } = useApp();
   const [selectedBanner, setSelectedBanner] = useState<ActivityBanner | null>(null);
 
@@ -79,6 +81,7 @@ export const DiscoverRoomsView: React.FC = () => {
       className="pb-28 px-3.5 pt-3 font-['Cairo',sans-serif] bg-gradient-to-b from-[#FDFBF7] via-[#FAF6ED] to-[#F5EFE0] min-h-screen text-slate-800 select-none"
       dir={isRtl ? 'rtl' : 'ltr'}
     >
+      {supportRoom && <div className="mb-3 grid grid-cols-2 gap-3.5"><RoomCard room={supportRoom} /></div>}
       {/* لوحة النشاط الحصرية المكونة من البنرات الرسمية الخمسة */}
       <div className="space-y-3">
         {ACTIVITY_BANNERS.map((banner, index) => (

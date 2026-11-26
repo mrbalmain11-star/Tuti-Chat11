@@ -1,3 +1,5 @@
+import { hasVipChatBubble, hasVipEntrance } from '../utils/vipPerks';
+import { VipMessageFrame } from './VipMessageFrame';
 import { VipAvatarFrame } from './VipAvatarFrame';
 /* V002 staging APK build marker: vvv2 — original VIP layout preserved. */
 import React, { useState, useEffect, useRef } from 'react';
@@ -10,7 +12,7 @@ import {
   User,
   Shield,
   Crown,
-  Volume2,
+  MessageCircle,
   Palette,
   Award,
   Copy,
@@ -34,7 +36,6 @@ export interface VipTierData {
   glowColor: string;
   badgeGradient: string;
   borderClass: string;
-  perks: string[];
 }
 
 export const VIP_TIERS: VipTierData[] = [
@@ -48,14 +49,6 @@ export const VIP_TIERS: VipTierData[] = [
     glowColor: 'rgba(34, 197, 94, 0.5)',
     badgeGradient: 'from-emerald-700 via-green-500 to-emerald-800',
     borderClass: 'border-emerald-500/60',
-    perks: [
-      'شعار VIP1 الأخضر اللافت للنظر',
-      'إطار الصورة الشخصية الذهبي الملكي VIP 1',
-      'موجة مايك دائرية خضراء مخصصة للكلام',
-      'فقاعة دردشة حصرية في الشاشة العامة للروم',
-      'لون اسم ولمعان حصري مميز',
-      'استرداد كوينز بنسبة 5% عند الشحن',
-    ],
   },
   {
     level: 2,
@@ -67,15 +60,6 @@ export const VIP_TIERS: VipTierData[] = [
     glowColor: 'rgba(6, 182, 212, 0.55)',
     badgeGradient: 'from-cyan-600 via-sky-400 to-blue-700',
     borderClass: 'border-cyan-400/60',
-    perks: [
-      'جميع مميزات وتأثيرات رتبة VIP 1',
-      'شعار VIP2 الأزرق السماوي البراق',
-      'إطار فرس السماء الجليدي المتلألئ',
-      'موجة مايك بلورية زرقاء مخصصة للكلام',
-      'فقاعة دردشة سحرية متوهجة',
-      'لافتة دخول الغرفة السماوية الفاخرة',
-      'لون اسم أزرق وأصفر لامع في كافة القوائم',
-    ],
   },
   {
     level: 3,
@@ -87,15 +71,6 @@ export const VIP_TIERS: VipTierData[] = [
     glowColor: 'rgba(168, 85, 247, 0.6)',
     badgeGradient: 'from-purple-700 via-fuchsia-500 to-indigo-900',
     borderClass: 'border-purple-400/60',
-    perks: [
-      'جميع مميزات ورتب VIP 1 و VIP 2',
-      'شعار VIP3 الكوبالت الأرجواني المتوهج',
-      'إطار الذئب الأسطوري البنفسجي مع أجنحة كريستالية',
-      'موجة مايك بنفسجية متدفقة بأمواج كهرومغناطيسية',
-      'فقاعة دردشة أرجوانية مرصعة بالجواهر',
-      'لافتة دخول فاخرة مع صواعق سحرية',
-      'حصانة ضد الكتم في الرومات العامة',
-    ],
   },
   {
     level: 4,
@@ -107,15 +82,6 @@ export const VIP_TIERS: VipTierData[] = [
     glowColor: 'rgba(147, 51, 234, 0.65)',
     badgeGradient: 'from-purple-800 via-violet-600 to-indigo-950',
     borderClass: 'border-purple-300/70',
-    perks: [
-      'جميع مميزات ورتب VIP 1 إلى VIP 3',
-      'شعار VIP4 الملكي الفاخر',
-      'إطار التاج الأرجواني الملكي عيار 24 مع أجنحة',
-      'موجة مايك أرجوانية ملكية ذات هالة ثلاثية الأبعاد',
-      'فقاعة دردشة أرجوانية نيون ملكية',
-      'إشعار دخول ملفت للنظر يظهر للغرفة بأكملها',
-      'لون اسم مميز يلمع بتدرجات البنفسجي والذهب',
-    ],
   },
   {
     level: 5,
@@ -127,15 +93,6 @@ export const VIP_TIERS: VipTierData[] = [
     glowColor: 'rgba(225, 29, 72, 0.7)',
     badgeGradient: 'from-rose-600 via-amber-500 to-red-800',
     borderClass: 'border-rose-400/70',
-    perks: [
-      'جميع مميزات ورتب VIP 1 إلى VIP 4',
-      'شعار VIP5 الذهبي الناري',
-      'إطار الفهد الياقوتي المتوهج بالنيران الذهبية',
-      'موجة مايك ياقوتية نارية ثلاثية الأبعاد',
-      'فقاعة دردشة ذهبية ياقوتية بنقوش ملكية',
-      'موكب دخول فخم مع وميض ناري وألعاب نارية',
-      'أولوية الجلوس على مايكات الغرفة',
-    ],
   },
   {
     level: 6,
@@ -147,15 +104,6 @@ export const VIP_TIERS: VipTierData[] = [
     glowColor: 'rgba(5, 150, 105, 0.75)',
     badgeGradient: 'from-emerald-600 via-teal-400 to-green-900',
     borderClass: 'border-emerald-300/80',
-    perks: [
-      'جميع مميزات ورتب VIP 1 إلى VIP 5',
-      'شعار VIP6 البرونزي المرصع بالأحجار',
-      'إطار الأسد الزمردي عيار 24 مع تاج إمبراطوري',
-      'موجة مايك زمردية مشعة بأشعة شمسية حية',
-      'فقاعة دردشة خضراء زمردية فائقة الندرة',
-      'لافتة دخول إمبراطورية تعبر شاشة الروم',
-      'حصانة تامة من الطرد العشوائي',
-    ],
   },
   {
     level: 7,
@@ -167,15 +115,6 @@ export const VIP_TIERS: VipTierData[] = [
     glowColor: 'rgba(37, 99, 235, 0.8)',
     badgeGradient: 'from-blue-600 via-sky-400 to-indigo-900',
     borderClass: 'border-blue-300/80',
-    perks: [
-      'جميع مميزات ورتب VIP 1 إلى VIP 6',
-      'شعار VIP7 النمر اللهبي الأزرق الصاعق',
-      'إطار الأجنحة الفضية الملكية الماسية',
-      'موجة مايك صاعقة متدفقة بنبضات حية',
-      'فقاعة دردشة ماسية ببريق النجوم',
-      'طيران النمر الأزرق عبر شاشة الروم عند الدخول',
-      'أولوية الظهور الدائم في قوائم المتصدرين',
-    ],
   },
   {
     level: 8,
@@ -187,15 +126,6 @@ export const VIP_TIERS: VipTierData[] = [
     glowColor: 'rgba(202, 138, 4, 0.85)',
     badgeGradient: 'from-amber-500 via-yellow-300 to-stone-900',
     borderClass: 'border-yellow-200/90',
-    perks: [
-      'جميع مميزات ورتب VIP 1 إلى VIP 7',
-      'شعار VIP8 الوردي والذهبي الإمبراطوري',
-      'تاج وإطار العرش الملكي الماسي والوردي',
-      'موجة مايك نادرة بتأثيرات بلورية مشعة',
-      'فقاعة دردشة ماسية نادرة منقوشة بالذهب',
-      'موكب إمبراطوري كامل ومؤثرات سينمائية عند الدخول',
-      'مدير حسابات ودعم عملاء VIP على مدار 24 ساعة',
-    ],
   },
   {
     level: 9,
@@ -207,15 +137,6 @@ export const VIP_TIERS: VipTierData[] = [
     glowColor: 'rgba(124, 58, 237, 0.9)',
     badgeGradient: 'from-purple-900 via-fuchsia-600 to-amber-500',
     borderClass: 'border-purple-200/90',
-    perks: [
-      'جميع مميزات ورتب VIP 1 إلى VIP 8',
-      'شعار VIP9 التنين القرمزي الناري',
-      'إطار تنين المجرات الأسطوري المتحرك',
-      'موجة مايك كونية ثلاثية الأبعاد لا مثيل لها',
-      'فقاعة شات كونية مرصعة بالشهب',
-      'موكب تنين ناري ومطر ألعاب نارية عند الدخول لجميع الغرف',
-      'حصانة مطلقة من أي كتم أو طرد في التطبيق',
-    ],
   },
   {
     level: 10,
@@ -227,15 +148,6 @@ export const VIP_TIERS: VipTierData[] = [
     glowColor: 'rgba(190, 18, 60, 0.95)',
     badgeGradient: 'from-red-600 via-rose-500 to-amber-500',
     borderClass: 'border-amber-300 ring-1 ring-amber-400',
-    perks: [
-      'جميع مميزات ورتب VIP 1 إلى VIP 9',
-      'شعار VIP10 الإمبراطوري بالذهب والياقوت الأحمر',
-      'إطار الأسد المتوج عيار 24 مع ياقوت نقي',
-      'موجة مايك ياقوتية ملكية تشع بالطاقة الشمسية',
-      'فقاعة شات ملكية منقوشة بالأحجار الكريمة',
-      'إعلان عاجل على مستوى التطبيق عند دخول أي غرفة',
-      'خدمة كبار الشخصيات المباشرة مع إدارة توتي شات',
-    ],
   },
   {
     level: 11,
@@ -247,15 +159,6 @@ export const VIP_TIERS: VipTierData[] = [
     glowColor: 'rgba(13, 148, 136, 0.95)',
     badgeGradient: 'from-purple-900 via-fuchsia-600 to-amber-400',
     borderClass: 'border-cyan-300 ring-2 ring-purple-500',
-    perks: [
-      'جميع مميزات ورتب VIP 1 إلى VIP 10',
-      'شارة SVIP11 الأسطورية فائقة التميز',
-      'إطار العنقاء الماسي الأزرق والذهبي الإمبراطوري',
-      'موجة مايك أسطورية تضيء الغرفة بأمواج النور',
-      'فقاعة شات أسطورية بتأثيرات حية',
-      'دخولية أسطورية مخصصة تحبس أنفاس الحاضرين',
-      'تثبيت غرفتك الخاصة في أعلى قائمة الصفحة الرئيسية',
-    ],
   },
   {
     level: 12,
@@ -267,19 +170,10 @@ export const VIP_TIERS: VipTierData[] = [
     glowColor: 'rgba(245, 158, 11, 1)',
     badgeGradient: 'from-amber-600 via-yellow-400 to-amber-700',
     borderClass: 'border-yellow-200 ring-2 ring-amber-400',
-    perks: [
-      'الرتبة العظمى المطلقة في توتي شات (SVIP 12)',
-      'شارة SVIP12 الخالدة بذهب عيار 24 والياقوت الأزرق',
-      'إطار عرش السيادة والخلود الأعظم الأكثر فخامة في العالم',
-      'موجة مايك العرش المطلق ثلاثية الأبعاد ببريق الماس',
-      'فقاعة دردشة ذهبية ماسية إمبراطورية مطلقة',
-      'موكب دخول ملكي عالمي يعلن في جميع غرف التطبيق',
-      'لمعان اسم إمبراطوري فائق لا يملكه سواك',
-    ],
   },
 ];
 
-type PopupType = 'badge' | 'nickname' | 'mic' | 'headframe' | null;
+type PopupType = 'badge' | 'nickname' | 'bubble' | 'headframe' | null;
 
 // Staging currently has different VIP prices in store_catalog and the purchase RPC.
 // Keep purchases unavailable until the owner confirms one authoritative price list.
@@ -312,6 +206,20 @@ export const VipModal: React.FC = () => {
     return currentUser.vipLevel > 0 ? Math.max(0, Math.min(11, currentUser.vipLevel - 1)) : 0;
   });
   const activeTier = VIP_TIERS[activeTierIdx];
+  const level = activeTier.level;
+  const perks = [
+    ['إطار الصورة الشخصية', 'متاح'],
+    ['فقاعة الكتابة', hasVipChatBubble(level) ? 'متاحة' : 'التصميم المعتمد غير متوفر'],
+    ['لون الاسم', 'متاح'],
+    ['إطار الصورة في بطاقة الملف داخل الغرفة', 'متاح'],
+    ['إطار خارجي لبطاقة الملف داخل الغرفة', 'التصميم المعتمد غير متوفر'],
+    ['تأثير الدخول', hasVipEntrance(level) ? 'التأثير المشترك متاح' : 'غير متاح لهذا المستوى'],
+    ['الحماية من كتم المشرف', level >= 8 ? 'متاحة' : 'غير متاحة'],
+    ['الحماية من كتم المالك', level >= 10 ? 'متاحة' : 'غير متاحة'],
+    ['الحماية من الطرد', level >= 10 ? 'متاحة' : 'غير متاحة'],
+    ['الدخول المخفي', level >= 11 ? 'غير مفعل حالياً' : 'غير متاح لهذا المستوى'],
+    ['دخول الغرف المغلقة برقم الغرفة', level === 12 ? 'متاح' : 'غير متاح'],
+  ];
   // Keep the carousel aligned with the actual account tier on each opening.
   useEffect(() => {
     if (openVipModal) setActiveTierIdx(Math.max(0, Math.min(11, currentUser.vipLevel > 0 ? currentUser.vipLevel - 1 : 0)));
@@ -323,7 +231,7 @@ export const VipModal: React.FC = () => {
 
   useEffect(() => {
     if (vipModalInitialPopup) {
-      setActivePopup(vipModalInitialPopup);
+      setActivePopup(vipModalInitialPopup === 'mic' ? 'bubble' : vipModalInitialPopup);
       setVipModalInitialPopup(null);
     }
   }, [vipModalInitialPopup, setVipModalInitialPopup]);
@@ -482,7 +390,7 @@ export const VipModal: React.FC = () => {
             className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-950/70 border border-amber-500/40 text-amber-300 text-xs font-bold cursor-pointer hover:bg-amber-900 transition active:scale-95"
             title="انقر للشحن"
           >
-            <span className="font-mono font-black">{(currentUser.coins ?? 0).toLocaleString()}</span>
+            <span className="font-mono font-black">{(currentUser.coins ?? 0).toLocaleString('en-US')}</span>
             <span>🪙</span>
           </div>
         </header>
@@ -571,7 +479,7 @@ export const VipModal: React.FC = () => {
                   ID
                 </span>
                 <span className="px-2 py-0.2 rounded-full bg-pink-600/60 text-pink-200 text-[9px] font-bold">
-                  🎙️ موثق
+                  💬 موثق
                 </span>
               </div>
             </div>
@@ -625,21 +533,21 @@ export const VipModal: React.FC = () => {
                 </div>
               </button>
 
-              {/* Feature 3: موجة مايك حصرية (Exclusive Mic Wave) */}
+              {/* Feature 3: فقاعة كتابة VIP (Exclusive Mic Wave) */}
               <button
                 onClick={() => {
                   sounds.playClick();
-                  setActivePopup('mic');
+                  setActivePopup('bubble');
                 }}
                 className="p-3 rounded-2xl bg-gradient-to-b from-white/10 to-black/60 border border-amber-500/30 hover:border-amber-400 text-right transition active:scale-98 cursor-pointer flex flex-col justify-between h-20 shadow-md group"
               >
                 <div className="flex items-center justify-between w-full">
-                  <span className="text-xl">🎙️</span>
-                  <Volume2 className="w-4 h-4 text-amber-400 group-hover:scale-110 transition" />
+                  <span className="text-xl">💬</span>
+                  <MessageCircle className="w-4 h-4 text-amber-400 group-hover:scale-110 transition" />
                 </div>
                 <div>
-                  <span className="text-xs font-black text-amber-200 block">موجة مايك حصرية</span>
-                  <span className="text-[10px] text-slate-400">موجات صوت مخصصة للكلام</span>
+                  <span className="text-xs font-black text-amber-200 block">فقاعة كتابة VIP</span>
+                  <span className="text-[10px] text-slate-400">معاينة فقاعة رسائل الغرفة</span>
                 </div>
               </button>
 
@@ -671,23 +579,12 @@ export const VipModal: React.FC = () => {
               <span>✦ قائمة مزايا رتبة {activeTier.name}:</span>
             </h3>
             <div className="space-y-2">
-              {VIP_PURCHASE_PRICES_RECONCILED ? activeTier.perks.map((perk, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-2.5 p-2 rounded-xl bg-white/[0.04] border border-white/5"
-                >
-                  <div
-                    className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 font-bold text-[10px]"
-                    style={{
-                      backgroundColor: `${activeTier.themeColor}30`,
-                      color: activeTier.themeColor,
-                    }}
-                  >
-                    {i + 1}
-                  </div>
-                  <span className="text-xs text-slate-200 leading-snug">{perk}</span>
+              {perks.map(([label, availability]) => (
+                <div key={label} className="flex flex-wrap justify-between gap-2 rounded-xl border border-white/5 bg-white/[0.04] p-2 text-xs">
+                  <span className="text-slate-200">{label}</span>
+                  <span className="text-amber-200">{availability}</span>
                 </div>
-              )) : <div role="status" className="rounded-xl border border-amber-500/30 bg-amber-950/30 p-3 text-xs leading-6 text-amber-100">قائمة المزايا والأسعار الرسمية غير متاحة حالياً من مصدر موحّد.</div>}
+              ))}
             </div>
           </div>
         </div>
@@ -700,7 +597,7 @@ export const VipModal: React.FC = () => {
           <div className="text-right">
             <span className="text-[10px] text-slate-400 block font-bold">سعر الاشتراك:</span>
             <div className="flex items-center gap-1 font-mono font-black text-amber-300 text-sm">
-              <span>{VIP_PURCHASE_PRICES_RECONCILED ? activeTier.price.toLocaleString() : 'غير متاح'}</span>
+              <span>{VIP_PURCHASE_PRICES_RECONCILED ? activeTier.price.toLocaleString('en-US') : 'غير متاح'}</span>
               {VIP_PURCHASE_PRICES_RECONCILED && <span className="text-xs font-sans text-amber-400">كوينز 🪙</span>}
             </div>
           </div>
@@ -784,14 +681,14 @@ export const VipModal: React.FC = () => {
                   onClick={() => {
                     sounds.playClick();
                     // Toggle through the other 3 perks if desired
-                    const order: PopupType[] = ['badge', 'headframe', 'mic', 'nickname'];
+                    const order: PopupType[] = ['badge', 'headframe', 'bubble', 'nickname'];
                     const nextIdx = ((order.indexOf(activePopup) + 1) % order.length);
                     setActivePopup(order[nextIdx]);
                   }}
                   className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-amber-300 flex items-center justify-center transition active:scale-90 cursor-pointer text-xs font-bold"
                   title="الميزة التالية"
                 >
-                  {activePopup === 'badge' ? '👑' : activePopup === 'headframe' ? '🎙️' : activePopup === 'mic' ? '✨' : '🛡️'}
+                  {activePopup === 'badge' ? '👑' : activePopup === 'headframe' ? '💬' : activePopup === 'bubble' ? '✨' : '🛡️'}
                 </button>
               </div>
 
@@ -895,7 +792,7 @@ export const VipModal: React.FC = () => {
                         className="w-full h-12.5 rounded-full bg-gradient-to-r from-[#FFE58A] via-[#FFD666] to-[#F5A623] hover:brightness-105 active:scale-98 transition shadow-[0_4px_18px_rgba(245,166,35,0.45)] cursor-pointer flex items-center justify-center gap-2 text-[#3D2105] font-black text-sm"
                       >
                         <span>إلى الشحن</span>
-                        {VIP_PURCHASE_PRICES_RECONCILED && <span className="font-mono text-xs opacity-80">({activeTier.price.toLocaleString()} 🪙)</span>}
+                        {VIP_PURCHASE_PRICES_RECONCILED && <span className="font-mono text-xs opacity-80">({activeTier.price.toLocaleString('en-US')} 🪙)</span>}
                       </button>
                     )}
                   </div>
@@ -935,44 +832,13 @@ export const VipModal: React.FC = () => {
               )}
 
               {/* ============================================================= */}
-              {/* SUB-MODAL 3: موجة مايك حصرية (Matching Screenshot d9e8e6c2.jpg) */}
+              {/* SUB-MODAL 3: فقاعة كتابة VIP (Matching Screenshot d9e8e6c2.jpg) */}
               {/* ============================================================= */}
-              {activePopup === 'mic' && (
-                <div className="w-full flex flex-col items-center space-y-3 pt-1">
-                  <div className="w-full rounded-2xl overflow-hidden border border-amber-500/30 shadow-lg">
-                    <img
-                      src="/assets/aistudio/Screenshot_____-__-__-__-__-__-____com.tuliling.laika_d9e8e6c2.jpg"
-                      alt="موجات مايك VIP 1-12"
-                      className="w-full h-auto object-contain max-h-[42vh]"
-                    />
-                  </div>
-
-                  <div className="text-center pt-1">
-                    <h4 className="text-base font-black text-amber-200">موجة مايك حصرية</h4>
-                    <p className="text-xs text-slate-300 mt-0.5">موجات مايك مخصصة للكلام في الرومات الصوتية</p>
-                  </div>
-
-                  <div className="flex items-center justify-center gap-1.5 py-1">
-                    {VIP_TIERS.map((_, i) => (
-                      <span
-                        key={i}
-                        className={`h-1.5 rounded-full transition-all ${
-                          i === activeTierIdx ? 'w-4 bg-amber-400' : 'w-1.5 bg-white/30'
-                        }`}
-                      />
-                    ))}
-                  </div>
-
-                  <button
-                    onClick={() => {
-                      sounds.playLevelUp();
-                      setGiftSuccessToast(`تم تفعيل موجة المايك الحصرية لـ ${activeTier.name} 🎙️`);
-                      setTimeout(() => setGiftSuccessToast(null), 3000);
-                    }}
-                    className="w-full py-3.5 rounded-full bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-slate-950 font-black text-sm shadow-xl active:scale-98 transition cursor-pointer flex items-center justify-center gap-2"
-                  >
-                    <span>تطبيق موجة المايك</span>
-                  </button>
+              {activePopup === 'bubble' && (
+                <div className="flex w-full justify-center py-4">
+                  {hasVipChatBubble(level)
+                    ? <VipMessageFrame level={level}>معاينة فقاعة الكتابة لـ {activeTier.name}</VipMessageFrame>
+                    : <p className="text-xs text-slate-300">التصميم المعتمد غير متوفر لهذا المستوى.</p>}
                 </div>
               )}
 
@@ -1081,7 +947,7 @@ export const VipModal: React.FC = () => {
               <div className="p-3 rounded-xl bg-amber-950/40 border border-amber-500/30 flex items-center justify-between text-xs">
                 <span className="text-slate-300">سعر الاشتراك:</span>
                 <span className="font-bold text-amber-300 font-mono">
-                  {`${activeTier.price.toLocaleString()} كوينز 🪙`}
+                  {`${activeTier.price.toLocaleString('en-US')} كوينز 🪙`}
                 </span>
               </div>
 

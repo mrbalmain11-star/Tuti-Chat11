@@ -1,3 +1,4 @@
+import { latinDigits } from '../utils/digits';
 import { useEffect, useState } from 'react';
 import { Search } from 'lucide-react';
 import { stagingBackend } from '../services/stagingBackend';
@@ -6,14 +7,14 @@ type Account = { id: number; name: string | null; until: string | null };
 type Decision = { account: Account; action: 'ban' | 'lift' };
 const pageSize = 25;
 const durations = [
-  [1, 'ساعة'], [6, '٦ ساعات'], [24, 'يوم'], [72, '٣ أيام'],
-  [168, '٧ أيام'], [336, '١٤ يوم'], [720, '٣٠ يوم'], [2160, '٩٠ يوم'], [0, 'دائم'],
+  [1, 'ساعة'], [6, '6 ساعات'], [24, 'يوم'], [72, '3 أيام'],
+  [168, '7 أيام'], [336, '14 يوم'], [720, '30 يوم'], [2160, '90 يوم'], [0, 'دائم'],
 ] as const;
 
 function banExpiry(value: string) {
   const date = new Date(value);
   if (!Number.isFinite(date.getTime()) || date.getUTCFullYear() >= 9999) return 'باند دائم';
-  return 'الباند ينتهي ' + date.toLocaleString('ar-IQ', { timeZone: 'Asia/Baghdad' });
+  return 'الباند ينتهي ' + date.toLocaleString('ar-IQ-u-nu-latn', { timeZone: 'Asia/Baghdad' });
 }
 
 export function AdminAppBansPanel() {
@@ -90,7 +91,7 @@ export function AdminAppBansPanel() {
   return <section className="space-y-3">
     <form className="space-y-2 rounded-2xl border border-amber-200 bg-white p-4" onSubmit={event => {
       event.preventDefault();
-      const value = input.trim().replace(/[٠-٩۰-۹]/g, digit => String(digit.charCodeAt(0) % 16));
+      const value = latinDigits(input.trim());
       if (value.length >= 2) startSearch(value);
     }}>
       <label htmlFor="app-ban-account-search" className="text-sm font-bold">ابحث عن مستخدم</label>

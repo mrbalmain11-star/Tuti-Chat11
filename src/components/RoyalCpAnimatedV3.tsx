@@ -34,7 +34,7 @@ export const RoyalCpAnimatedV3: React.FC<Props> = ({
       </div>
       {hasRealProgress ? (
         <div className="royal-cp-v3-progress" dir="rtl" aria-label={`تقدم علاقة CP ${Math.round(percentage!)} بالمئة`}>
-          <div className="royal-cp-v3-progress-label"><span>تقدم العلاقة</span><span dir="ltr">{progressPoints!.toLocaleString()} / {nextLevelPoints!.toLocaleString()}</span></div>
+          <div className="royal-cp-v3-progress-label"><span>تقدم العلاقة</span><span dir="ltr">{progressPoints!.toLocaleString('en-US')} / {nextLevelPoints!.toLocaleString('en-US')}</span></div>
           <div className="royal-cp-v3-progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={nextLevelPoints!} aria-valuenow={Math.min(progressPoints!, nextLevelPoints!)}><span style={{ width: `${percentage}%` }} /></div>
         </div>
       ) : <p className="royal-cp-v3-progress-unavailable" dir="rtl">بيانات تقدم العلاقة غير متوفرة حالياً</p>}

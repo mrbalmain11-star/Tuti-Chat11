@@ -181,7 +181,7 @@ export const GiftAnimationOverlay: React.FC = () => {
       {!showPremiumBanner && <div className="toti-epic-ticker absolute top-[max(12%,env(safe-area-inset-top))] inset-x-4 flex justify-center">
         <div className="w-full max-w-sm rounded-2xl border border-amber-300 bg-[#131225]/95 px-4 py-3 text-center shadow-[0_0_28px_var(--epic-glow)]" dir="rtl">
           <div className="text-amber-100 text-xs font-black truncate">{sender} أهدى إلى {receiver}</div>
-          <div className="text-amber-300 text-sm font-black mt-1">{gift.name} ×{count} · {confirmedTotal.toLocaleString('ar-IQ')} عملة</div>
+          <div className="text-amber-300 text-sm font-black mt-1">{gift.name} ×{count} · {confirmedTotal.toLocaleString('ar-IQ-u-nu-latn')} عملة</div>
         </div>
       </div>}
       <button type="button" onClick={clearGiftAnimation} aria-label="إغلاق تأثير الهدية" className="pointer-events-auto absolute top-[max(5%,env(safe-area-inset-top))] right-4 flex h-9 w-9 items-center justify-center rounded-full border border-white/30 bg-black/60 text-white"><X size={18}/></button>

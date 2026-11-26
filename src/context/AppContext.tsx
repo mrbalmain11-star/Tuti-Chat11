@@ -1,3 +1,7 @@
+import { giftCategory } from '../services/giftCategory';
+import { RoomPinDialog } from '../components/RoomPinDialog';
+import type { RankingPeriod } from '../services/liveRankings';
+import { activeVipTier, hasVipEntrance } from '../utils/vipPerks';
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { imageUrl } from '../services/imageUrl';
 import { startAuthenticatedPushRegistration } from '../services/nativePushBridge';
@@ -54,6 +58,8 @@ interface AppContextType {
   roomMessages: Record<string, ChatMessage[]>;
   sendRoomMessage: (roomId: string, text: string) => void;
   selectedCountry: string;
+  homeRoomsStatus: 'loading' | 'ready' | 'error';
+  refreshHomeRooms: () => void;
   setSelectedCountry: (c: string) => void;
   conversations: DirectConversation[];
   sendDirectMessage: (convId: string, text: string) => void;
@@ -61,7 +67,7 @@ interface AppContextType {
   setOpenChatThread: (conv: DirectConversation | null) => void;
   unreadCount: number;
   gifts: GiftItem[];
-  sendGift: (gift: GiftItem, receiver: { id: string; name: string; avatar?: string }, count?: number) => Promise<boolean>;
+  sendGift: (gift: GiftItem, receiver: { id: string; name: string; avatar?: string }, count?: number, requestId?: string) => Promise<boolean>;
   sendGiftToRoom: (gift: GiftItem, receivers: Array<{ id: string; name: string; avatar?: string }>, count: number, requestId: string) => Promise<boolean>;
   activeGiftAnimation: GiftAnimationPayload | null;
   clearGiftAnimation: () => void;
@@ -72,7 +78,7 @@ interface AppContextType {
   rechargeCoins: (amount: number) => void;
   convertDiamondsToCoins: (diamondsAmount: number) => boolean;
   followedRoomHosts: Set<string>;
-  toggleFollowHost: (hostId: string) => void;
+  toggleFollowHost: (hostId: string, desired?: boolean) => boolean;
   createVoiceRoom: (title: string, tag: string, coverDataUrl?: string) => Promise<VoiceRoom>;
   updateRoom: (roomId: string, updates: Partial<VoiceRoom>) => Promise<void>;
   changeRoomBackground: (roomId: string, backgroundUrl: string) => Promise<boolean>;
@@ -124,6 +130,8 @@ interface AppContextType {
   openWealthLeaderboardModal: boolean;
   setOpenWealthLeaderboardModal: (open: boolean) => void;
   leaderboardTab: 'wealth' | 'charm' | 'room';
+  leaderboardPeriod: RankingPeriod;
+  setLeaderboardPeriod: (period: RankingPeriod) => void;
   setLeaderboardTab: (tab: 'wealth' | 'charm' | 'room') => void;
   internalProfileUser: UserProfile | null;
   setInternalProfileUser: (user: UserProfile | null) => void;
@@ -493,18 +501,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     if (!isLoggedIn || !stagingBackend) return;
     let active = true;
+    let expiryTimer: number | undefined;
+    let request = 0;
     const refreshVip = async () => {
+      const currentRequest = ++request;
       const { data: auth, error: authError } = await stagingBackend!.auth.getUser();
       if (authError || !auth.user) return;
       const { data, error } = await stagingBackend!.from('vip_entitlements')
         .select('tier,expires_at').eq('user_id', auth.user.id).maybeSingle();
       if (error) throw error;
-      if (active) setCurrentUser(prev => ({
-        ...prev,
-        vipLevel: data && (!data.expires_at || new Date(data.expires_at).getTime() > Date.now())
-          ? Number(data.tier) : 0,
-        vipExpiry: data?.expires_at ?? '',
-      }));
+      if (!active || currentRequest !== request) return;
+      window.clearTimeout(expiryTimer);
+      const expiresIn = data?.expires_at ? Date.parse(data.expires_at) - Date.now() : Infinity;
+      const tier = expiresIn > 0 ? activeVipTier(Number(data?.tier)) : 0;
+      setCurrentUser(prev => ({ ...prev, vipLevel: tier, vipExpiry: data?.expires_at ?? '' }));
+      if (tier && Number.isFinite(expiresIn)) {
+        expiryTimer = window.setTimeout(() => {
+          if (!active) return;
+          if (Date.now() >= Date.parse(data!.expires_at)) {
+            setCurrentUser(prev => prev.vipExpiry === data!.expires_at ? { ...prev, vipLevel: 0 } : prev);
+          }
+          onChanged();
+        }, Math.min(expiresIn + 10, 2147483647));
+      }
     };
     void refreshVip().catch(error => console.error('VIP entitlement refresh failed:', error));
     const onChanged = () => { void refreshVip().catch(error => console.error('VIP refresh failed:', error)); };
@@ -519,6 +538,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       .subscribe();
     return () => {
       active = false;
+      window.clearTimeout(expiryTimer);
       window.removeEventListener('totichat:vip-changed', onChanged);
       window.removeEventListener('focus', onChanged);
       document.removeEventListener('visibilitychange', onVisible);
@@ -528,9 +548,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [activeTab, setActiveTab] = useState<'home' | 'messages' | 'profile'>('home');
   const [homeSubTab, setHomeSubTab] = useState<'party' | 'royal' | 'discover'>('party');
+  const [pinEntry, setPinEntry] = useState<{room: VoiceRoom; busy?: boolean; error?: string}>();
   const [rooms, setRooms] = useState<VoiceRoom[]>([]);
+  const [homeRoomsStatus, setHomeRoomsStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const homeRoomsRefresh = useRef<() => void>(() => {});
+  const refreshHomeRooms = () => { setHomeRoomsStatus('loading'); homeRoomsRefresh.current(); };
   useEffect(() => {
-    if (!isLoggedIn) { setRooms([]); return; }
+    if (!isLoggedIn) { setRooms([]); setHomeRoomsStatus('loading'); return; }
     let active = true;
     let refreshInFlight = false;
     let refreshPending = false;
@@ -540,19 +564,37 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       try {
         do {
           refreshPending = false;
-          const rows = await fetchRealRooms();
-          if (active) setRooms(rows.map(mapRoomToUi));
+          const rows = await fetchRealRooms(true);
+          if (active) { setRooms(rows.map(mapRoomToUi)); setHomeRoomsStatus('ready'); }
         } while (active && refreshPending);
       } catch (error) {
         console.error('Failed to refresh real staging rooms:', error);
+        if (active) setHomeRoomsStatus('error');
       } finally {
         refreshInFlight = false;
       }
     };
+    homeRoomsRefresh.current = refreshRooms;
     void refreshRooms();
+    const refreshVisible = () => { if (!document.hidden) void refreshRooms(); };
+    const updateRoomLock = (id: string, locked: boolean) => {
+      setRooms(previous => previous.map(room => room.id===id ? { ...room, accessLocked:locked } : room));
+    };
+    const onLocalLock = (event: Event) => {
+      const { roomId, locked } = (event as CustomEvent<{roomId:string;locked:boolean}>).detail;
+      updateRoomLock(roomId,locked);
+      void refreshRooms();
+    };
+    window.addEventListener('focus', refreshVisible);
+    window.addEventListener('online', refreshVisible);
+    window.addEventListener('totichat:room-lock-changed', onLocalLock);
+    const fallback = window.setInterval(refreshVisible, 30000);
     const client = stagingBackend;
     const channel = client?.channel('staging-public-rooms')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'rooms' }, () => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'rooms' }, payload => {
+        if (payload.eventType==='UPDATE' && typeof payload.new.id==='string' && typeof payload.new.access_locked==='boolean') {
+          updateRoomLock(payload.new.id,payload.new.access_locked);
+        }
         void refreshRooms();
       })
       .subscribe(status => {
@@ -563,12 +605,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
     return () => {
       active = false;
+      homeRoomsRefresh.current = () => {};
+      window.clearInterval(fallback);
+      window.removeEventListener('focus', refreshVisible);
+      window.removeEventListener('totichat:room-lock-changed', onLocalLock);
+      window.removeEventListener('online', refreshVisible);
       if (channel && client) void client.removeChannel(channel);
     };
   }, [isLoggedIn]);
   const [activeRoom, setActiveRoom] = useState<VoiceRoom | null>(null);
   const [isRoomMinimized, setIsRoomMinimized] = useState(false);
   const [myMicMuted, setMyMicMuted] = useState(false);
+  const seatReservationVersion = useRef(0);
   const voiceRoomId = activeRoom?.id ?? null;
   const voiceSeat = activeRoom?.seats.some(seat => seat.user?.id === currentUser.id) ?? false;
   const voiceShouldPublish = isLoggedIn && voiceSeat && !myMicMuted;
@@ -633,7 +681,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsRoomMinimized(false);
     setMyMicMuted(false);
   }, [isLoggedIn]);
-  const [selectedCountry, setSelectedCountry] = useState<string>('شائع 🔥');
+  const [selectedCountry, setSelectedCountry] = useState<string>('all');
   const [realGifts, setRealGifts] = useState<GiftItem[]>([]);
   useEffect(() => {
     if (!isLoggedIn || !stagingBackend) {
@@ -661,7 +709,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           assetFormat: typeof g.preview_url === 'string' && /\.svga(?:[?#]|$)/i.test(g.preview_url) ? 'svga' as const
             : typeof g.preview_url === 'string' && /\.lottie(?:[?#]|$)/i.test(g.preview_url) ? 'lottie' as const
             : typeof g.preview_url === 'string' && /\.json(?:[?#]|$)/i.test(g.preview_url) ? 'json' as const : undefined,
-          category: (g.category_id === 'luck' ? 'حظ' : g.category_id === 'cp' ? 'CP' : 'هدية') as GiftItem['category'],
+          category: giftCategory(g.category_id),
           animationType: (allowedAnimation.has(g.animation_type as GiftItem['animationType'])
             ? g.animation_type : 'rose') as GiftItem['animationType'],
           rarity: (['legendary','epic','rare','common'].includes(g.rarity ?? '')
@@ -722,7 +770,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           icon: String(serverGift.icon),
           assetUrl: typeof serverGift.preview_url === 'string' && /^https:\/\//i.test(serverGift.preview_url) ? serverGift.preview_url : undefined,
           assetFormat: typeof serverGift.preview_url === 'string' && /\.json(?:[?#]|$)/i.test(serverGift.preview_url) ? 'json' as const : undefined,
-          category: (serverGift.category_id === 'luck' ? 'حظ' : serverGift.category_id === 'cp' ? 'CP' : 'هدية') as GiftItem['category'],
+          category: giftCategory(serverGift.category_id),
           animationType: (['lion', 'mosque', 'sword', 'samurai', 'crown', 'car', 'diamond', 'rose'].includes(String(serverGift.animation_type))
             ? serverGift.animation_type : 'rose') as GiftItem['animationType'],
           rarity: (['legendary', 'epic', 'rare', 'common'].includes(String(serverGift.rarity))
@@ -864,12 +912,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         void loadDirectMessages().catch(error => console.error('DM resume refresh failed:', error));
       }
     };
+    window.addEventListener('totichat:dm-refresh', refreshOnReturn);
     window.addEventListener('focus', refreshOnReturn);
     window.addEventListener('online', refreshOnReturn);
     document.addEventListener('visibilitychange', refreshOnReturn);
     window.addEventListener('totichat:personal-blocks-changed', refreshOnReturn);
     return () => {
       active = false;
+      window.removeEventListener('totichat:dm-refresh', refreshOnReturn);
       window.removeEventListener('focus', refreshOnReturn);
       window.removeEventListener('online', refreshOnReturn);
       document.removeEventListener('visibilitychange', refreshOnReturn);
@@ -1032,7 +1082,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           name: catalog.name,
           category,
           assetUrl: getStorageAsset(row.item_id, catalog.preview_url),
-          expiry: row.expires_at ? new Date(row.expires_at).toLocaleDateString('ar-IQ') : 'دائم',
+          expiry: row.expires_at ? new Date(row.expires_at).toLocaleDateString('ar-IQ-u-nu-latn') : 'دائم',
           isEquipped: Boolean(row.equipped),
         }];
       });
@@ -1122,6 +1172,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [openInviteModal, setOpenInviteModal] = useState(false);
   const [openInternalProfileModal, setOpenInternalProfileModal] = useState(false);
   const [openWealthLeaderboardModal, setOpenWealthLeaderboardModal] = useState(false);
+  const [leaderboardPeriod, setLeaderboardPeriod] = useState<RankingPeriod>('daily');
   const [leaderboardTab, setLeaderboardTab] = useState<'wealth' | 'charm' | 'room'>('wealth');
   const [internalProfileUser, setInternalProfileUser] = useState<UserProfile | null>(null);
   const [selectedGiftReceiver, setSelectedGiftReceiver] = useState<{ id: string; name: string; avatar?: string } | null>(null);
@@ -1291,6 +1342,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       try {
         do {
           pending = false;
+          const reservationVersion = seatReservationVersion.current;
           const members = await resolveRoomAvatars(await fetchRoomVisualMembers(roomId));
           const hostMember = members.find(member => member.user_id === hostId);
           const { data: hostProfile } = !hostMember && hostId
@@ -1302,16 +1354,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const moderatorMutedIds = new Set(rawMembers.filter(m => m.moderation_muted).map(m => m.user_id));
           const { data: moderatorIds, error: moderatorsError } = await roomClient.rpc('totichat_room_moderator_ids', { p_room_id: roomId });
           if (!alive) return;
+          if (reservationVersion !== seatReservationVersion.current) {
+            pending = true;
+            continue;
+          }
           const currentVipRoomMemberIds = new Set(members.map(member => member.user_id));
-          if (previousVipRoomMemberIds) {
-            for (const member of members) {
-              if (previousVipRoomMemberIds.has(member.user_id) || member.user_id === currentUser.id) continue;
-              const vipLevel = Number(member.vip_level);
-              if (Number.isSafeInteger(vipLevel) && vipLevel > 0) {
-                window.dispatchEvent(new CustomEvent('totichat:vip-room-entry', {
-                  detail: { roomId, userId: member.user_id, name: member.display_name, vipLevel },
-                }));
-              }
+          for (const member of members) {
+            const newArrival = previousVipRoomMemberIds
+              ? member.user_id !== currentUser.id && !previousVipRoomMemberIds.has(member.user_id)
+              : member.user_id === currentUser.id;
+            const vipLevel = Number(member.vip_level);
+            if (newArrival && hasVipEntrance(vipLevel)) {
+              window.dispatchEvent(new CustomEvent('totichat:vip-room-entry', {
+                detail: { roomId, userId: member.user_id, name: member.display_name, vipLevel },
+              }));
             }
           }
           previousVipRoomMemberIds = currentVipRoomMemberIds;
@@ -1517,9 +1573,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     membershipTransitionQueue.current = next.catch(() => {});
     return next;
   };
-  const enterRoom = (roomId: string, newlyCreatedRoom?: VoiceRoom): void => {
+  const enterRoom = (roomId: string, newlyCreatedRoom?: VoiceRoom, pin?: string): void => {
     const room = newlyCreatedRoom?.id === roomId ? newlyCreatedRoom : rooms.find(r => r.id === roomId);
     if (!room) return;
+    if (pin === undefined) setPinEntry(undefined);
+    else setPinEntry({ room, busy: true });
     const transition = ++roomTransitionVersion.current;
     void queueMembershipTransition(async () => {
       if (transition !== roomTransitionVersion.current) return;
@@ -1527,7 +1585,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // rejects entry, and never activate two room audio sessions in the UI.
       const previousRoomId = activeRoom?.id;
       if (previousRoomId === roomId) return;
-      await joinRoomMembership(roomId);
+      await joinRoomMembership(roomId, pin);
       if (previousRoomId && previousRoomId !== roomId) {
         try {
           await leaveRoomMembership(previousRoomId);
@@ -1541,6 +1599,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     }).then(async () => {
       if (transition !== roomTransitionVersion.current) return;
+      setPinEntry(undefined);
       setActiveRoom(room);
       setIsRoomMinimized(false);
       setMyMicMuted(true);
@@ -1595,8 +1654,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
     }).catch(error => {
       if (transition !== roomTransitionVersion.current) return;
+      const joinError = error as { code?: string; message?: string; wait?: number } | null;
+      const reason = joinError?.message ?? '';
+      if (reason.includes('ROOM_PIN_REQUIRED')) { setPinEntry({room}); return; }
+      if (reason === 'ROOM_PIN_WRONG' || reason === 'ROOM_PIN_WAIT') {
+        const wait = joinError?.wait ? ' انتظر ' + joinError.wait + ' ثانية.' : '';
+        setPinEntry({ room, error: (reason === 'ROOM_PIN_WRONG' ? 'رمز الدخول غير صحيح.' : 'محاولات كثيرة.') + wait });
+        return;
+      }
+      if (pin !== undefined) {
+        setPinEntry(undefined);
+      }
       console.error('Room join or membership fetch failed:', error);
-      const joinError = error as { code?: string; message?: string } | null;
       const banned = joinError?.message?.includes('ROOM_BANNED') === true;
       if (banned) {
         const wantsAppeal = window.confirm('أنت محظور من هذه الغرفة. هل تريد تقديم اعتراض إلى مالك الغرفة؟');
@@ -1638,6 +1707,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             })();
           }
         }
+      } else if (joinError?.message === 'room is private') {
+        alert('هذه الغرفة مغلقة. تأكد من وجود صلاحية دخول أو اشتراك VIP12 فعّال.');
+      } else if (joinError?.message === 'ROOM_ACCESS_DENIED') {
+        alert('لا يمكن الدخول إلى هذه الغرفة بسبب قيود الوصول الحالية.');
       } else {
         alert('تعذر تأكيد دخول الغرفة من الخادم.');
       }
@@ -1670,11 +1743,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const seatReservationPendingRef = useRef(false);
   const seatReleasePendingRef = useRef(false);
   const takeSeat = (seatNumber: number): void => {
-    if (!activeRoom || seatReservationPendingRef.current || seatReleasePendingRef.current) return;
+    if (!activeRoom || seatReservationPendingRef.current || seatReleasePendingRef.current || micUpdatePendingRef.current) return;
     seatReservationPendingRef.current = true;
     const roomId = activeRoom.id;
     const transitionAtStart = roomTransitionVersion.current;
-    let reservationConfirmed = false;
     void reserveSeat(roomId, seatNumber).catch(async error => {
       // Membership can expire while a room remains open; rejoin once and retry.
       const reason = error instanceof Error ? error.message.toLowerCase() : '';
@@ -1687,8 +1759,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (roomTransitionVersion.current !== transitionAtStart) throw new Error('Room changed during seat reservation');
       return reserveSeat(roomId, seatNumber);
     }).then(() => {
-      reservationConfirmed = true;
       if (roomTransitionVersion.current !== transitionAtStart) return;
+      seatReservationVersion.current += 1;
       setMyMicMuted(true);
       window.dispatchEvent(new CustomEvent('totichat:room-seat-changed', { detail: roomId }));
       setActiveRoom(prev => {
@@ -1712,31 +1784,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           })),
         };
       });
-      // Joining a seat must also reconcile the server mute flag. Otherwise
-      // LiveKit stays unpublished even though the seat is visibly occupied.
-      return setMyRoomMute(roomId, false).then(confirmed => {
-        if (confirmed !== false) throw new Error('Microphone unmute not confirmed');
-        if (roomTransitionVersion.current !== transitionAtStart) return;
-        setMyMicMuted(false);
-        setActiveRoom(prev => prev?.id !== roomId ? prev : ({
-          ...prev,
-          seats: prev.seats.map(seat => seat.seatNumber === seatNumber && seat.user?.id === currentUser.id
-            ? { ...seat, isMuted: false } : seat),
-        }));
-      });
     }).catch(error => {
       if (roomTransitionVersion.current !== transitionAtStart) return;
-      if (reservationConfirmed) {
-        // Seat assignment succeeded; only the separate microphone unmute failed.
-        // Do not report a failed reservation or clear the server-confirmed seat.
-        console.error('Seat reserved but microphone could not be enabled:', error);
-        setMyMicMuted(true);
-        const moderatorMuted = error instanceof Error && error.message.includes('ROOM_MODERATOR_MUTED');
-        alert(moderatorMuted
-          ? 'تم حجز المقعد، لكن المايك مكتوم من إدارة الغرفة حتى يرفع المشرف الكتم.'
-          : 'تم حجز المقعد، لكن تعذر فتح المايك. حاول تشغيله مجدداً.');
-        return;
-      }
       console.error('Seat reservation failed:', error);
       const reason = error instanceof Error ? error.message.toLowerCase() : '';
       alert(reason.includes('seat locked') ? 'هذا المقعد مقفول من إدارة الغرفة.' :
@@ -1939,7 +1988,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       alert('لا يوجد اتصال بالإنترنت. احتفظنا بالنص لإعادة المحاولة.');
       return;
     }
-    const requestId = crypto.randomUUID();
+    const requestId: string = crypto.randomUUID();
     const dmClient = stagingBackend;
     void Promise.resolve(dmClient.rpc('staging_send_dm', {
       p_to: recipientId, p_text: body, p_nonce: requestId,
@@ -2001,7 +2050,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const sendGift = async (
     gift: GiftItem,
     receiver: { id: string; name: string; avatar?: string },
-    count: number = 1
+    count: number = 1,
+    requestId: string = crypto.randomUUID()
   ): Promise<boolean> => {
     if (!stagingBackend || !activeRoom || !gift || !receiver?.id ||
         ![1, 7, 17, 77, 777].includes(count) || !Number.isSafeInteger(gift.price) || gift.price < 0) {
@@ -2015,7 +2065,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             p_room_id: activeRoom.id,
             p_gift_id: gift.id,
             p_quantity: count,
-            p_request_id: crypto.randomUUID(),
+            p_request_id: requestId,
             p_expected_price: gift.price,
           })
         : await stagingBackend.rpc('phase3_send_gift', {
@@ -2023,7 +2073,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             p_recipient_id: receiver.id,
             p_gift_id: gift.id,
             p_quantity: count,
-            p_request_id: crypto.randomUUID(),
+            p_request_id: requestId,
             p_expected_price: gift.price,
           });
       if (error) throw error;
@@ -2139,15 +2189,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return false;
   };
 
-  const toggleFollowHost = (hostId: string): void => {
-    if (!stagingBackend || !hostId || hostId === currentUser.id || followPendingRef.current.has(hostId)) return;
+  const toggleFollowHost = (hostId: string, desired?: boolean): boolean => {
+    if (!stagingBackend || !hostId || hostId === currentUser.id || followPendingRef.current.has(hostId)) return false;
     followPendingRef.current.add(hostId);
-    void Promise.resolve(stagingBackend.rpc('staging_toggle_follow', { p_followed_id: hostId }))
+    const request = desired === undefined
+      ? stagingBackend.rpc('staging_toggle_follow', { p_followed_id: hostId })
+      : stagingBackend.rpc('phase5_social_follow', {
+        p_target: hostId, p_follow: desired, p_request_id: crypto.randomUUID(),
+      });
+    void Promise.resolve(request)
       .then(({ data, error }) => {
-        if (error || typeof data !== 'boolean') throw error ?? new Error('Follow not confirmed');
+        const followed = desired === undefined ? data : data?.followed;
+        if (error || typeof followed !== 'boolean' || (desired !== undefined && followed !== desired)) {
+          throw error ?? new Error('Follow not confirmed');
+        }
         setFollowedRoomHosts(prev => {
           const next = new Set(prev);
-          if (data) next.add(hostId);
+          if (followed) next.add(hostId);
           else next.delete(hostId);
           return next;
         });
@@ -2156,6 +2214,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         console.error('Follow update rejected:', error);
         alert('تعذر تحديث المتابعة من الخادم.');
       }).finally(() => { followPendingRef.current.delete(hostId); window.dispatchEvent(new Event('totichat:follows-changed')); });
+    return true;
   };
 
   const joinAgency = (agencyId: string): void => {
@@ -2351,6 +2410,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         roomMessages,
         sendRoomMessage,
         selectedCountry,
+        homeRoomsStatus,
+        refreshHomeRooms,
         setSelectedCountry,
         conversations,
         sendDirectMessage,
@@ -2421,6 +2482,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         openWealthLeaderboardModal,
         setOpenWealthLeaderboardModal,
         leaderboardTab,
+        leaderboardPeriod,
+        setLeaderboardPeriod,
         setLeaderboardTab,
         internalProfileUser,
         setInternalProfileUser,
@@ -2439,6 +2502,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }}
     >
       {children}
+      {isLoggedIn && pinEntry && <RoomPinDialog key={pinEntry.room.id} roomId={pinEntry.room.id} entryError={pinEntry.error}
+        entryBusy={pinEntry.busy} onClose={()=>setPinEntry(undefined)}
+        onEnter={pin=>enterRoom(pinEntry.room.id,pinEntry.room,pin)} />}
     </AppContext.Provider>
   );
 };

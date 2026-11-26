@@ -1,5 +1,6 @@
-import React, { useEffect, useId, useState } from 'react';
-import { stagingBackend } from '../services/stagingBackend';
+import { RoomLockBadge } from './RoomLockBadge';
+import React, { useId, useState } from 'react';
+import { useLiveRanking, type RankingPeriod as TimePeriod, type RankingRow } from '../services/liveRankings';
 import { imageUrl } from '../services/imageUrl';
 
 const rankingImageFallback = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="50" fill="#e9d5a1"/><circle cx="50" cy="38" r="17" fill="#94753e"/><path d="M17 91c3-27 18-38 33-38s30 11 33 38" fill="#94753e"/></svg>');
@@ -69,13 +70,13 @@ export interface RoomLeaderboardItem {
   activeListeners: number;
 }
 
-type TimePeriod = 'daily' | 'weekly' | 'monthly';
-
 export const WealthLeaderboardModal: React.FC = () => {
   const {
     openWealthLeaderboardModal,
     setOpenWealthLeaderboardModal,
     leaderboardTab,
+    leaderboardPeriod: period,
+    setLeaderboardPeriod: setPeriod,
     setLeaderboardTab,
     setInternalProfileUser,
     setOpenInternalProfileModal,
@@ -86,66 +87,12 @@ export const WealthLeaderboardModal: React.FC = () => {
     isRtl,
   } = useApp();
 
-  const [period, setPeriod] = useState<TimePeriod>('daily');
   const [showResetRulesModal, setShowResetRulesModal] = useState(false);
-  type RankingRow={entity_id:string;public_id:number;display_name:string;avatar_url:string|null;score:number};
-  const [rankingState,setRankingState]=useState<{period:TimePeriod;tab:string;rows:RankingRow[]}|null>(null);
-  const ranking=openWealthLeaderboardModal && rankingState?.period===period && rankingState?.tab===leaderboardTab ? rankingState.rows : [];
-  useEffect(()=>{
-    if(!openWealthLeaderboardModal||!stagingBackend)return;
-    let alive=true;
-    let requestId=0;
-    let inFlight=false;
-    // Never show results from the previously selected tab or period.
-    setRankingState(null);
-    const refresh=async()=>{
-      // Avoid piling up network requests when the server takes over 30 seconds.
-      if(!alive||inFlight)return;
-      inFlight=true;
-      const currentRequest=++requestId;
-      try {
-        const {data,error}=await stagingBackend!.rpc('live_rankings',{p_period:period,p_kind:leaderboardTab});
-        if(!alive||currentRequest!==requestId)return;
-        if(error)throw error;
-        if (!Array.isArray(data)) throw new Error('Invalid leaderboard response');
-        const rows = data.filter((item):item is RankingRow =>
-              item !== null && typeof item === 'object' &&
-              typeof item.entity_id === 'string' && item.entity_id.trim().length > 0 &&
-              typeof item.display_name === 'string' &&
-              item.display_name.trim().length > 0 &&
-              (item.avatar_url === null || typeof item.avatar_url === 'string')
-            );
-        // One account or room can occupy only one position in a ranking.
-        const seenEntities = new Set<string>();
-        const uniqueRows = rows.filter(row => {
-          const entityKey = row.entity_id.trim();
-          if (seenEntities.has(entityKey)) return false;
-          seenEntities.add(entityKey);
-          return true;
-        });
-        // Ranking rows are already ordered by the backend; render at most ten.
-        setRankingState({period,tab:leaderboardTab,rows:uniqueRows.slice(0,10)});
-      } catch(error) {
-        if(!alive||currentRequest!==requestId)return;
-        console.error('Rankings load failed',error);
-        // Preserve the last valid ranking for this tab/period during a transient outage.
-        // On initial load (or after switching tabs), no stale results are displayed.
-        setRankingState(previous =>
-          previous?.period===period && previous?.tab===leaderboardTab
-            ? previous
-            : {period,tab:leaderboardTab,rows:[]}
-        );
-      } finally {
-        inFlight=false;
-      }
-    };
-    void refresh();
-    const interval=setInterval(()=>void refresh(),30000);
-    return()=>{alive=false;clearInterval(interval);};
-  },[openWealthLeaderboardModal,period,leaderboardTab]);
+  const ranking = useLiveRanking(currentUser.id, period, leaderboardTab, openWealthLeaderboardModal);
   // Ranking RPC does not return VIP, role or level metadata: never copy the viewer's badges or privileges to another user.
   const profileFor=(r:RankingRow):UserProfile=>({
     id:r.entity_id,
+    publicId: Number.isSafeInteger(r.public_id) && r.public_id > 0 ? r.public_id : undefined,
     name:r.display_name,
     nickname:r.display_name,
     avatar:imageUrl(r.avatar_url) || rankingImageFallback,
@@ -385,7 +332,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                       />
 
                       <div className="mt-1 flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-300 text-amber-950 text-[10px] font-bold shadow-2xs font-sans">
-                        <span>{topWealth2.supportAmount.toLocaleString()}</span>
+                        <span>{topWealth2.supportAmount.toLocaleString('en-US')}</span>
                         <span>🪙</span>
                       </div>
                     </div>
@@ -407,7 +354,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                       />
 
                       <div className="mt-1.5 flex items-center gap-1 px-3 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 border border-amber-500 text-slate-950 text-xs font-black shadow-xs font-sans">
-                        <span>{topWealth1.supportAmount.toLocaleString()}</span>
+                        <span>{topWealth1.supportAmount.toLocaleString('en-US')}</span>
                         <span className="text-amber-900">🪙</span>
                       </div>
                     </div>
@@ -431,7 +378,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                       />
 
                       <div className="mt-1 flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-300 text-amber-950 text-[10px] font-bold shadow-2xs font-sans">
-                        <span>{topWealth3.supportAmount.toLocaleString()}</span>
+                        <span>{topWealth3.supportAmount.toLocaleString('en-US')}</span>
                         <span>🪙</span>
                       </div>
                     </div>
@@ -485,11 +432,13 @@ export const WealthLeaderboardModal: React.FC = () => {
                             fallbackColor="text-slate-900"
                             className="text-xs font-black truncate max-w-[130px]"
                           />
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                            <span className="text-[9px] text-slate-500 font-mono">
-                              ID:{supporter.user.id}
-                            </span>
-                          </div>
+                          {supporter.user.publicId !== undefined && (
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span dir="ltr" className="text-[9px] text-slate-500 font-mono">
+                                ID: {supporter.user.publicId}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -497,7 +446,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                       <div className="flex items-center gap-2 shrink-0">
                         <div className="flex flex-col items-end">
                           <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-300/80 text-amber-950 font-black text-xs font-sans shadow-2xs">
-                            <span>{supporter.supportAmount.toLocaleString()}</span>
+                            <span>{supporter.supportAmount.toLocaleString('en-US')}</span>
                             <span className="text-amber-500 text-xs">🪙</span>
                           </div>
                           <span className="text-[9px] text-amber-700/80 mt-0.5 font-bold">
@@ -543,7 +492,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                       {/* مستوى السحر (Magic Level Badge) */}
                       {/* قيمة المرمي للحساب (Received Gifts Value) */}
                       <div className="mt-1 flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-300 text-amber-950 text-[10px] font-bold shadow-2xs font-sans">
-                        <span>{topCharm2.charmReceived.toLocaleString()}</span>
+                        <span>{topCharm2.charmReceived.toLocaleString('en-US')}</span>
                         <span>💎</span>
                       </div>
                       <span className="text-[8px] font-bold text-amber-800 mt-0.5">مرمي للحساب</span>
@@ -568,7 +517,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                       {/* مستوى السحر (Magic Level Badge) */}
                       {/* قيمة المرمي للحساب */}
                       <div className="mt-1.5 flex items-center gap-1 px-3 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 border border-amber-500 text-slate-950 text-xs font-black shadow-xs font-sans">
-                        <span>{topCharm1.charmReceived.toLocaleString()}</span>
+                        <span>{topCharm1.charmReceived.toLocaleString('en-US')}</span>
                         <span>💎</span>
                       </div>
                       <span className="text-[9px] font-black text-amber-900 mt-0.5">مرمي للحساب (مرسل له)</span>
@@ -594,7 +543,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                       {/* مستوى السحر (Magic Level Badge) */}
                       {/* قيمة المرمي للحساب */}
                       <div className="mt-1 flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-300 text-amber-950 text-[10px] font-bold shadow-2xs font-sans">
-                        <span>{topCharm3.charmReceived.toLocaleString()}</span>
+                        <span>{topCharm3.charmReceived.toLocaleString('en-US')}</span>
                         <span>💎</span>
                       </div>
                       <span className="text-[8px] font-bold text-amber-800 mt-0.5">مرمي للحساب</span>
@@ -651,12 +600,13 @@ export const WealthLeaderboardModal: React.FC = () => {
                             fallbackColor="text-slate-900"
                             className="text-xs font-black truncate max-w-[130px]"
                           />
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                            {/* مستوى السحر */}
-                            <span className="text-[9px] text-slate-500 font-mono">
-                              ID:{item.user.id}
-                            </span>
-                          </div>
+                          {item.user.publicId !== undefined && (
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span dir="ltr" className="text-[9px] text-slate-500 font-mono">
+                                ID: {item.user.publicId}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -664,7 +614,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                       <div className="flex items-center gap-2 shrink-0">
                         <div className="flex flex-col items-end">
                           <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-300 text-amber-950 font-black text-xs font-sans shadow-2xs">
-                            <span>{item.charmReceived.toLocaleString()}</span>
+                            <span>{item.charmReceived.toLocaleString('en-US')}</span>
                             <span className="text-amber-500 text-xs">💎</span>
                           </div>
                           <span className="text-[9px] text-amber-700 mt-0.5 font-bold">
@@ -707,7 +657,7 @@ export const WealthLeaderboardModal: React.FC = () => {
 
                       {/* قيمة المرمي للروم */}
                       <div className="mt-1 flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-300 text-amber-950 text-[10px] font-bold shadow-2xs font-sans">
-                        <span>{topRoom2.roomGiftsAmount.toLocaleString()}</span>
+                        <span>{topRoom2.roomGiftsAmount.toLocaleString('en-US')}</span>
                         <span>💎</span>
                       </div>
                       <span className="text-[9px] font-bold text-amber-800 mt-0.5">مرمي للروم</span>
@@ -729,7 +679,7 @@ export const WealthLeaderboardModal: React.FC = () => {
 
                       {/* قيمة المرمي للروم */}
                       <div className="mt-1.5 flex items-center gap-1 px-3 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 border border-amber-500 text-slate-950 text-xs font-black shadow-xs font-sans">
-                        <span>{topRoom1.roomGiftsAmount.toLocaleString()}</span>
+                        <span>{topRoom1.roomGiftsAmount.toLocaleString('en-US')}</span>
                         <span>💎 مرمي للروم</span>
                       </div>
                     </div>
@@ -751,7 +701,7 @@ export const WealthLeaderboardModal: React.FC = () => {
 
                       {/* قيمة المرمي للروم */}
                       <div className="mt-1 flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-300 text-amber-950 text-[10px] font-bold shadow-2xs font-sans">
-                        <span>{topRoom3.roomGiftsAmount.toLocaleString()}</span>
+                        <span>{topRoom3.roomGiftsAmount.toLocaleString('en-US')}</span>
                         <span>💎</span>
                       </div>
                       <span className="text-[9px] font-bold text-amber-800 mt-0.5">مرمي للروم</span>
@@ -798,7 +748,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                         {/* Room Info */}
                         <div className="text-right min-w-0">
                           <span className="text-xs font-black text-slate-900 block truncate max-w-[140px] group-hover:text-amber-900 transition">
-                            {room.title}
+                            {room.title}<RoomLockBadge roomId={room.id}/>
                           </span>
                           <div className="flex items-center gap-2 mt-0.5">
                             <span className="text-[10px] text-slate-500 truncate max-w-[80px]">
@@ -815,7 +765,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                       <div className="flex items-center gap-2 shrink-0">
                         <div className="flex flex-col items-end">
                           <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-300 text-amber-950 font-black text-xs font-sans shadow-2xs">
-                            <span>{room.roomGiftsAmount.toLocaleString()}</span>
+                            <span>{room.roomGiftsAmount.toLocaleString('en-US')}</span>
                             <span className="text-amber-500 text-xs">💎</span>
                           </div>
                           <span className="text-[9px] text-amber-800 mt-0.5 font-bold">
@@ -850,7 +800,7 @@ export const WealthLeaderboardModal: React.FC = () => {
                     إجمالي دعمك:
                   </span>
                   <div className="flex items-center gap-1 text-xs font-black text-amber-900 font-sans">
-                    <span>{(currentUser.wealthExp || 0).toLocaleString()} 🪙</span>
+                    <span>{(currentUser.wealthExp || 0).toLocaleString('en-US')} 🪙</span>
                   </div>
                 </>
               )}
@@ -858,7 +808,7 @@ export const WealthLeaderboardModal: React.FC = () => {
               {leaderboardTab === 'charm' && (
                 <>
                   <div className="flex items-center gap-1 text-xs font-black text-amber-950 font-sans">
-                    <span>مرمي لك: {(currentUser.charmExp || 0).toLocaleString()} 💎</span>
+                    <span>مرمي لك: {(currentUser.charmExp || 0).toLocaleString('en-US')} 💎</span>
                   </div>
                 </>
               )}

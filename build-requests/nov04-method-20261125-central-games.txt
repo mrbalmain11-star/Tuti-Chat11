@@ -1,0 +1,1 @@
+Build and verify the staging APK with the centrally settled live game rounds.

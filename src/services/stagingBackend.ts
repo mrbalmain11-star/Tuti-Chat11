@@ -28,6 +28,7 @@ export type BackendRoom = {
   owner_id: string;
   title: string;
   is_private: boolean;
+  access_locked?: boolean;
   welcome_message: string;
   tag: string;
   cover_path: string | null;
@@ -36,6 +37,7 @@ export type BackendRoom = {
   cover_url?: string;
   owner_name?: string;
   owner_avatar?: string;
+  owner_country?: string | null;
 };
 
 export type BackendProfile = {
@@ -56,12 +58,12 @@ function requireBackend() {
   return stagingBackend;
 }
 
-export async function fetchRealRooms(): Promise<BackendRoom[]> {
+export async function fetchRealRooms(requireOwnerCountry = false): Promise<BackendRoom[]> {
   const client = requireBackend();
   const { data: auth, error: authError } = await client.auth.getUser();
   if (authError) throw authError;
   if (!auth.user) return [];
-  const fields = 'id,public_id,owner_id,title,is_private,welcome_message,tag,cover_path,background_path';
+  const fields = 'id,public_id,owner_id,title,is_private,access_locked,welcome_message,tag,cover_path,background_path';
   const [publicRooms, ownedRooms] = await Promise.all([
     client.from('rooms').select(fields).eq('is_private', false).order('created_at', { ascending: false }),
     client.from('rooms').select(fields).eq('owner_id', auth.user.id).order('created_at', { ascending: false }),
@@ -76,13 +78,17 @@ export async function fetchRealRooms(): Promise<BackendRoom[]> {
   const ownerIds = [...new Set(rooms.map(room => room.owner_id))];
   if (ownerIds.length) {
     const { data: owners, error: ownersError } = await client.from('profiles')
-      .select('id,display_name,avatar_url').in('id', ownerIds);
-    if (ownersError) console.warn('Room owner profiles unavailable:', ownersError.message);
+      .select('id,display_name,avatar_url,country').in('id', ownerIds);
+    if (ownersError) {
+      if (requireOwnerCountry) throw ownersError;
+      console.warn('Room owner profiles unavailable:', ownersError.message);
+    }
     const ownerById = new Map((owners ?? []).map(owner => [owner.id, owner]));
     for (const room of rooms) {
       const owner = ownerById.get(room.owner_id);
       room.owner_name = owner?.display_name ?? '';
       room.owner_avatar = imageUrl(owner?.avatar_url, 'profile-avatars');
+      room.owner_country = owner?.country ?? null;
     }
   }
   for (const room of rooms) {
@@ -275,7 +281,7 @@ export async function fetchOwnerDashboardCounts(): Promise<OwnerDashboardCounts 
   return { users_count: values[0], agencies_count: values[1], rooms_count: values[2] };
 }
 
-export type AdminRecentItem = { public_id?: number; id?: string; display_name?: string; name?: string; title?: string; created_at: string };
+export type AdminRecentItem = { public_id?: number; id?: string; display_name?: string; name?: string; title?: string; kind?: string; is_active?: boolean; is_private?: boolean; created_at: string };
 export type OwnerDashboardRecent = { users: AdminRecentItem[]; agencies: AdminRecentItem[]; rooms: AdminRecentItem[] };
 /** Owner-only, read-only latest records. Authorization enforced by the SQL function. */
 export async function fetchOwnerDashboardRecent(): Promise<OwnerDashboardRecent> {

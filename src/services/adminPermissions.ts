@@ -1,7 +1,7 @@
 export const adminSections = [
-  { id: 'games', label: 'إدارة الألعاب', permission: 'games.manage' },
   { id: 'stats', label: 'الإحصائيات', permission: 'stats.read' },
   { id: 'users', label: 'المستخدمون', permission: 'users.manage' },
+  { id: 'accountReset', label: 'تصفير حساب', permission: 'users.manage', ownerOnly: true },
   { id: 'agencies', label: 'الوكالات', permission: 'agencies.read' },
   { id: 'rooms', label: 'الغرف', permission: 'rooms.read' },
   { id: 'operations', label: 'العمليات', permission: 'operations.read', ownerOnly: true },
@@ -14,7 +14,8 @@ export const adminSections = [
   { id: 'agencyRegistrations', label: 'طلبات فتح وكالة مضيفين', permission: 'host_agency.open' },
   { id: 'reports', label: 'البلاغات', permission: 'reports.moderate' },
   { id: 'financeReports', label: 'التقارير المالية', permission: 'reports.read' },
-  { id: 'recharge', label: 'الشحن', permission: 'recharge.manage', ownerOnly: true },
+  { id: 'agencySupplyRequests', label: 'طلبات شحن الوكالة', permission: 'recharge.manage', ownerOnly: true },
+  { id: 'gamesTreasury', label: 'إدارة الألعاب', permission: 'games.manage' },
   { id: 'staff', label: 'الصلاحيات', permission: 'staff.manage', ownerOnly: true },
   { id: 'banners', label: 'البنرات', permission: 'banners.manage' },
   { id: 'decorations', label: 'إدارة الزينة والمتجر', permission: 'catalog.manage' },

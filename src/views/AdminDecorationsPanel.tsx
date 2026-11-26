@@ -47,7 +47,7 @@ export function AdminDecorationsPanel() {
     if (!stagingBackend || busy || !file) return;
     const extension = extensions[file.type];
     if (!extension || file.size > 20 * 1024 * 1024 || (imageOnly && !file.type.startsWith('image/'))) {
-      setStatus('اختار ملف مدعوم بحجم ٢٠ ميغابايت أو أقل');
+      setStatus('اختار ملف مدعوم بحجم 20 ميغابايت أو أقل');
       return;
     }
     const form = event.currentTarget;
@@ -107,8 +107,8 @@ export function AdminDecorationsPanel() {
           </select>
         </label>
         <label className="block text-sm font-bold">اسم العنصر<input className={field} name="name" maxLength={80} required /></label>
-        <label className="block text-sm font-bold">السعر بالعملات<input className={field} name="price" type="number" min="1" required /></label>
-        <label className="block text-sm font-bold">المدة بالأيام<input className={field} name="duration" type="number" min="1" max="365" placeholder="اتركها فارغة للمدة الدائمة" /></label>
+        <label className="block text-sm font-bold">السعر بالعملات<input className={field} name="price" type="number" lang="en" dir="ltr" min="1" required /></label>
+        <label className="block text-sm font-bold">المدة بالأيام<input className={field} name="duration" type="number" lang="en" dir="ltr" min="1" max="365" placeholder="اتركها فارغة للمدة الدائمة" /></label>
         {category === 'cards' && <label className="block text-sm font-bold">نوع علاقة CP
           <select name="cpType" className={field} required><option value="">اختر النوع</option>
             {cpTypes.map(type => <option key={type.id} value={type.id}>{type.label}</option>)}

@@ -1,3 +1,5 @@
+import { SharedRoomMessage } from './SharedRoomMessage';
+import { sharedRoomMessageId } from '../services/roomShare';
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Send, UserRound } from 'lucide-react';
 import { useApp } from '../context/AppContext';
@@ -6,7 +8,7 @@ import { stagingBackend } from '../services/stagingBackend';
 
 const formatTime = (value: string) => {
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? '' : date.toLocaleTimeString('ar-IQ', { hour: '2-digit', minute: '2-digit' });
+  return Number.isNaN(date.getTime()) ? '' : date.toLocaleTimeString('ar-IQ-u-nu-latn', { hour: '2-digit', minute: '2-digit' });
 };
 
 export const DirectChatModal: React.FC = () => {
@@ -129,6 +131,7 @@ export const DirectChatModal: React.FC = () => {
           {cpRequest?.accepted && <p className="mx-auto rounded-full bg-rose-100 px-4 py-2 text-xs font-bold text-rose-700">💞 علاقة CP مؤكدة: {cpRequest.typeLabel}</p>}
           {cpError && <p role="alert" className="text-center text-xs text-rose-600">{cpError}</p>}
           {openChatThread.messages.map(m => {
+            const sharedRoom = sharedRoomMessageId(m.text);
             const mine = m.sender === 'me';
             const senderName = mine ? (currentUser.nickname || currentUser.name || 'أنت') : openChatThread.userName;
             const senderAvatar = mine ? currentUser.avatar : openChatThread.userAvatar;
@@ -142,7 +145,7 @@ export const DirectChatModal: React.FC = () => {
                   <div className={`relative isolate w-fit max-w-full px-3 pt-2 pb-1.5 rounded-xl text-sm leading-6 break-words shadow-sm ${mine ? 'bg-[#d9fdd3] text-[#172b25] rounded-tr-sm' : 'bg-white text-[#172b25] rounded-tl-sm'}`}>
                     {m.bubbleAsset && <img src={m.bubbleAsset} alt="" aria-hidden="true" loading="lazy"
                       className="pointer-events-none absolute inset-0 -z-10 h-full w-full rounded-xl object-fill opacity-30" />}
-                    <p className="whitespace-pre-wrap break-words" dir="auto">{m.text}</p>
+                    {sharedRoom ? <SharedRoomMessage roomId={sharedRoom} /> : <p className="whitespace-pre-wrap break-words" dir="auto">{m.text}</p>}
                     <div className="text-[10px] leading-4 text-slate-500 text-left mt-0.5" dir="ltr">{formatTime(m.timestamp)}</div>
                   </div>
                 </div>

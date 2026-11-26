@@ -1,3 +1,4 @@
+import { ProfileSocialStats } from '../components/ProfileSocialStats';
 import { StoreAvatarFrame } from '../components/StoreAvatarFrame';
 import { VipAvatarFrame } from '../components/VipAvatarFrame';
 import React, { useState, useRef, useEffect } from 'react';
@@ -34,6 +35,8 @@ import { IdentityBadge, useIdentityBadgeKind } from '../components/IdentityBadge
 export const ProfileView: React.FC = () => {
   const {
     currentUser,
+    activeTab,
+    openInternalProfileModal,
     updateUserProfile,
     setOpenVipModal,
     setVipModalInitialPopup,
@@ -96,6 +99,7 @@ export const ProfileView: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const [adminAccess, setAdminAccess] = useState<AdminAccess | null>(null);
   const [adminPanelOpen, setAdminPanelOpen] = useState(false);
+  useEffect(() => { if (activeTab !== 'profile') setAdminPanelOpen(false); }, [activeTab]);
   useEffect(() => {
     let active = true;
     setAdminAccess(null);
@@ -288,7 +292,7 @@ export const ProfileView: React.FC = () => {
       className="min-h-screen pb-28 profile-android-safe font-['Cairo',sans-serif] bg-gradient-to-b from-[#FDFBF7] via-[#FAF6ED] to-[#F5EFE0] text-slate-800 select-none relative overflow-x-hidden"
       dir={isRtl ? 'rtl' : 'ltr'}
     >
-      {adminPanelOpen && adminAccess && <AdminCenterView onClose={() => setAdminPanelOpen(false)} />}
+      {activeTab === 'profile' && adminPanelOpen && adminAccess && <AdminCenterView onClose={() => setAdminPanelOpen(false)} />}
       {/* Toast Alert */}
       {toastMessage && (
         <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-white/95 border border-amber-400 text-slate-900 text-xs font-bold px-5 py-2.5 rounded-full shadow-xl flex items-center gap-2 backdrop-blur-md animate-in fade-in slide-in-from-top-3">
@@ -560,62 +564,7 @@ export const ProfileView: React.FC = () => {
           />
         )}
 
-        {/* =========================================================================
-            Stats Row: (الزوار | المعجبون | متابعة | الأصدقاء)
-            ========================================================================= */}
-        <div className="grid grid-cols-4 gap-1 text-center mt-6 pt-1 px-1 min-w-0">
-          {/* الأصدقاء (Friends) */}
-          <div
-            onClick={() => sounds.playClick()}
-            className="cursor-pointer active:scale-95 transition"
-          >
-            <span className="text-2xl font-black text-slate-900 block font-sans">
-              {currentUser.friendsCount ?? 0}
-            </span>
-            <span className="text-xs text-slate-500 font-bold mt-1 block">
-              الأصدقاء
-            </span>
-          </div>
-
-          {/* متابعة (Following) */}
-          <div
-            onClick={() => sounds.playClick()}
-            className="cursor-pointer active:scale-95 transition"
-          >
-            <span className="text-2xl font-black text-slate-900 block font-sans">
-              {currentUser.followingCount ?? 0}
-            </span>
-            <span className="text-xs text-slate-500 font-bold mt-1 block">
-              متابعة
-            </span>
-          </div>
-
-          {/* المعجبون (Fans) */}
-          <div
-            onClick={() => sounds.playClick()}
-            className="cursor-pointer active:scale-95 transition"
-          >
-            <span className="text-2xl font-black text-slate-900 block font-sans">
-              {currentUser.fansCount ?? 0}
-            </span>
-            <span className="text-xs text-slate-500 font-bold mt-1 block">
-              المعجبون
-            </span>
-          </div>
-
-          {/* الزوار (Visitors) */}
-          <div
-            onClick={() => sounds.playClick()}
-            className="cursor-pointer active:scale-95 transition"
-          >
-            <span className="text-2xl font-black text-slate-900 block font-sans">
-              {currentUser.visitorsCount ?? 0}
-            </span>
-            <span className="text-xs text-slate-500 font-bold mt-1 block">
-              الزوار
-            </span>
-          </div>
-        </div>
+        <ProfileSocialStats viewerId={currentUser.id} enabled={activeTab === 'profile' && !openInternalProfileModal} />
       </div>
 
       {/* =========================================================================

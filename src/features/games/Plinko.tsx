@@ -1,3 +1,5 @@
+import { WinNotice } from './WinNotice';
+import { integerDigits } from '../../utils/digits';
 import { useEffect, useRef, useState } from 'react';
 import { dropBall, gameAsset, type Pending, type Risk, type Round, type Rules } from './api';
 
@@ -30,6 +32,7 @@ export function Plinko({ accountId, rules, history, onRound }: {
   const [busy, setBusy] = useState(false);
   const [muted, setMuted] = useState(false);
   const [error, setError] = useState('');
+  const [win, setWin] = useState<Round>();
   const [round, setRound] = useState<Round | null>(null);
   const [position, setPosition] = useState(0);
   const timer = useRef<number | undefined>(undefined);
@@ -68,6 +71,7 @@ export function Plinko({ accountId, rules, history, onRound }: {
     setBusy(true);
     setError('');
     setRound(null);
+    setWin(undefined);
     setPosition(0);
     const request = pending.current ?? {
       p_request: crypto.randomUUID(), p_rows: rows, p_risk: risk, p_stake: stake,
@@ -89,7 +93,8 @@ export function Plinko({ accountId, rules, history, onRound }: {
           window.clearInterval(timer.current);
           setBusy(false);
           inFlight.current = false;
-          if (result.reward >= result.stake && !muted) {
+          if (result.reward > result.stake) setWin(result);
+          if (result.reward > result.stake && !muted) {
             playSound(result.multiplier >= 10 ? 'bigwin.wav' : 'win.wav', 0.45);
           }
         }
@@ -116,6 +121,7 @@ export function Plinko({ accountId, rules, history, onRound }: {
     setRound(null);
   };
   return <div className="space-y-3">
+    {win && <WinNotice game="باتشينكو" prize={win.reward} onClose={() => setWin(undefined)} />}
     <div className="flex gap-1 overflow-x-auto" aria-label="آخر المضاعفات">
       {history.map(item => <span key={item.request_id} className="rounded px-2 py-1 text-xs" style={{ background: color(item.multiplier) }}>×{item.multiplier}</span>)}
     </div>
@@ -143,7 +149,7 @@ export function Plinko({ accountId, rules, history, onRound }: {
       </div>
     </div>
     <p role="status" className="min-h-5 text-center text-amber-200">
-      {!busy && round && <>×{round.multiplier} · {round.reward.toLocaleString('ar-IQ')} عملة تجريبية</>}
+      {!busy && round && <>×{round.multiplier} · {round.reward.toLocaleString('ar-IQ-u-nu-latn')} عملة تجريبية</>}
     </p>
     <div className="flex flex-wrap gap-2">
       {risks.map(([value, label]) => <button key={value} type="button" aria-pressed={risk === value}
@@ -153,9 +159,8 @@ export function Plinko({ accountId, rules, history, onRound }: {
     </div>
     <label className="flex items-center justify-between gap-2">
       المبلغ التجريبي
-      <input className="w-24 rounded bg-white/10 px-2 py-1" type="number" inputMode="numeric"
-        min={rules.min_stake} max={rules.max_stake} value={stake} disabled={busy || showRetry}
-        onChange={event => setStake(Number(event.target.value))} />
+      <input className="w-24 rounded bg-white/10 px-2 py-1" type="text" dir="ltr" inputMode="numeric" maxLength={4} value={stake || ''} disabled={busy || showRetry}
+        onChange={event => setStake(Number(integerDigits(event.target.value)))} />
     </label>
     <button type="button" className="w-full rounded-xl bg-amber-300 p-2 font-bold text-black disabled:opacity-50"
       disabled={busy || (!showRetry && (!Number.isInteger(stake) || stake < rules.min_stake || stake > rules.max_stake))}

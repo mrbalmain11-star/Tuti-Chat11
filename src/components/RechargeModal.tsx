@@ -1,8 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import { ChevronRight, ChevronDown, FileText, X, Check, ArrowRightLeft, Sparkles, AlertCircle } from 'lucide-react';
+import { latinDigits } from '../utils/digits';
+import React, { useState, useEffect, useRef, useEffectEvent } from 'react';
+import { ArrowLeft, ChevronLeft, BadgeCheck, ShieldCheck, Info, Headset, MessageCircle, Zap, FileText, X, Check, ArrowRightLeft, Sparkles, AlertCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useApp } from '../context/AppContext';
+import { stagingBackend } from '../services/stagingBackend';
+import { App as CapacitorApp } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
+import { RechargeAgentFrame } from './RechargeAgentFrame';
+import { fetchRechargeAgents, fetchRechargeHistory, type RechargeAgentCard, type RechargeHistoryRow } from '../services/rechargeDirectory';
+import './user-recharge.css';
 import { sounds } from '../utils/audio';
+
+const diamondRejections: Record<string, string> = {
+  'Insufficient diamonds': 'رصيد الألماس غير كافٍ.',
+  'Insufficient tracked diamonds': 'المبلغ يتجاوز رصيد الألماس المؤهل للتحويل. جرّب مبلغاً أقل.',
+  'Amount too small to redeem': 'كمية الألماس أقل من الحد اللازم للتحويل.',
+  'Redemption quote changed; confirm again': 'تغيرت قيمة التحويل. راجع العرض الجديد وأكّد مرة ثانية.',
+  'Wallet amount out of range': 'تعذر التحويل بسبب حد رصيد المحفظة.',
+};
+function diamondError(message: string) {
+  return diamondRejections[message] ?? 'تعذر حساب قيمة التحويل. تحقق من الاتصال وحاول مرة ثانية.';
+}
 
 // 6 Recharge Packs exactly from Image 1
 export interface RechargePack {
@@ -17,85 +35,6 @@ export interface RechargePack {
    ========================================================= */
 
 // Damask / Arabesque subtle pattern overlay
-const DamaskPattern: React.FC = () => (
-  <svg
-    className="absolute inset-0 w-full h-full pointer-events-none opacity-20"
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 400 200"
-    preserveAspectRatio="none"
-  >
-    <defs>
-      <pattern id="damask" width="60" height="60" patternUnits="userSpaceOnUse">
-        <path
-          d="M30 10 C35 18 42 20 50 20 C42 24 38 32 38 40 C34 32 26 30 18 30 C26 26 28 18 30 10 Z"
-          fill="none"
-          stroke="#ffffff"
-          strokeWidth="1.2"
-          opacity="0.4"
-        />
-        <circle cx="30" cy="30" r="4" fill="#ffffff" opacity="0.3" />
-        <path
-          d="M10 50 C15 55 18 58 25 58 C18 60 16 66 16 70 C14 66 8 64 2 64 C8 62 9 55 10 50 Z"
-          fill="none"
-          stroke="#ffffff"
-          strokeWidth="0.8"
-          opacity="0.3"
-        />
-      </pattern>
-    </defs>
-    <rect width="100%" height="100%" fill="url(#damask)" />
-  </svg>
-);
-
-// Large 3D Embossed Gold Dollar Watermark (left side of Yellow Card)
-const GoldDollarWatermark: React.FC = () => (
-  <div className="absolute -left-5 -bottom-7 w-36 h-36 pointer-events-none select-none">
-    <svg viewBox="0 0 160 160" className="w-full h-full drop-shadow-md">
-      <defs>
-        <linearGradient id="wmOuterGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#FFF275" stopOpacity="0.95" />
-          <stop offset="50%" stopColor="#F5B800" stopOpacity="0.9" />
-          <stop offset="100%" stopColor="#DF9300" stopOpacity="0.85" />
-        </linearGradient>
-        <linearGradient id="wmInnerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#FFE066" />
-          <stop offset="100%" stopColor="#C97F00" />
-        </linearGradient>
-        <linearGradient id="wmSignGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#FFF8B8" />
-          <stop offset="100%" stopColor="#BF7300" />
-        </linearGradient>
-      </defs>
-      {/* Outer thick beveled circle rim */}
-      <circle cx="80" cy="80" r="72" fill="url(#wmOuterGrad)" />
-      <circle cx="80" cy="80" r="62" fill="none" stroke="#FFA700" strokeWidth="3" opacity="0.6" />
-      <circle cx="80" cy="80" r="58" fill="url(#wmInnerGrad)" />
-      {/* Crescent inner cut effect */}
-      <path
-        d="M38 48 C48 30 70 24 94 30 C122 36 138 65 132 94 C128 112 114 128 96 134 C120 120 128 85 110 58 C94 38 64 34 38 48 Z"
-        fill="#FFE885"
-        opacity="0.5"
-      />
-      {/* Embossed Bold 3D Dollar Sign */}
-      <text
-        x="80"
-        y="108"
-        textAnchor="middle"
-        fontFamily="sans-serif"
-        fontWeight="900"
-        fontSize="82"
-        fill="url(#wmSignGrad)"
-        stroke="#A05A00"
-        strokeWidth="3.5"
-        letterSpacing="-2"
-      >
-        $
-      </text>
-    </svg>
-  </div>
-);
-
-// Small round shiny gold coin icon next to the number on yellow card
 const SmallGoldCoin: React.FC = () => (
   <svg viewBox="0 0 36 36" className="w-6 h-6 inline-block drop-shadow-xs">
     <defs>
@@ -123,7 +62,7 @@ const SmallGoldCoin: React.FC = () => (
 
 // Large 3D Faceted Brilliant Blue Diamond (for Diamond Card)
 const BigDiamondGraphic: React.FC = () => (
-  <div className="absolute -left-2 -bottom-2 w-32 h-28 pointer-events-none select-none">
+  <div className="h-full w-full">
     <svg viewBox="0 0 120 100" className="w-full h-full drop-shadow-lg">
       <defs>
         <linearGradient id="facetTop" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -256,20 +195,9 @@ const CoinDefs: React.FC = () => (
   </defs>
 );
 
-// 1. Stack for 4,900 coins (Neat 3 coins stack)
-const CoinStack4900: React.FC = () => (
-  <svg viewBox="0 0 80 56" className="w-16 h-11 drop-shadow-md">
-    <CoinDefs />
-    <SingleCoinItem cx={40} cy={34} width={42} height={16} />
-    <SingleCoinItem cx={40} cy={26} width={42} height={16} />
-    <SingleCoinItem cx={40} cy={18} width={42} height={16} />
-  </svg>
-);
-
 // 2. Stack for 24,500 coins (Two side-by-side stacks)
 const CoinStack24500: React.FC = () => (
   <svg viewBox="0 0 80 56" className="w-16 h-11 drop-shadow-md">
-    <CoinDefs />
     {/* Left stack */}
     <SingleCoinItem cx={30} cy={34} width={34} height={14} />
     <SingleCoinItem cx={30} cy={27} width={34} height={14} />
@@ -280,59 +208,9 @@ const CoinStack24500: React.FC = () => (
   </svg>
 );
 
-// 3. Stack for 49,000 coins (Three stacked piles)
-const CoinStack49000: React.FC = () => (
-  <svg viewBox="0 0 80 56" className="w-16 h-11 drop-shadow-md">
-    <CoinDefs />
-    {/* Back left */}
-    <SingleCoinItem cx={25} cy={32} width={32} height={13} />
-    <SingleCoinItem cx={25} cy={25} width={32} height={13} />
-    {/* Back right */}
-    <SingleCoinItem cx={55} cy={32} width={32} height={13} />
-    <SingleCoinItem cx={55} cy={25} width={32} height={13} />
-    {/* Center front */}
-    <SingleCoinItem cx={40} cy={36} width={34} height={14} />
-    <SingleCoinItem cx={40} cy={29} width={34} height={14} />
-    <SingleCoinItem cx={40} cy={22} width={34} height={14} />
-  </svg>
-);
-
-// 4. Stack for 122,500 coins (Medium pile)
-const CoinStack122500: React.FC = () => (
-  <svg viewBox="0 0 80 56" className="w-16 h-11 drop-shadow-md">
-    <CoinDefs />
-    <SingleCoinItem cx={22} cy={34} width={30} height={12} />
-    <SingleCoinItem cx={22} cy={27} width={30} height={12} />
-    <SingleCoinItem cx={58} cy={34} width={30} height={12} />
-    <SingleCoinItem cx={58} cy={27} width={30} height={12} />
-    <SingleCoinItem cx={40} cy={36} width={34} height={14} />
-    <SingleCoinItem cx={40} cy={29} width={34} height={14} />
-    <SingleCoinItem cx={40} cy={21} width={34} height={14} />
-  </svg>
-);
-
-// 5. Stack for 245,000 coins (Large cluster)
-const CoinStack245000: React.FC = () => (
-  <svg viewBox="0 0 80 56" className="w-16 h-11 drop-shadow-md">
-    <CoinDefs />
-    {/* Back row */}
-    <SingleCoinItem cx={20} cy={28} width={28} height={12} />
-    <SingleCoinItem cx={20} cy={21} width={28} height={12} />
-    <SingleCoinItem cx={60} cy={28} width={28} height={12} />
-    <SingleCoinItem cx={60} cy={21} width={28} height={12} />
-    {/* Front center piles */}
-    <SingleCoinItem cx={32} cy={35} width={32} height={13} />
-    <SingleCoinItem cx={32} cy={28} width={32} height={13} />
-    <SingleCoinItem cx={32} cy={20} width={32} height={13} />
-    <SingleCoinItem cx={50} cy={36} width={32} height={13} />
-    <SingleCoinItem cx={50} cy={29} width={32} height={13} />
-  </svg>
-);
-
 // 6. Stack for 490,000 coins (Massive treasure mountain)
 const CoinStack490000: React.FC = () => (
   <svg viewBox="0 0 80 56" className="w-16 h-11 drop-shadow-md">
-    <CoinDefs />
     {/* Back left */}
     <SingleCoinItem cx={18} cy={26} width={28} height={12} />
     <SingleCoinItem cx={18} cy={19} width={28} height={12} />
@@ -350,63 +228,100 @@ const CoinStack490000: React.FC = () => (
   </svg>
 );
 
-// Helper mapping to return coin component by ID
-const getCoinStackIllustration = (packId: string) => {
-  switch (packId) {
-    case 'pack-1':
-      return <CoinStack4900 />;
-    case 'pack-2':
-      return <CoinStack24500 />;
-    case 'pack-3':
-      return <CoinStack49000 />;
-    case 'pack-4':
-      return <CoinStack122500 />;
-    case 'pack-5':
-      return <CoinStack245000 />;
-    case 'pack-6':
-      return <CoinStack490000 />;
-    default:
-      return <CoinStack4900 />;
-  }
-};
-
-/* =========================================================
-   Main Recharge Screen Modal Component
-   ========================================================= */
-
 export const RechargeModal: React.FC = () => {
   const {
     openRechargeModal,
     setOpenRechargeModal,
     currentUser,
-    convertDiamondsToCoins,
-    transactions,
+    conversations,
+    setOpenChatThread,
   } = useApp();
 
-  // Two tabs: 'coins' (عملات معدنية) and 'diamonds' (ألماسي)
   const [activeTab, setActiveTab] = useState<'coins' | 'diamonds'>('coins');
   const [rechargePacks, setRechargePacks] = useState<RechargePack[]>([]);
   const [selectedPack, setSelectedPack] = useState<RechargePack | null>(null);
   const [packagesLoading, setPackagesLoading] = useState(false);
   const [packagesError, setPackagesError] = useState('');
   const [showHistoryModal, setShowHistoryModal] = useState(false);
-  const [showOrderCheckModal, setShowOrderCheckModal] = useState(false);
   const [showExchangeModal, setShowExchangeModal] = useState(false);
   const [exchangeAmount, setExchangeAmount] = useState<number>(100000);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const [rechargeMode, setRechargeMode] = useState<'app' | 'agents'>('app');
-  const [modeMenuOpen, setModeMenuOpen] = useState(false);
-  const [rechargeAgents, setRechargeAgents] = useState<Array<{ id: string; name: string; public_id: number }>>([]);
+  const [rechargeAgents, setRechargeAgents] = useState<RechargeAgentCard[]>([]);
   const [agentsError, setAgentsError] = useState('');
   const [agentsLoading, setAgentsLoading] = useState(false);
+  const [contactError, setContactError] = useState('');
+  const [contacting, setContacting] = useState(false);
+  const [wallet, setWallet] = useState<{ coins: number; diamonds: number }>();
+  const [walletError, setWalletError] = useState(false);
+  const [history, setHistory] = useState<RechargeHistoryRow[]>();
+  const [historyError, setHistoryError] = useState(false);
+  const [packPage, setPackPage] = useState(0);
+  const onBack = useEffectEvent(() => {
+    if (exchangeLock.current) return;
+    if (showExchangeModal) setShowExchangeModal(false);
+    else if (showHistoryModal) setShowHistoryModal(false);
+    else if (rechargeMode === 'agents') setRechargeMode('app');
+    else setOpenRechargeModal(false);
+  });
+  useEffect(() => {
+    if (!openRechargeModal || Capacitor.getPlatform() !== 'android') return;
+    let active = true;
+    const handle = CapacitorApp.addListener('backButton', () => { if (active) onBack(); });
+    void handle.catch(console.error);
+    return () => { active = false; void handle.then(subscription => subscription.remove()).catch(console.error); };
+  }, [openRechargeModal]);
+  useEffect(() => {
+    if (openRechargeModal) return;
+    setRechargeMode('app');
+    setActiveTab('coins');
+    setShowHistoryModal(false);
+    setShowExchangeModal(false);
+  }, [openRechargeModal]);
+
+  useEffect(() => {
+    setWallet(undefined);
+    setWalletError(false);
+    if (!openRechargeModal || !currentUser.id) return;
+    const client = stagingBackend;
+    if (!client) { setWalletError(true); return; }
+    let active = true;
+    let request = 0;
+    const refresh = async () => {
+      const version = ++request;
+      const { data, error } = await client.from('wallets').select('coins,diamonds').eq('user_id', currentUser.id).maybeSingle();
+      if (!active || version !== request) return;
+      const coins = Number(data?.coins), diamonds = Number(data?.diamonds);
+      if (error || !Number.isSafeInteger(coins) || !Number.isSafeInteger(diamonds) || coins < 0 || diamonds < 0) {
+        setWalletError(true);
+        setWallet(undefined);
+      } else { setWallet({ coins, diamonds }); setWalletError(false); }
+    };
+    void refresh();
+    const channel = client.channel('recharge-wallet:' + currentUser.id).on('postgres_changes', {
+      event: '*', schema: 'public', table: 'wallets', filter: 'user_id=eq.' + currentUser.id,
+    }, refresh).subscribe();
+    const timer = window.setInterval(refresh, 15000);
+    window.addEventListener('totichat:wallet-changed', refresh);
+    return () => { active = false; window.clearInterval(timer); window.removeEventListener('totichat:wallet-changed', refresh); void client.removeChannel(channel); };
+  }, [openRechargeModal, currentUser.id]);
+
+  useEffect(() => {
+    if (!openRechargeModal || !showHistoryModal) return;
+    let active = true;
+    setHistory(undefined);
+    setHistoryError(false);
+    void fetchRechargeHistory(currentUser.id).then(rows => { if (active) setHistory(rows); })
+      .catch(() => { if (active) setHistoryError(true); });
+    return () => { active = false; };
+  }, [openRechargeModal, showHistoryModal, currentUser.id]);
   useEffect(() => {
     if (!openRechargeModal || activeTab !== 'coins' || rechargeMode !== 'app') return;
     let active = true;
     setPackagesLoading(true);
     setPackagesError('');
     void (async () => {
-      const { stagingBackend } = await import('../services/stagingBackend');
       if (!stagingBackend) throw new Error('خدمة باقات الشحن غير متاحة');
       const { data, error } = await stagingBackend.from('recharge_packages')
         .select('id,price_usd,gold_amount').eq('is_active', true).order('price_usd');
@@ -415,6 +330,7 @@ export const RechargeModal: React.FC = () => {
         .filter(row => Number.isFinite(Number(row.gold_amount)) && Number(row.gold_amount) > 0 && Number.isFinite(Number(row.price_usd)) && Number(row.price_usd) > 0)
         .map(row => ({ id: String(row.id), coins: Number(row.gold_amount), price: `${Number(row.price_usd).toFixed(2)} $` }));
       if (active) {
+        setPackPage(0);
         setRechargePacks(rows);
         setSelectedPack(rows[0] ?? null);
       }
@@ -431,22 +347,69 @@ export const RechargeModal: React.FC = () => {
   useEffect(() => {
     if (!openRechargeModal || rechargeMode !== 'agents') return;
     let active = true;
+    let request = 0;
     setAgentsLoading(true);
-    setAgentsError('');
-    void (async () => {
-      const { stagingBackend } = await import('../services/stagingBackend');
-      if (!stagingBackend) throw new Error('خادم الوكالات غير متصل');
-      // Never show host agencies, unapproved applications or placeholder agents.
-      const { data, error } = await stagingBackend.from('agencies')
-        .select('id,name,public_id')
-        .eq('kind', 'recharge').eq('is_active', true).order('name');
-      if (error) throw new Error(`فشل قراءة الوكالات (${error.code ?? 'unknown'}): ${error.message}`);
-      if (active) setRechargeAgents((data ?? []).filter(a => Number.isInteger(Number(a.public_id)) && Number(a.public_id) > 0));
-    })().catch(e => { if (active) { setRechargeAgents([]); setAgentsError(e instanceof Error ? e.message : 'تعذر تحميل وكلاء الشحن'); } })
-      .finally(() => { if (active) setAgentsLoading(false); });
-    return () => { active = false; };
+    setContactError('');
+    const refresh = async () => {
+      const version = ++request;
+      try {
+        const rows = await fetchRechargeAgents();
+        if (!active || version !== request) return;
+        setRechargeAgents(rows);
+        setAgentsError('');
+      } catch {
+        if (!active || version !== request) return;
+        setRechargeAgents([]);
+        setAgentsError('تعذر تحميل وكلاء الشحن.');
+      } finally {
+        if (active && version === request) setAgentsLoading(false);
+      }
+    };
+    void refresh();
+    const timer = window.setInterval(refresh, 15000);
+    window.addEventListener('focus', refresh);
+    return () => { active = false; window.clearInterval(timer); window.removeEventListener('focus', refresh); };
   }, [openRechargeModal, rechargeMode]);
 
+  const exchangeKey = 'totichat:diamond-redemption:' + currentUser.id;
+  const [pendingExchange, setPendingExchange] = useState<{ amount: number; coins: number; requestId: string }>();
+  const [quote, setQuote] = useState<{ amount: number; coins: number }>();
+  const [exchangeError, setExchangeError] = useState('');
+  const [quoteRetry, setQuoteRetry] = useState(0);
+  const [exchangeBusy, setExchangeBusy] = useState(false);
+  const exchangeLock = useRef(false);
+
+  useEffect(() => {
+    setPendingExchange(undefined);
+    setQuote(undefined);
+    setExchangeError('');
+    if (!openRechargeModal || !showExchangeModal) return;
+    try {
+      const saved = localStorage.getItem(exchangeKey);
+      if (saved) {
+        setPendingExchange(JSON.parse(saved));
+        return;
+      }
+    } catch {
+      setExchangeError('تعذر قراءة العملية المحفوظة.');
+      return;
+    }
+    if (!stagingBackend || !Number.isSafeInteger(exchangeAmount) || exchangeAmount < 1) return;
+    const client = stagingBackend;
+    let active = true;
+    const timer = window.setTimeout(async () => {
+      const { data, error } = await client.rpc('phase4_preview_redemption', { p_diamonds: exchangeAmount });
+      if (!active) return;
+      if (error || !Number.isSafeInteger(data?.coins) || data.coins <= 0) {
+        setExchangeError(diamondError(error?.message ?? ''));
+        return;
+      }
+      setQuote({ amount: exchangeAmount, coins: data.coins });
+    }, 250);
+    return () => { active = false; window.clearTimeout(timer); };
+  }, [openRechargeModal, showExchangeModal, exchangeAmount, exchangeKey, quoteRetry]);
+
+  const exchangeCoins = pendingExchange?.coins ?? (quote?.amount === exchangeAmount ? quote.coins : undefined);
   if (!openRechargeModal) return null;
 
   // Trigger Toast Notification
@@ -455,394 +418,158 @@ export const RechargeModal: React.FC = () => {
     setTimeout(() => setToastMessage(null), 3200);
   };
 
-  // Direct purchases are unavailable until verified billing is enabled.
-  // Never credit coins or show a success toast for an unavailable purchase.
-  const handleConfirmRecharge = () => {
-    sounds.playClick();
-    window.alert('الشحن المباشر من التطبيق غير متاح. يرجى التواصل مع وكيل شحن معتمد.');
+  const contactAgent = async (agency: RechargeAgentCard) => {
+    if (contacting) return;
+    setContacting(true);
+    setContactError('');
+    try {
+      const [live] = await fetchRechargeAgents(agency.id);
+      if (!live || live.ownerId !== agency.ownerId) {
+        setContactError('تغير اعتماد هذه الوكالة. اختر وكيلاً متاحاً.');
+        return;
+      }
+      const existing = conversations.find(thread => thread.userId === live.ownerId);
+      setOpenRechargeModal(false);
+      setOpenChatThread(existing ?? {
+        id: 'chat-' + live.ownerId, userId: live.ownerId,
+        userName: live.name, userAvatar: live.avatar, isOnline: false,
+        lastMessage: '', lastTime: '', unreadCount: 0, messages: [],
+      });
+    } catch {
+      setContactError('تعذر التحقق من حساب الوكيل.');
+    } finally { setContacting(false); }
   };
 
-  // Convert Diamonds to Coins Handler (30% rule: 100,000 Diamonds = 30,000 Coins)
-  const handleConvertDiamonds = () => {
-    const userDiamonds = currentUser.diamonds || 0;
-    if (exchangeAmount <= 0) {
-      showToast('يرجى إدخال كمية صالحة للتحويل');
-      return;
-    }
-    if (userDiamonds < exchangeAmount) {
-      showToast(`رصيدك الحالي (${userDiamonds.toLocaleString('ar-EG')}) غير كافٍ`);
-      return;
-    }
-
-    const success = convertDiamondsToCoins(exchangeAmount);
-    if (success) {
-      const calculatedCoins = Math.floor(exchangeAmount * 0.3);
-      confetti({ particleCount: 70, spread: 65, origin: { y: 0.5 } });
+  const handleConvertDiamonds = async () => {
+    if (!stagingBackend || exchangeLock.current || exchangeCoins === undefined) return;
+    exchangeLock.current = true;
+    setExchangeBusy(true);
+    setExchangeError('');
+    try {
+      const intent = pendingExchange ?? { amount: exchangeAmount, coins: exchangeCoins, requestId: crypto.randomUUID() };
+      localStorage.setItem(exchangeKey, JSON.stringify(intent));
+      setPendingExchange(intent);
+      const { data, error } = await stagingBackend.rpc('phase4_redeem_diamonds', {
+        p_diamonds: intent.amount,
+        p_expected_coins: intent.coins,
+        p_request_id: intent.requestId,
+      });
+      if (error) {
+        if (diamondRejections[error.message]) {
+          localStorage.removeItem(exchangeKey);
+          setPendingExchange(undefined);
+          setQuote(undefined);
+          if (error.message === 'Redemption quote changed; confirm again') setQuoteRetry(value => value + 1);
+          else setExchangeError(diamondError(error.message));
+        } else setExchangeError('تعذر تأكيد التحويل. اضغط استرجاع العملية لإعادة الطلب نفسه.');
+        return;
+      }
+      if (data?.status !== 'completed' || !Number.isSafeInteger(data.coins)) {
+        setExchangeError('تعذر تأكيد التحويل. اضغط استرجاع العملية.');
+        return;
+      }
+      localStorage.removeItem(exchangeKey);
+      setPendingExchange(undefined);
+      window.dispatchEvent(new Event('totichat:wallet-changed'));
       setShowExchangeModal(false);
-      showToast(
-        `تم فك ${exchangeAmount.toLocaleString('ar-EG')} ألماسة إلى ${calculatedCoins.toLocaleString('ar-EG')} كوينز بنسبة 30%! ✨`
-      );
-    } else {
-      showToast('تعذر إتمام عملية الفك، يرجى المحاولة لاحقاً');
+      showToast(`تم تحويل الألماس وإضافة ${data.coins.toLocaleString('ar-IQ-u-nu-latn')} كوينز.`);
+      confetti({ particleCount: 70, spread: 65, origin: { y: 0.5 } });
+    } catch {
+      setExchangeError('تعذر إكمال الطلب. جرّب مرة ثانية.');
+    } finally {
+      exchangeLock.current = false;
+      setExchangeBusy(false);
     }
+  };
+
+  const agents = rechargeMode === 'agents';
+  const diamonds = activeTab === 'diamonds';
+  const balance = diamonds ? wallet?.diamonds : wallet?.coins;
+  const goBack = () => {
+    sounds.playClick();
+    if (agents) setRechargeMode('app');
+    else setOpenRechargeModal(false);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs font-['Cairo',sans-serif] select-none p-0 sm:p-4">
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-60 bg-slate-900/95 text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-2xl flex items-center gap-2 border border-slate-700 animate-in fade-in slide-in-from-top-3">
-          <Check className="w-4 h-4 text-emerald-400" />
-          <span>{toastMessage}</span>
+    <div className="tu-recharge" dir="rtl">
+      <svg width="0" height="0" className="absolute" aria-hidden="true"><CoinDefs /></svg>
+      {toastMessage && <div role="status" className="tu-toast"><Check size={16} />{toastMessage}</div>}
+      <div className="tu-frame" data-mode={agents ? 'agents' : diamonds ? 'diamonds' : 'packages'}>
+        <header className="tu-header">
+          <button type="button" aria-label="سجل الشحن" onClick={() => setShowHistoryModal(true)}><FileText /></button>
+          <h2><span aria-hidden="true"><CoinStack24500 /></span>شحن العملات<span aria-hidden="true"><CoinStack24500 /></span></h2>
+          <button type="button" aria-label="رجوع" onClick={goBack}><ArrowLeft /></button>
+        </header>
+        <div className="tu-tabs">
+          <button type="button" aria-pressed={!diamonds} onClick={() => setActiveTab('coins')}><SmallGoldCoin />عملات معدنية</button>
+          <button type="button" aria-pressed={diamonds} onClick={() => setActiveTab('diamonds')}><SmallDiamond />ألماسي</button>
         </div>
-      )}
+        <section className="tu-balance" aria-label="رصيدك الحالي">
+          <div><span>رصيدك الحالي</span><strong dir="ltr">{balance?.toLocaleString('en-US') ?? '—'}</strong>
+            {balance === undefined && <small>{walletError ? 'تعذر تحميل الرصيد' : 'جارٍ تحميل الرصيد…'}</small>}</div>
+          <span className="tu-balance-art" aria-hidden="true">{diamonds ? <BigDiamondGraphic /> : <CoinStack490000 />}</span>
+        </section>
 
-      {/* Main Container - replicates native mobile screen */}
-      <div className="w-full max-w-md h-full sm:h-auto sm:max-h-[92vh] sm:rounded-3xl bg-white text-slate-800 flex flex-col shadow-2xl overflow-y-auto no-scrollbar relative">
-        {/* Top Header matching Image 2 */}
-        <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-xs px-4 pt-3 pb-2 flex items-center justify-between border-b border-slate-100">
-          {/* Left: Document / Receipt Icon for Transactions History */}
-          <button
-            onClick={() => {
-              sounds.playClick();
-              window.dispatchEvent(new Event('totichat:wallet-changed'));
-              setShowHistoryModal(true);
-            }}
-            className="w-9 h-9 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-700 active:scale-95 transition"
-            title="سجل الشحن"
-          >
-            <FileText className="w-5 h-5 text-slate-600" />
-          </button>
-
-          {/* Center: Title "شحن العملات" */}
-          <h2 className="text-base font-extrabold text-slate-900">شحن العملات</h2>
-
-          {/* Right: Back Arrow Button (ChevronRight for RTL) */}
-          <button
-            onClick={() => {
-              sounds.playClick();
-              setOpenRechargeModal(false);
-            }}
-            className="w-9 h-9 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-700 active:scale-95 transition"
-            title="رجوع"
-          >
-            <ChevronRight className="w-6 h-6 text-slate-800" />
-          </button>
-        </div>
-
-        {/* Tab Switcher: "عملات معدنية" and "ألماسي" exactly matching Image 2 */}
-        <div className="flex justify-center pt-3 pb-2">
-          <div className="inline-flex items-center bg-slate-100/90 p-1 rounded-full shadow-inner">
-            {/* 1. عملات معدنية (Coins) */}
-            <button
-              onClick={() => {
-                sounds.playClick();
-                setActiveTab('coins');
-              }}
-              className={`px-5 py-1.5 rounded-full text-xs font-bold transition-all ${
-                activeTab === 'coins'
-                  ? 'bg-[#38d89e] text-white shadow-xs'
-                  : 'text-slate-400 hover:text-slate-600'
-              }`}
-            >
-              عملات معدنية
-            </button>
-
-            {/* 2. ألماسي (Diamonds) */}
-            <button
-              onClick={() => {
-                sounds.playClick();
-                setActiveTab('diamonds');
-              }}
-              className={`px-5 py-1.5 rounded-full text-xs font-bold transition-all ${
-                activeTab === 'diamonds'
-                  ? 'bg-[#38d89e] text-white shadow-xs'
-                  : 'text-slate-400 hover:text-slate-600'
-              }`}
-            >
-              ألماسي
-            </button>
-          </div>
-        </div>
-
-        {/* =========================================================
-            TAB 1: عملات معدنية (Coins Recharge) - Exactly Image 1
-           ========================================================= */}
-        {activeTab === 'coins' && (
-          <div className="p-4 space-y-4">
-            {/* Top Yellow/Golden Balance Card matching Image 1 */}
-            <div className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-[#FFC200] via-[#F8B700] to-[#E59200] p-4 text-white shadow-md min-h-[105px] flex flex-col justify-between">
-              {/* Subtle Arabesque Damask Texture */}
-              <DamaskPattern />
-
-              {/* Large Embossed 3D Gold Dollar Coin on Left */}
-              <GoldDollarWatermark />
-
-              {/* Card Content (Right-aligned in RTL) */}
-              <div className="relative z-10 text-right pr-1">
-                <p className="text-white/95 text-xs font-bold tracking-wide">
-                  رصيد الماس الحالي
-                </p>
-                <div className="mt-2 flex items-center justify-end gap-1.5">
-                  <span
-                    className="text-2xl sm:text-3xl font-black text-white drop-shadow-xs tracking-tight truncate max-w-[230px]"
-                    title={(currentUser.coins ?? 0).toLocaleString('en-US')}
-                  >
-                    {currentUser.coins > 0 ? currentUser.coins.toLocaleString('en-US') : '0'}
-                  </span>
-                  <SmallGoldCoin />
+        {agents ? <>
+          <h3 className="tu-agent-title"><ShieldCheck />وكلاء الشحن المعتمدون</h3>
+          <section className="tu-agents" aria-label="وكلاء الشحن المعتمدون">
+            {agentsLoading ? <p role="status">جارٍ تحميل الوكلاء…</p> : agentsError ? <p role="alert">{agentsError}</p> :
+              rechargeAgents.length === 0 ? <p>لا توجد وكالات شحن معتمدة حالياً.</p> : rechargeAgents.map(agent =>
+              <article key={agent.id} className="tu-agent">
+                <RechargeAgentFrame avatar={agent.avatar} />
+                <div className="tu-agent-identity">
+                  <strong>{agent.name}<BadgeCheck aria-label="وكالة معتمدة" /></strong>
+                  <bdi>ID: {agent.publicId}</bdi>
                 </div>
-              </div>
-            </div>
-
-            {/* Section Title: "كمية الشحن" */}
-            <div className="text-right pt-1 relative" dir="rtl">
-              <button type="button" onClick={() => setModeMenuOpen(!modeMenuOpen)} className="flex items-center gap-2 text-sm font-black text-slate-800" aria-expanded={modeMenuOpen}>
-                كمية الشحن <ChevronDown className="w-4 h-4" />
-              </button>
-              {modeMenuOpen && <div className="absolute right-0 top-full z-30 mt-1 min-w-48 rounded-xl bg-white shadow-lg border border-slate-200 overflow-hidden">
-                <button className="block w-full text-right p-3 text-sm" onClick={() => { setRechargeMode('app'); setModeMenuOpen(false); }}>الشحن من التطبيق</button>
-                <button className="block w-full text-right p-3 text-sm border-t" onClick={() => { setRechargeMode('agents'); setModeMenuOpen(false); }}>وكلاء الشحن</button>
-              </div>}
-            </div>
-            {rechargeMode === 'agents' && <section className="space-y-3" dir="rtl">
-              <h3 className="font-bold text-slate-800">وكلاء الشحن المعتمدون</h3>
-              {agentsLoading ? <p>جاري تحميل الوكلاء...</p> : agentsError ? <p role="alert" className="text-red-600">تعذر تحميل الوكلاء: {agentsError}</p> : rechargeAgents.length === 0 ? <p className="text-slate-500">لا توجد وكالات شحن معتمدة حالياً</p> : rechargeAgents.map(agent => <div key={agent.id} className="rounded-xl border border-emerald-200 bg-emerald-50 p-4"><strong className="block">{agent.name}</strong><span className="text-sm">ID: {agent.public_id}</span></div>)}
-            </section>}
-            {rechargeMode === 'app' && <>
-
-            {/* 6 Packages Grid (3 Columns x 2 Rows) */}
-            <div className="grid grid-cols-3 gap-2.5">
-              {packagesLoading ? <div className="col-span-3 rounded-xl border border-slate-200 p-4 text-center text-xs text-slate-500" role="status">جاري تحميل باقات الشحن…</div>
-                : packagesError || rechargePacks.length === 0 ? <div className="col-span-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-center text-xs text-amber-900" role="status">{packagesError || 'لا توجد باقات شحن نشطة حالياً.'}</div>
-                : rechargePacks.map((pack) => {
-                const isSelected = selectedPack?.id === pack.id;
-
-                return (
-                  <div
-                    key={pack.id}
-                    onClick={() => {
-                      sounds.playClick();
-                      setSelectedPack(pack);
-                    }}
-                    className={`relative rounded-2xl bg-white border flex flex-col items-center justify-between pt-3 pb-0 overflow-hidden cursor-pointer transition-all active:scale-96 shadow-xs ${
-                      isSelected
-                        ? 'border-amber-400 ring-2 ring-amber-400/40 shadow-sm'
-                        : 'border-slate-100 hover:border-slate-200 bg-white'
-                    }`}
-                  >
-                    {/* Coin Stack 3D Visual */}
-                    <div className="my-1 flex items-center justify-center h-12">
-                      {getCoinStackIllustration(pack.id)}
-                    </div>
-
-                    {/* Coins Amount */}
-                    <div className="text-center px-1 mb-2">
-                      <span className="text-xs font-black text-slate-800">
-                        {pack.coins.toLocaleString('en-US')}
-                      </span>
-                    </div>
-
-                    {/* Bottom Price Pill Banner (Highlighted in Amber/Gold when selected like Image 1) */}
-                    <div
-                      className={`w-full py-1.5 text-center text-xs font-black transition-colors ${
-                        isSelected
-                          ? 'bg-[#F59E0B] text-white'
-                          : 'bg-[#FFF8EA] text-[#8C5810] hover:bg-amber-100/70'
-                      }`}
-                    >
-                      {pack.price}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Main Action Button: "تأكيد الشحن" (Vibrant Mint/Green Pill) */}
-            <div className="pt-2">
-              <button
-                onClick={handleConfirmRecharge}
-                className="w-full py-3.5 rounded-full bg-gradient-to-r from-[#20C98F] to-[#12B97C] hover:from-[#1eb883] hover:to-[#0fa66f] text-white font-black text-base shadow-lg shadow-emerald-500/20 active:scale-98 transition flex items-center justify-center gap-2"
-              >
-                <span>تأكيد الشحن</span>
-              </button>
-            </div>
-
-            </>}
-
-            {/* Footer Notice & Verification Link */}
-            <div className="text-center pt-1 pb-3 text-xs leading-relaxed space-y-0.5">
-              <p className="text-sky-600 font-semibold">
-                إذا لم يتم شحن العملات خلال 3 دقائق
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  sounds.playClick();
-                  setShowOrderCheckModal(true);
-                }}
-                className="text-sky-600 font-bold hover:underline active:opacity-75 inline-block"
-              >
-                يرجى النقر هنا للتحقق من الطلب
-              </button>
-            </div>
+                <div className="tu-contact"><button type="button" className="tu-green" disabled={contacting || agent.ownerId === currentUser.id}
+                  onClick={() => void contactAgent(agent)}><MessageCircle />تواصل</button></div>
+              </article>)}
+          </section>
+          <aside className="tu-info"><Info />{contactError || 'إذا لم يتم شحن العملات خلال 3 دقائق يرجى التواصل مع الوكيل مباشرة.'}</aside>
+        </> : diamonds ? <>
+          <section className="tu-diamonds tu-info"><Sparkles /><div><h3>تحويل الألماس</h3><p>تُحسب قيمة التحويل حسب مصدر الألماس وتظهر قبل التأكيد.</p></div></section>
+          <button type="button" className="tu-green tu-convert" disabled={balance === undefined} onClick={() => setShowExchangeModal(true)}><ArrowRightLeft />تحويل</button>
+        </> : <>
+          <div className="tu-catalog">
+            <section className="tu-packs" aria-label="باقات الشحن">
+              {packagesLoading ? <p role="status">جارٍ تحميل باقات الشحن…</p> : packagesError || rechargePacks.length === 0
+                ? <p role="status">{packagesError || 'لا توجد باقات نشطة حالياً.'}</p>
+                : rechargePacks.slice(packPage * 6, packPage * 6 + 6).map(pack =>
+                  <button key={pack.id} type="button" className="tu-pack" aria-pressed={selectedPack?.id === pack.id}
+                    onClick={() => { sounds.playClick(); setSelectedPack(pack); }}>
+                    {selectedPack?.id === pack.id && <Check className="tu-pack-check" />}
+                    <img className="tu-pack-art" src="/assets/recharge/coin-pack.png" alt="" draggable={false} />
+                    <strong dir="ltr">{pack.coins.toLocaleString('en-US')}</strong>
+                    <bdi>{pack.price}</bdi>
+                  </button>)}
+            </section>
+            {rechargePacks.length > 6 && <nav className="tu-pages" aria-label="صفحات الباقات">
+              <button type="button" disabled={packPage === 0} onClick={() => setPackPage(page => page - 1)}>السابق</button>
+              <bdi>{packPage + 1} / {Math.ceil(rechargePacks.length / 6)}</bdi>
+              <button type="button" disabled={(packPage + 1) * 6 >= rechargePacks.length} onClick={() => setPackPage(page => page + 1)}>التالي</button>
+            </nav>}
           </div>
-        )}
-
-        {/* =========================================================
-            TAB 2: ألماسي (Diamonds View) - Exactly Image 2
-           ========================================================= */}
-        {activeTab === 'diamonds' && (
-          <div className="p-4 space-y-4">
-            {/* Top Aqua / Cyan Diamond Balance Card matching Image 2 */}
-            <div className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-[#00D4FF] via-[#00A7FF] to-[#0088FF] p-4 text-white shadow-md min-h-[105px] flex flex-col justify-between">
-              {/* Subtle Arabesque Damask Texture */}
-              <DamaskPattern />
-
-              {/* Large 3D Faceted Diamond on Left */}
-              <BigDiamondGraphic />
-
-              {/* Card Content (Right-aligned in RTL) */}
-              <div className="relative z-10 text-right pr-1">
-                <p className="text-white text-xs font-bold tracking-wide">
-                  ألماسي
-                </p>
-                <div className="mt-2 flex items-center justify-end gap-1.5">
-                  <span className="text-3xl font-black text-white drop-shadow-xs tracking-tight">
-                    {(currentUser.diamonds || 0).toFixed(1)}
-                  </span>
-                  <SmallDiamond />
-                </div>
-              </div>
-            </div>
-
-            {/* Subtext below card matching Image 2 */}
-            <div className="text-center pt-2">
-              <p className="text-xs font-bold text-slate-400">
-                استلم الهدايا للحصول على الألما
-              </p>
-            </div>
-
-            {/* Official 30% Conversion Rule Banner */}
-            <div className="bg-gradient-to-r from-sky-50 via-cyan-50 to-blue-50 border border-sky-200/70 rounded-2xl p-3 flex items-center justify-between text-xs shadow-2xs">
-              <div className="flex items-center gap-2">
-                <span className="w-7 h-7 rounded-full bg-sky-500 text-white flex items-center justify-center font-black text-xs shrink-0">
-                  %
-                </span>
-                <div className="text-right">
-                  <p className="font-extrabold text-sky-900">آلية الفك الرسمية: 30%</p>
-                  <p className="text-[10px] text-sky-700 font-semibold mt-0.5">
-                    كل 100,000 ألماسة = 30,000 كوينز معدنية
-                  </p>
-                </div>
-              </div>
-              <span className="px-2 py-1 bg-sky-600 text-white font-black text-[11px] rounded-lg shadow-xs">
-                30%
-              </span>
-            </div>
-
-            {/* Action Button: "تحويل" (Cyan Pill Button matching Image 2) */}
-            <div className="pt-1">
-              <button
-                onClick={() => {
-                  sounds.playClick();
-                  setShowExchangeModal(true);
-                }}
-                className="w-full py-3 rounded-full bg-gradient-to-r from-[#29B6F6] to-[#0288D1] hover:from-[#26a5df] hover:to-[#0277bd] text-white font-extrabold text-sm shadow-md active:scale-98 transition flex items-center justify-center gap-1.5"
-              >
-                <ArrowRightLeft className="w-4 h-4" />
-                <span>تحويل</span>
-              </button>
-            </div>
-
-            {/* Explanatory Info Card for Diamonds */}
-            <div className="mt-2 bg-slate-50 border border-slate-100 rounded-2xl p-4 text-xs text-slate-600 space-y-2">
-              <div className="flex items-center gap-2 font-bold text-slate-800">
-                <Sparkles className="w-4 h-4 text-sky-500" />
-                <span>كيف تحصل على الألماس وتفكه؟</span>
-              </div>
-              <p className="text-[11px] leading-relaxed text-slate-500">
-                عند استلام الهدايا من الأصدقاء في الغرف الصوتية، يتم إيداع الألماس في حسابك، وتستطيع فكه بنسبة 30% وتحويله إلى كوينز على الفور (مثال: فك 100,000 ألماسة يعطيك 30,000 كوينز).
-              </p>
-            </div>
+          <div className="tu-actions">
+            <button type="button" className="tu-gold" onClick={() => setRechargeMode('agents')}><ChevronLeft />الشحن عبر الوكيل<Headset /></button>
+            <button type="button" className="tu-green" disabled aria-describedby="tu-billing-status"><Zap />تأكيد الشحن</button>
           </div>
-        )}
+          <p className="tu-billing-status" id="tu-billing-status">الشراء المباشر غير متاح حالياً</p>
+        </>}
       </div>
-
-      {/* =========================================================
-          Overlay Modal: Transactions / Recharge History (Receipt Icon)
-         ========================================================= */}
       {showHistoryModal && (
-        <div className="fixed inset-0 z-60 bg-black/60 backdrop-blur-2xs flex items-center justify-center p-4">
-          <div className="w-full max-w-sm bg-white rounded-3xl p-5 shadow-2xl flex flex-col max-h-[80vh] animate-in zoom-in-95">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="font-extrabold text-slate-900 text-sm">سجل عمليات الشحن</h3>
-              <button
-                onClick={() => setShowHistoryModal(false)}
-                className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500"
-              >
-                <X className="w-4 h-4" />
-              </button>
+        <div className="fixed inset-0 z-60 bg-black/70 flex items-center justify-center p-4">
+          <section className="tu-history" role="dialog" aria-label="سجل عمليات الشحن">
+            <header><h3>سجل عمليات الشحن</h3><button type="button" aria-label="إغلاق" onClick={() => setShowHistoryModal(false)}><X size={20} /></button></header>
+            <div className="tu-history-list">
+              {historyError ? <p role="alert">تعذر تحميل سجل الشحن.</p> : !history ? <p role="status">جارٍ تحميل السجل…</p> :
+                history.length === 0 ? <p>لا توجد عمليات شحن سابقة.</p> : history.map(row => (
+                  <article key={row.id}><strong>{row.coins.toLocaleString('en-US')} عملة</strong>
+                    <span>{row.status === 'completed' ? 'ناجحة' : row.status === 'pending' ? 'قيد المراجعة' : 'فاشلة'}</span>
+                    <small>{new Date(row.date).toLocaleString('ar-IQ-u-nu-latn')}</small></article>
+                ))}
             </div>
-
-            <div className="py-3 divide-y divide-slate-100 overflow-y-auto no-scrollbar flex-1">
-              {transactions && transactions.length > 0 ? (
-                transactions.slice(0, 10).map((tx) => (
-                  <div key={tx.id} className="py-2.5 flex items-center justify-between text-xs">
-                    <div>
-                      <p className="font-bold text-slate-800">{tx.title}</p>
-                      <p className="text-[10px] text-slate-400 mt-0.5">{tx.timestamp}</p>
-                    </div>
-                    <span className="font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-                      {tx.status}
-                    </span>
-                  </div>
-                ))
-              ) : (
-                <div className="py-8 text-center text-slate-400 text-xs">
-                  لا توجد عمليات شحن سابقة
-                </div>
-              )}
-            </div>
-
-            <button
-              onClick={() => setShowHistoryModal(false)}
-              className="mt-3 w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition"
-            >
-              إغلاق
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* =========================================================
-          Overlay Modal: Order Verification Dialog (Footer Link)
-         ========================================================= */}
-      {showOrderCheckModal && (
-        <div className="fixed inset-0 z-60 bg-black/60 backdrop-blur-2xs flex items-center justify-center p-4">
-          <div className="w-full max-w-sm bg-white rounded-3xl p-5 shadow-2xl flex flex-col animate-in zoom-in-95 text-center">
-            <div className="w-12 h-12 rounded-full bg-sky-50 text-sky-600 mx-auto flex items-center justify-center mb-3">
-              <AlertCircle className="w-6 h-6" />
-            </div>
-            <h3 className="font-extrabold text-slate-900 text-sm">التحقق من حالة الشحن</h3>
-            <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-              جميع طلبات الشحن تتم فورياً وبشكل آمن ومحمي. إذا واجهت أي تأخير، يرجى التأكد من اتصالك بالإنترنت أو إرسال رقم المعاملة للدعم الفني.
-            </p>
-            <div className="mt-4 p-3 bg-slate-50 rounded-xl text-right text-[11px] text-slate-600 space-y-1">
-              <p>• رقم الحساب: <span className="font-bold text-slate-900">{currentUser.id}</span></p>
-              <p>• حالة المزامنة: <span className="text-emerald-600 font-bold">متصل بالخادم</span></p>
-            </div>
-            <button
-              onClick={() => {
-                sounds.playCoin();
-                setShowOrderCheckModal(false);
-                showToast('تمت إعادة مزامنة رصيد حسابك بنجاح');
-              }}
-              className="mt-4 w-full py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold text-xs rounded-full shadow-md active:scale-95 transition"
-            >
-              إعادة التحقق الآن
-            </button>
-          </div>
+          </section>
         </div>
       )}
 
@@ -851,7 +578,7 @@ export const RechargeModal: React.FC = () => {
          ========================================================= */}
       {showExchangeModal && (
         <div className="fixed inset-0 z-60 bg-black/60 backdrop-blur-2xs flex items-center justify-center p-4">
-          <div className="w-full max-w-sm bg-white rounded-3xl p-5 shadow-2xl flex flex-col animate-in zoom-in-95">
+          <div className="w-full max-w-sm bg-white text-slate-800 rounded-3xl p-5 shadow-2xl flex flex-col animate-in zoom-in-95">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-1.5">
                 <span className="w-6 h-6 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center text-xs font-black">
@@ -872,13 +599,13 @@ export const RechargeModal: React.FC = () => {
               <div className="bg-sky-50 rounded-2xl p-3 flex items-center justify-between text-xs border border-sky-100">
                 <span className="text-slate-600 font-bold">رصيدك المتاح من الألماس:</span>
                 <span className="font-black text-sky-700 text-sm">
-                  {(currentUser.diamonds || 0).toLocaleString('ar-EG')} 💎
+                  {(wallet?.diamonds ?? 0).toLocaleString('ar-EG-u-nu-latn')} 💎
                 </span>
               </div>
 
               {/* Conversion Rule Note */}
               <div className="bg-amber-50/80 border border-amber-200/60 rounded-xl px-3 py-2 text-[11px] text-amber-900 text-center font-bold">
-                ⚡ نسبة الفك الرسمية: 30% (كل 100,000 💎 = 30,000 🪙)
+                تظهر قيمة التحويل من الخادم قبل التأكيد.
               </div>
 
               {/* Quick Preset Buttons */}
@@ -891,11 +618,12 @@ export const RechargeModal: React.FC = () => {
                     { dia: 10000, label: '10K' },
                     { dia: 50000, label: '50K' },
                     { dia: 100000, label: '100K' },
-                    { dia: currentUser.diamonds || 0, label: 'الكل' },
+                    { dia: wallet?.diamonds ?? 0, label: 'الكل' },
                   ].map((preset, idx) => (
                     <button
                       key={idx}
                       type="button"
+                      disabled={exchangeBusy || !!pendingExchange}
                       onClick={() => setExchangeAmount(preset.dia)}
                       className={`py-1.5 rounded-xl text-xs font-bold transition border ${
                         exchangeAmount === preset.dia
@@ -916,12 +644,13 @@ export const RechargeModal: React.FC = () => {
                 </label>
                 <div className="relative">
                   <input
-                    type="number"
-                    min="1"
-                    step="1000"
-                    max={currentUser.diamonds || 1000000}
-                    value={exchangeAmount || ''}
-                    onChange={(e) => setExchangeAmount(Math.max(0, Number(e.target.value)))}
+                    type="text" dir="ltr" inputMode="numeric"
+                    value={pendingExchange?.amount ?? (exchangeAmount || '')}
+                    disabled={exchangeBusy || !!pendingExchange}
+                    onChange={(e) => {
+                      const value = latinDigits(e.target.value);
+                      if (/^[0-9]*$/.test(value)) setExchangeAmount(Number(value));
+                    }}
                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-center font-black text-sm text-slate-800 focus:outline-sky-500"
                     placeholder="أدخل عدد الألماس..."
                   />
@@ -934,23 +663,24 @@ export const RechargeModal: React.FC = () => {
               {/* Output Preview Calculation (30% formula) */}
               <div className="p-3 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 rounded-2xl border border-emerald-200/80 text-center">
                 <span className="text-[11px] font-bold text-emerald-800 block">
-                  الكوينز المحصلة بعد الفك (بنسبة 30%):
+                  الكوينز المحصلة بعد التحويل
                 </span>
                 <span className="text-xl font-black text-emerald-600 block mt-0.5">
-                  {Math.floor(exchangeAmount * 0.3).toLocaleString('ar-EG')} 🪙
+                  {exchangeCoins?.toLocaleString('ar-EG-u-nu-latn') ?? '—'} 🪙
                 </span>
                 <span className="text-[10px] text-emerald-700 font-semibold mt-1 block">
-                  (خصم {exchangeAmount.toLocaleString('ar-EG')} 💎 ➜ إضافة {Math.floor(exchangeAmount * 0.3).toLocaleString('ar-EG')} 🪙)
+                  (خصم {(pendingExchange?.amount ?? exchangeAmount).toLocaleString('ar-EG-u-nu-latn')} 💎 ➜ إضافة {exchangeCoins?.toLocaleString('ar-EG-u-nu-latn') ?? '—'} 🪙)
                 </span>
               </div>
             </div>
 
+            {exchangeError && <p role="alert" className="mb-2 text-sm text-red-700">{exchangeError}</p>}
             <button
-              onClick={handleConvertDiamonds}
-              disabled={exchangeAmount <= 0 || (currentUser.diamonds || 0) < exchangeAmount}
+              onClick={() => void handleConvertDiamonds()}
+              disabled={exchangeBusy || exchangeCoins === undefined}
               className="w-full py-3 bg-gradient-to-r from-[#29B6F6] to-[#0288D1] hover:from-[#26a5df] hover:to-[#0277bd] disabled:opacity-50 text-white font-extrabold text-xs rounded-full shadow-md active:scale-95 transition"
             >
-              تأكيد فك الألماس (30%)
+              {exchangeBusy ? 'جارٍ التحويل…' : pendingExchange ? 'استرجاع العملية' : 'تأكيد فك الألماس'}
             </button>
           </div>
         </div>

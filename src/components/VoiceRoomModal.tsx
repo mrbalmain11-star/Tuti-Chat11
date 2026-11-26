@@ -1,5 +1,17 @@
+import { RoomPinDialog } from './RoomPinDialog';
+import { LockOpen } from 'lucide-react';
+import { latinDigits } from '../utils/digits';
+import { activeVipTier, hasVipEntrance } from '../utils/vipPerks';
+import { RoomShareDialog } from './RoomShareDialog';
+import { RoomOptionsDialog } from './RoomOptionsDialog';
+import { GameCenter } from '../features/games/GameCenter';
+import { RoomProfileCard, RoomProfileAvatarFrame } from './RoomProfileCard';
+import { ProfileReportForm } from './ProfileReportForm';
+import { imageUrl } from '../services/imageUrl';
+import { Flag, Ban } from 'lucide-react';
 import './roomHeader.css';
 import { RoomTheater } from './RoomTheater';
+import { RoomTapHearts } from './RoomTapHearts';
 import { StorageItemVisual } from './StorageItemVisual';
 import { useRoomDecorations } from '../services/roomDecorations';
 import { CpFrameForUser } from './CpFrameForUser';
@@ -7,13 +19,13 @@ import { VipMessageFrame } from './VipMessageFrame';
 import { WealthBadge, CharmBadge } from './LevelBadgeIcons';
 import { fetchIdentityBadgeKind, stagingBackend, type IdentityBadgeKind } from '../services/stagingBackend';
 import { IdentityBadge } from './IdentityBadge';
+import { RoomMembersDialog } from './RoomMembersDialog';
 import { RoomManagementPanel } from './RoomManagementPanel';
 import { App as CapacitorApp } from '@capacitor/app';
 import { playRoomMusic, pauseRoomMusic, resumeRoomMusic, stopRoomMusic, getRoomMusicProgress, seekRoomMusic, setRoomMusicVolume } from '../services/isolatedRoomMusic';
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { RoyalGiftIcon } from './RoyalGiftIcon';
 import { RoyalSeatIcon } from './RoyalSeatIcon';
-import { GameCenter } from '../features/games/GameCenter';
 import { RoyalGamepadIcon } from './RoyalGamepadIcon';
 import {
   Mic,
@@ -127,6 +139,7 @@ function RoomMessageAvatar({ name, src, alternateSrc }: { name: string; src: str
 export const VoiceRoomModal: React.FC = () => {
   const {
     activeRoom,
+    rooms,
     leaveRoom,
     isRoomMinimized,
     setIsRoomMinimized,
@@ -263,6 +276,7 @@ export const VoiceRoomModal: React.FC = () => {
   const [roomManagementSection,setRoomManagementSection]=useState<'rules'|'auto_message'|'announcement'|'history'|null>(null);
   const [seatLayout, setSeatLayout] = useState<'grid'|'classic'|'circle'|'stage'>('grid');
   const [layoutSaving, setLayoutSaving] = useState(false);
+  const [roomShareId, setRoomShareId] = useState<string | null>(null);
   const [showExitOptions, setShowExitOptions] = useState(false);
   const [showMembersModal, setShowMembersModal] = useState(false);
   const [serverRoomMembers, setServerRoomMembers] = useState<Array<{user_id:string;display_name:string;avatar_url:string|null;seat_no:number|null}>>([]);
@@ -534,15 +548,37 @@ export const VoiceRoomModal: React.FC = () => {
     return () => { active = false; };
   }, [activeRoom?.id]);
 
-  const [selectedMicPublicId, setSelectedMicPublicId] = useState<string>('—');
+  const [selectedMicAccountId, setSelectedMicAccountId] = useState<{ userId: string; value: string }>();
   const [selectedMicUser, setSelectedMicUser] = useState<{ seatNumber: number; user: UserProfile } | null>(null);
+  const [roomProfileReport, setRoomProfileReport] = useState<{ id: string; name: string } | null>(null);
+  const [roomProfileIdentity, setRoomProfileIdentity] = useState<{ id: string; name: string; avatar: string; bio: string; badge: IdentityBadgeKind | null }>();
+  useEffect(() => {
+    const id = selectedMicUser?.user.id;
+    if (!id || !stagingBackend) return;
+    let active = true;
+    const client = stagingBackend;
+    const refresh = async () => {
+      const [profile, badge] = await Promise.all([
+        client.from('profiles').select('display_name,avatar_url,bio').eq('id', id).maybeSingle(),
+        fetchIdentityBadgeKind(id).catch(() => null),
+      ]);
+      if (active && profile.data && !profile.error) setRoomProfileIdentity({
+        id, name: profile.data.display_name, avatar: imageUrl(profile.data.avatar_url), bio: profile.data.bio, badge,
+      });
+    };
+    void refresh();
+    const timer = window.setInterval(refresh, 15000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, [selectedMicUser?.user.id]);
+
   const [selectedMicVerifiedStatus, setSelectedMicVerifiedStatus] = useState<{ userId: string; wealthExp: number; charmExp: number; vipLevel: number; loadFailed?: boolean } | null>(null);
   useEffect(() => {
     let active = true;
     const userId = selectedMicUser?.user.id;
     setSelectedMicVerifiedStatus(null);
     if (!userId || !stagingBackend) return;
-    void Promise.resolve(stagingBackend.rpc('staging_visited_profile_status', { p_user_id: userId }))
+    const client = stagingBackend;
+    const refresh = () => void Promise.resolve(client.rpc('staging_visited_profile_status', { p_user_id: userId }))
       .then(({ data, error }) => {
         if (error) throw error;
         if (!active || !data) return;
@@ -560,11 +596,13 @@ export const VoiceRoomModal: React.FC = () => {
         console.warn('Verified room profile levels unavailable:', error);
         if (active) setSelectedMicVerifiedStatus({ userId, wealthExp: 0, charmExp: 0, vipLevel: 0, loadFailed: true });
       });
-    return () => { active = false; };
+    refresh();
+    const timer = window.setInterval(refresh, 5000);
+    return () => { active = false; window.clearInterval(timer); };
   }, [selectedMicUser?.user.id]);
   useEffect(() => {
     let active = true;
-    setSelectedMicPublicId('—');
+    setSelectedMicAccountId(undefined);
     const target = selectedMicUser?.user.id;
     if (!target || !stagingBackend) return;
     // The seat card must use the same effective ID as the profile page:
@@ -575,12 +613,12 @@ export const VoiceRoomModal: React.FC = () => {
       const status = special as { assigned?: boolean; publicId?: string } | null;
       if (!active) return;
       if (!specialError && status?.assigned && status.publicId) {
-        setSelectedMicPublicId(String(status.publicId));
+        setSelectedMicAccountId({ userId: target, value: String(status.publicId) });
         return;
       }
       const { data, error } = await stagingBackend.from('profiles').select('public_id').eq('id', target).maybeSingle();
       if (error) throw error;
-      if (active && data?.public_id != null) setSelectedMicPublicId(String(data.public_id));
+      if (active && data?.public_id != null) setSelectedMicAccountId({ userId: target, value: String(data.public_id) });
     })().catch(error => console.error('Seat profile ID lookup failed:', error));
     return () => { active = false; };
   }, [selectedMicUser?.user.id]);
@@ -615,6 +653,13 @@ export const VoiceRoomModal: React.FC = () => {
   // Bottom Sheets & Popups
   const [gamesRoomId, setGamesRoomId] = useState<string | null>(null);
   const [showToolsDrawer, setShowToolsDrawer] = useState(false);
+  const [managePin, setManagePin] = useState(false);
+  const [pinOverride, setPinOverride] = useState<{roomId: string; locked: boolean}>();
+  const lockFromServer = rooms.find(room=>room.id===activeRoom?.id)?.accessLocked ?? activeRoom?.accessLocked ?? false;
+  const roomLocked = pinOverride?.roomId===activeRoom?.id ? pinOverride?.locked ?? lockFromServer : lockFromServer;
+  useEffect(()=>{
+    if (pinOverride && (pinOverride.roomId!==activeRoom?.id || pinOverride.locked===lockFromServer)) setPinOverride(undefined);
+  },[pinOverride,activeRoom?.id,lockFromServer]);
   const [showMessagesSheet, setShowMessagesSheet] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
@@ -723,6 +768,7 @@ export const VoiceRoomModal: React.FC = () => {
   const [audioModeHQ, setAudioModeHQ] = useState(true);
 
   // Floating animated emojis
+  const roomTapViewport = useRef<HTMLDivElement>(null);
   const [floatingEmojis, setFloatingEmojis] = useState<{ id: number; char: string; left: number }[]>([]);
 
   const chatScrollRef = useRef<HTMLDivElement>(null);
@@ -946,7 +992,7 @@ export const VoiceRoomModal: React.FC = () => {
     }
   };
 
-  const handleToggleModerator = async (userId: string, userName: string) => {
+  const handleSetModerator = async (userId: string, userName: string, shouldBeModerator: boolean) => {
     if (!activeRoom || !isOwner || !stagingBackend) {
       showToast('تعيين المشرفين يتطلب ملكية الغرفة والاتصال بالخادم.');
       return;
@@ -956,18 +1002,13 @@ export const VoiceRoomModal: React.FC = () => {
     moderationPendingRef.current.add(userId);
     setModerationBusy(true);
     try {
-      // Read the current server role before deciding whether this is a grant or revoke.
-      // The local moderator list may lag behind a change made on another device.
-      const { data: serverModeratorIds, error: rosterError } = await stagingBackend.rpc('totichat_room_moderator_ids', { p_room_id: roomId });
-      if (rosterError || !Array.isArray(serverModeratorIds)) throw rosterError ?? new Error('Moderator roster unavailable');
-      const isMod = serverModeratorIds.includes(userId);
       const { data, error } = await stagingBackend.rpc('phase2_room_moderate', {
         p_room_id: roomId, p_target: userId,
-        p_action: isMod ? 'revoke_moderator' : 'grant_moderator',
+        p_action: shouldBeModerator ? 'grant_moderator' : 'revoke_moderator',
         p_request_id: crypto.randomUUID(),
       });
       if (error || !data?.success) throw error ?? new Error('Server did not confirm role change');
-      showToast(isMod ? `تم سحب إشراف ${userName}` : `تم منح ${userName} صلاحية المشرف`);
+      showToast(shouldBeModerator ? `تم منح ${userName} صلاحية المشرف` : `تم سحب إشراف ${userName}`);
       window.dispatchEvent(new CustomEvent('totichat:room-moderators-changed', { detail: roomId }));
       // Preserve the active voice session; do not reload the entire app.
     } catch (error) {
@@ -1005,7 +1046,7 @@ export const VoiceRoomModal: React.FC = () => {
     }
   };
 
-  const handleVoiceModeration = async (userId: string, action: 'kick' | 'ban' | 'mute' | 'release_seat') => {
+  const handleVoiceModeration = async (userId: string, action: 'kick' | 'ban' | 'mute' | 'release_seat', banType?: 'temporary' | 'permanent') => {
     if (!activeRoom || !stagingBackend || (!isOwner && !isModerator)) {
       showToast('هذا الأمر متاح لمالك الغرفة والمشرف فقط.');
       return;
@@ -1015,17 +1056,17 @@ export const VoiceRoomModal: React.FC = () => {
       return;
     }
     let durationSeconds: number | null = null;
-    if (action === 'ban') {
+    if (action === 'ban' && banType !== 'permanent') {
       const durationChoice = window.prompt(
         'مدة حظر الغرفة: دائم، 10د، 30د، 1س، 6س، 12س، 24س، 3أيام، 7أيام، 30يوماً',
-        'دائم',
+        banType === 'temporary' ? '10د' : 'دائم',
       );
       if (durationChoice === null) return;
       const durations: Record<string, number | null> = {
         'دائم': null, '10د': 600, '30د': 1800, '1س': 3600, '6س': 21600,
         '12س': 43200, '24س': 86400, '3أيام': 259200, '7أيام': 604800, '30يوماً': 2592000,
       };
-      if (!Object.prototype.hasOwnProperty.call(durations, durationChoice.trim())) {
+      if (!Object.prototype.hasOwnProperty.call(durations, durationChoice.trim()) || (banType === 'temporary' && durationChoice.trim() === 'دائم')) {
         showToast('اختر مدة من القائمة المحددة.');
         return;
       }
@@ -1052,7 +1093,16 @@ export const VoiceRoomModal: React.FC = () => {
           ...(reason ? { reason: reason.trim() } : {}),
           ...(action === 'ban' ? { durationSeconds } : {}) },
       });
-      if (data?.databaseCommitted === true) {
+      const response = error && 'context' in error ? error.context : null;
+      const failure = response instanceof Response
+        ? await response.clone().json().catch(() => null) : data;
+      if (failure?.error === 'VIP_ROOM_MUTE_PROTECTED' || failure?.error === 'VIP_ROOM_KICK_PROTECTED') {
+        showToast(action === 'mute'
+          ? 'لا يمكنك كتم هذا المستخدم بسبب صلاحيات VIP الخاصة به.'
+          : 'هذا المستخدم يتمتع بحماية VIP من الطرد.');
+        return;
+      }
+      if (failure?.databaseCommitted === true) {
         // The database has changed even if the voice disconnect acknowledgement fails.
         // Reconcile seats from the server; do not optimistically remove a member.
         window.dispatchEvent(new CustomEvent('totichat:room-moderators-changed', { detail: activeRoom.id }));
@@ -1065,7 +1115,7 @@ export const VoiceRoomModal: React.FC = () => {
       }
       if (error || data?.success !== true || data?.sfuDisconnected !== true) {
         console.error('Voice moderation not confirmed:', error, data);
-        showToast(data?.databaseCommitted
+        showToast(failure?.databaseCommitted
           ? 'تم تحديث الخادم لكن فصل الصوت غير مؤكد. تحقق من حالة العضو.'
           : 'تعذر تنفيذ الأمر. تحقق من الصلاحيات واتصال الصوت.');
         return;
@@ -1128,7 +1178,7 @@ export const VoiceRoomModal: React.FC = () => {
       showToast('تقديم الاعتراضات متاح لمشرفي غرفة خدمة العملاء فقط.');
       return;
     }
-    const publicIdText = window.prompt('رقم حساب المستخدم المحظور (6 أرقام):');
+    const publicIdText = latinDigits(window.prompt('رقم حساب المستخدم المحظور (6 أرقام):') ?? '').trim();
     if (!publicIdText || !/^\d{6}$/.test(publicIdText.trim())) {
       showToast('أدخل رقم الحساب المكوّن من 6 أرقام.');
       return;
@@ -1154,9 +1204,7 @@ export const VoiceRoomModal: React.FC = () => {
     } finally { setModerationBusy(false); }
   };
 
-  const handleKickMember = (userId: string, _userName: string) => {
-    void handleVoiceModeration(userId, 'kick');
-  };
+
 
   const handleApplyDecoration = (type: 'mic' | 'frame' | 'title', value: string) => {
     if (!activeRoom) return;
@@ -1211,25 +1259,15 @@ export const VoiceRoomModal: React.FC = () => {
   // VIP entrance is shown once on a fresh room entry, never on every render.
   const [vipEntrance, setVipEntrance] = useState<{ roomId: string; sequence: number; name: string; vipLevel: number } | null>(null);
   const vipEntranceSequence = useRef(0);
-  const lastEnteredRoom = useRef<string | null>(null);
   useEffect(() => {
-    if (!activeRoom || isRoomMinimized) {
-      if (!activeRoom) lastEnteredRoom.current = null;
-      setVipEntrance(null);
-      return;
-    }
-    if (lastEnteredRoom.current === activeRoom.id) return;
-    lastEnteredRoom.current = activeRoom.id;
-    if (!Number.isInteger(currentUser.vipLevel) || currentUser.vipLevel < 1 || currentUser.vipLevel > 12) return;
-    setVipEntrance({ roomId: activeRoom.id, sequence: ++vipEntranceSequence.current, name: currentUser.nickname || currentUser.name || 'عضو VIP', vipLevel: currentUser.vipLevel });
-  }, [activeRoom?.id, isRoomMinimized, currentUser.vipLevel]);
+    setVipEntrance(null);
+  }, [activeRoom?.id, isRoomMinimized]);
 
   useEffect(() => {
     const onVipRoomEntry = (rawEvent: Event) => {
       const detail = (rawEvent as CustomEvent<{ roomId: string; userId: string; name: string; vipLevel: number }>).detail;
-      if (isRoomMinimized || !detail || detail.roomId !== activeRoom?.id || detail.userId === currentUser.id ||
-          typeof detail.name !== 'string' || !Number.isSafeInteger(detail.vipLevel) ||
-          detail.vipLevel < 1 || detail.vipLevel > 12) return;
+      if (isRoomMinimized || !detail || detail.roomId !== activeRoom?.id ||
+          typeof detail.name !== 'string' || !hasVipEntrance(detail.vipLevel)) return;
       setVipEntrance({
         roomId: detail.roomId, sequence: ++vipEntranceSequence.current,
         name: detail.name, vipLevel: detail.vipLevel,
@@ -1237,7 +1275,7 @@ export const VoiceRoomModal: React.FC = () => {
     };
     window.addEventListener('totichat:vip-room-entry', onVipRoomEntry);
     return () => window.removeEventListener('totichat:vip-room-entry', onVipRoomEntry);
-  }, [activeRoom?.id, currentUser.id, isRoomMinimized]);
+  }, [activeRoom?.id, isRoomMinimized]);
 
   useEffect(() => {
     if (!vipEntrance) return;
@@ -1253,11 +1291,13 @@ export const VoiceRoomModal: React.FC = () => {
     void CapacitorApp.addListener('backButton', () => {
       // Android's native document picker emits back while handing the file to WebView.
       // Ignore it until the file input has received its change event.
-      if (musicPickerPendingRef.current || Date.now() - musicPickerReturnAtRef.current < 2000) return;
+      if (musicPickerPendingRef.current || Date.now() - musicPickerReturnAtRef.current < 2000 || document.querySelector('.room-pin-overlay, .royal-gift-sheet')) return;
       if (isRoomMinimized) {
         setIsRoomMinimized(false);
       } else if (gamesRoomId === activeRoom.id) {
         setGamesRoomId(null);
+      } else if (roomShareId === activeRoom.id) {
+        setRoomShareId(null);
       } else if (showExitOptions) {
         setShowExitOptions(false);
       } else if (showChatInput) {
@@ -1291,6 +1331,8 @@ export const VoiceRoomModal: React.FC = () => {
         setShowRoomModeModal(false);
       } else if (showRoomInfoModal) {
         setShowRoomInfoModal(false);
+      } else if (roomProfileReport) {
+        setRoomProfileReport(null);
       } else if (selectedMicUser) {
         setSelectedMicUser(null);
       } else if (selectedEmptySeat !== null) {
@@ -1300,7 +1342,7 @@ export const VoiceRoomModal: React.FC = () => {
       }
     }).then(handle => { if (disposed) void handle.remove(); else listener = handle; });
     return () => { disposed = true; if (listener) void listener.remove(); };
-  }, [activeRoom?.id, gamesRoomId, isRoomMinimized, showExitOptions, showChatInput, showEmojiPicker, showMusicPlayerModal, showTasksModal, showChangeBgModal, showDecorationsModal, showRoomStatsModal, showHostCenterModal, showAgencyInfoModal, showMembersModal, showMessagesSheet, showToolsDrawer, showRoomModeModal, showRoomInfoModal, selectedMicUser, selectedEmptySeat, setIsRoomMinimized]);
+  }, [activeRoom?.id, gamesRoomId, isRoomMinimized, roomShareId, showExitOptions, showChatInput, showEmojiPicker, showMusicPlayerModal, showTasksModal, showChangeBgModal, showDecorationsModal, showRoomStatsModal, showHostCenterModal, showAgencyInfoModal, showMembersModal, showMessagesSheet, showToolsDrawer, showRoomModeModal, showRoomInfoModal, roomProfileReport, selectedMicUser, selectedEmptySeat, setIsRoomMinimized]);
 
   // Reconcile messages missed while the room was minimized before showing the chat again.
   useEffect(() => {
@@ -1316,7 +1358,8 @@ export const VoiceRoomModal: React.FC = () => {
     let active = true;
     setVerifiedSenderBadges({});
     if (!activeRoom?.id || !stagingBackend || !verifiedSenderIdsKey) return;
-    void Promise.resolve(stagingBackend.rpc('staging_room_chat_verified_badges', { p_room_id: activeRoom.id }))
+    const client = stagingBackend;
+    const refresh = () => void Promise.resolve(client.rpc('staging_room_chat_verified_badges', { p_room_id: activeRoom.id }))
       .then(({ data, error }) => {
         if (error) throw error;
         if (!active) return;
@@ -1334,7 +1377,9 @@ export const VoiceRoomModal: React.FC = () => {
         setVerifiedSenderBadges(verified);
       })
       .catch(error => console.warn('Verified room sender badges unavailable:', error));
-    return () => { active = false; };
+    refresh();
+    const timer = window.setInterval(() => { if (!document.hidden) refresh(); }, 15000);
+    return () => { active = false; window.clearInterval(timer); };
   }, [activeRoom?.id, verifiedSenderIdsKey]);
   const [chatIdentityByUser, setChatIdentityByUser] = useState<Record<string, IdentityBadgeKind>>({});
   const senderIdsKey = [...new Set(currentMessages.map(msg => msg.senderId).filter(Boolean))].sort().join(',');
@@ -1457,7 +1502,7 @@ export const VoiceRoomModal: React.FC = () => {
     if (seatLayout === 'stage') return { gridColumn: 5 - ((n - 1) % 5), gridRow: Math.floor((n - 1) / 5) + 1 };
     return {};
   };
-  const saveSeatLayout=async(layout:'grid'|'classic'|'circle'|'stage')=>{if(!activeRoom||!stagingBackend||layoutSaving||(!isOwner&&!currentUser.isSuperAdmin))return;if(layout==='stage' && roomSeats.some(seat=>seat.seatNumber>10 && seat.user)){showToast('انقل المتحدثين إلى المايكات ١–١٠ قبل تشغيل المسرح');return;}setLayoutSaving(true);try{const {data,error}=await stagingBackend.rpc('totichat_room_seat_layout',{p_room_id:activeRoom.id,p_layout:layout});if(error||data!==layout)throw error||new Error('لم يؤكد الخادم الحفظ');setSeatLayout(layout);setShowSeatLayouts(false);showToast('تم حفظ ترتيب المقاعد لجميع الأعضاء');}catch(e){showToast(e instanceof Error?e.message:'تعذر حفظ ترتيب المقاعد');}finally{setLayoutSaving(false);}};
+  const saveSeatLayout=async(layout:'grid'|'classic'|'circle'|'stage')=>{if(!activeRoom||!stagingBackend||layoutSaving||(!isOwner&&!currentUser.isSuperAdmin))return;if(layout==='stage' && roomSeats.some(seat=>seat.seatNumber>10 && seat.user)){showToast('انقل المتحدثين إلى المايكات 1–10 قبل تشغيل المسرح');return;}setLayoutSaving(true);try{const {data,error}=await stagingBackend.rpc('totichat_room_seat_layout',{p_room_id:activeRoom.id,p_layout:layout});if(error||data!==layout)throw error||new Error('لم يؤكد الخادم الحفظ');setSeatLayout(layout);setShowSeatLayouts(false);showToast('تم حفظ ترتيب المقاعد لجميع الأعضاء');}catch(e){showToast(e instanceof Error?e.message:'تعذر حفظ ترتيب المقاعد');}finally{setLayoutSaving(false);}};
   // 15 Seats Layout: 3 Rows of 5 Seats
   // Row 1: NO 01, NO 02, NO 03, NO 04, NO 05
   const row1Numbers = [1, 2, 3, 4, 5];
@@ -1525,35 +1570,15 @@ export const VoiceRoomModal: React.FC = () => {
       )}
       {activeRoom && <RoomLevelUpWatcher roomId={activeRoom.id} roomName={activeRoom.title} active={!isRoomMinimized} />}
 
-      {showExitOptions && (
-        <div
-          className="absolute inset-0 z-[120] flex items-center justify-center bg-slate-950/55 backdrop-blur-lg px-6"
-          onClick={() => setShowExitOptions(false)}
-        >
-          <div
-            className="w-full max-w-xs overflow-hidden rounded-[28px] border border-white/25 bg-gradient-to-br from-slate-900/90 via-[#152c32]/90 to-[#071b1b]/95 p-5 shadow-[0_22px_65px_rgba(0,0,0,0.55)] backdrop-blur-2xl"
-            onClick={event => event.stopPropagation()}
-            dir="rtl"
-            role="dialog"
-            aria-modal="true"
-            aria-label="خيارات الغرفة"
-          >
-            <div className="mx-auto mb-3 h-1 w-12 rounded-full bg-amber-200/40" />
-            <h3 className="mb-5 text-center text-lg font-black text-[#f8df9a]">خيارات الغرفة</h3>
-            <div className="flex flex-col gap-3">
-              <button type="button" onClick={() => setShowExitOptions(false)} className="flex w-full min-h-12 items-center justify-center gap-2 rounded-2xl border border-emerald-300/35 bg-emerald-500/15 py-3 font-bold text-white transition active:scale-[0.98]">
-                <Maximize2 className="h-5 w-5 text-emerald-200" aria-hidden="true" /> العودة إلى الغرفة
-              </button>
-              <button type="button" onClick={() => { setShowExitOptions(false); setIsRoomMinimized(true); }} className="flex w-full min-h-12 items-center justify-center gap-2 rounded-2xl border border-amber-300/50 bg-amber-300/10 py-3 font-bold text-amber-100 transition active:scale-[0.98]">
-                <span className="flex h-5 w-5 items-center justify-center rounded border border-amber-200/70 text-xs font-black" aria-hidden="true">−</span> تصغير الغرفة
-              </button>
-              <button type="button" onClick={() => { setShowExitOptions(false); leaveRoom(); }} className="flex w-full min-h-12 items-center justify-center gap-2 rounded-2xl border border-rose-300/35 bg-rose-500/15 py-3 font-bold text-rose-100 transition active:scale-[0.98]">
-                <LogOut className="h-5 w-5" aria-hidden="true" /> الخروج من الغرفة
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <RoomOptionsDialog open={showExitOptions}
+        onClose={() => setShowExitOptions(false)}
+        onMinimize={() => { setShowExitOptions(false); setIsRoomMinimized(true); }}
+        onLeave={() => { setShowExitOptions(false); leaveRoom(); }} />
+
+      {!isRoomMinimized && roomShareId === activeRoom.id && <RoomShareDialog key={activeRoom.id} room={activeRoom}
+        publicId={roomPublicId !== '—' ? roomPublicId : undefined}
+        members={serverMembersStatus === 'ready' ? serverRoomMembers.length : undefined}
+        onClose={() => setRoomShareId(null)} />}
 
       {/* Toast Notification */}
       {toastMessage && (
@@ -1563,7 +1588,7 @@ export const VoiceRoomModal: React.FC = () => {
       )}
 
       {/* Main Room Viewport Container (Matching Mobile Aspect Ratio) */}
-      <div className="relative w-full max-w-md h-full flex flex-col overflow-hidden overscroll-none shadow-2xl bg-[#0d0426] box-border" style={{ paddingTop: "max(10px, env(safe-area-inset-top, 0px))", paddingBottom: "max(10px, env(safe-area-inset-bottom, 0px))" }}>
+      <div ref={roomTapViewport} className="relative w-full max-w-md h-full flex flex-col overflow-hidden overscroll-none shadow-2xl bg-[#0d0426] box-border" style={{ paddingTop: "max(10px, env(safe-area-inset-top, 0px))", paddingBottom: "max(10px, env(safe-area-inset-bottom, 0px))" }}>
         {storeArrival && (
           <div className="pointer-events-none absolute inset-x-4 top-24 z-40 flex h-44 items-center justify-center gap-2">
             {storeArrival.mountUrl && <div className="h-full w-1/2">
@@ -1598,6 +1623,8 @@ export const VoiceRoomModal: React.FC = () => {
           </div>
         </div>
 
+        {!isRoomMinimized && <RoomTapHearts key={activeRoom.id} viewport={roomTapViewport} />}
+
         {/* Floating animated emojis */}
         <div className="absolute inset-0 pointer-events-none z-30 overflow-hidden">
           {floatingEmojis.map((item) => (
@@ -1629,27 +1656,9 @@ export const VoiceRoomModal: React.FC = () => {
                   <Power className="w-5 h-5 text-white stroke-[2.2]" />
                 </button>
 
-                {/* Share / External button */}
-                <button
-                  onClick={() => {
-                    sounds.playClick();
-                    const roomReference = roomPublicId !== '—' ? roomPublicId : activeRoom.id;
-                    const shareText = `انضم إلى غرفتي في TotiChat 🎙️\nالغرفة: ${activeRoom.title}\nرقم الغرفة: ${roomReference}`;
-                    void (async () => {
-                      try {
-                        if (navigator.share) {
-                          await navigator.share({ title: activeRoom.title, text: shareText });
-                          return;
-                        }
-                        if (!navigator.clipboard) throw new Error('Clipboard unavailable');
-                        await navigator.clipboard.writeText(shareText);
-                        showToast('تم نسخ معلومات الغرفة للمشاركة');
-                      } catch (error) {
-                        if (error instanceof Error && error.name === 'AbortError') return;
-                        showToast('تعذرت المشاركة. حاول مرة أخرى.');
-                      }
-                    })();
-                  }}
+                {/* Share the current room through existing private chats. */}
+                <button type="button"
+                  onClick={() => { sounds.playClick(); setRoomShareId(activeRoom.id); }}
                   className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 text-white/90 flex items-center justify-center transition active:scale-95 cursor-pointer"
                   title="مشاركة الغرفة"
                 >
@@ -1740,7 +1749,7 @@ export const VoiceRoomModal: React.FC = () => {
         </div>
 
         {seatLayout === 'stage' && <RoomTheater key={activeRoom.id} roomId={activeRoom.id} isOwner={isOwner} />}
-        <div className={"relative z-10 mx-auto w-full max-w-[540px] shrink-0 px-2 py-1"}>
+        <div data-room-tap-surface className={"relative z-10 mx-auto w-full max-w-[540px] shrink-0 px-2 py-1"}>
           <div dir={seatLayout === 'stage' ? 'ltr' : undefined} className={"grid grid-cols-5 gap-x-1 gap-y-[clamp(2px,1.5dvh,12px)] items-start justify-items-center"}>
 {Array.from({length:seatLayout === 'stage' ? 10 : 15},(_,i)=>i+1).map((seatNum) => {
               const seat = getSeat(seatNum);
@@ -1901,7 +1910,7 @@ export const VoiceRoomModal: React.FC = () => {
             </div>
 
             {/* 5. CHAT STREAM & WELCOME NOTICES */}
-            <div className="relative z-10 min-h-0 px-4 flex-1 flex flex-col justify-end pb-2 overflow-hidden">
+            <div data-room-tap-surface className="relative z-10 min-h-0 px-4 flex-1 flex flex-col justify-end pb-2 overflow-hidden">
               <div className="w-full flex min-h-0 max-h-full items-end justify-between gap-3">
                 {/* Left side floating badges: 🚀, 🎮, •• */}
                 <div className="flex flex-col items-center gap-2 pb-1 shrink-0">
@@ -1925,7 +1934,7 @@ export const VoiceRoomModal: React.FC = () => {
                       setGamesRoomId(activeRoom.id);
                     }}
                     className="w-10 h-10 rounded-2xl bg-[#1b1038]/80 border border-purple-400/30 flex items-center justify-center shadow-lg text-emerald-400 cursor-pointer active:scale-95 transition"
-                    title="مركز الألعاب" aria-label="مركز الألعاب"
+                    aria-label="مركز الألعاب" title="مركز الألعاب"
                   >
                     <RoyalGamepadIcon className="w-7 h-7 drop-shadow-[0_2px_5px_rgba(16,185,129,0.45)]" />
                   </button>
@@ -1980,7 +1989,7 @@ export const VoiceRoomModal: React.FC = () => {
                     <div key={msg.id} data-room-message-id={msg.id} className="flex min-w-0 items-start justify-end gap-1.5">
                       <div className="flex min-w-0 max-w-[calc(100%-2.5rem)] flex-col items-end gap-1">
                         <div className="flex min-w-0 max-w-full flex-wrap items-center justify-end gap-x-1 gap-y-0.5 text-[11px]">
-                          <bdi className="text-amber-300 font-bold [overflow-wrap:anywhere]">{msg.senderName}</bdi>
+                          <bdi className="min-w-0 [overflow-wrap:anywhere]"><VipName name={msg.senderName} vipLevel={verifiedSenderBadges[msg.senderId]?.vip} fallbackColor="text-amber-300 font-bold" /></bdi>
                           {chatIdentityByUser[msg.senderId] && <IdentityBadge kind={chatIdentityByUser[msg.senderId]} size={19} />}
                           {(verifiedSenderBadges[msg.senderId]?.wealth ?? 0) > 0 && <WealthBadge level={verifiedSenderBadges[msg.senderId].wealth} size="xs" />}
                           {(verifiedSenderBadges[msg.senderId]?.charm ?? 0) > 0 && <CharmBadge level={verifiedSenderBadges[msg.senderId].charm} size="xs" />}
@@ -2221,6 +2230,11 @@ export const VoiceRoomModal: React.FC = () => {
             - Agency Center
             ========================================================================= */}
         {!isRoomMinimized && gamesRoomId === activeRoom.id && <GameCenter key={activeRoom.id + currentUser.id} accountId={currentUser.id} onClose={() => setGamesRoomId(null)} />}
+        {managePin && isOwner && <RoomPinDialog key={activeRoom.id} roomId={activeRoom.id} locked={roomLocked}
+          onClose={()=>setManagePin(false)} onChanged={locked=>{
+            setPinOverride({roomId:activeRoom.id,locked});
+            window.dispatchEvent(new CustomEvent('totichat:room-lock-changed', { detail: { roomId:activeRoom.id,locked } }));
+          }} />}
         {showToolsDrawer && (
           <div
             onClick={() => setShowToolsDrawer(false)}
@@ -2312,20 +2326,14 @@ export const VoiceRoomModal: React.FC = () => {
 
                 {/* 6 Grid Icons: وضع الصوت | الرسوم | استبدال العملات | الصوت | مسح الشاشة | تحميل التطبيق */}
                 <div className="grid grid-cols-4 gap-2 text-center">
-                  {/* وضع الصوت */}
-                  <div
-                    onClick={() => {
-                      sounds.playClick();
-                      setAudioModeHQ(!audioModeHQ);
-                      showToast(audioModeHQ ? 'وضع الصوت: عالي الدقة HD 🎵' : 'وضع الصوت: قياسي منخفض البث 🎙️');
-                    }}
-                    className="flex flex-col items-center gap-1.5 cursor-pointer group active:scale-95 transition"
-                  >
-                    <div className="w-13 h-13 rounded-2xl bg-[#281a4b] border border-white/10 flex items-center justify-center shadow-md group-hover:border-purple-400/50">
-                      <Radio className="w-6 h-6 text-white stroke-[2]" />
-                    </div>
-                    <span className="text-xs font-bold text-slate-200">وضع الصوت</span>
-                  </div>
+                  {isOwner ? <button type="button"
+                    onClick={() => { sounds.playClick(); setShowToolsDrawer(false); setManagePin(true); }}
+                    className="flex flex-col items-center gap-1.5 cursor-pointer group active:scale-95 transition">
+                    <span className="w-13 h-13 rounded-2xl bg-[#281a4b] border border-white/10 flex items-center justify-center shadow-md">
+                      {roomLocked ? <Lock className="size-6 text-amber-400"/> : <LockOpen className="size-6 text-amber-300"/>}
+                    </span>
+                    <span className="text-xs font-bold text-slate-200">قفل الغرفة</span>
+                  </button> : <span aria-hidden="true"/>}
 
                   {/* الرسوم */}
                   <div
@@ -2813,77 +2821,89 @@ export const VoiceRoomModal: React.FC = () => {
             - زر الهدية المركزي الكبير 🎁 ارسل الهدايا
             - شريط التحكم السفلي: "نزل من المايك 💺" و "حظر مايك 🔇"
             ========================================================================= */}
-        {selectedMicUser && (
-          <div
-            onClick={() => setSelectedMicUser(null)}
-            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end justify-center animate-in fade-in"
-            dir="rtl"
-          >
-            <div
-              onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-md max-h-[min(88dvh,780px)] overflow-y-auto overscroll-contain bg-[#101924]/95 border-t border-slate-700/70 rounded-t-3xl backdrop-blur-xl shadow-2xl p-5 pt-3 text-white relative animate-in slide-in-from-bottom [padding-bottom:calc(1.5rem+env(safe-area-inset-bottom,0px))]"
-            >
-              {/* Top Header Row: close control only; room roles are not profile badges. */}
-              <div className="flex items-center justify-between">
-                <button
-                  onClick={() => setSelectedMicUser(null)}
-                  className="w-8 h-8 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 flex items-center justify-center active:scale-95 transition cursor-pointer"
-                  title="إغلاق"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-
-                <span className="text-xs font-bold text-slate-400">الملف الشخصي</span>
-              </div>
-
-              {/* Avatar and CP frame share one anchor. Keep the decorative frame outside
-                  the clipped photo, so neither the CP wings nor the name are obscured. */}
-              <div className="relative -mt-9 mx-auto mb-3 h-20 w-20 sm:h-22 sm:w-22 [&:has([data-avatar-frame])>button]:border-transparent">
-                <button type="button" onClick={() => { const target = selectedMicUser.user; setSelectedMicUser(null); handleOpenUserProfile(target); }} aria-label="فتح الملف الشخصي الكامل" className="relative block h-full w-full rounded-full border-2 border-white/90 shadow-2xl bg-slate-900">
-                  <span className="absolute inset-0 overflow-hidden rounded-full">
-                    <img
-                      src={selectedMicUser.user.avatar || '/placeholder-avatar.svg'}
-                      alt={selectedMicUser.user.name}
-                      onError={event => {
-                        if (!event.currentTarget.src.endsWith('/placeholder-avatar.svg')) event.currentTarget.src = '/placeholder-avatar.svg';
-                      }}
-                      className="h-full w-full object-cover"
-                    />
-                  </span>
-                </button>
-                <div className="absolute inset-0 pointer-events-none"><CpFrameForUser userId={selectedMicUser.user.id} name={selectedMicUser.user.name} vipLevel={selectedMicVerifiedStatus?.userId === selectedMicUser.user.id && !selectedMicVerifiedStatus.loadFailed ? selectedMicVerifiedStatus.vipLevel : undefined} /></div>
-              </div>
-
-              {/* User Name in large, bold, clear white text */}
-              <h3 className="text-xl sm:text-2xl font-black text-white text-center mt-2.5 tracking-wide flex items-center justify-center gap-1">
-                <span>{selectedMicUser.user.nickname || selectedMicUser.user.name}</span>
-              </h3>
-
-              {selectedMicAgencyName && <p className="mt-1 text-center text-[11px] font-bold text-red-400">{selectedMicAgencyName}</p>}
-              <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-xs font-bold" aria-live="polite">
-                {selectedMicVerifiedStatus?.userId === selectedMicUser.user.id ? <>
-                  {!selectedMicVerifiedStatus.loadFailed && <>
-                    <span className="inline-flex items-center gap-1 rounded-xl bg-slate-900/70 px-1 py-1 text-amber-50"><RoyalLevelEmblem track="wealth" level={royalProgress(BigInt(selectedMicVerifiedStatus.wealthExp)).level} kind="badge" size={62} animated={false} /><span className="text-xs">الثروة {royalProgress(BigInt(selectedMicVerifiedStatus.wealthExp)).level}</span></span>
-                    <span className="inline-flex items-center gap-1 rounded-xl bg-slate-900/70 px-1 py-1 text-amber-50"><RoyalLevelEmblem track="charm" level={royalProgress(BigInt(selectedMicVerifiedStatus.charmExp)).level} kind="badge" size={62} animated={false} /><span className="text-xs">السحر {royalProgress(BigInt(selectedMicVerifiedStatus.charmExp)).level}</span></span>
-                  </>}
-                  {!selectedMicVerifiedStatus.loadFailed && <VipBadge vipLevel={selectedMicVerifiedStatus.vipLevel} size="lg" />}
-                  {selectedMicVerifiedStatus.loadFailed && <span className="text-slate-400">تعذر التحقق من المستويات</span>}
-                </> : <span className="text-slate-400">جارٍ التحقق من بيانات الحساب…</span>}
-              </div>
-              <ProfileCpCard key={selectedMicUser.user.id} userId={selectedMicUser.user.id} userName={selectedMicUser.user.nickname || selectedMicUser.user.name} userAvatar={selectedMicUser.user.avatar} onPartnerClick={partnerId => { if (!stagingBackend) return; void (async () => {
+        {selectedMicUser && (() => {
+          const target = selectedMicUser.user;
+          const isSelf = target.id === currentUser.id;
+          const selectedMicPublicId = selectedMicAccountId?.userId === target.id ? selectedMicAccountId.value : '—';
+          const identity = roomProfileIdentity?.id === target.id ? roomProfileIdentity : undefined;
+          const name = identity?.name || target.nickname || target.name;
+          const avatar = identity?.avatar ?? target.avatar;
+          const status = selectedMicVerifiedStatus?.userId === target.id ? selectedMicVerifiedStatus : null;
+          const following = followedRoomHosts.has(target.id);
+          const blocked = personalBlocks.some(item => item.userId === target.id);
+          const canSetModerator = isOwner && !isSelf && target.id !== activeRoom.hostId;
+          const targetIsModerator = activeRoom.moderatorIds?.includes(target.id) ?? false;
+          const close = () => setSelectedMicUser(null);
+          const openFullProfile = () => { close(); handleOpenUserProfile(target); };
+          const message = () => {
+            const existing = conversations.find(thread => thread.userId === target.id);
+            close();
+            setOpenChatThread(existing ?? {
+              id: 'chat-' + target.id, userId: target.id, userName: name, userAvatar: avatar,
+              isOnline: false, lastMessage: '', lastTime: '', unreadCount: 0, messages: [],
+            });
+          };
+          return <RoomProfileCard onClose={close}>
+            <div className="room-profile-avatar">
+              <button type="button" onClick={openFullProfile} aria-label="فتح الملف الشخصي الكامل">
+                <img src={avatar || '/placeholder-avatar.svg'} alt={name} className="room-profile-photo"
+                  onError={event => { if (!event.currentTarget.src.endsWith('/placeholder-avatar.svg')) event.currentTarget.src = '/placeholder-avatar.svg'; }} />
+              </button>
+              <RoomProfileAvatarFrame userId={target.id} name={name} isSelf={isSelf} vipTier={activeVipTier(status?.vipLevel)} />
+            </div>
+            <h3 className="room-profile-name"><VipName name={name} vipLevel={status?.vipLevel} /></h3>
+            {(identity?.bio ?? target.bio) && <p className="room-profile-status">{identity?.bio ?? target.bio}</p>}
+            {selectedMicAgencyName && <p className="text-center text-[11px] text-amber-200">{selectedMicAgencyName}</p>}
+            <div className="room-profile-levels" aria-live="polite">
+              {status && !status.loadFailed ? <>
+                {(['wealth','charm'] as const).map(track => {
+                  const level = royalProgress(BigInt(track === 'wealth' ? status.wealthExp : status.charmExp)).level;
+                  return <div key={track} className="room-profile-level">
+                    <RoyalLevelEmblem track={track} level={level} kind="badge" size={40} animated={false} />
+                    <span>{track === 'wealth' ? 'الثروة' : 'السحر'}<b>{level}</b></span>
+                  </div>;
+                })}
+                {status.vipLevel > 0 && <VipBadge vipLevel={status.vipLevel} size="lg" />}
+              </> : <span className="py-2 text-xs">{status?.loadFailed ? 'تعذر التحقق من المستويات' : 'جارٍ التحقق من المستويات…'}</span>}
+            </div>
+              <ProfileCpCard key={selectedMicUser.user.id} userId={selectedMicUser.user.id} userName={name} userAvatar={avatar} onPartnerClick={partnerId => { if (!stagingBackend) return; void (async () => {
                 const { data, error } = await stagingBackend.from('profiles').select('id,display_name,avatar_url').eq('id', partnerId).maybeSingle();
                 if (error || !data) { showToast('تعذر فتح ملف الشريك'); return; }
                 const avatar = data.avatar_url ? (/^(https?:\/\/|data:image\/)/i.test(data.avatar_url) ? data.avatar_url : stagingBackend.storage.from('profile-avatars').getPublicUrl(data.avatar_url).data.publicUrl) : '';
                 setSelectedMicUser(null);
                 handleOpenUserProfile({ ...currentUser, id: data.id, name: data.display_name || 'مستخدم', nickname: data.display_name || 'مستخدم', avatar, country: '', countryCode: '', countryFlag: '', birthdate: '', age: null, friendsCount: 0, followersCount: 0, followingCount: 0, fansCount: 0, visitorsCount: 0, hearts: 0, gameLevel: 0, gameExp: 0, cover: '', bio: '', album: [], vipExpiry: '', specialIdBadge: undefined, isBanned: false, banReason: undefined, isNameBanned: false, isAvatarBanned: false, wealthExp: 0, charmExp: 0, wealthLevel: 0, charmLevel: 0, coins: 0, diamonds: 0, vipLevel: 0, isSuperAdmin: false, isRechargeAgent: false, isHost: false, isSpecialId: false, permissions: [], agencyRole: undefined, agencyName: undefined, rechargeCoins: 0, hasWelcomeBanner: false });
               })().catch(() => showToast('تعذر فتح ملف الشريك')); }} compact />
-              <button type="button" onClick={() => { const target = selectedMicUser.user; setSelectedMicUser(null); handleOpenUserProfile(target); }} className="mx-auto mt-4 flex min-h-12 w-[min(100%,340px)] items-center justify-center gap-2 rounded-full bg-gradient-to-l from-emerald-400 via-green-400 to-teal-500 px-5 py-3 text-base font-black text-emerald-950 shadow-[0_8px_22px_rgba(16,185,129,.28)] transition active:scale-[.98]">
-                <CircleUserRound className="h-5 w-5" /> المزيد
-              </button>
 
-              {selectedMicUser.user.id !== currentUser.id && <button type="button" onClick={() => void setPersonalBlock(selectedMicUser.user.id, !personalBlocks.some(item => item.userId === selectedMicUser.user.id))} className="mx-auto mt-2 block rounded-xl bg-slate-700 px-4 py-2 text-xs text-white">{personalBlocks.some(item => item.userId === selectedMicUser.user.id) ? 'فك الحظر الشخصي' : 'حظر شخصي'}</button>}
+            <div className="room-profile-actions">
+              <button type="button" className="room-profile-action" onClick={() => {
+                sounds.playGiftFanfare(); setSelectedGiftReceiver(target); setOpenGiftStore(true); close();
+              }}><Gift />إرسال الهدايا</button>
+              {!isSelf && <>
+                <button type="button" className="room-profile-action primary" aria-pressed={following}
+                  onClick={() => toggleFollowHost(target.id)}>{following ? <UserCheck /> : <UserPlus />}{following ? 'إلغاء المتابعة' : 'متابعة'}</button>
+                <button type="button" className="room-profile-action" onClick={message}><MessageCircle />مراسلة</button>
+                <button type="button" className="room-profile-action" onClick={() => setRoomProfileReport({ id: target.id, name })}><Flag />إبلاغ</button>
+                <button type="button" className="room-profile-action danger" aria-pressed={blocked}
+                  onClick={() => void setPersonalBlock(target.id, !blocked)}><Ban />{blocked ? 'فك الحظر الشخصي' : 'حظر شخصي'}</button>
+              </>}
+              {canSetModerator && (
+                <button type="button" className="room-profile-action" disabled={moderationBusy}
+                  onClick={() => void handleSetModerator(target.id, name, !targetIsModerator)}>
+                  {targetIsModerator ? <UserMinus /> : <UserPlus />}
+                  {targetIsModerator ? 'إزالة مشرف' : 'تعيين مشرف'}
+                </button>
+              )}
+              {isSelf && profileTargetSeat && <>
+                <button type="button" className="room-profile-action" onClick={() => { sounds.playClick(); toggleMyMic(); close(); }}>
+                  {myMicMuted ? <MicOff /> : <Mic />}{myMicMuted ? 'فتح المايك' : 'كتم المايك'}
+                </button>
+                <button type="button" className="room-profile-action" onClick={() => { sounds.playClick(); leaveSeat(profileTargetSeat.seatNumber); close(); }}>
+                  <ArrowRightLeft />النزول من المقعد
+                </button>
+              </>}
+            </div>
               {canModerateProfile && profileTargetId && (
-                <section aria-label="إدارة العضو في الغرفة" className="mx-auto mt-3 w-full max-w-[340px] rounded-2xl border border-slate-700/80 bg-slate-900/60 p-2.5">
+                <section aria-label="إدارة العضو في الغرفة" className="mx-auto mt-3 w-full max-w-[340px] rounded-2xl border border-amber-500/40 bg-emerald-950/60 p-2.5">
                   <h3 className="mb-2 px-1 text-xs font-bold text-slate-200">إدارة العضو في الغرفة</h3>
                   <div className="grid grid-cols-2 gap-2">
                     {profileTargetSeat && (
@@ -2901,104 +2921,29 @@ export const VoiceRoomModal: React.FC = () => {
                         </button>
                       </>
                     )}
+                    <button type="button" disabled={moderationBusy} onClick={() => void handleVoiceModeration(profileTargetId, 'kick')}
+                      className={profileModerationButton + ' bg-rose-950 text-rose-100'}><LogOut size={16} /> طرد</button>
                     <button type="button" disabled={moderationBusy}
                       onClick={() => void handleVoiceModeration(profileTargetId, 'ban')}
-                      className={profileModerationButton + ' col-span-2 bg-rose-950 text-rose-100'}>
+                      className={profileModerationButton + ' bg-rose-950 text-rose-100'}>
                       <Shield size={16} /> حظر من الروم
                     </button>
                   </div>
                 </section>
               )}
-              {/* ID Row with Copy */}
-              <div
-                onClick={() => {
-                  sounds.playClick();
-                  const copyId = selectedMicPublicId !== '—' ? selectedMicPublicId : undefined;
-                  if (!copyId) return;
-                  if (!navigator.clipboard?.writeText) {
-                    showToast('نسخ المعرف غير متاح على هذا الجهاز');
-                    return;
-                  }
-                  void navigator.clipboard.writeText(copyId)
-                    .then(() => showToast(`تم نسخ المعرف: ${copyId} بنجاح 📋`))
-                    .catch(() => showToast('تعذر نسخ المعرف، حاول مجدداً'));
-                }}
-                className="flex items-center justify-center gap-1.5 text-slate-300 text-xs mt-2 cursor-pointer hover:text-white transition active:scale-95"
-                title="انقر لنسخ المعرف"
-              >
-                <Copy className="w-3.5 h-3.5 text-slate-400" />
-                <span className="font-mono font-bold tracking-wider">{selectedMicPublicId}</span>
-                <span className="px-1.5 py-0.2 rounded-full bg-cyan-600 text-white font-mono text-[10px] font-bold">
-                  ID
-                </span>
-              </div>
 
-              {selectedMicUser.user.id !== currentUser.id && (
-                <div className="flex justify-center mt-3">
-                  <button type="button"
-                    onClick={() => toggleFollowHost(selectedMicUser.user.id)}
-                    className="min-h-10 px-5 rounded-full bg-emerald-600/20 border border-emerald-400/60 text-emerald-100 text-sm font-bold flex items-center gap-2"
-                    aria-label={followedRoomHosts.has(selectedMicUser.user.id) ? 'إلغاء المتابعة' : 'متابعة المستخدم'}
-                  >
-                    {followedRoomHosts.has(selectedMicUser.user.id) ? <UserCheck className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
-                    {followedRoomHosts.has(selectedMicUser.user.id) ? 'إلغاء المتابعة' : 'متابعة'}
-                  </button>
-                </div>
-              )}
-
-              {/* Central Large Gift Button (ارسل الهدايا 🎁) */}
-              <div className="flex flex-col items-center justify-center my-4">
-                <button
-                  onClick={() => {
-                    sounds.playGiftFanfare();
-                    setSelectedGiftReceiver(selectedMicUser.user);
-                    setOpenGiftStore(true);
-                    setSelectedMicUser(null);
-                  }}
-                  className="flex flex-col items-center group active:scale-95 transition cursor-pointer"
-                >
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-cyan-500/20 via-teal-400/25 to-blue-500/20 border border-cyan-400/40 flex items-center justify-center text-4xl shadow-[0_0_20px_rgba(6,182,212,0.3)] group-hover:shadow-[0_0_25px_rgba(6,182,212,0.5)] transition">
-                    🎁
-                  </div>
-                  <span className="text-sm font-bold text-slate-200 mt-1.5">ارسل الهدايا</span>
-                </button>
-              </div>
-
-              {/* Self seat controls stay with the user; moderation actions live in room management. */}
-              {selectedMicUser.user.id === currentUser.id && <div className="border-t border-slate-800/90 pt-3 flex items-center justify-around">
-                {/* Action 1: نزل من المايك */}
-                <button
-                  onClick={() => {
-                    sounds.playClick();
-                    leaveSeat(selectedMicUser.seatNumber);
-                    setSelectedMicUser(null);
-                  }}
-                  className="flex flex-col items-center gap-1 text-slate-300 hover:text-white transition active:scale-95 cursor-pointer"
-                >
-                  <div className="w-10 h-10 rounded-full bg-slate-800/90 flex items-center justify-center border border-slate-700 shadow-sm">
-                    <ArrowRightLeft className="w-5 h-5 text-cyan-400" />
-                  </div>
-                  <span className="text-xs font-bold">نزل من المايك</span>
-                </button>
-
-                {/* Action 2: حظر مايك */}
-                <button
-                  onClick={() => {
-                    sounds.playClick();
-                    toggleMyMic();
-                    setSelectedMicUser(null);
-                  }}
-                  className="flex flex-col items-center gap-1 text-slate-300 hover:text-white transition active:scale-95 cursor-pointer"
-                >
-                  <div className="w-10 h-10 rounded-full bg-slate-800/90 flex items-center justify-center border border-slate-700 shadow-sm">
-                    <MicOff className="w-5 h-5 text-rose-400" />
-                  </div>
-                  <span className="text-xs font-bold">{myMicMuted ? 'فتح المايك' : 'كتم المايك'}</span>
-                </button>
-              </div>}
-            </div>
-          </div>
-        )}
+            <button type="button" className="room-profile-id" aria-label="نسخ رقم الحساب" disabled={selectedMicPublicId === '—'} onClick={() => {
+              sounds.playClick();
+              if (!navigator.clipboard?.writeText) { showToast('نسخ المعرف غير متاح على هذا الجهاز'); return; }
+              void navigator.clipboard.writeText(selectedMicPublicId).then(() => showToast('تم نسخ المعرف'))
+                .catch(() => showToast('تعذر نسخ المعرف، حاول مجدداً'));
+            }}>
+              {identity?.badge ? <IdentityBadge kind={identity.badge} size={22} /> : <span>ID</span>}
+              <bdi>{selectedMicPublicId}</bdi><Copy size={15} />
+            </button>
+          </RoomProfileCard>;
+        })()}
+        {roomProfileReport && <ProfileReportForm targetId={roomProfileReport.id} targetName={roomProfileReport.name} onClose={() => setRoomProfileReport(null)} />}
 
         {/* =========================================================================
             EMPTY MIC ACTIONS BOTTOM SHEET (اصعد بنفسي، قفل المايكرفون، انتقل، مغادرة)
@@ -3375,144 +3320,51 @@ export const VoiceRoomModal: React.FC = () => {
             MEMBERS & MODERATORS MODAL (أعضاء ومشرفو الغرفة 👥)
             ========================================================================= */}
         {showMembersModal && (
-          <div
-            onClick={() => setShowMembersModal(false)}
-            className="fixed inset-0 z-60 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in"
-          >
-            <div
-              onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-sm bg-gradient-to-b from-[#180d36] to-[#0d061f] border border-purple-400/40 rounded-3xl p-5 shadow-2xl text-white space-y-4 max-h-[85vh] flex flex-col"
-            >
-              <div className="flex items-center justify-between pb-3 border-b border-white/10">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-cyan-500/20 text-cyan-300 flex items-center justify-center">
-                    <Users className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="font-black text-sm text-white">أعضاء ومشرفو الغرفة 👥</h3>
-                    <p className="text-[10px] text-purple-200">
-                      {isOwner ? 'إدارة الصلاحيات والمشرفين' : 'قائمة المتواجدين في الغرفة'}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowMembersModal(false)}
-                  className="w-7 h-7 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <div className="flex-1 overflow-y-auto space-y-2.5 pr-0.5">
-                {serverMembersStatus === 'loading' && <p className="text-xs text-slate-300">جارٍ جلب الأعضاء...</p>}
-                {serverMembersStatus === 'error' && <p className="text-xs text-rose-300">تعذر تحميل القائمة المباشرة من الخادم</p>}
-                {serverMembersStatus === 'ready' && <p className="text-xs text-emerald-300">الأعضاء المسجلون بالغرفة: {serverRoomMembers.length}</p>}
-                {serverMembersStatus === 'ready' && serverRoomMembers.filter(member => member.seat_no == null && member.user_id !== activeRoom.hostId && !activeRoom.seats.some(seat => seat.user?.id === member.user_id)).map(member => (
-                  <button type="button" key={member.user_id} onClick={() => {
-                    setInternalProfileUser({
-                      ...currentUser,
-                      id: member.user_id,
-                      name: member.display_name || 'مستخدم',
-                      nickname: member.display_name || 'مستخدم',
-                      avatar: member.avatar_url || '',
-                      wealthExp: 0,
-                      charmExp: 0,
-                      coins: 0,
-                      diamonds: 0,
-                      vipLevel: 0,
+          <RoomMembersDialog key={activeRoom.id} roomId={activeRoom.id} actorId={currentUser.id}
+            pending={moderationBusy || banActionBusy} blockedIds={personalBlocks.map(item => item.userId)}
+            onClose={() => setShowMembersModal(false)}
+            onAction={async (action, member) => {
+              const { id, name } = member;
+              switch (action) {
+                case 'profile':
+                  setShowMembersModal(false);
+                  handleOpenUserProfile({
+                    id, name: name || 'مستخدم', nickname: name || 'مستخدم', avatar: imageUrl(member.avatar),
+                  } as UserProfile);
+                  break;
+                case 'grant': case 'revoke': await handleSetModerator(id, name || 'العضو', action === 'grant'); break;
+                case 'warn': await handleRoomWarning(id); break;
+                case 'mute': case 'kick': case 'release_seat': await handleVoiceModeration(id, action); break;
+                case 'allowMic': await handleAllowMic(id); break;
+                case 'temporaryBan': case 'permanentBan':
+                  await handleVoiceModeration(id, 'ban', action === 'temporaryBan' ? 'temporary' : 'permanent'); break;
+                case 'unban': await unbanRoomUser(id); break;
+                case 'personalBlock': await setPersonalBlock(id, !personalBlocks.some(item => item.userId === id)); break;
+                case 'muteChat': case 'unmuteChat': {
+                  const input = action === 'muteChat'
+                    ? window.prompt('مدة كتم الكتابة بالدقائق: 5، 15، 30، 60، 180، 720، 1440', '5') : '0';
+                  if (input === null) break;
+                  const value = latinDigits(input.trim());
+                  const minutes = Number(value);
+                  if (!/^[0-9]+$/.test(value) || (action === 'muteChat' && ![5, 15, 30, 60, 180, 720, 1440].includes(minutes))) {
+                    showToast('اختر مدة من القائمة المحددة.');
+                    break;
+                  }
+                  try {
+                    const response = await stagingBackend?.rpc('totichat_room_set_chat_mute', {
+                      p_room_id: activeRoom.id, p_target: id, p_minutes: minutes,
                     });
-                    setOpenInternalProfileModal(true);
-                    setShowMembersModal(false);
-                  }} className="flex w-full items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 p-3 text-right hover:bg-white/10" aria-label={`فتح ملف ${member.display_name || 'مستخدم'}`}>
-                    <div className="flex min-w-0 items-center gap-2.5">
-                      {member.avatar_url && /^https?:\/\//i.test(member.avatar_url) ? (
-                        <img src={member.avatar_url} alt="" className="h-9 w-9 shrink-0 rounded-full border border-emerald-300/40 object-cover" />
-                      ) : (
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-900/40"><Users className="h-4 w-4 text-emerald-200" /></div>
-                      )}
-                      <span className="truncate text-xs font-bold text-white">{member.display_name || 'مستخدم'}</span>
-                    </div>
-                    <span className="shrink-0 text-[10px] text-slate-300">عرض الملف</span>
-                  </button>
-                ))}
-                {/* Host User */}
-                <div className="p-2.5 rounded-2xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-amber-400">
-                      <img src={activeRoom.hostAvatar} alt={activeRoom.hostName} className="w-full h-full object-cover" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-black text-white">{activeRoom.hostName}</span>
-                        <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-amber-500 text-slate-950">مالك 👑</span>
-                      </div>
-                      <span className="text-[10px] text-slate-300 font-mono">ID:{hostAccountId}</span>
-                    </div>
-                  </div>
-                  <span className="text-[11px] text-amber-300 font-bold">صاحب الغرفة</span>
-                </div>
-
-                {/* Other Users on seats */}
-                {activeRoom.seats
-                  .filter((s) => s.user && s.user.id !== activeRoom.hostId)
-                  .map((seat) => {
-                    if (!seat.user) return null;
-                    const user = seat.user;
-                    const isMod = (activeRoom.moderatorIds || []).includes(user.id);
-
-                    return (
-                      <div key={user.id} className="p-2.5 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between">
-                        <div
-                          onClick={() => handleOpenUserProfile(user)}
-                          className="flex items-center gap-2.5 cursor-pointer hover:opacity-90 transition"
-                        >
-                          <div className="relative w-10 h-10 rounded-full overflow-hidden border border-purple-300">
-                            <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-xs font-bold text-white">{user.name}</span>
-                              {isMod && (
-                                <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-cyan-600 text-white">مشرف 🛡️</span>
-                              )}
-                            </div>
-                            <span className="text-[10px] text-slate-400 font-mono">المايك NO {seat.seatNumber}</span>
-                          </div>
-                        </div>
-
-                        {(isOwner || isModerator) && user.id !== currentUser.id && user.id !== activeRoom.hostId && (
-                          <div className="flex items-center gap-1.5">
-                            {isOwner && <button
-                              disabled={moderationBusy}
-                              onClick={() => handleToggleModerator(user.id, user.name)}
-                              className={`p-1.5 rounded-lg text-[10px] font-bold transition active:scale-95 ${
-                                isMod
-                                  ? 'bg-rose-500/20 text-rose-300 hover:bg-rose-500/30'
-                                  : 'bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30'
-                              }`}
-                              title={isMod ? 'إلغاء الإشراف' : 'ترقية إلى مشرف'}
-                            >
-                              {isMod ? <UserMinus className="w-3.5 h-3.5" /> : <UserPlus className="w-3.5 h-3.5" />}
-                            </button>}
-                            <button
-                              disabled={moderationBusy}
-                              onClick={() => handleKickMember(user.id, user.name)}
-                              className="p-1.5 rounded-lg bg-rose-900/30 hover:bg-rose-900/50 text-rose-400 text-[10px] font-bold transition active:scale-95"
-                              title="طرد من الغرفة"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                            {(isOwner || isModerator) && <button type="button" disabled={moderationBusy} onClick={() => void handleVoiceModeration(user.id, 'ban')} className="rounded-lg bg-red-800/50 px-2 py-1.5 text-[10px] font-bold text-red-200" title="حظر مؤقت أو دائم من الغرفة">حظر الغرفة</button>}
-                            {(isOwner || (isModerator && !isMod)) && <button type="button" disabled={moderationBusy} onClick={() => void handleRoomWarning(user.id)} className="rounded-lg bg-amber-700/60 px-2 py-1.5 text-[10px] font-bold text-amber-100">تحذير</button>}
-                            <button type="button" onClick={() => void setPersonalBlock(user.id, !personalBlocks.some(item => item.userId === user.id))} className="rounded-lg bg-slate-700 px-2 py-1.5 text-[10px] text-white">{personalBlocks.some(item => item.userId === user.id) ? 'فك الحظر الشخصي' : 'حظر شخصي'}</button>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-              </div>
-            </div>
-          </div>
+                    if (response?.error || response?.data !== true) throw response?.error ?? new Error('Unconfirmed text moderation');
+                    showToast(minutes ? 'تم كتم كتابة العضو في الغرفة' : 'تم رفع كتم الكتابة');
+                  } catch (error) {
+                    console.error('Room text moderation failed:', error);
+                    showToast('تعذر تغيير كتم الكتابة. تحقق من الصلاحيات.');
+                  }
+                  break;
+                }
+              }
+            }}
+          />
         )}
 
         {/* =========================================================================
@@ -3812,7 +3664,7 @@ export const VoiceRoomModal: React.FC = () => {
                 {roomBans.map(item => <div key={item.userId} className="mb-2 rounded-xl bg-white/5 p-3 text-xs">
                   <div className="flex items-center gap-2">{item.avatar ? <img src={item.avatar} alt="" className="h-9 w-9 rounded-full object-cover" /> : <CircleUserRound className="h-9 w-9 text-slate-400" />}<div className="min-w-0"><p className="truncate font-bold">{item.name || 'مستخدم'}</p><p className="text-slate-400">ID: {item.publicId ?? '—'}</p></div></div>
                   {item.reason && <p className="mt-1 text-slate-400">السبب: {item.reason}</p>}
-                  {item.expiresAt && <p className="mt-1 text-amber-300">ينتهي: {new Date(item.expiresAt).toLocaleString('ar-IQ')}</p>}
+                  {item.expiresAt && <p className="mt-1 text-amber-300">ينتهي: {new Date(item.expiresAt).toLocaleString('ar-IQ-u-nu-latn')}</p>}
                   <button disabled={banActionBusy || (!isOwner && item.bannedByOwner)} onClick={() => void unbanRoomUser(item.userId)} className="mt-2 rounded-lg bg-emerald-700 px-3 py-2 disabled:opacity-50">{!isOwner && item.bannedByOwner ? "حظر المالك" : "فك حظر الغرفة"}</button>
                 </div>)}
               </section>}
