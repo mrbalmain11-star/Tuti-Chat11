@@ -21,6 +21,7 @@ import { SupplyReview } from '../features/rechargeAgent/SupplyReview';
 import { AdminAccountResetPanel } from './AdminAccountResetPanel';
 import { AdminDomino } from '../features/games/AdminDomino';
 import { AdminEmbeddedGamesPanel } from './AdminEmbeddedGamesPanel';
+import { AdminGamesTreasuryPanel } from './AdminGamesTreasuryPanel';
 import { AdminStaffPanel } from './AdminStaffPanel';
 import { AdminTesterBadgesPanel } from './AdminTesterBadgesPanel';
 import { ArrowRight, RefreshCw, ShieldCheck, Users, Building2, Radio, Gift, BarChart3, UserCog,
@@ -243,7 +244,7 @@ export const AdminCenterView: React.FC<Props> = ({ onClose }) => {
                 {adminPage === 'financeReports' && <AdminReportsPanel />}
                 {adminPage === 'agencySupplyRequests' && <SupplyReview />}
                 {adminPage === 'accountReset' && <AdminAccountResetPanel />}
-                {adminPage === 'gamesTreasury' && <><AdminEmbeddedGamesPanel /><AdminDomino /></>}
+                {adminPage === 'gamesTreasury' && <><AdminEmbeddedGamesPanel /><AdminGamesTreasuryPanel /><AdminDomino /></>}
                 {adminPage === 'appBans' && <AdminAppBansPanel />}
                 {adminPage === 'staff' && <AdminStaffPanel />}
                 {adminPage === 'banners' && <AdminBannersPanel />}

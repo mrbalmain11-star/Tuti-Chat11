@@ -1,4 +1,3 @@
-import { AdminEmbeddedGamesPanel } from './AdminEmbeddedGamesPanel';
 import { useEffect, useState } from 'react';
 import { gameName } from '../features/games/api';
 import { stagingBackend } from '../services/stagingBackend';
@@ -60,7 +59,6 @@ export function AdminGamesTreasuryPanel() {
     ['التحويلات إلى خزينة التطبيق', distributed],
   ];
   return <section dir="rtl" className="space-y-4">
-    <AdminEmbeddedGamesPanel />
     <button type="button" className="rounded-xl border bg-white px-3 py-2 font-bold" onClick={() => setAttempt(value => value + 1)}>تحديث</button>
     {!treasury && <p role="status" className="rounded-xl bg-amber-50 p-3">التمويل التأسيسي بعده ما تفعّل.</p>}
     <dl className="grid grid-cols-2 gap-2">

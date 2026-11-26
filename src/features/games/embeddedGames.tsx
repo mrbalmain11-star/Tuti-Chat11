@@ -12,21 +12,14 @@ export const additionalGameCards = [
   ['fortune-gem', freeGameNames['fortune-gem'], gem],
 ] as const;
 
-function TotiFoodPreview({ onClose }: { accountId: string; onClose: () => void }) {
-  return <div className="flex flex-col items-center gap-2">
-    <p className="text-xs text-amber-200">نسخة تجريبية — العملات افتراضية ولا ترتبط بمحفظة الحساب.</p>
-    <iframe title="توتي للمأكولات" src="https://toti-game-preview.vercel.app" sandbox="allow-scripts allow-same-origin" referrerPolicy="no-referrer" className="w-full border-0 rounded-xl" style={{height:'min(68dvh, 720px)', background:'#00170e'}} />
-    <button type="button" onClick={onClose} className="rounded-lg border border-amber-500 px-4 py-2">العودة للألعاب</button>
-  </div>;
-}
-
+const TotiFood = lazy(() => import('./toti-food/TotiFood'));
 
 type GameScreenProps = { accountId: string; onClose: () => void };
 type GameModule = { id: string; name: string; icon: string; version: string; enabled: boolean; Screen: ComponentType<GameScreenProps> };
 const embeddedGames: Readonly<Record<string, GameModule>> = {
   'royal-cars': { id: 'royal-cars', name: freeGameNames['royal-cars'], icon: palace, version: '1.0.0', enabled: true, Screen: RoyalCars },
   'fortune-gem': { id: 'fortune-gem', name: freeGameNames['fortune-gem'], icon: gem, version: '1.0.0', enabled: true, Screen: FortuneGem },
-  greedy: { id: 'greedy-original', name: 'توتي للمأكولات', icon: 'greedy', version: '1.12.0-preview', enabled: true, Screen: TotiFoodPreview },
+  greedy: { id: 'greedy-original', name: 'توتي للمأكولات', icon: 'greedy', version: '1.13.0', enabled: true, Screen: TotiFood },
 };
 
 export const getEmbeddedGame = (code: string | undefined) => code && Object.hasOwn(embeddedGames, code) ? embeddedGames[code] : undefined;

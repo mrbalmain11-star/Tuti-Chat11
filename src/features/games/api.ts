@@ -15,7 +15,7 @@ export const recoveredGames = [
   ['fishing', 'صيد السمك', 'Fishing'],
 ] as const;
 export const gameAsset = '/assets/games/';
-export const gameName = (code: string) => recoveredGames.find(game => game[0] === code)?.[1] ?? games.find(game => game[0] === code)?.[1] ?? code;
+export const gameName = (code: string) => code === 'toti-food' ? 'توتي للمأكولات' : recoveredGames.find(game => game[0] === code)?.[1] ?? games.find(game => game[0] === code)?.[1] ?? code;
 export type Risk = 'low' | 'normal' | 'high';
 export type Rules = { min_stake: number; max_stake: number; payouts: Record<Risk, Record<number, number[]>> };
 export type Game = { code: string; enabled: boolean; implemented: boolean; rules: Partial<Rules> };

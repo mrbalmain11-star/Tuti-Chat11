@@ -1,0 +1,184 @@
+.toti-food {
+  position: relative;
+  width: min(100%, 38.25dvh);
+  aspect-ratio: 9 / 16;
+  margin-inline: auto;
+  margin-bottom: 2.25rem;
+  container-type: inline-size;
+  background: #00170e;
+  color: #fff9d8;
+  isolation: isolate;
+}
+.toti-food-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  user-select: none;
+  pointer-events: none;
+}
+.toti-food-field {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  border-radius: 0.65em;
+  background: #05271a;
+  color: #fff9d8;
+  font-size: 2.8cqw;
+  font-weight: 700;
+}
+.toti-food-identity > div {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 1cqw;
+  text-align: left;
+}
+.toti-food-identity img, .toti-food-list img {
+  flex: none;
+  width: 8cqw;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.toti-food-identity span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.toti-food-identity small {
+  display: block;
+  color: #f3d895;
+  font-size: 1.9cqw;
+}
+.toti-food-hit {
+  position: absolute;
+  z-index: 1;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: transparent;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+}
+.toti-food-hit[data-active], .toti-food-hit:focus-visible {
+  outline: 1px solid #ffe5a0;
+  box-shadow: 0 0 7px #ffcc42, inset 0 0 7px #ffcc42;
+}
+.toti-food-hit:disabled {
+  cursor: default;
+}
+.toti-food-progress {
+  overflow: hidden;
+  justify-items: start;
+  border: 1px solid #c39c40;
+}
+.toti-food-progress span {
+  height: 100%;
+  background: linear-gradient(#a8ff55, #159900);
+}
+.toti-food-progress b {
+  position: absolute;
+  inset: 0;
+  align-content: center;
+  font-size: 2.3cqw;
+  text-shadow: 0 1px 2px #000;
+}
+.toti-food-clock { font-size: 6.5cqw; }
+.toti-food-result { font-size: 7cqw; }
+.toti-food-status {
+  z-index: 2;
+  padding-inline: 2cqw;
+  direction: rtl;
+}
+.toti-food-status button {
+  color: #ffe5a0;
+  text-decoration: underline;
+}
+.toti-food-list {
+  display: block;
+  padding: 2cqw;
+  overflow: auto;
+  direction: rtl;
+  border: 1px solid #a78c45;
+}
+.toti-food-list > div {
+  display: flex;
+  min-height: 8cqw;
+  gap: 1.5cqw;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #685c2c;
+}
+.toti-food-list p { padding-top: 2cqw; }
+.toti-food-close {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  min-height: 2.1rem;
+  color: #f5d27f;
+  text-decoration: underline;
+}
+.toti-food-wheel {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.toti-food-wheel path {
+  fill: #ffd34d;
+  fill-opacity: 0;
+  stroke: #ffe5a0;
+  stroke-opacity: 0;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.toti-food-wheel .chosen {
+  fill-opacity: 0.10;
+  stroke-opacity: 0.85;
+}
+.toti-food-wheel .spin {
+  fill-opacity: 0.20;
+  stroke-opacity: 1;
+  stroke-width: 4;
+}
+.toti-food-stake {
+  background: linear-gradient(#005b36, #002719);
+  border: 1px solid #48dba0;
+  color: white;
+  font-size: 2.7cqw;
+  font-weight: 700;
+}
+.toti-food-stake[data-active] {
+  background: linear-gradient(#a66a00, #e4a321, #784000);
+  border-color: #ffe39a;
+}
+.toti-food-portrait {
+  overflow: hidden;
+  border-radius: 50%;
+}
+.toti-food-portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.toti-food-podium {
+  align-content: center;
+  font-size: 2.6cqw;
+}
+.toti-food-podium strong {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.toti-food-podium small {
+  font-size: 2.2cqw;
+}
