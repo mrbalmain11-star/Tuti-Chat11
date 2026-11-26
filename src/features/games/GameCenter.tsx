@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { gameAsset, gameName, games, loadSharedGames, recoveredGames, type SharedSnapshot } from './api';
 import { EmbeddedGame, additionalGameCards, getEmbeddedGame } from './embeddedGames';
+import { UnoPractice } from './uno/UnoPractice';
 import { Domino } from './Domino';
 import { SharedRoundPanel } from './SharedRoundPanel';
 
@@ -15,6 +16,7 @@ export function GameCenter({ accountId, onClose }: { accountId: string; onClose:
       .map(([code, name, icon]) => ({ code, name, english: code, icon })),
   ].filter(({ code, name, english }) => [name, english, getEmbeddedGame(code)?.name ?? '']
     .some(label => label.toLowerCase().includes(query.trim().toLowerCase())));
+  const standalone = selected === 'domino' || selected === 'uno';
   const embedded = getEmbeddedGame(selected);
   const [minimized, setMinimized] = useState(false);
   const [seconds, setSeconds] = useState(0);
@@ -30,7 +32,7 @@ export function GameCenter({ accountId, onClose }: { accountId: string; onClose:
     setSeconds(0);
     const tick = () => setSeconds(Math.max(0, Math.min(30, Math.ceil((deadline - performance.now()) / 1000))));
     const refresh = () => {
-      if (selected === 'domino') return;
+      if (standalone) return;
       if (inFlight) return;
       inFlight = true;
       const id = ++request;
@@ -61,7 +63,7 @@ export function GameCenter({ accountId, onClose }: { accountId: string; onClose:
       window.clearInterval(poll);
       window.clearInterval(timer);
     };
-  }, [selected]);
+  }, [selected, standalone]);
 
   return <>
     {minimized && <button type="button" className="absolute bottom-28 end-3 z-[95] rounded-full bg-emerald-950 px-3 py-2 text-white"
@@ -77,12 +79,12 @@ export function GameCenter({ accountId, onClose }: { accountId: string; onClose:
       </header>
       <div className="my-3 flex justify-between gap-2 text-sm text-amber-200">
         {selected && <button type="button" onClick={() => setSelected(undefined)}>الألعاب</button>}
-        {selected !== 'domino' && snapshot && <span>رصيدك <bdi>{snapshot.balance?.toLocaleString('en-US') ?? '—'}</bdi> كوينز</span>}
+        {!standalone && snapshot && <span>رصيدك <bdi>{snapshot.balance?.toLocaleString('en-US') ?? '—'}</bdi> كوينز</span>}
       </div>
-      {selected !== 'domino' && error && <p role="alert" className="my-3 text-red-300">تعذر الاتصال بخادم الألعاب. يُعاد الاتصال تلقائياً.</p>}
-      {selected !== 'domino' && !snapshot && !error && <p role="status">جارٍ تحميل الألعاب…</p>}
-      {snapshot && !snapshot.funded && <p role="status" className="mb-3 text-amber-200">محفظة الألعاب غير ممولة.</p>}
-      {selected === 'domino' ? <Domino paused={minimized} /> : embedded && !minimized ? (
+      {!standalone && error && <p role="alert" className="my-3 text-red-300">تعذر الاتصال بخادم الألعاب. يُعاد الاتصال تلقائياً.</p>}
+      {!standalone && !snapshot && !error && <p role="status">جارٍ تحميل الألعاب…</p>}
+      {!standalone && snapshot && !snapshot.funded && <p role="status" className="mb-3 text-amber-200">محفظة الألعاب غير ممولة.</p>}
+      {selected === 'domino' ? <Domino paused={minimized} /> : selected === 'uno' ? <UnoPractice paused={minimized} /> : embedded && !minimized ? (
         <EmbeddedGame game={embedded} accountId={accountId} onClose={() => setSelected(undefined)} />
       ) : selected && !embedded && snapshot ? (
         <SharedRoundPanel key={selected} code={selected} accountId={accountId} snapshot={snapshot}
@@ -95,12 +97,13 @@ export function GameCenter({ accountId, onClose }: { accountId: string; onClose:
         {catalog.map(({ code, name, icon }) => {
           const game = snapshot?.catalog.find(item => item.code === code);
           const gameModule = getEmbeddedGame(code);
-          const enabled = code === 'domino' || (gameModule ? gameModule.enabled : game?.enabled && !error);
+          const enabled = code === 'domino' || code === 'uno' || (gameModule ? gameModule.enabled : game?.enabled && !error);
           return <button key={code} type="button" disabled={!enabled}
             className="grid min-w-0 justify-items-center rounded-xl border border-white/10 bg-white/5 p-1.5 text-xs disabled:opacity-65"
             onClick={() => setSelected(code)}>
             <img src={icon.startsWith('/') ? icon : gameAsset + (gameModule?.icon ?? icon) + '.png'} alt="" loading="lazy" className="aspect-square w-full rounded-lg object-cover" />
             <strong className="mt-1">{gameModule?.name ?? name}</strong>
+            {code === 'uno' && <span>تدريب محلي</span>}
             {!enabled && <span>غير متاحة</span>}
           </button>;
         })}
