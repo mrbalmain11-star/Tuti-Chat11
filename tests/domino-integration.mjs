@@ -107,6 +107,10 @@ await use(1);
 await act('join', { table: rematch.id });
 let completed;
 for (let step = 0; step < 60; step++) {
+  // Simulate time between bursts without making the suite wait for the rate-limit window.
+  if (step % 16 === 0) {
+    await db.exec("reset role; update toti_game_tables.requests set created_at = clock_timestamp() - interval '11 seconds'");
+  }
   await use(0);
   let game = (await lobby()).current;
   if (!game.my_turn) {
@@ -130,6 +134,14 @@ for (let step = 0; step < 60; step++) {
 }
 assert.ok(completed);
 assert.ok(['win', 'draw', 'loss'].includes(completed.outcome));
+await db.exec('reset role');
+await db.query(`
+  insert into toti_game_tables.requests (actor, id, payload, table_id)
+  select $1, gen_random_uuid(), '[]'::jsonb, $2 from generate_series(1, 25)
+`, [players[2], rematch.id]);
+await use(2);
+await assert.rejects(act('create'), /DOMINO_RATE_LIMIT/);
+await use(0);
 await db.query("select set_config('domino_test.admin', 'yes', false)");
 const summary = await admin();
 assert.equal(summary.enabled, true);
