@@ -116,16 +116,17 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
   const [leaderError, setLeaderError] = useState(false);
   const [stake, setStake] = useState(stakes[0]);
   const [connected, setConnected] = useState<boolean>();
-  const [busy, setBusy] = useState(false);
   const pendingKey = 'totichat-food-request:' + accountId;
-  const [pending, setPending] = useState<(FoodRequest & { royal?: boolean }) | undefined>(() => {
+  type Bet = FoodRequest & { royal?: boolean };
+  const [pending, setPending] = useState<Bet[]>(() => {
     try {
-      const saved = localStorage.getItem(pendingKey);
-      return saved ? JSON.parse(saved) as FoodRequest & { royal?: boolean } : undefined;
-    } catch {
-      return undefined;
-    }
+      const saved = JSON.parse(localStorage.getItem(pendingKey) ?? 'null') as Bet | Bet[] | null;
+      return saved ? (Array.isArray(saved) ? saved : [saved]) : [];
+    } catch { return []; }
   });
+  const pendingRef = useRef(pending);
+  const [confirmed, setConfirmed] = useState<Bet[]>([]);
+  const [unconfirmed, setUnconfirmed] = useState<Set<string>>(() => new Set(pending.map(bet => bet.p_request)));
   const [notice, setNotice] = useState('');
   const [shownResult, setShownResult] = useState<{ round: FoodRound; winners: FoodState['latest_winners'] }>();
   const [spin, setSpin] = useState<number>();
@@ -140,8 +141,7 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
   const [historyPage, setHistoryPage] = useState(0);
   const refresh = useRef<() => void>(() => {});
   const lastRound = useRef<string | null | undefined>(undefined);
-  const inFlight = useRef(false);
-  const queuedBets = useRef<(FoodRequest & { royal?: boolean })[]>([]);
+  const inFlight = useRef(new Set<string>());
 
   useEffect(() => {
     const controller = new AbortController();
@@ -276,6 +276,7 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
   const currentSlot = state?.round_start;
   useEffect(() => {
     setSelectedFoods([]);
+    setConfirmed([]);
     setNotice('');
   }, [currentSlot]);
   const waitingForResult = page === 'play' && state?.enabled && seconds === 0 && spin === undefined;
@@ -290,40 +291,37 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
     return () => window.clearInterval(timer);
   }, [waitingForResult, currentSlot]);
   const activeSpin = spin ?? waitingSpin;
-  const canEnter = Boolean(connected && state?.enabled && (!royal || state.royal_eligible) && seconds && (!pending || inFlight.current));
+  const canEnter = Boolean(connected && state?.enabled && (!royal || state.royal_eligible) && seconds);
   const go = (target: Page) => { setNotice(''); setPage(target); };
   const rewards = (label: string) => { setRewardsTab(label); showRewardRules(false); setRewardError(''); go('rewards'); };
-  const submit = async (first: FoodRequest & { royal?: boolean }) => {
-    if (inFlight.current) return;
-    inFlight.current = true;
-    setBusy(true);
-    setNotice('');
-    let next: (FoodRequest & { royal?: boolean }) | undefined = first;
+  function savePending(next: Bet[]) {
+    pendingRef.current = next;
+    setPending(next);
     try {
-      while (next) {
-        const { royal: royalEntry, ...request } = next;
-        setPending(next);
-        try { localStorage.setItem(pendingKey, JSON.stringify(next)); } catch { /* Storage may be unavailable. */ }
-        try {
-          await enterFood(request, royalEntry);
-        } catch (error) {
-          const message = (error as { message?: string })?.message ?? '';
-          const known = messages[message];
-          if (!known) {
-            queuedBets.current = [];
-            setNotice('تعذر تأكيد المشاركة. أعد المحاولة للتحقق من نفس الطلب');
-            return;
-          }
-          setNotice(known);
-        }
-        setPending(undefined);
-        try { localStorage.removeItem(pendingKey); } catch { /* Storage may be unavailable. */ }
-        next = queuedBets.current.shift();
-      }
+      if (next.length) localStorage.setItem(pendingKey, JSON.stringify(next));
+      else localStorage.removeItem(pendingKey);
+    } catch { /* Storage may be unavailable. */ }
+  }
+
+  const submit = async (bet: Bet) => {
+    const { royal: royalEntry, ...request } = bet;
+    const id = request.p_request;
+    if (inFlight.current.has(id)) return;
+    inFlight.current.add(id);
+    setUnconfirmed(previous => new Set([...previous].filter(value => value !== id)));
+    if (!pendingRef.current.some(item => item.p_request === id)) savePending([...pendingRef.current, bet]);
+    try {
+      const receipt = await enterFood(request, royalEntry);
+      if (receipt.status === 'pending') setConfirmed(previous => [...previous, bet]);
+      savePending(pendingRef.current.filter(item => item.p_request !== id));
+    } catch (error) {
+      const message = (error as { message?: string })?.message ?? '';
+      const known = messages[message];
+      if (known) savePending(pendingRef.current.filter(item => item.p_request !== id));
+      else setUnconfirmed(previous => new Set(previous).add(id));
+      setNotice(known ?? 'تعذر تأكيد إحدى المشاركات');
     } finally {
-      inFlight.current = false;
-      setBusy(false);
-      setNotice(previous => previous === 'جارٍ إرسال المشاركات المختارة…' ? '' : previous);
+      inFlight.current.delete(id);
       refresh.current();
     }
   };
@@ -336,17 +334,15 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
       return;
     }
     const request = { p_request: createRequestId(), p_start: state.round_start, p_pick: pick, p_stake: stake, royal };
-    if (inFlight.current) {
-      if (queuedBets.current.length >= 59) {
-        setNotice('وصلت إلى حد المشاركات قيد الإرسال');
-        return;
-      }
-      queuedBets.current.push(request);
-      setNotice('جارٍ إرسال المشاركات المختارة…');
-      return;
-    }
     void submit(request);
   };
+  const recorded = new Set(state?.entries.map(entry => entry.request_id));
+  const stakesByFood = { ...state?.bets };
+  for (const item of confirmed) {
+    if (item.p_start !== currentSlot || recorded.has(item.p_request)) continue;
+    stakesByFood[item.p_pick] = (stakesByFood[item.p_pick] ?? 0) + item.p_stake;
+  }
+  const retryable = pending.filter(item => unconfirmed.has(item.p_request));
   const connectionStatus = connected === false ? 'تعذر الاتصال بخادم اللعبة' : !state ? 'جارٍ الاتصال…' : '';
   const status = connectionStatus || (state && !state.enabled ? 'المشاركات متوقفة' : '');
   const winners = shownResult?.winners;
@@ -390,7 +386,7 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
       </button>
       <svg className="toti-food-wheel" viewBox="0 0 865 1536" aria-label="أطعمة العجلة">
         {sectors.map((path, index) => <path key={path} d={path} role="button" tabIndex={0}
-          aria-label={food[index]} aria-pressed={selectedFoods.includes(index) || Boolean(state?.bets[index])}
+          aria-label={food[index]} aria-pressed={selectedFoods.includes(index) || Boolean(stakesByFood[index])}
           style={{ pointerEvents: 'all', cursor: 'pointer', touchAction: 'manipulation', outline: 'none', strokeWidth: 0 }}
           onClick={() => bet(index)}
           onKeyDown={event => {
@@ -398,14 +394,14 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
             event.preventDefault();
             bet(index);
           }}
-          className={activeSpin === index ? 'spin' : (state?.bets[index] || selectedFoods.includes(index)) ? 'chosen' : undefined} />)}
+          className={activeSpin === index ? 'spin' : (stakesByFood[index] || selectedFoods.includes(index)) ? 'chosen' : undefined} />)}
       </svg>
-      {spots.map(([x, y], index) => Boolean(state?.bets[index]) &&
-        <Field key={food[index]} x={x - 6} y={y - 4} w={12} h={2}>{formatted(state?.bets[index])}</Field>)}
+      {spots.map(([x, y], index) => Boolean(stakesByFood[index]) &&
+        <Field key={food[index]} x={x - 6} y={y - 4} w={12} h={2}>{formatted(stakesByFood[index])}</Field>)}
       <Hit x={7} y={88} w={86} h={11} label="المكافآت والصناديق" action={() => rewards('الصناديق الملكية')} />
-      {(notice || status || pending) && <Field x={7} y={82.2} w={86} h={5} className="toti-food-status">
+      {(notice || status || retryable.length > 0) && <Field x={7} y={82.2} w={86} h={5} className="toti-food-status">
         <span role="status">{notice || status || 'تأكيد المشاركة السابقة معلّق'}</span>
-        {pending && <button type="button" disabled={busy || !connected} onClick={() => void submit(pending)}>إعادة المحاولة</button>}
+        {retryable.length > 0 && <button type="button" disabled={!connected} onClick={() => retryable.forEach(item => void submit(item))}>إعادة المحاولة</button>}
       </Field>}
     </>}
     {page === 'rules' && <>
