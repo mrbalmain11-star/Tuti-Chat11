@@ -54,6 +54,40 @@ function Hit({ x, y, w, h, label, action, active = false, disabled = false, clas
 }
 
 export default function TotiFood({ accountId, onClose }: { accountId: string; onClose: () => void }) {
+  const [selectedFood, setSelectedFood] = useState<number>();
+  const [sound, setSound] = useState(() => {
+    try { return localStorage.getItem('totichat-food-sound') !== 'off'; } catch { return true; }
+  });
+  const audio = useRef<AudioContext | null>(null);
+  useEffect(() => () => { void audio.current?.close().catch(() => {}); audio.current = null; }, []);
+
+  function playTap() {
+    try {
+      const context = audio.current ??= new AudioContext();
+      void context.resume().then(() => {
+        if (context.state !== 'running') return;
+        const tone = context.createOscillator();
+        const gain = context.createGain();
+        const now = context.currentTime;
+        tone.frequency.value = 740;
+        gain.gain.setValueAtTime(0.045, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+        tone.connect(gain);
+        gain.connect(context.destination);
+        tone.start(now);
+        tone.stop(now + 0.09);
+      }).catch(() => {});
+    } catch { /* Game interaction remains available when audio is unavailable. */ }
+  }
+
+  function toggleSound() {
+    const next = !sound;
+    setSound(next);
+    try { localStorage.setItem('totichat-food-sound', next ? 'on' : 'off'); } catch { /* Storage may be unavailable. */ }
+    if (next) playTap();
+    else void audio.current?.suspend().catch(() => {});
+  }
+
   const [royal, setRoyal] = useState(false);
   const [page, setPage] = useState<Page>('play');
   const [state, setState] = useState<FoodState>();
@@ -248,7 +282,14 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
     }
   };
   const bet = (pick: number) => {
-    if (canEnter && state) void submit({ p_request: crypto.randomUUID(), p_start: state.round_start, p_pick: pick, p_stake: stake, royal });
+    setSelectedFood(pick);
+    if (sound) playTap();
+    if (!canEnter || !state) {
+      const suffix = !connected ? 'تعذر الاتصال' : !state?.enabled ? 'المشاركات متوقفة' : !seconds ? 'انتهى وقت المشاركة' : 'بانتظار تأكيد المشاركة';
+      setNotice(`تم تحديد ${food[pick]} · ${suffix}`);
+      return;
+    }
+    void submit({ p_request: crypto.randomUUID(), p_start: state.round_start, p_pick: pick, p_stake: stake, royal });
   };
   const connectionStatus = connected === false ? 'تعذر الاتصال بخادم اللعبة' : !state ? 'جارٍ الاتصال…' : '';
   const status = connectionStatus || (state && !state.enabled ? 'المشاركات متوقفة' : '');
@@ -285,13 +326,20 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
       <Hit x={79} y={28} w={9} h={5} label="سجل مشاركاتي" action={() => { setHistoryPage(0); go('personal'); }} />
       {stakes.map((amount, index) => <Hit key={amount} x={5.1 + index * 18.2} y={77.4} w={17} h={3.1}
         label={formatted(amount)} action={() => setStake(amount)} active={stake === amount} disabled={royal && amount < 10000} className="toti-food-stake">{formatted(amount)}</Hit>)}
+      <button type="button" className="toti-food-stake" aria-label="صوت اللعبة" aria-pressed={sound} onClick={toggleSound}
+        style={{ position: 'absolute', left: '88%', top: '28.55%', width: '7.1%', aspectRatio: '1', zIndex: 2, borderRadius: '50%', display: 'grid', placeItems: 'center' }}>
+        <svg viewBox="0 0 24 24" width="65%" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+          <path d="M3 9h4l5-4v14l-5-4H3z" fill="currentColor" />
+          {sound ? <path d="M16 8q5 4 0 8m3-11q8 7 0 14" /> : <path d="m16 9 6 6m0-6-6 6" />}
+        </svg>
+      </button>
       <svg className="toti-food-wheel" viewBox="0 0 865 1536" aria-hidden="true">
         {sectors.map((path, index) => <path key={path} d={path}
-          className={spin === index ? 'spin' : state?.bets[index] ? 'chosen' : undefined} />)}
+          className={spin === index ? 'spin' : (state?.bets[index] || selectedFood === index) ? 'chosen' : undefined} />)}
       </svg>
       {spots.map(([x, y], index) => <div key={food[index]}>
         <Hit x={x - 7} y={y - 4} w={14} h={8} label={food[index]} action={() => bet(index)}
-          disabled={!canEnter} />
+          disabled={busy} />
         {Boolean(state?.bets[index]) && <Field x={x - 6} y={y - 4} w={12} h={2}>{formatted(state?.bets[index])}</Field>}
       </div>)}
       <Hit x={7} y={88} w={86} h={11} label="المكافآت والصناديق" action={() => rewards('الصناديق الملكية')} />
