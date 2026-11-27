@@ -141,6 +141,7 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
   const refresh = useRef<() => void>(() => {});
   const lastRound = useRef<string | null | undefined>(undefined);
   const inFlight = useRef(false);
+  const queuedBets = useRef<(FoodRequest & { royal?: boolean })[]>([]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -289,31 +290,40 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
     return () => window.clearInterval(timer);
   }, [waitingForResult, currentSlot]);
   const activeSpin = spin ?? waitingSpin;
-  const canEnter = Boolean(connected && state?.enabled && (!royal || state.royal_eligible) && seconds && !busy && !pending);
+  const canEnter = Boolean(connected && state?.enabled && (!royal || state.royal_eligible) && seconds && (!pending || inFlight.current));
   const go = (target: Page) => { setNotice(''); setPage(target); };
   const rewards = (label: string) => { setRewardsTab(label); showRewardRules(false); setRewardError(''); go('rewards'); };
-  const submit = async ({ royal: royalEntry, ...request }: FoodRequest & { royal?: boolean }) => {
+  const submit = async (first: FoodRequest & { royal?: boolean }) => {
     if (inFlight.current) return;
     inFlight.current = true;
     setBusy(true);
     setNotice('');
-    setPending({ ...request, royal: royalEntry });
-    try { localStorage.setItem(pendingKey, JSON.stringify({ ...request, royal: royalEntry })); } catch { /* Storage may be unavailable. */ }
-    const clearPending = () => {
-      setPending(undefined);
-      try { localStorage.removeItem(pendingKey); } catch { /* Storage may be unavailable. */ }
-    };
+    let next: (FoodRequest & { royal?: boolean }) | undefined = first;
     try {
-      await enterFood(request, royalEntry);
-      clearPending();
-    } catch (error) {
-      const message = (error as { message?: string })?.message ?? '';
-      const known = messages[message];
-      if (known) clearPending();
-      setNotice(known ?? 'تعذر تأكيد المشاركة. أعد المحاولة للتحقق من نفس الطلب');
+      while (next) {
+        const { royal: royalEntry, ...request } = next;
+        setPending(next);
+        try { localStorage.setItem(pendingKey, JSON.stringify(next)); } catch { /* Storage may be unavailable. */ }
+        try {
+          await enterFood(request, royalEntry);
+        } catch (error) {
+          const message = (error as { message?: string })?.message ?? '';
+          const known = messages[message];
+          if (!known) {
+            queuedBets.current = [];
+            setNotice('تعذر تأكيد المشاركة. أعد المحاولة للتحقق من نفس الطلب');
+            return;
+          }
+          setNotice(known);
+        }
+        setPending(undefined);
+        try { localStorage.removeItem(pendingKey); } catch { /* Storage may be unavailable. */ }
+        next = queuedBets.current.shift();
+      }
     } finally {
       inFlight.current = false;
       setBusy(false);
+      setNotice(previous => previous === 'جارٍ إرسال المشاركات المختارة…' ? '' : previous);
       refresh.current();
     }
   };
@@ -325,7 +335,17 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
       setNotice(`تم تحديد ${food[pick]} · ${suffix}`);
       return;
     }
-    void submit({ p_request: createRequestId(), p_start: state.round_start, p_pick: pick, p_stake: stake, royal });
+    const request = { p_request: createRequestId(), p_start: state.round_start, p_pick: pick, p_stake: stake, royal };
+    if (inFlight.current) {
+      if (queuedBets.current.length >= 59) {
+        setNotice('وصلت إلى حد المشاركات قيد الإرسال');
+        return;
+      }
+      queuedBets.current.push(request);
+      setNotice('جارٍ إرسال المشاركات المختارة…');
+      return;
+    }
+    void submit(request);
   };
   const connectionStatus = connected === false ? 'تعذر الاتصال بخادم اللعبة' : !state ? 'جارٍ الاتصال…' : '';
   const status = connectionStatus || (state && !state.enabled ? 'المشاركات متوقفة' : '');
@@ -369,12 +389,12 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
         </svg>
       </button>
       <svg className="toti-food-wheel" viewBox="0 0 865 1536" aria-label="أطعمة العجلة">
-        {sectors.map((path, index) => <path key={path} d={path} role="button" tabIndex={busy ? -1 : 0}
-          aria-label={food[index]} aria-disabled={busy} aria-pressed={selectedFoods.includes(index) || Boolean(state?.bets[index])}
-          style={{ pointerEvents: 'all', cursor: busy ? 'wait' : 'pointer', touchAction: 'manipulation', outline: 'none', strokeWidth: 0 }}
-          onClick={() => { if (!busy) bet(index); }}
+        {sectors.map((path, index) => <path key={path} d={path} role="button" tabIndex={0}
+          aria-label={food[index]} aria-pressed={selectedFoods.includes(index) || Boolean(state?.bets[index])}
+          style={{ pointerEvents: 'all', cursor: 'pointer', touchAction: 'manipulation', outline: 'none', strokeWidth: 0 }}
+          onClick={() => bet(index)}
           onKeyDown={event => {
-            if (busy || (event.key !== 'Enter' && event.key !== ' ')) return;
+            if (event.key !== 'Enter' && event.key !== ' ') return;
             event.preventDefault();
             bet(index);
           }}
