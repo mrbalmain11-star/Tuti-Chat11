@@ -140,7 +140,7 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
   const [rewardsTab, setRewardsTab] = useState('المكافآت اليومية');
   const [historyPage, setHistoryPage] = useState(0);
   const refresh = useRef<() => void>(() => {});
-  const finishedSlot = useRef<string>();
+  const finishedSlot = useRef<string | undefined>(undefined);
   const inFlight = useRef(new Set<string>());
 
   useEffect(() => {
