@@ -22,6 +22,14 @@ const sectors = [
   "M209 635 L316 678 Q307 710 316 744 L209 787 Q168 792 160 744 L160 669 Q168 624 209 635Z",
   "M314 507 Q324 514 332 531 L372 612 Q344 627 329 660 L209 607 Q194 574 234 533 Q274 490 314 507Z",
 ];
+function createRequestId() {
+  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 15) | 64;
+  bytes[8] = (bytes[8] & 63) | 128;
+  const hex = Array.from(bytes, value => value.toString(16).padStart(2, '0')).join('');
+  return [hex.slice(0, 8), hex.slice(8, 12), hex.slice(12, 16), hex.slice(16, 20), hex.slice(20)].join('-');
+}
 const formatted = (value: number | string | null | undefined) =>
   value == null ? '—' : BigInt(value).toLocaleString('en-US');
 const roundNumber = (value: string) => Math.floor(Date.parse(value) / 30000);
@@ -289,7 +297,7 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
       setNotice(`تم تحديد ${food[pick]} · ${suffix}`);
       return;
     }
-    void submit({ p_request: crypto.randomUUID(), p_start: state.round_start, p_pick: pick, p_stake: stake, royal });
+    void submit({ p_request: createRequestId(), p_start: state.round_start, p_pick: pick, p_stake: stake, royal });
   };
   const connectionStatus = connected === false ? 'تعذر الاتصال بخادم اللعبة' : !state ? 'جارٍ الاتصال…' : '';
   const status = connectionStatus || (state && !state.enabled ? 'المشاركات متوقفة' : '');
@@ -333,15 +341,20 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
           {sound ? <path d="M16 8q5 4 0 8m3-11q8 7 0 14" /> : <path d="m16 9 6 6m0-6-6 6" />}
         </svg>
       </button>
-      <svg className="toti-food-wheel" viewBox="0 0 865 1536" aria-hidden="true">
-        {sectors.map((path, index) => <path key={path} d={path}
+      <svg className="toti-food-wheel" viewBox="0 0 865 1536" aria-label="أطعمة العجلة">
+        {sectors.map((path, index) => <path key={path} d={path} role="button" tabIndex={busy ? -1 : 0}
+          aria-label={food[index]} aria-disabled={busy} aria-pressed={selectedFood === index}
+          style={{ pointerEvents: 'all', cursor: busy ? 'wait' : 'pointer', touchAction: 'manipulation' }}
+          onClick={() => { if (!busy) bet(index); }}
+          onKeyDown={event => {
+            if (busy || (event.key !== 'Enter' && event.key !== ' ')) return;
+            event.preventDefault();
+            bet(index);
+          }}
           className={spin === index ? 'spin' : (state?.bets[index] || selectedFood === index) ? 'chosen' : undefined} />)}
       </svg>
-      {spots.map(([x, y], index) => <div key={food[index]}>
-        <Hit x={x - 7} y={y - 4} w={14} h={8} label={food[index]} action={() => bet(index)}
-          disabled={busy} />
-        {Boolean(state?.bets[index]) && <Field x={x - 6} y={y - 4} w={12} h={2}>{formatted(state?.bets[index])}</Field>}
-      </div>)}
+      {spots.map(([x, y], index) => Boolean(state?.bets[index]) &&
+        <Field key={food[index]} x={x - 6} y={y - 4} w={12} h={2}>{formatted(state?.bets[index])}</Field>)}
       <Hit x={7} y={88} w={86} h={11} label="المكافآت والصناديق" action={() => rewards('الصناديق الملكية')} />
       {(notice || status || pending) && <Field x={7} y={82.2} w={86} h={5} className="toti-food-status">
         <span role="status">{notice || status || 'تأكيد المشاركة السابقة معلّق'}</span>
