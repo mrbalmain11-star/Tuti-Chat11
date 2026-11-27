@@ -129,7 +129,7 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
   const [unconfirmed, setUnconfirmed] = useState<Set<string>>(() => new Set(pending.map(bet => bet.p_request)));
   const [notice, setNotice] = useState('');
   const [shownResult, setShownResult] = useState<{ round: FoodRound; winners: FoodState['latest_winners'] }>();
-  const [spin, setSpin] = useState<number>();
+  const [spinningSlot, setSpinningSlot] = useState<string>();
   const [resultSeconds, setResultSeconds] = useState(3);
   const [offset, setOffset] = useState(0);
   const [rewardState, setRewardState] = useState<Awaited<ReturnType<typeof loadFoodRewards>>>();
@@ -140,7 +140,7 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
   const [rewardsTab, setRewardsTab] = useState('المكافآت اليومية');
   const [historyPage, setHistoryPage] = useState(0);
   const refresh = useRef<() => void>(() => {});
-  const lastRound = useRef<string | null | undefined>(undefined);
+  const finishedSlot = useRef<string>();
   const inFlight = useRef(new Set<string>());
 
   useEffect(() => {
@@ -240,31 +240,6 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
     }
   }
 
-  const latest = state?.rounds[0];
-  const roundKey = latest?.starts_at;
-  useEffect(() => {
-    if (!state) return;
-    if (lastRound.current === undefined || page !== 'play') {
-      lastRound.current = roundKey ?? null;
-      return;
-    }
-    if (!latest || lastRound.current === roundKey || latest.result.outcome == null) return;
-    const winner = latest.result.outcome;
-    let step = 0;
-    const animation = window.setInterval(() => {
-      setSpin(step % food.length);
-      if (step++ < 16 + winner) return;
-      window.clearInterval(animation);
-      lastRound.current = latest.starts_at;
-      setSpin(undefined);
-      setResultSeconds(3);
-      setShownResult({ round: latest, winners: state.latest_winners });
-      setPage('result');
-    }, 70);
-    return () => { window.clearInterval(animation); setSpin(undefined); };
-    // A refresh of the same authoritative round must not restart the animation.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, roundKey, Boolean(state)]);
   useEffect(() => {
     if (page !== 'result') return;
     const count = window.setInterval(() => setResultSeconds(seconds => Math.max(0, seconds - 1)), 1000);
@@ -279,9 +254,21 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
     setConfirmed([]);
     setNotice('');
   }, [currentSlot]);
-  const waitingForResult = page === 'play' && state?.enabled && seconds === 0 && spin === undefined;
+  const closedSlot = state?.enabled && seconds === 0 && currentSlot !== finishedSlot.current ? currentSlot : undefined;
+  const activeSlot = page === 'play' ? spinningSlot ?? closedSlot : undefined;
+  const latest = state?.rounds[0];
+  const resolvedRound = activeSlot && latest && Date.parse(latest.starts_at) >= Date.parse(activeSlot) ? latest : undefined;
+  const winner = resolvedRound?.result.outcome;
+  const counter = activeSlot ? 0 : seconds;
   useEffect(() => {
-    if (!waitingForResult) {
+    if (!activeSlot) return;
+    if (!spinningSlot) {
+      setSpinningSlot(activeSlot);
+      refresh.current();
+    }
+  }, [activeSlot, spinningSlot]);
+  useEffect(() => {
+    if (!activeSlot || resolvedRound) {
       setWaitingSpin(undefined);
       return;
     }
@@ -289,9 +276,24 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
     setWaitingSpin(step);
     const timer = window.setInterval(() => setWaitingSpin(++step % food.length), 85);
     return () => window.clearInterval(timer);
-  }, [waitingForResult, currentSlot]);
-  const activeSpin = spin ?? waitingSpin;
-  const canEnter = Boolean(connected && state?.enabled && (!royal || state.royal_eligible) && seconds);
+  }, [activeSlot, Boolean(resolvedRound)]);
+  const resolvedKey = resolvedRound?.starts_at;
+  useEffect(() => {
+    if (!resolvedRound || !state || !activeSlot) return;
+    const showResult = () => {
+      finishedSlot.current = resolvedRound.starts_at;
+      setSpinningSlot(undefined);
+      setWaitingSpin(undefined);
+      setResultSeconds(3);
+      setShownResult({ round: resolvedRound, winners: state.latest_winners });
+      setPage('result');
+    };
+    // Hold the winning sector for one brief beat, then display the result.
+    const stop = window.setTimeout(showResult, winner == null ? 0 : 120);
+    return () => window.clearTimeout(stop);
+  }, [activeSlot, resolvedKey, winner]);
+  const activeSpin = activeSlot ? winner ?? (resolvedRound ? undefined : waitingSpin ?? 0) : undefined;
+  const canEnter = Boolean(!activeSlot && connected && state?.enabled && (!royal || state.royal_eligible) && seconds);
   const go = (target: Page) => { setNotice(''); setPage(target); };
   const rewards = (label: string) => { setRewardsTab(label); showRewardRules(false); setRewardError(''); go('rewards'); };
   function savePending(next: Bet[]) {
@@ -370,7 +372,7 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
         <b>{formatted(state?.monthly_stake)} / 1,000,000,000</b>
       </Field>
       <Field x={32} y={64.2} w={36} h={4.8} className="toti-food-clock">
-        {seconds == null || !state?.enabled ? '—' : '00:' + String(seconds).padStart(2, '0')}
+        {counter == null || !state?.enabled ? '—' : '00:' + String(counter).padStart(2, '0')}
       </Field>
       <Field x={11} y={73.7} w={22} h={2}>{formatted(state?.player.balance)}</Field>
       <Hit x={12} y={28} w={9} h={5} label="قواعد اللعبة" action={() => go('rules')} />
@@ -507,7 +509,7 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
     {page === 'result' && shownResult && <>
       <Field x={88} y={1.4} w={8} h={5}>{resultSeconds}</Field>
       <Field x={18} y={14} w={64} h={18} className="toti-food-result">
-        {food[shownResult.round.result.outcome ?? -1]} ×{shownResult.round.multiplier}
+        {shownResult.round.result.refunded ? 'أُعيدت المشاركات' : `${food[shownResult.round.result.outcome ?? -1]} ×${shownResult.round.multiplier}`}
       </Field>
       {[[50, 50.8, 60.3], [22, 54.4, 63.1], [78, 54.4, 63.1]].map(([x, portraitY, textY], index) => {
         const winner = winners?.players[index];
