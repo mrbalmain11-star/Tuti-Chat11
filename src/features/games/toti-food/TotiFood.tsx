@@ -12,6 +12,8 @@ function Avatar({ value, name }: { value?: string | null; name?: string | null }
     : <span aria-hidden="true" style={{ display: 'grid', placeItems: 'center', minWidth: '7cqw', color: '#ebc765' }}>{name?.trim().charAt(0) || '♙'}</span>;
 }
 
+const foodIcons = ['🍔', '🍕', '🍗', '🥩', '🍟', '🥗', '🍣', '🍰'];
+
 const root = '/assets/games/toti-food/';
 const stages = {
   play: 'main-game', royal: 'royal-mode', rules: 'game-rules', recent: 'recent-rounds',
@@ -80,21 +82,22 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
   const audio = useRef<AudioContext | null>(null);
   useEffect(() => () => { void audio.current?.close().catch(() => {}); audio.current = null; }, []);
 
-  function playTap() {
+  function playTap(frequency = 740, duration = 0.09, volume = 0.045, unlock = true) {
     try {
+      if (!unlock && audio.current?.state !== 'running') return;
       const context = audio.current ??= new AudioContext();
       void context.resume().then(() => {
         if (context.state !== 'running') return;
         const tone = context.createOscillator();
         const gain = context.createGain();
         const now = context.currentTime;
-        tone.frequency.value = 740;
-        gain.gain.setValueAtTime(0.045, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+        tone.frequency.value = frequency;
+        gain.gain.setValueAtTime(volume, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
         tone.connect(gain);
         gain.connect(context.destination);
         tone.start(now);
-        tone.stop(now + 0.09);
+        tone.stop(now + duration);
       }).catch(() => {});
     } catch { /* Game interaction remains available when audio is unavailable. */ }
   }
@@ -136,6 +139,8 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
   const [rewardError, setRewardError] = useState('');
   const [rewardBusy, setRewardBusy] = useState(false);
   const [rewardRevision, reloadRewards] = useState(0);
+  const [chestDetails, setChestDetails] = useState<number>();
+  const royalEntries = useRef(new Set<string>());
   const [rewardRules, showRewardRules] = useState(false);
   const [rewardsTab, setRewardsTab] = useState('المكافآت اليومية');
   const [historyPage, setHistoryPage] = useState(0);
@@ -259,7 +264,18 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
   const latest = state?.rounds[0];
   const resolvedRound = activeSlot && latest && Date.parse(latest.starts_at) >= Date.parse(activeSlot) ? latest : undefined;
   const winner = resolvedRound?.result.outcome;
+  const royalSectorWin = Boolean(resolvedRound && royalEntries.current.has(resolvedRound.starts_at) &&
+    state?.entries.some(entry => entry.starts_at === resolvedRound.starts_at && entry.status === 'settled' && (entry.paid ?? 0) > 0));
   const counter = activeSlot ? 0 : seconds;
+  const urgent = page === 'play' && state?.enabled && counter != null && counter >= 1 && counter <= 3;
+  useEffect(() => {
+    if (sound && urgent) playTap(900, 0.07, 0.035, false);
+  }, [sound, urgent, counter]);
+  useEffect(() => {
+    if (sound && activeSlot && !resolvedRound && waitingSpin != null && waitingSpin % 2 === 0) {
+      playTap(440 + waitingSpin * 35, 0.05, 0.025, false);
+    }
+  }, [sound, activeSlot, Boolean(resolvedRound), waitingSpin]);
   useEffect(() => {
     if (!activeSlot) return;
     if (!spinningSlot) {
@@ -292,6 +308,11 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
     const stop = window.setTimeout(showResult, winner == null ? 0 : 120);
     return () => window.clearTimeout(stop);
   }, [activeSlot, resolvedKey, winner]);
+  useEffect(() => {
+    if (page === 'result' && shownResult && sound) {
+      playTap(shownResult.round.result.refunded ? 440 : 1046, 0.22, 0.05, false);
+    }
+  }, [page, shownResult, sound]);
   const activeSpin = activeSlot ? winner ?? (resolvedRound ? undefined : waitingSpin ?? 0) : undefined;
   const canEnter = Boolean(!activeSlot && connected && state?.enabled && (!royal || state.royal_eligible) && seconds);
   const go = (target: Page) => { setNotice(''); setPage(target); };
@@ -314,7 +335,10 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
     if (!pendingRef.current.some(item => item.p_request === id)) savePending([...pendingRef.current, bet]);
     try {
       const receipt = await enterFood(request, royalEntry);
-      if (receipt.status === 'pending') setConfirmed(previous => [...previous, bet]);
+      if (receipt.status === 'pending') {
+        if (royalEntry) royalEntries.current.add(request.p_start);
+        setConfirmed(previous => [...previous, bet]);
+      }
       savePending(pendingRef.current.filter(item => item.p_request !== id));
     } catch (error) {
       const message = (error as { message?: string })?.message ?? '';
@@ -348,6 +372,13 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
   const connectionStatus = connected === false ? 'تعذر الاتصال بخادم اللعبة' : !state ? 'جارٍ الاتصال…' : '';
   const status = connectionStatus || (state && !state.enabled ? 'المشاركات متوقفة' : '');
   const winners = shownResult?.winners;
+  const recentRounds = (state?.rounds ?? []).slice(0, 10);
+  const resultEntries = shownResult ? (state?.entries ?? []).filter(entry =>
+    Date.parse(entry.starts_at) === Date.parse(shownResult.round.starts_at) && entry.status !== 'pending') : [];
+  const resultStake = resultEntries.reduce((total, entry) => total + entry.stake, 0);
+  const resultPaid = resultEntries.reduce((total, entry) => total + (entry.paid ?? 0), 0);
+  const resultNet = resultPaid - resultStake;
+  const royalWin = Boolean(shownResult && resultNet > 0 && royalEntries.current.has(shownResult.round.starts_at));
   const hasHeader = page !== 'result';
 
   return <section className="toti-food" aria-label="توتي للمأكولات">
@@ -371,7 +402,7 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
         <span style={{ width: Math.min(100, Number(state?.monthly_stake ?? 0) / 1e7) + '%' }} />
         <b>{formatted(state?.monthly_stake)} / 1,000,000,000</b>
       </Field>
-      <Field x={32} y={64.2} w={36} h={4.8} className="toti-food-clock">
+      <Field x={32} y={64.2} w={36} h={4.8} className={`toti-food-clock ${urgent ? 'toti-food-clock-urgent' : ''}`}>
         {counter == null || !state?.enabled ? '—' : '00:' + String(counter).padStart(2, '0')}
       </Field>
       <Field x={11} y={73.7} w={22} h={2}>{formatted(state?.player.balance)}</Field>
@@ -386,7 +417,7 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
           {sound ? <path d="M16 8q5 4 0 8m3-11q8 7 0 14" /> : <path d="m16 9 6 6m0-6-6 6" />}
         </svg>
       </button>
-      <svg className="toti-food-wheel" viewBox="0 0 865 1536" aria-label="أطعمة العجلة">
+      <svg className="toti-food-wheel" viewBox="0 0 865 1536" preserveAspectRatio="none" aria-label="أطعمة العجلة">
         {sectors.map((path, index) => <path key={path} d={path} role="button" tabIndex={0}
           aria-label={food[index]} aria-pressed={selectedFoods.includes(index) || Boolean(stakesByFood[index])}
           style={{ pointerEvents: 'all', cursor: 'pointer', touchAction: 'manipulation', outline: 'none', strokeWidth: 0 }}
@@ -396,7 +427,7 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
             event.preventDefault();
             bet(index);
           }}
-          className={activeSpin === index ? 'spin' : (stakesByFood[index] || selectedFoods.includes(index)) ? 'chosen' : undefined} />)}
+          className={activeSpin === index ? (royalSectorWin ? 'spin toti-food-royal-sector' : 'spin') : (stakesByFood[index] || selectedFoods.includes(index)) ? 'chosen' : undefined} />)}
       </svg>
       {spots.map(([x, y], index) => Boolean(stakesByFood[index]) &&
         <Field key={food[index]} x={x - 6} y={y - 4} w={12} h={2}>{formatted(stakesByFood[index])}</Field>)}
@@ -436,12 +467,12 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
       <Hit x={8} y={23} w={12} h={6} label="رجوع" action={() => go('play')} />
       <Hit x={82} y={23} w={12} h={6} label="تحديث الجولات" action={() => refresh.current()} />
       <Field x={8} y={36} w={84} h={43} className="toti-food-list">
-        {state?.rounds.length ? state.rounds.map(round => <div key={round.starts_at}>
-          <span>#{roundNumber(round.starts_at)}</span><span>{shortDate(round.starts_at)}</span><span>{round.result.refunded ? 'مستردة' : food[round.result.outcome ?? -1]}</span>
+        {recentRounds.length ? recentRounds.map(round => <div key={round.starts_at}>
+          <span>#{roundNumber(round.starts_at)}</span><span>{shortDate(round.starts_at)}</span><span>{round.result.refunded ? 'مستردة' : `${foodIcons[round.result.outcome ?? -1] ?? ''} ${food[round.result.outcome ?? -1] ?? '—'}`}</span>
           <span>{round.multiplier == null ? '—' : '×' + round.multiplier}</span>
         </div>) : <p>{connectionStatus || 'لا توجد جولات مكتملة'}</p>}
       </Field>
-      <Field x={8} y={84} w={84} h={8}>الجولات المعروضة {state?.rounds.length ?? '—'}</Field>
+      <Field x={8} y={84} w={84} h={8}>الجولات المعروضة {state ? recentRounds.length : '—'}</Field>
     </>}
     {page === 'personal' && <>
       <Field x={8} y={28.8} w={84} h={6}>سجل المشاركات من الخادم</Field>
@@ -495,8 +526,14 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
               ? ['الفضي', 'الذهبي', 'الماسي', 'النخبة'][item.item - 1]
               : ['VIP', 'الجواهر', 'العملات', 'الطاقة', 'المفاجآت'][item.item - 1];
             return <div key={item.item} className={item.kind === 'daily' && item.available ? 'toti-food-reward-ready' : undefined}>
-              <strong>{name}</strong><span>{formatted(item.coins)} كوينز</span>
+              {item.kind === 'chest' ? <button type="button" aria-expanded={chestDetails === item.item}
+                onClick={() => setChestDetails(previous => previous === item.item ? undefined : item.item)}>الصندوق {name}</button>
+                : <strong>{name}</strong>}<span>{formatted(item.coins)} كوينز</span>
               {item.kind !== 'daily' && <span>{formatted(item.progress)} / {formatted(item.requirement)}</span>}
+              {item.kind === 'chest' && chestDetails === item.item && <small className="toti-food-chest-details">
+                الشرط {formatted(item.requirement)} كوينز من المشاركات المسوّاة. {item.claimed ? 'مستلم' : item.available ? 'جاهز للفتح' :
+                  `باقي ${formatted(Math.max(0, item.requirement - item.progress))} كوينز`}
+              </small>}
               <button type="button" disabled={rewardBusy || !rewardState.enabled || !item.available}
                 onClick={() => void claim(item)}>{item.claimed ? 'مستلمة' : item.kind === 'card' ? 'استخدام' : item.kind === 'chest' ? 'فتح' : 'استلام'}</button>
             </div>;
@@ -508,9 +545,13 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
     </>}
     {page === 'result' && shownResult && <>
       <Field x={88} y={1.4} w={8} h={5}>{resultSeconds}</Field>
-      <Field x={18} y={14} w={64} h={18} className="toti-food-result">
+      <Field x={18} y={14} w={64} h={18} className={royalWin ? "toti-food-result toti-food-royal-win" : "toti-food-result"}>
+        {royalWin && <span aria-label="فوز ملكي">♛</span>}
         {shownResult.round.result.refunded ? 'أُعيدت المشاركات' : `${food[shownResult.round.result.outcome ?? -1]} ×${shownResult.round.multiplier}`}
       </Field>
+      {resultStake > 0 && <Field x={12} y={35} w={76} h={4} className={royalWin ? "toti-food-royal-win" : ""}>
+        شاركت بـ{formatted(resultStake)} · استلمت {formatted(resultPaid)} · الصافي {resultNet > 0 ? '+' : ''}{formatted(resultNet)}
+      </Field>}
       {[[50, 50.8, 60.3], [22, 54.4, 63.1], [78, 54.4, 63.1]].map(([x, portraitY, textY], index) => {
         const winner = winners?.players[index];
         return <div key={x}>

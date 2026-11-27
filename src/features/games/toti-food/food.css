@@ -1,9 +1,9 @@
 .toti-food {
   position: relative;
-  width: min(100%, 38.25dvh);
-  aspect-ratio: 9 / 16;
+  width: 100%;
+  height: min(68dvh, calc((min(100vw, 28rem) - 1.5rem) * 16 / 9));
   margin-inline: auto;
-  margin-bottom: 2.25rem;
+  margin-bottom: 2.1rem;
   container-type: inline-size;
   background: #00170e;
   color: #fff9d8;
@@ -189,3 +189,29 @@
 .toti-food-list button:disabled, .toti-food-stake:disabled {
   opacity: 0.55;
 }
+
+.toti-food-clock-urgent {
+  color: #ffac9f;
+  background: #521b15;
+}
+.toti-food-list > div:has(.toti-food-chest-details) {
+  flex-wrap: wrap;
+}
+.toti-food-chest-details {
+  order: 4;
+  flex-basis: 100%;
+  text-align: start;
+  color: #ffe39a;
+}
+.toti-food-royal-win {
+  color: #ffe39a;
+  animation: toti-food-royal-glow 700ms ease-out both;
+}
+@keyframes toti-food-royal-glow {
+  from { box-shadow: 0 0 2cqw #ffe39a; }
+  to { box-shadow: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .toti-food-royal-win { animation: none; }
+}
+.toti-food-wheel .toti-food-royal-sector { fill-opacity: 0.55; }

@@ -24,6 +24,7 @@ export function GameCenter({ accountId, onClose }: { accountId: string; onClose:
   const practiceGames = ['uno', 'fishing', 'knife', 'okey', 'carrom', 'liars-bar'];
   const standalone = selected === 'domino' || (selected !== undefined && practiceGames.includes(selected));
   const embedded = getEmbeddedGame(selected);
+  const isTotiFood = embedded?.id === 'greedy-original';
   const [minimized, setMinimized] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const reload = useRef(() => {});
@@ -75,21 +76,22 @@ export function GameCenter({ accountId, onClose }: { accountId: string; onClose:
     {minimized && <button type="button" className="absolute bottom-28 end-3 z-[95] rounded-full bg-emerald-950 px-3 py-2 text-white"
       onClick={() => setMinimized(false)}>استعادة اللعبة</button>}
     <section role="dialog" aria-label="مركز ألعاب TotiChat" dir="rtl" hidden={minimized}
-      className="absolute inset-x-0 bottom-0 z-[95] mx-auto max-h-[85dvh] max-w-md overflow-y-auto rounded-t-3xl
-        border-t border-amber-500/70 bg-[#101c16] p-3 pb-[max(1rem,env(safe-area-inset-bottom))] text-white shadow-2xl">
-      <header className="flex flex-wrap items-center gap-2 border-b border-white/15 pb-2">
+      className={`absolute inset-x-0 bottom-0 z-[95] mx-auto max-h-[85dvh] rounded-t-3xl
+        border-t border-amber-500/70 bg-[#101c16] pb-[max(1rem,env(safe-area-inset-bottom))] text-white shadow-2xl
+        ${isTotiFood ? 'w-full overflow-hidden pt-2' : 'max-w-md overflow-y-auto p-3'}`}>
+      <header className={`flex flex-wrap items-center gap-2 border-b border-white/15 pb-2 ${isTotiFood ? 'px-3' : ''}`}>
         <img src="/icon.svg" alt="" className="h-9 w-9 rounded-lg" />
         <h2 className="font-bold">{embedded?.name ?? (selected ? gameName(selected) : 'مركز الألعاب')}</h2>
-        <button type="button" className="ms-auto px-2" onClick={() => setMinimized(true)}>تصغير</button>
-        <button type="button" className="px-2" onClick={onClose}>إغلاق</button>
+        {!isTotiFood && <button type="button" className="ms-auto px-2" onClick={() => setMinimized(true)}>تصغير</button>}
+        <button type="button" className={isTotiFood ? "ms-auto px-2" : "px-2"} onClick={onClose}>إغلاق</button>
       </header>
-      <div className="my-3 flex justify-between gap-2 text-sm text-amber-200">
+      {!isTotiFood && <><div className="my-3 flex justify-between gap-2 text-sm text-amber-200">
         {selected && <button type="button" onClick={() => setSelected(undefined)}>الألعاب</button>}
         {!standalone && snapshot && <span>رصيدك <bdi>{snapshot.balance?.toLocaleString('en-US') ?? '—'}</bdi> كوينز</span>}
       </div>
       {!standalone && error && <p role="alert" className="my-3 text-red-300">تعذر الاتصال بخادم الألعاب. يُعاد الاتصال تلقائياً.</p>}
       {!standalone && !snapshot && !error && <p role="status">جارٍ تحميل الألعاب…</p>}
-      {!standalone && snapshot && !snapshot.funded && <p role="status" className="mb-3 text-amber-200">محفظة الألعاب غير ممولة.</p>}
+      {!standalone && snapshot && !snapshot.funded && <p role="status" className="mb-3 text-amber-200">محفظة الألعاب غير ممولة.</p>}</>}
       {selected === 'domino' ? <Domino paused={minimized} /> : selected === 'uno' ? <UnoPractice paused={minimized} />
       : selected === 'fishing' ? <FishingPractice paused={minimized} />
       : selected === 'knife' ? <KnifePractice paused={minimized} />
