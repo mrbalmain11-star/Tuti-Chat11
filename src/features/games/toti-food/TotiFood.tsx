@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { claimFoodReward, enterFood, loadFood, loadFoodLeaders, loadFoodRewards, type FoodReward, type FoodPeriod, type FoodRequest, type FoodRound, type FoodState } from './api';
+import { claimFoodReward, enterFood, finishFoodRound, loadFood, loadFoodLeaders, loadFoodRewards, type FoodReward, type FoodPeriod, type FoodRequest, type FoodRound, type FoodState } from './api';
 import './food.css';
 
 import { imageUrl } from '../../../services/imageUrl';
@@ -261,13 +261,26 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
   }, [currentSlot]);
   const closedSlot = state?.enabled && seconds === 0 && currentSlot !== finishedSlot.current ? currentSlot : undefined;
   const activeSlot = page === 'play' ? spinningSlot ?? closedSlot : undefined;
+  const serverNow = clock + offset;
+  const animationExpired = Boolean(activeSlot && serverNow >= Date.parse(activeSlot) + 21000);
+  const missedRound = Boolean(activeSlot && currentSlot !== activeSlot &&
+    serverNow >= Date.parse(activeSlot) + 34000);
+  useEffect(() => {
+    if (!missedRound || !activeSlot) return;
+    finishedSlot.current = activeSlot;
+    setSpinningSlot(undefined);
+    setWaitingSpin(undefined);
+  }, [missedRound, activeSlot]);
   const latest = state?.rounds[0];
   const resolvedRound = activeSlot && latest && Date.parse(latest.starts_at) >= Date.parse(activeSlot) ? latest : undefined;
   const winner = resolvedRound?.result.outcome;
   const royalSectorWin = Boolean(resolvedRound && royalEntries.current.has(resolvedRound.starts_at) &&
     state?.entries.some(entry => entry.starts_at === resolvedRound.starts_at && entry.status === 'settled' && (entry.paid ?? 0) > 0));
-  const counter = activeSlot ? 0 : seconds;
-  const urgent = page === 'play' && state?.enabled && counter != null && counter >= 1 && counter <= 3;
+  const betweenRounds = Boolean(!activeSlot && state?.enabled && currentSlot && finishedSlot.current === currentSlot);
+  const counter = activeSlot ? 0 : betweenRounds && currentSlot
+    ? Math.max(0, Math.ceil((Date.parse(currentSlot) + 30000 - serverNow) / 1000))
+    : seconds;
+  const urgent = page === 'play' && !betweenRounds && state?.enabled && counter != null && counter >= 1 && counter <= 3;
   useEffect(() => {
     if (sound && urgent) playTap(900, 0.07, 0.035, false);
   }, [sound, urgent, counter]);
@@ -280,11 +293,11 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
     if (!activeSlot) return;
     if (!spinningSlot) {
       setSpinningSlot(activeSlot);
-      refresh.current();
+      void finishFoodRound(activeSlot).catch(() => {}).finally(() => refresh.current());
     }
   }, [activeSlot, spinningSlot]);
   useEffect(() => {
-    if (!activeSlot || resolvedRound) {
+    if (!activeSlot || resolvedRound || animationExpired) {
       setWaitingSpin(undefined);
       return;
     }
@@ -292,8 +305,13 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
     setWaitingSpin(step);
     const timer = window.setInterval(() => setWaitingSpin(++step % food.length), 85);
     return () => window.clearInterval(timer);
-  }, [activeSlot, Boolean(resolvedRound)]);
+  }, [activeSlot, Boolean(resolvedRound), animationExpired]);
   const resolvedKey = resolvedRound?.starts_at;
+  useEffect(() => {
+    if (!activeSlot || resolvedKey) return;
+    const poll = window.setInterval(() => refresh.current(), 600);
+    return () => window.clearInterval(poll);
+  }, [activeSlot, resolvedKey]);
   useEffect(() => {
     if (!resolvedRound || !state || !activeSlot) return;
     const showResult = () => {
@@ -313,7 +331,7 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
       playTap(shownResult.round.result.refunded ? 440 : 1046, 0.22, 0.05, false);
     }
   }, [page, shownResult, sound]);
-  const activeSpin = activeSlot ? winner ?? (resolvedRound ? undefined : waitingSpin ?? 0) : undefined;
+  const activeSpin = activeSlot ? winner ?? (resolvedRound || animationExpired ? undefined : waitingSpin ?? 0) : undefined;
   const canEnter = Boolean(!activeSlot && connected && state?.enabled && (!royal || state.royal_eligible) && seconds);
   const go = (target: Page) => { setNotice(''); setPage(target); };
   const rewards = (label: string) => { setRewardsTab(label); showRewardRules(false); setRewardError(''); go('rewards'); };
@@ -402,8 +420,8 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
         <span style={{ width: Math.min(100, Number(state?.monthly_stake ?? 0) / 1e7) + '%' }} />
         <b>{formatted(state?.monthly_stake)} / 1,000,000,000</b>
       </Field>
-      <Field x={32} y={64.2} w={36} h={4.8} className={`toti-food-clock ${urgent ? 'toti-food-clock-urgent' : ''}`}>
-        {counter == null || !state?.enabled ? '—' : '00:' + String(counter).padStart(2, '0')}
+      <Field x={33} y={64.05} w={34} h={4.55} className={`toti-food-clock ${urgent ? 'toti-food-clock-urgent' : ''}`}>
+        <bdi>{counter == null || !state?.enabled ? '—' : '00:' + String(counter).padStart(2, '0')}</bdi>
       </Field>
       <Field x={11} y={73.7} w={22} h={2}>{formatted(state?.player.balance)}</Field>
       <Hit x={12} y={28} w={9} h={5} label="قواعد اللعبة" action={() => go('rules')} />
@@ -432,8 +450,8 @@ export default function TotiFood({ accountId, onClose }: { accountId: string; on
       {spots.map(([x, y], index) => Boolean(stakesByFood[index]) &&
         <Field key={food[index]} x={x - 6} y={y - 4} w={12} h={2}>{formatted(stakesByFood[index])}</Field>)}
       <Hit x={7} y={88} w={86} h={11} label="المكافآت والصناديق" action={() => rewards('الصناديق الملكية')} />
-      {(notice || status || retryable.length > 0) && <Field x={7} y={82.2} w={86} h={5} className="toti-food-status">
-        <span role="status">{notice || status || 'تأكيد المشاركة السابقة معلّق'}</span>
+      {(notice || status || betweenRounds || (activeSlot && animationExpired) || retryable.length > 0) && <Field x={7} y={82.2} w={86} h={5} className="toti-food-status">
+        <span role="status">{notice || status || (betweenRounds ? 'الجولة التالية' : activeSlot && animationExpired ? 'بانتظار نتيجة الخادم' : 'تأكيد المشاركة السابقة معلّق')}</span>
         {retryable.length > 0 && <button type="button" disabled={!connected} onClick={() => retryable.forEach(item => void submit(item))}>إعادة المحاولة</button>}
       </Field>}
     </>}

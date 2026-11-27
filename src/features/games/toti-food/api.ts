@@ -62,3 +62,6 @@ export const loadFoodRewards = (signal: AbortSignal) =>
   rpc<{ enabled: boolean; items: FoodReward[] }>('totichat_food_rewards', undefined, signal);
 export const claimFoodReward = ({ kind, item, period }: FoodReward) =>
   rpc<{ coins: number }>('totichat_food_reward_claim', { p_kind: kind, p_item: item, p_period: period });
+
+export const finishFoodRound = (roundStart: string) =>
+  rpc<void>('totichat_food_finish', { p_start: roundStart });
