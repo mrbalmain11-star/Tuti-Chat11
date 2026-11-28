@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import {
   SYMBOLS,
   REWARDS, matchingSymbol, MAX_STAKE, type Round,
@@ -100,8 +100,8 @@ function Reels({
               style={{
                 height: (seq.length / 3) * 100 + "%",
                 transform: `translateY(-${(count / seq.length) * 100}%)`,
-                animationDuration: 1.15 + i * 0.36 + "s",
-              }}
+                "--toti777-reel-duration": 1.15 + i * 0.36 + "s",
+              } as CSSProperties}
             >
               {seq.map((v, j) => (
                 <div key={j} className={s === match && j === count + 1 ? 'matched-cell' : undefined}>
