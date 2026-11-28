@@ -652,6 +652,7 @@ export const VoiceRoomModal: React.FC = () => {
 
   // Bottom Sheets & Popups
   const [gamesRoomId, setGamesRoomId] = useState<string | null>(null);
+  const toti777BackRef = useRef<() => boolean>(null);
   const [showToolsDrawer, setShowToolsDrawer] = useState(false);
   const [managePin, setManagePin] = useState(false);
   const [pinOverride, setPinOverride] = useState<{roomId: string; locked: boolean}>();
@@ -1295,7 +1296,7 @@ export const VoiceRoomModal: React.FC = () => {
       if (isRoomMinimized) {
         setIsRoomMinimized(false);
       } else if (gamesRoomId === activeRoom.id) {
-        setGamesRoomId(null);
+        if (!toti777BackRef.current?.()) setGamesRoomId(null);
       } else if (roomShareId === activeRoom.id) {
         setRoomShareId(null);
       } else if (showExitOptions) {
@@ -2229,7 +2230,7 @@ export const VoiceRoomModal: React.FC = () => {
             - Host Center
             - Agency Center
             ========================================================================= */}
-        {!isRoomMinimized && gamesRoomId === activeRoom.id && <GameCenter key={activeRoom.id + currentUser.id} accountId={currentUser.id} onClose={() => setGamesRoomId(null)} />}
+        {!isRoomMinimized && gamesRoomId === activeRoom.id && <GameCenter key={activeRoom.id + currentUser.id} accountId={currentUser.id} toti777BackRef={toti777BackRef} onClose={() => setGamesRoomId(null)} />}
         {managePin && isOwner && <RoomPinDialog key={activeRoom.id} roomId={activeRoom.id} locked={roomLocked}
           onClose={()=>setManagePin(false)} onChanged={locked=>{
             setPinOverride({roomId:activeRoom.id,locked});

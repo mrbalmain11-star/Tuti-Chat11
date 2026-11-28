@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useImperativeHandle, useRef, useState, type Ref } from 'react';
+import { createPortal } from 'react-dom';
 import { gameAsset, gameName, games, loadSharedGames, recoveredGames, type SharedSnapshot } from './api';
 import { EmbeddedGame, additionalGameCards, getEmbeddedGame } from './embeddedGames';
 import { UnoPractice } from './uno/UnoPractice';
@@ -10,19 +11,39 @@ import { LiarsPractice } from './liars/LiarsPractice';
 import { Domino } from './Domino';
 import { SharedRoundPanel } from './SharedRoundPanel';
 
-export function GameCenter({ accountId, onClose }: { accountId: string; onClose: () => void }) {
+const Toti777 = lazy(() => import('./toti777/components/royal-arcade'));
+const toti777Code = 'toti-777';
+
+export function GameCenter({
+  accountId,
+  onClose,
+  toti777BackRef,
+}: {
+  accountId: string;
+  onClose: () => void;
+  toti777BackRef?: Ref<() => boolean>;
+}) {
   const [snapshot, setSnapshot] = useState<SharedSnapshot>();
   const [error, setError] = useState(false);
   const [selected, setSelected] = useState<string>();
   const [query, setQuery] = useState('');
+  const isToti777 = selected === toti777Code;
+  const backInToti777 = useRef<() => void>(null);
+  useImperativeHandle(toti777BackRef, () => () => {
+    if (!isToti777) return false;
+    if (backInToti777.current) backInToti777.current();
+    else setSelected(undefined);
+    return true;
+  });
   const catalog = [
+    { code: toti777Code, name: 'توتي 777', english: 'Toti 777', icon: '/assets/games/toti777/emblem.webp' },
     ...recoveredGames.map(([code, name, english]) => ({ code, name, english, icon: gameAsset + 'stage6/' + code + '.webp' })),
     ...[...games, ...additionalGameCards].filter(([code]) => !recoveredGames.some(([recovered]) => recovered === code))
       .map(([code, name, icon]) => ({ code, name, english: code, icon })),
   ].filter(({ code, name, english }) => [name, english, getEmbeddedGame(code)?.name ?? '']
     .some(label => label.toLowerCase().includes(query.trim().toLowerCase())));
   const practiceGames = ['uno', 'fishing', 'knife', 'okey', 'carrom', 'liars-bar'];
-  const standalone = selected === 'domino' || (selected !== undefined && practiceGames.includes(selected));
+  const standalone = isToti777 || selected === 'domino' || (selected !== undefined && practiceGames.includes(selected));
   const embedded = getEmbeddedGame(selected);
   const isTotiFood = embedded?.id === 'greedy-original';
   const [minimized, setMinimized] = useState(false);
@@ -31,6 +52,10 @@ export function GameCenter({ accountId, onClose }: { accountId: string; onClose:
   const lastBalance = useRef<number | null | undefined>(undefined);
 
   useEffect(() => {
+    if (isToti777) {
+      reload.current = () => {};
+      return;
+    }
     let active = true;
     let request = 0;
     let inFlight = false;
@@ -70,7 +95,19 @@ export function GameCenter({ accountId, onClose }: { accountId: string; onClose:
       window.clearInterval(poll);
       window.clearInterval(timer);
     };
-  }, [selected, standalone]);
+  }, [selected, standalone, isToti777]);
+
+  if (isToti777) {
+    return createPortal(
+      <Suspense fallback={<section className="fixed inset-0 z-[1000] grid place-content-center bg-[#071711] text-white" dir="rtl">
+        <p role="status">جارٍ تحميل توتي 777…</p>
+        <button type="button" onClick={() => setSelected(undefined)}>العودة إلى الألعاب</button>
+      </section>}>
+        <Toti777 onClose={() => setSelected(undefined)} backRef={backInToti777} />
+      </Suspense>,
+      document.body,
+    );
+  }
 
   return <>
     {minimized && <button type="button" className="absolute bottom-28 end-3 z-[95] rounded-full bg-emerald-950 px-3 py-2 text-white"
@@ -110,13 +147,14 @@ export function GameCenter({ accountId, onClose }: { accountId: string; onClose:
         {catalog.map(({ code, name, icon }) => {
           const game = snapshot?.catalog.find(item => item.code === code);
           const gameModule = getEmbeddedGame(code);
-          const enabled = code === 'domino' || practiceGames.includes(code) || (gameModule ? gameModule.enabled : game?.enabled && !error);
+          const enabled = code === toti777Code || code === 'domino' || practiceGames.includes(code) || (gameModule ? gameModule.enabled : game?.enabled && !error);
           return <button key={code} type="button" disabled={!enabled}
             className="grid min-w-0 justify-items-center rounded-xl border border-white/10 bg-white/5 p-1.5 text-xs disabled:opacity-65"
             onClick={() => setSelected(code)}>
-            <img src={icon.startsWith('/') ? icon : gameAsset + (gameModule?.icon ?? icon) + '.png'} alt="" loading="lazy" className="aspect-square w-full rounded-lg object-cover" />
+            <img src={icon.startsWith('/') ? icon : gameAsset + (gameModule?.icon ?? icon) + '.png'} alt="" loading="lazy" className={`aspect-square w-full rounded-lg ${code === toti777Code ? "object-contain" : "object-cover"}`} />
             <strong className="mt-1">{gameModule?.name ?? name}</strong>
             {practiceGames.includes(code) && <span>تدريب محلي</span>}
+            {code === toti777Code && <span>تجريبي</span>}
             {!enabled && <span>غير متاحة</span>}
           </button>;
         })}
